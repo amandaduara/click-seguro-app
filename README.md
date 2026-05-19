@@ -17,6 +17,8 @@ O projeto foi construído utilizando o ecossistema **Flutter & Dart**, adotando 
 | **Flutter Secure Storage** | Armazenamento criptografado de dados sensíveis (Tokens JWT) |
 | **Shimmer** | Esqueletos de carregamento visuais para otimizar a UX |
 | **Flutter Localizations** | Sistema oficial de suporte a internacionalização (i18n) |
+| **Flutter SVG** | Biblioteca quer permite desenhar e exibir arquivos Scalable Vector Graphics |
+| **Flutter Lints** | Pacote que fornece um conjunto recomendado de regras, visando incentivar boas práticas de programação e manter a consistência do código |
 
 ---
 
@@ -25,6 +27,8 @@ O projeto foi construído utilizando o ecossistema **Flutter & Dart**, adotando 
 Para garantir que o projeto seja escalável, testável e que o desenvolvimento em equipe ocorra sem conflitos, adotamos o **DDD (Domain-Driven Design)** pragmático aliado aos princípios do **SOLID**. O aplicativo é dividido em **módulos independentes (Features)**, onde cada funcionalidade possui três camadas isoladas:
 
 ```text
+assets/
+├── images/                       # Onde ficam as ilustrações (ex: empty_state.svg, logo.svg)
 lib/
 ├── core/                         # Código compartilhado globalmente
 │   ├── constants/                # Caminhos de imagens, rotas fixas, chaves
