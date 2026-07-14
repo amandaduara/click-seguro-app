@@ -1,0 +1,41 @@
+name: Deploy Style Guide to GitHub Pages
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Instalar Dependências
+        run: |
+          cd click_seguro_app
+          flutter pub get
+
+      - name: Build Web (Style Guide)
+        run: |
+          cd click_seguro_app
+          flutter build web -t lib/style_guide/style_guide.dart --base-href "/click-seguro-app/"
+
+      - name: Deploy para o GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: click_seguro_app/build/web # Pasta onde a build foi gerada
+          branch: gh-pages # Branch de destino do deploy
