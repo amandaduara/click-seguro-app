@@ -2,7 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 void main() {
-  runApp(const StyleguideWebScreen()); // O widget principal do seu Style Guide
+  runApp(const StyleGuideApp());
+}
+
+class StyleGuideApp extends StatelessWidget {
+  const StyleGuideApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'SafeNews Style Guide',
+      home: StyleguideWebScreen(),
+    );
+  }
 }
 
 // --- TOKENS DE CORES ---
