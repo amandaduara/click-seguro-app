@@ -10,6 +10,7 @@ abstract class AppSpacing {
   static const double s4 = 16.0;  
   static const double s5 = 20.0;  
   static const double s6 = 24.0;  
+  static const double s7 = 32.0;  
 
   // Border Radius
   static final BorderRadius radius2xl = BorderRadius.circular(20.0);

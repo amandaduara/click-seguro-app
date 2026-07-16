@@ -82,10 +82,6 @@ abstract class AppTheme {
           borderRadius: AppSpacing.radius2xl,
           borderSide: const BorderSide(color: AppColors.border),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: AppSpacing.radius2xl,
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
       ),
     );
   }
