@@ -1,6 +1,9 @@
+import 'package:click_seguro_app/core/routing/app_router.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/modules/authentication/authentication.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
+import 'package:click_seguro_app/modules/onboarding/onboarding.dart';
+import 'package:click_seguro_app/modules/splash/splash.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +32,8 @@ Future<ModuleManagerInterface> _setup() async {
   await moduleManager.registerModules([
     CommonModule(),
     AuthenticationModule(),
+    OnboardingModule(),
+    SplashModule(),
   ]);
   return moduleManager;
 }
@@ -42,12 +47,13 @@ class ClickSeguroApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: moduleManager.providers,
-      child: MaterialApp(
+      child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         localizationsDelegates: context.localizationDelegates,
         supportedLocales: context.supportedLocales,
         locale: context.locale,
-        theme: AppTheme.lightTheme
+        theme: AppTheme.lightTheme,
+        routerConfig: appRouter,
       ),
     );
   }
