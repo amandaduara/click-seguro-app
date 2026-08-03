@@ -1,3 +1,12 @@
 {
-  "app_title": "Click Seguro"
+  "app_title": "Click Seguro",
+  "onboarding_page1_title": "Protect yourself from scams",
+  "onboarding_page1_description": "Get alerts about the most common scams and learn how to defend yourself.",
+  "onboarding_page2_title": "Verified news",
+  "onboarding_page2_description": "Follow fake news debunked by official sources.",
+  "onboarding_page3_title": "Learn by doing",
+  "onboarding_page3_description": "Short activities and quizzes to practice your digital security.",
+  "onboarding_button_continue": "Continue",
+  "onboarding_button_start": "Get Started",
+  "onboarding_skip": "Skip"
 }
