@@ -1,3 +1,12 @@
 {
-  "app_title": "Click Seguro"
+  "app_title": "Click Seguro",
+  "onboarding_page1_title": "Proteja-se de golpes",
+  "onboarding_page1_description": "Receba alertas sobre os golpes mais comuns e aprenda a se defender.",
+  "onboarding_page2_title": "Notícias verificadas",
+  "onboarding_page2_description": "Acompanhe fake news desmentidas por fontes oficiais.",
+  "onboarding_page3_title": "Aprenda na prática",
+  "onboarding_page3_description": "Atividades curtas e quizzes para treinar sua segurança digital.",
+  "onboarding_button_continue": "Continuar",
+  "onboarding_button_start": "Começar",
+  "onboarding_skip": "Pular"
 }

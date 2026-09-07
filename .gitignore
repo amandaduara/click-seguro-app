@@ -1,0 +1,148 @@
+# =====================================================
+# Operating System
+# =====================================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+*~
+*.swp
+*.swo
+
+# =====================================================
+# Environment Variables & Secrets (CRITICAL)
+# =====================================================
+.env
+.env.*
+*.env
+# Configurações do Firebase
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist
+firebase_crashlytics_mapping.json
+
+# =====================================================
+# Dart / Flutter
+# =====================================================
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub/
+.pub-cache/
+build/
+coverage/
+
+# Generated documentation
+doc/api/
+
+# Flutter build metadata
+**/ios/Flutter/.last_build_id
+
+# Generated symbol files
+app.*.symbols
+app.*.map.json
+
+# =====================================================
+# Android
+# =====================================================
+android/.gradle/
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/local.properties
+android/key.properties
+android/app/build/
+
+# Keystore (Mantenha ignorado para não vazar a chave de assinatura)
+*.jks
+*.keystore
+
+# =====================================================
+# iOS / macOS
+# =====================================================
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/App.framework
+ios/Flutter/flutter_export_environment.sh
+
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral/
+
+# Xcode
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+DerivedData/
+
+# =====================================================
+# Windows / Linux (Desktop builds)
+# =====================================================
+windows/flutter/ephemeral/
+windows/flutter/ephemeral/generated_config.cmake
+linux/flutter/ephemeral/
+
+# =====================================================
+# FVM (Flutter Version Management)
+# =====================================================
+.fvm/flutter_sdk
+# Descomente a linha abaixo se não quiser versionar a versão fixa do Flutter da sua equipe
+# .fvm/fvm_config.json
+
+# =====================================================
+# IDEs: IntelliJ / Android Studio
+# =====================================================
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# =====================================================
+# IDEs: VS Code
+# =====================================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# =====================================================
+# IDEs: Visual Studio
+# =====================================================
+.vs/
+
+# =====================================================
+# Logs & Temporary Files
+# =====================================================
+*.log
+*.tmp
+*.temp
+*.bak
+.history
+
+# =====================================================
+# Claude / AI
+# =====================================================
+.claude/
+CLAUDE.md
+
+# =====================================================
+# OpenSpec
+# =====================================================
+/openspec/
+ref_screens/
+
+# =====================================================
+# Miscellaneous
+# =====================================================
+.class
+.pyc
+.atom/
+.build/
+.buildlog/
+.svn/
+.swiftpm/
+migrate_working_dir/
