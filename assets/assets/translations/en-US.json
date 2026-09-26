@@ -8,5 +8,9 @@
   "onboarding_page3_description": "Short activities and quizzes to practice your digital security.",
   "onboarding_button_continue": "Continue",
   "onboarding_button_start": "Get Started",
-  "onboarding_skip": "Skip"
+  "onboarding_skip": "Skip",
+  "error_generic": "We couldn't complete the action. Please try again later.",
+  "error_connection": "No internet connection. Check your network.",
+  "error_session_expired": "Your session has expired, please log in again.",
+  "error_cache": "Failed to access local storage."
 }

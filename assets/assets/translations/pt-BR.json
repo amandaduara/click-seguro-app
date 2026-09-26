@@ -8,5 +8,9 @@
   "onboarding_page3_description": "Atividades curtas e quizzes para treinar sua segurança digital.",
   "onboarding_button_continue": "Continuar",
   "onboarding_button_start": "Começar",
-  "onboarding_skip": "Pular"
+  "onboarding_skip": "Pular",
+  "error_generic": "Não foi possível completar a ação. Tente novamente mais tarde.",
+  "error_connection": "Sem conexão com a internet. Verifique sua rede.",
+  "error_session_expired": "Sua sessão expirou, faça login novamente.",
+  "error_cache": "Falha ao acessar o armazenamento local."
 }
