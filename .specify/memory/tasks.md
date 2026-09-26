@@ -23,7 +23,12 @@ do wireframe do Lovable
   o teste vem antes (Red → Green → Refactor, Seção III da constituição), com Fakes à mão.
 - **Portão de API:** antes da camada `data/` de uma feature remota, a linha correspondente em
   [api-contract.md](api-contract.md) MUST estar ✅ confirmada com a API real.
-- Caminhos relativos a `click_seguro_app/`. Branch por tarefa: `feature/a3-feed`, `feature/b6-help`.
+- Caminhos relativos a `click_seguro_app/`.
+- **Cada tarefa vira uma feature do Spec Kit** ([plan.md §6](plan.md)): `/speckit-specify` (cria a
+  branch `NNN-slug` e `specs/NNN-slug/spec.md`) → `/speckit-clarify` → `/speckit-plan` →
+  `/speckit-tasks` → `/speckit-analyze` → `/speckit-implement`. No prompt do specify, cite o ID
+  da tarefa (ex.: F0.4) e os RF/RN correspondentes. Ao terminar, marque a tarefa aqui com `[x]`
+  e o número da feature (ex.: `[x] F0.4 … (specs/001-sessao-persistente)`).
 
 ## Já concluído
 

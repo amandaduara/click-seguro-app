@@ -308,15 +308,15 @@ manter histórico do que já foi endereçado e evitar que reapareçam como prece
 
 - **Autoridade.** Esta constituição substitui qualquer convenção ad-hoc em
   conflito. A seção `## Constitution Check` dos templates de plano do Spec Kit
-  MUST ser avaliada contra os Princípios I–V, e `/speckit.analyze` MUST tratar
+  MUST ser avaliada contra os Princípios I–V, e `/speckit-analyze` MUST tratar
   conflito com um MUST como CRÍTICO.
 - **Emendas.** Alterar este documento exige registrar a mudança no Sync Impact
   Report no topo do arquivo e justificar o racional da mudança.
 - **Política de versionamento (SemVer para governança).** MAJOR = remoção ou
   redefinição incompatível de um princípio; MINOR = novo princípio ou seção
   adicionada; PATCH = clarificação sem mudança semântica.
-- **Revisão de conformidade.** Toda tarefa gerada via Spec Kit (`/speckit.plan`,
-  `/speckit.tasks`) MUST ser verificada contra estes princípios antes de ser
+- **Revisão de conformidade.** Toda tarefa gerada via Spec Kit (`/speckit-plan`,
+  `/speckit-tasks`) MUST ser verificada contra estes princípios antes de ser
   considerada concluída. Complexidade adicionada ou qualquer desvio MUST ser
   justificado explicitamente na tarefa ou no plano.
 

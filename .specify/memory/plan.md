@@ -275,8 +275,17 @@ edita.
 | `lib/core/widgets/`, `lib/core/theme/` | Componente novo no design system: combinar, fazer em commit isolado e adicionar ao style guide (C2). |
 | `lib/modules/common/`, `lib/modules/shell/` | Fechados depois da Fase 0. Ajuste só combinado. |
 
-**Branches:** `feature/<trilha>-<tarefa>` (ex.: `feature/a3-feed`) a partir de `develop`, com PR
-pequeno por tarefa.
+**Fluxo por tarefa (Spec Kit):** cada tarefa do [tasks.md](tasks.md) vira uma feature do Spec
+Kit. A partir de `develop` atualizado, `/speckit-specify` cria a branch `NNN-slug` (numeração
+sequencial, ex.: `001-sessao-persistente`) e a pasta `specs/NNN-slug/` com `spec.md`; depois
+vêm `/speckit-clarify` → `/speckit-plan` → `/speckit-tasks` → `/speckit-analyze` →
+`/speckit-implement`. PR pequeno por feature para `develop`. Os documentos desta pasta
+(`.specify/memory/`) são o mapa do produto inteiro; os de `specs/NNN-slug/` detalham só aquela
+feature e MUST citar os IDs (RF/RN/CB e a tarefa, ex.: F0.4) daqui.
+
+**Evitar número repetido entre as duas pessoas:** a numeração sequencial olha as branches e as
+pastas `specs/` que existem localmente. Antes de rodar `/speckit-specify`, faça `git fetch` e
+`git pull` do `develop`, e avise a outra pessoa do número que vai usar.
 
 ---
 
