@@ -1,7 +1,17 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.0.0 (Spec Kit genérico/specify-cli) → 1.0.0 (Click Seguro) → 1.0.1
+Version change: 1.0.0 (Spec Kit genérico/specify-cli) → 1.0.0 (Click Seguro) → 1.0.1 → 1.1.0
+Bump rationale (1.1.0): MINOR — padroniza a camada de dados a partir do guia
+  `click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md` sem redefinir princípios:
+  (1) camada de UI renomeada de `ui/` para `presentation/` em todos os módulos
+  (`authentication` migrado); (2) Princípio V ganha a regra de fronteira
+  `ApiException` (data) → `Either<Failure, T>` (repository/usecase), que já era
+  o padrão do README/onboarding mas não estava escrito aqui; (3) `ApiException`
+  passa a ser classificada por `ApiErrorType` (enum), eliminando a convenção
+  mágica `statusCode == 0` para falta de conexão; (4) camadas obrigatórias
+  explicitadas (datasource → repository → usecase → controller), com
+  datasources recebendo `ApiClient` por construtor.
 Bump rationale (1.0.0 Click Seguro): Substituição completa do conteúdo herdado do
   template do Spec Kit por uma constituição própria do projeto Click Seguro (TCC),
   derivada da stack e dos padrões já presentes no código-fonte (GetIt, Dio,
@@ -62,11 +72,19 @@ um isolado sob `lib/modules/<nome_do_modulo>/`, e em camadas que não se mistura
   `ModuleInterface` (`providers(GetIt injector)` e `registerServices(GetIt injector)`)
   e ser registrado através do `ModuleManager`. É proibido registrar serviços ou
   providers fora desse contrato.
-- **Camadas obrigatórias por módulo:** `ui/` (widgets e controllers de apresentação),
-  uma camada de domínio/regra de negócio quando aplicável, e uma camada de dados
-  (clientes de API, repositórios, serviços). Um controller de UI MUST NOT instanciar
-  `Dio`, `ApiClient` ou qualquer classe de infraestrutura diretamente — a dependência
-  MUST ser injetada via `GetIt`.
+- **Camadas obrigatórias por módulo:** `presentation/` (controllers, pages,
+  widgets e extensions de exibição), `domain/` (entities, contratos de repository,
+  usecases) e `data/` (datasources, models, implementações de repository).
+  `data/` e `domain/` só podem ser omitidos em módulos sem regra de negócio nem
+  acesso a dados (ex.: `splash`). É proibido usar outro nome para a camada de UI
+  (ex.: `ui/`).
+- **Direção das chamadas:** `Controller → UseCase → Repository (contrato) →
+  DataSource → ApiClient`. Um controller MUST falar apenas com usecases, e MUST NOT
+  instanciar ou acessar `Dio`, `ApiClient`, datasource ou repository. Toda
+  dependência MUST ser injetada via construtor e resolvida pelo `GetIt`.
+- **Guia de referência:** o passo a passo de integração de um endpoint
+  (`click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md`) é a aplicação concreta
+  destes princípios e MUST ser seguido em toda nova integração com a API.
 - **`lib/core/` é exclusivo para elementos verdadeiramente transversais** (tema,
   i18n, widgets de design system, spacing). Regra de negócio de um módulo específico
   MUST NOT ser colocada em `core/`.
@@ -173,26 +191,37 @@ Toda falha MUST ser representada por um tipo, nunca por uma `String` solta, um
 `dynamic` ou um código numérico não nomeado.
 
 - **Exceções tipadas obrigatórias.** Toda falha originada de uma chamada HTTP MUST
-  ser convertida para `ApiException` antes de sair da camada de dados (dentro de
-  `ApiClient._safeRequest`). É proibido deixar vazar `DioException` ou qualquer
-  exceção de biblioteca externa para a camada de UI ou de domínio.
+  ser convertida para `ApiException` dentro de `ApiClient._safeRequest`, classificada
+  por `ApiErrorType` (`connection`, `timeout`, `cancelled`, `unauthorized`,
+  `client`, `server`, `invalidResponse`, `unknown`). Falhas de parse do JSON MUST
+  virar `ApiException(type: invalidResponse)` (já feito por `toModel`/`toModelList`).
+  É proibido deixar vazar `DioException`, `TypeError` de parse ou qualquer exceção de
+  biblioteca externa para fora da camada de dados.
+- **Fronteira `ApiException` → `Failure`.** `ApiException` só circula dentro de
+  `data/`. Todo repository MUST capturá-la e devolver `Either<Failure, T>` (fpdart):
+  repositories e usecases MUST NOT lançar exceções. As `Failure` genéricas vivem em
+  `lib/core/errors/` (`ConnectionFailure`, `UnauthorizedFailure`, `ServerFailure`,
+  `CacheFailure`), e o mapeamento padrão (`ApiException.toFailure()`) em
+  `lib/modules/common/api_client/api_failure_mapper.dart`. Uma feature só cria uma
+  `Failure` própria quando a UI precisa distinguir aquele cenário.
 - **Um único padrão canônico.** `ApiClient`/`ApiException`
   (`lib/modules/common/api_client/api_client.dart`) é o único cliente HTTP e o
   único tipo de exceção de API do projeto. É proibido introduzir um segundo
   cliente HTTP, uma segunda hierarquia de exceção, ou qualquer variante paralela
   para o mesmo propósito.
-- **Proibição de strings mágicas.** Códigos de erro, chaves de mensagem e
+- **Proibição de strings e números mágicos.** Códigos de erro, chaves de mensagem e
   identificadores de estado MUST ser representados por `enum` ou constante
-  nomeada (seguindo o exemplo de `UserSessionStatus`), nunca por literais de
-  string comparados diretamente no fluxo de controle (`if (error == "algumacoisa")`
-  é proibido).
+  nomeada (seguindo o exemplo de `UserSessionStatus` e `ApiErrorType`), nunca por
+  literais comparados diretamente no fluxo de controle (`if (error == "algumacoisa")`
+  e `if (statusCode == 0)` para "sem conexão" são proibidos).
 - **Mapeamento centralizado.** A decisão do que fazer com um código de erro (ex.:
   401/403 → logout automático via `UserSessionService`) MUST viver em um único
   ponto centralizado da camada de dados, nunca duplicada em cada tela que consome a
   API.
-- **Mensagens de erro para o usuário MUST ser desacopladas da mensagem técnica.** A
-  UI MUST exibir uma mensagem amigável mapeada a partir do tipo/código da exceção,
-  nunca a `message` bruta vinda da API sem validação.
+- **Mensagens de erro para o usuário MUST ser desacopladas da mensagem técnica.**
+  `Failure.message` é uma chave de tradução (`AppStrings`), e a UI exibe
+  `failure.message.tr()`. `ApiException.message` é técnica (log/debug) e MUST NOT
+  ser exibida ao usuário.
 
 **Racional:** erros não tipados e strings mágicas são a causa mais comum de bugs
 silenciosos em Dart, porque o compilador não pode ajudar a pegar um typo em uma
@@ -203,7 +232,9 @@ string de erro — um `enum` ou uma classe de exceção, sim.
 - **Arquivos:** `snake_case.dart`. O nome do arquivo MUST refletir o papel da
   classe principal via sufixo: `_module.dart` (módulo), `_controller.dart`
   (controller de UI), `_service.dart` (serviço de negócio/infra), `_client.dart`
-  (cliente de API), `_config.dart` (configuração).
+  (cliente de API), `_config.dart` (configuração), `_entity.dart`, `_model.dart`,
+  `_data_source.dart` / `_data_source_impl.dart`, `_repository.dart` (contrato) /
+  `_repository_impl.dart`, `_usecase.dart`, `_failure.dart`, `_extension.dart`.
 - **Classes e enums:** `UpperCamelCase`. O nome da classe MUST terminar com o mesmo
   sufixo semântico do arquivo (`AuthenticationController`, `UserSessionService`,
   `ApiClient`, `EnvironmentConfig`).
@@ -216,7 +247,7 @@ string de erro — um `enum` ou uma classe de exceção, sim.
 - **Arquivos de ambiente (`EnvironmentConfig`):** toda constante MUST ser
   `static const`, tipada explicitamente (`String`, `bool`, `int`), e MUST ter um
   `defaultValue` seguro (nunca uma credencial real como default).
-- **Barrel files** (`common.dart`, `authentication.dart`, `ui.dart`) MUST apenas
+- **Barrel files** (`common.dart`, `authentication.dart`, `presentation.dart`) MUST apenas
   reexportar arquivos do próprio módulo/pasta — é proibido colocar lógica neles.
 - **Imports** MUST usar o prefixo do pacote (`package:click_seguro_app/...`) para
   arquivos fora da pasta atual, nunca `../../../` mais de dois níveis.
@@ -260,6 +291,18 @@ manter histórico do que já foi endereçado e evitar que reapareçam como prece
    `.env.*` foram adicionados ao `.gitignore` do pacote Flutter. O arquivo nunca
    havia sido commitado, portanto nenhuma credencial foi exposta no histórico do
    Git.
+3. ~~`ApiException` sem classificação e frágil a corpo não-JSON~~ — **Resolvido em
+   2026-09-26.** Falta de conexão era sinalizada por `statusCode: 0` (número
+   mágico), timeouts de envio/recebimento não eram tratados como conexão, um corpo
+   de erro não-JSON (ex.: HTML de um 502) quebrava o mapeamento com `TypeError`, o
+   código de negócio (`error`) da API era descartado e a mensagem de conexão estava
+   fixa em português. `ApiException` passou a ter `type` (`ApiErrorType`),
+   `statusCode` anulável e `errorCode`; o texto para o usuário saiu da exceção e foi
+   para as `Failure` (chaves de i18n). Cobertura em
+   `test/modules/common/api_client/`.
+4. ~~Nome da camada de UI inconsistente~~ — **Resolvido em 2026-09-26.**
+   `authentication` usava `ui/` enquanto `onboarding`/`splash` usavam
+   `presentation/`. Padronizado em `presentation/`.
 
 ## Governança
 
@@ -277,4 +320,4 @@ manter histórico do que já foi endereçado e evitar que reapareçam como prece
   considerada concluída. Complexidade adicionada ou qualquer desvio MUST ser
   justificado explicitamente na tarefa ou no plano.
 
-**Versão**: 1.0.1 | **Ratificada em**: 2026-09-07 | **Última alteração**: 2026-09-07
+**Versão**: 1.1.0 | **Ratificada em**: 2026-09-07 | **Última alteração**: 2026-09-26

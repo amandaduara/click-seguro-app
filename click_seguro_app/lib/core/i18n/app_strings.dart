@@ -15,4 +15,9 @@ abstract class AppStrings {
   static const String onboardingButtonContinue = 'onboarding_button_continue';
   static const String onboardingButtonStart = 'onboarding_button_start';
   static const String onboardingSkip = 'onboarding_skip';
+
+  static const String errorGeneric = 'error_generic';
+  static const String errorConnection = 'error_connection';
+  static const String errorSessionExpired = 'error_session_expired';
+  static const String errorCache = 'error_cache';
 }

@@ -2,13 +2,13 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 1.0.0
+**Versão**: 1.0.1
 
 **Criado em**: 2026-09-07
 
 **Status**: Rascunho (Draft)
 
-**Alinhado a**: [constitution.md](constitution.md) v1.0.1 — este documento descreve O QUE o
+**Alinhado a**: [constitution.md](constitution.md) v1.1.0 — este documento descreve O QUE o
 sistema faz; o COMO (arquitetura, stack, camadas) é regido pela constituição e detalhado nos
 planos técnicos (`plan.md`) gerados a partir daqui.
 
@@ -135,7 +135,7 @@ responsável por revisar denúncias e decidir o status de veracidade de uma not�
 
 - **RF-014**: O sistema MUST associar a cada notícia um status de veracidade pertencente a um
   conjunto fechado e nomeado (`VeracityStatus`): `verified` (verificada), `unverified` (não
-  verificada — padrão), `underReview` (em análise) e `false` (falsa). É proibido representar
+  verificada — padrão), `underReview` (em análise) e `fake` (falsa). É proibido representar
   esse status como string livre (alinhado à Seção V da constituição).
 - **RF-015**: O sistema MUST permitir que um Leitor denuncie uma notícia, exigindo a seleção
   de um motivo estruturado (`ReportReason`: ex. `misleadingTitle`, `fabricatedContent`,
@@ -213,21 +213,21 @@ III da constituição) e (b) o comportamento de erro associado (Seção 6) tamb�
   (RNF-002), o sistema MUST exibir o feed em cache com um indicador visível de "modo offline"
   e MUST desabilitar ações que exigem rede.
 - **CB-002 (Sem conexão durante uma ação de rede)**: Toda chamada que falhar por ausência de
-  conexão MUST resultar em uma `ApiException` com mensagem amigável ("Sem conexão com a
-  internet. Verifique sua rede.") — nunca uma exceção técnica (`DioException`,
-  `SocketException`) exposta à UI.
+  conexão ou tempo esgotado MUST resultar em uma `ConnectionFailure`, exibida com a mensagem
+  amigável "Sem conexão com a internet. Verifique sua rede." — nunca uma exceção técnica
+  (`DioException`, `SocketException`, `ApiException`) exposta à UI.
 - **CB-003 (Token expirado / 401)**: Qualquer resposta 401 MUST disparar logout automático via
   `UserSessionService.logout()`, seguido de redirecionamento para a tela de login com a
   mensagem "Sua sessão expirou, faça login novamente." O usuário MUST NOT permanecer em uma
   tela autenticada após um 401.
-- **CB-004 (Erro inesperado do servidor, 5xx)**: Deve ser mapeado para `ApiException` com
+- **CB-004 (Erro inesperado do servidor, 5xx)**: Deve ser mapeado para `ServerFailure` com
   mensagem genérica amigável ("Não foi possível completar a ação. Tente novamente mais
   tarde."); detalhes técnicos (status code, corpo bruto) só MUST aparecer em log quando
   `EnvironmentConfig.debugMode` estiver ativo.
 - **CB-005 (Resposta malformada / campo ausente)**: Falhas de parsing (`TypeError`,
   `FormatException`) ao converter a resposta em modelo tipado MUST ser capturadas na camada de
-  dados e convertidas em `ApiException`; é proibido deixar uma exceção de parsing vazar até a
-  UI sem tratamento (alinhado à Seção V da constituição).
+  dados e tratadas como erro genérico (`ServerFailure`); é proibido deixar uma exceção de
+  parsing vazar até a UI sem tratamento (alinhado à Seção V da constituição).
 - **CB-006 (Denúncia duplicada)**: Ao tentar denunciar uma notícia já denunciada pelo mesmo
   usuário (RN-003), o sistema MUST informar "Você já denunciou esta notícia" sem chamar a API
   novamente, quando o estado de denúncia do usuário já for conhecido localmente.
@@ -265,4 +265,11 @@ redesenhado, não a constituição contornada. Alterações de escopo (novos RFs
 personas) exigem atualizar a versão deste documento e registrar a mudança em uma futura seção
 de changelog.
 
-**Versão**: 1.0.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-09-07
+**Versão**: 1.0.1 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-09-26
+
+## Changelog
+
+- **1.0.1 (2026-09-26)**: sem mudança de escopo. `VeracityStatus.false` renomeado para
+  `fake` (`false` é palavra reservada em Dart). CB-002, CB-004 e CB-005 passam a citar as
+  `Failure` que chegam à UI (`ConnectionFailure`, `ServerFailure`) em vez de `ApiException`,
+  que após a constituição v1.1.0 fica restrita à camada de dados.

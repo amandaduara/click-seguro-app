@@ -37,14 +37,14 @@ assets/
 lib/
 ├── core/                         # Código compartilhado globalmente
 │   ├── constants/                # Caminhos de imagens, rotas fixas, chaves
-│   ├── errors/                   # Failure (classe base) e subclasses (ex: CacheFailure)
-│   ├── http/                     # Configuração do Dio e Interceptors de API
+│   ├── errors/                   # Failure (classe base) e subclasses genéricas (Connection, Server...)
 │   ├── i18n/                     # Chaves de tradução (AppStrings) e internacionalização
 │   ├── routing/                  # Configuração do go_router (rotas do app)
 │   ├── theme/                    # Design System (Cores, fontes e espaçamentos)
 │   └── widgets/                  # Componentes puramente visuais e globais
 │
 └── modules/                      # Módulos/Funcionalidades independentes
+    ├── common/                   # Infra compartilhada: ApiClient, sessão, config de ambiente, ModuleManager
     └── [nome_do_modulo]/         # Exemplo: onboarding, splash, authentication
         ├── data/                 # CAMADA DATA: Conexão com infraestrutura externa
         │   ├── datasources/      # Requisições HTTP brutas para a API
@@ -58,6 +58,7 @@ lib/
         │
         └── presentation/         # CAMADA PRESENTATION: Interface com o Usuário
             ├── controller/       # Gerência de estado e lógica de tela (ChangeNotifier)
+            ├── extensions/       # Regras de exibição de entities (labels, datas formatadas)
             ├── pages/            # Telas completas da feature
             └── widgets/          # Componentes visuais exclusivos desta tela
 ```
@@ -66,7 +67,17 @@ lib/
 
 ### Tratamento de erro: `Either<Failure, T>`
 
-Repositories e usecases não lançam exceptions para cima — eles retornam `Either<Failure, T>` (pacote [`fpdart`](https://pub.dev/packages/fpdart)). `Failure` é a classe base em `core/errors/failure.dart`; subclasses (ex: `CacheFailure`) representam falhas concretas. Quem consome o resultado resolve com `.fold((falha) => ..., (sucesso) => ...)`. Veja `lib/modules/onboarding/domain/` para um exemplo completo desse padrão.
+Repositories e usecases não lançam exceptions para cima — eles retornam `Either<Failure, T>` (pacote [`fpdart`](https://pub.dev/packages/fpdart)). `Failure` é a classe base em `core/errors/failure.dart`; as subclasses genéricas são `ConnectionFailure`, `UnauthorizedFailure`, `ServerFailure` e `CacheFailure`, e cada feature pode criar as suas quando a UI precisar distinguir um cenário. `Failure.message` é uma **chave de tradução** (`AppStrings`), exibida na tela com `failure.message.tr()`. Quem consome o resultado resolve com `.fold((falha) => ..., (sucesso) => ...)`. Veja `lib/modules/onboarding/domain/` para um exemplo completo desse padrão.
+
+### Camada HTTP: `ApiClient` → `ApiException` → `Failure`
+
+Toda chamada HTTP passa pelo `ApiClient` único (`lib/modules/common/api_client/api_client.dart`), registrado no GetIt pelo `CommonModule` e injetado **pelo construtor** nos datasources. O fluxo de erro é:
+
+1. O `ApiClient` converte qualquer `DioException` em `ApiException`, classificada por `ApiErrorType` (`connection`, `timeout`, `unauthorized`, `client`, `server`, `invalidResponse`...). Um 401 já encerra a sessão automaticamente.
+2. O datasource só chama o endpoint e faz o parse com `response.toModel(...)` / `toModelList(...)`, deixando a `ApiException` subir.
+3. O repository captura e devolve `Left(Failure)` — casos específicos da feature primeiro, depois o mapeamento padrão `e.toFailure()` (`api_failure_mapper.dart`).
+
+O passo a passo completo para integrar um endpoint novo até a tela, com TDD, está em [`click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md`](click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md).
 
 ### Navegação: `go_router`
 
