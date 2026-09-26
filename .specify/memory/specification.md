@@ -2,15 +2,16 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 1.0.1
+**Versão**: 2.0.0
 
 **Criado em**: 2026-09-07
 
 **Status**: Rascunho (Draft)
 
-**Alinhado a**: [constitution.md](constitution.md) v1.1.0 — este documento descreve O QUE o
-sistema faz; o COMO (arquitetura, stack, camadas) é regido pela constituição e detalhado nos
-planos técnicos (`plan.md`) gerados a partir daqui.
+**Alinhado a**: [constitution.md](constitution.md) v1.1.0. Este documento descreve O QUE o
+sistema faz. O COMO (arquitetura, stack, camadas) é regido pela constituição e detalhado em
+[plan.md](plan.md). A fonte visual é o wireframe do Lovable (divisão em trilhas A/B/C, reproduzida
+em [tasks.md](tasks.md)).
 
 ---
 
@@ -18,258 +19,301 @@ planos técnicos (`plan.md`) gerados a partir daqui.
 
 ### 1.1 Problema
 
-A desinformação ("fake news") se propaga mais rápido do que a verificação factual,
-principalmente em redes sociais e aplicativos de mensagens. O usuário comum não tem, no
-momento em que lê uma notícia, nenhum sinal confiável e imediato sobre:
+Golpes digitais (falso parente no WhatsApp, falsa central do banco, Pix, links de phishing) e
+notícias falsas atingem com mais força o público **idoso**, que tem menos familiaridade com o
+ambiente digital e mais dificuldade de leitura em telas pequenas. Quando esse usuário é
+abordado, faltam três coisas:
 
-- se a fonte da notícia é reconhecidamente confiável;
-- se o conteúdo já foi checado por alguém com autoridade para validá-lo;
-- para onde reportar uma notícia suspeita e o que acontece depois disso.
-
-Isso cria um ambiente onde a decisão de "acreditar ou não" fica inteiramente a cargo do
-usuário leigo, sem ferramenta de apoio.
+- informação confiável e fácil de consumir sobre os golpes e as notícias do momento;
+- treino prático para reconhecer uma abordagem suspeita antes de cair nela;
+- um caminho rápido para pedir ajuda (polícia, banco, um familiar) quando algo acontece.
 
 ### 1.2 Proposta de valor do SafeNews
 
-O SafeNews é um aplicativo móvel/multiplataforma (Flutter) que concentra consumo de notícias
-e checagem de veracidade em um único fluxo:
+O SafeNews é um aplicativo Flutter, pensado para o público idoso, que reúne três frentes num
+único lugar:
 
-- entrega um **feed de notícias categorizado**, com indicação visual imediata do status de
-  veracidade de cada item;
-- permite que o leitor **denuncie** uma notícia que considera suspeita, com motivo
-  estruturado (não texto livre);
-- permite que um **validador** (usuário com papel de checagem) analise denúncias e atribua um
-  status de veracidade auditável;
-- funciona de forma **resiliente a conexões ruins ou ausentes**, mantendo o último feed
-  consultado disponível em modo offline.
+- **Informar:** feed de notícias por categoria, com selo de veracidade, Reels para consumo
+  rápido e notificações de alertas.
+- **Educar:** trilha de atividades em módulos, com lições curtas, leitura em voz alta e
+  exercícios práticos (quiz, verdadeiro/falso, checklist, cenário, ordenação).
+- **Socorrer:** central de ajuda com contatos oficiais e contatos pessoais de confiança, com
+  ligação em um toque.
 
-O valor central é reduzir a distância entre "ler uma notícia" e "saber se pode confiar nela",
-sem exigir que o usuário saia do aplicativo para checar em outro lugar.
+Tudo isso com **acessibilidade de primeira classe**: fonte ampliável, alto contraste e leitura
+em voz alta.
 
 ### 1.3 Fora de escopo (v1)
 
-- Rede social entre usuários (comentários públicos, seguir outros usuários, curtidas).
-- Geração de notícias ou conteúdo original pelo próprio SafeNews (o app consome/agrega e
-  valida, não produz jornalismo).
-- Moderação por inteligência artificial automatizada da veracidade (a decisão de veracidade é
-  humana, feita pelo validador — IA como apoio é uma evolução futura, não um requisito da v1).
+- **Checagem colaborativa de notícias (v2):** denúncia de notícia pelo leitor, papel de
+  Validador, fila de checagem e histórico auditável de vereditos. Na v1 o selo de veracidade
+  vem pronto da API e o app só o exibe (ver §8, Evoluções futuras).
+- Notificações push (a v1 tem apenas a lista de notificações dentro do app).
+- Rede social entre usuários (comentários, seguir, ranking público).
+- Produção de conteúdo dentro do app (notícias, módulos e lições vêm da API).
+- Painel de administração.
 
 ---
 
-## 2. Personas de Usuário e Casos de Uso Principais
+## 2. Personas e Casos de Uso
 
-### 2.1 Persona — Leitor de Notícias
+### 2.1 Persona principal — Usuário idoso cadastrado
 
-Usuário final comum, que abre o app para se manter informado e quer decidir rapidamente se
-uma notícia é confiável antes de compartilhá-la.
+Pessoa de 60 anos ou mais, usa o celular para WhatsApp e banco, tem receio de golpes e prefere
+textos grandes e explicações simples.
 
-**Objetivos primários:**
-- Consumir um feed de notícias relevante e categorizado.
-- Identificar, de forma visual e imediata, o quão confiável é cada notícia.
-- Denunciar uma notícia que parece falsa ou enganosa.
-- Ler notícias já abertas anteriormente mesmo sem internet.
+**Objetivos:** entender os golpes do momento, treinar para reconhecê-los, acompanhar o próprio
+progresso e ter a quem recorrer rapidamente.
 
-### 2.2 Persona — Validador (Fact-Checker)
+### 2.2 Persona secundária — Visitante
 
-Usuário com papel elevado de confiança (jornalista, moderador ou voluntário treinado),
-responsável por revisar denúncias e decidir o status de veracidade de uma notícia.
+Qualquer pessoa que abre o app sem criar conta (inclusive um familiar testando o app para
+indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 
-**Objetivos primários:**
-- Visualizar uma fila de notícias denunciadas/pendentes de checagem, priorizada.
-- Analisar a notícia, suas fontes e o motivo da denúncia.
-- Registrar uma decisão de veracidade com justificativa, criando um histórico auditável.
-- Ter certeza de que sua decisão é refletida imediatamente para todos os leitores.
+### 2.3 Casos de uso
 
-### 2.3 Casos de Uso Principais
-
-| ID | Persona | Caso de uso |
-|------|-----------|--------------|
-| UC-01 | Leitor | Criar conta e autenticar-se no aplicativo |
-| UC-02 | Leitor | Navegar pelo feed de notícias por categoria |
-| UC-03 | Leitor | Buscar uma notícia por palavra-chave |
-| UC-04 | Leitor | Visualizar o detalhe de uma notícia, incluindo selo de veracidade e fonte |
-| UC-05 | Leitor | Denunciar uma notícia com um motivo estruturado |
-| UC-06 | Leitor | Favoritar uma notícia para leitura posterior/offline |
-| UC-07 | Validador | Consultar a fila de notícias pendentes de checagem |
-| UC-08 | Validador | Atribuir um status de veracidade a uma notícia, com justificativa |
-| UC-09 | Leitor/Validador | Encerrar a sessão (logout) com segurança |
+| ID | Persona | Caso de uso | Trilha |
+|------|-----------|--------------|--------|
+| UC-01 | Todos | Ver o splash e o onboarding na primeira abertura | A1 |
+| UC-02 | Todos | Criar conta, entrar, recuperar senha ou seguir como visitante | A2 |
+| UC-03 | Todos | Navegar pelo feed por categoria e buscar notícias | A3 |
+| UC-04 | Todos | Consumir notícias em formato Reels | A4 |
+| UC-05 | Todos | Ler (ou ouvir) uma notícia completa, compartilhar e ir para atividades relacionadas | A5 |
+| UC-06 | Cadastrado | Salvar notícias e curtir Reels | A3–A5 |
+| UC-07 | Cadastrado | Ver e marcar notificações como lidas | A6 |
+| UC-08 | Todos | Acompanhar o painel de atividades e abrir um módulo | B1 |
+| UC-09 | Todos | Ler (ou ouvir) as lições de um módulo | B2 |
+| UC-10 | Todos | Responder os exercícios e receber feedback | B3 |
+| UC-11 | Todos | Concluir um módulo (visitante é convidado a criar conta) | B4 |
+| UC-12 | Todos | Ligar para um contato oficial ou pessoal pela central de ajuda | B6 |
+| UC-13 | Todos | Cadastrar contatos pessoais de confiança com foto | B6 |
+| UC-14 | Cadastrado | Ver perfil, estatísticas e conquistas; editar dados | B7 |
+| UC-15 | Todos | Ajustar configurações e sair da conta | B8 |
+| UC-16 | Todos | Ajustar tamanho de fonte, alto contraste e leitura em voz alta | B9 |
 
 ---
 
 ## 3. Requisitos Funcionais (RFs)
 
-### 3.1 Autenticação e Gestão de Perfil
+### 3.1 Entrada no app (A1)
 
-- **RF-001**: O sistema MUST permitir cadastro de novo usuário com e-mail, senha e nome
-  completo.
-- **RF-002**: O sistema MUST permitir login via e-mail e senha, retornando um token de sessão
-  a ser mantido pelo `UserSessionService`.
-- **RF-003**: O sistema MUST manter um estado de sessão explícito e observável
-  (`UserSessionStatus.authenticated` / `unauthenticated`), refletido imediatamente na UI (ex.:
-  navegação bloqueia telas autenticadas quando `unauthenticated`).
-- **RF-004**: O sistema MUST permitir logout explícito, que MUST limpar token, identificador
-  de usuário e reverter o status de sessão para `unauthenticated`.
-- **RF-005**: O sistema MUST permitir que o usuário edite dados básicos do próprio perfil
-  (nome, categorias de interesse).
-- **RF-006**: O sistema MUST oferecer fluxo de recuperação de senha ("esqueci minha senha")
-  via e-mail cadastrado.
-- **RF-007**: O sistema MUST diferenciar o papel do usuário (Leitor vs. Validador) e MUST
-  restringir funcionalidades de validação (RF-016) exclusivamente ao papel Validador.
+- **RF-001**: O sistema MUST exibir um splash ao abrir o app enquanto a sessão e as preferências
+  são restauradas.
+- **RF-002**: O sistema MUST exibir o onboarding (3 slides com indicador de página, botões
+  "Continuar"/"Começar" e "Pular") **apenas na primeira abertura** do aparelho (RN-004).
 
-### 3.2 Feed e Consumo de Notícias
+### 3.2 Autenticação e sessão (A2)
 
-- **RF-008**: O sistema MUST exibir um feed paginado de notícias, ordenado por data de
-  publicação (mais recente primeiro) por padrão.
-- **RF-009**: O sistema MUST permitir filtrar o feed por categoria (ex.: política, saúde,
-  economia, tecnologia).
-- **RF-010**: O sistema MUST permitir busca textual por título ou palavra-chave dentro do
-  feed.
-- **RF-011**: O sistema MUST exibir uma tela de detalhe da notícia contendo: título, corpo/
-  resumo, veículo/fonte original, data de publicação e autor (quando disponível).
-- **RF-012**: O sistema MUST exibir, tanto no card do feed quanto no detalhe, o selo de
-  veracidade atual da notícia (ver RF-014).
-- **RF-013**: O sistema MUST permitir favoritar/salvar uma notícia para consulta posterior,
-  inclusive offline (ver RNF-002).
+- **RF-003**: O sistema MUST permitir cadastro com nome, e-mail e senha.
+- **RF-004**: O sistema MUST permitir login com e-mail e senha, alternando com o cadastro na
+  mesma tela, com opção de mostrar/ocultar a senha.
+- **RF-005**: O sistema MUST permitir **entrar como visitante**, sem conta (RN-003).
+- **RF-006**: O sistema MUST oferecer recuperação de senha pelo e-mail cadastrado.
+- **RF-007**: A sessão MUST sobreviver ao fechamento do app e MUST ter estado observável
+  (`UserSessionStatus`: `authenticated`, `unauthenticated`, `guest`).
+- **RF-008**: O sistema MUST permitir sair da conta, limpando token e dados de sessão.
 
-### 3.3 Validação e Confiabilidade
+### 3.3 Notícias (A3, A4, A5)
 
-- **RF-014**: O sistema MUST associar a cada notícia um status de veracidade pertencente a um
-  conjunto fechado e nomeado (`VeracityStatus`): `verified` (verificada), `unverified` (não
-  verificada — padrão), `underReview` (em análise) e `fake` (falsa). É proibido representar
-  esse status como string livre (alinhado à Seção V da constituição).
-- **RF-015**: O sistema MUST permitir que um Leitor denuncie uma notícia, exigindo a seleção
-  de um motivo estruturado (`ReportReason`: ex. `misleadingTitle`, `fabricatedContent`,
-  `outOfContext`, `unreliableSource`, `other`) — nunca um campo de texto livre isolado como
-  único motivo.
-- **RF-016**: O sistema MUST permitir que um Validador liste notícias pendentes/denunciadas e
-  registre uma decisão de veracidade, com justificativa textual obrigatória.
-- **RF-017**: O sistema MUST manter histórico auditável de mudanças de status de veracidade de
-  uma notícia (quem decidiu, quando, status anterior e novo).
-- **RF-018**: O sistema MUST exibir, no detalhe da notícia, as fontes/checagens associadas
-  quando existentes (ex.: links de referência usados na decisão do validador).
+- **RF-009**: O feed MUST exibir saudação com o nome do usuário (ou genérica para visitante),
+  filtros por categoria, um carrossel horizontal de Reels e a lista de notícias.
+- **RF-010**: O feed MUST ser paginado, ordenado da mais recente para a mais antiga.
+- **RF-011**: O sistema MUST permitir buscar notícias por texto, com estado vazio explicativo.
+- **RF-012**: Todo card e todo detalhe de notícia MUST exibir o selo de veracidade
+  (`VeracityStatus`: `verified`, `unverified`, `underReview`, `fake`), vindo da API (RN-002).
+- **RF-013**: A tela de Reels MUST exibir uma notícia por vez em tela cheia (imagem, título,
+  resumo), com navegação vertical por gesto de arrastar e também por botões, e ações de
+  curtir, salvar e abrir a fonte.
+- **RF-014**: O detalhe da notícia MUST exibir título, imagem, texto completo, fonte, data e
+  autor (quando houver).
+- **RF-015**: O detalhe MUST oferecer **leitura em voz alta** do conteúdo, com controle de
+  velocidade (lenta, normal, rápida).
+- **RF-016**: O detalhe MUST permitir compartilhar a notícia pelo menu nativo do aparelho.
+- **RF-017**: O detalhe MUST permitir abrir a fonte original no navegador externo.
+- **RF-018**: O detalhe MUST exibir um bloco de **atividades relacionadas** que leva ao módulo
+  correspondente na trilha de atividades.
+- **RF-019**: O usuário cadastrado MUST poder **salvar** (favoritar) notícias e **curtir** Reels.
+
+### 3.4 Notificações (A6)
+
+- **RF-020**: O sistema MUST listar as notificações do usuário agrupadas por data ("Hoje",
+  "Ontem", "Anteriores").
+- **RF-021**: O topo do app MUST exibir um contador de notificações não lidas.
+- **RF-022**: O usuário MUST poder marcar uma notificação como lida (ao abri-la) e marcar todas
+  como lidas.
+
+### 3.5 Atividades educativas (B1, B2, B3, B4)
+
+- **RF-023**: O painel de atividades MUST exibir o progresso geral, a grade de módulos e o
+  status de cada módulo (não iniciado, em andamento, concluído).
+- **RF-024**: Cada módulo MUST ter lições apresentadas passo a passo, com avanço e retorno,
+  leitura em voz alta e marcação individual de lição lida.
+- **RF-025**: Cada módulo MUST ter exercícios dos tipos: múltipla escolha, verdadeiro/falso,
+  checklist, cenário (situação simulada com escolha de atitude) e ordenação de passos.
+- **RF-026**: Os exercícios MUST ter um rodapé fixo com o botão de confirmar resposta e um
+  painel deslizante de feedback (acerto ou erro, com explicação).
+- **RF-027**: As alternativas de múltipla escolha e cenário MUST ser embaralhadas a cada
+  tentativa.
+- **RF-028**: O sistema MUST calcular e guardar a pontuação por módulo (RN-005).
+- **RF-029**: Ao final do módulo o sistema MUST exibir uma tela de conclusão com a pontuação e a
+  opção de compartilhar a conquista.
+- **RF-030**: O visitante MUST ver um aviso convidando a criar conta para salvar o progresso
+  (RN-006).
+
+### 3.6 Central de ajuda (B6)
+
+- **RF-031**: A central MUST ter duas abas: "Oficiais" (polícia, bancos, Procon, canais
+  anti-golpe) e "Meus contatos".
+- **RF-032**: Todo contato MUST ter ação de **ligar em um toque**.
+- **RF-033**: O usuário MUST poder cadastrar, editar e remover contatos pessoais (nome,
+  telefone, parentesco opcional e foto circular da galeria ou câmera).
+- **RF-034**: Os contatos pessoais e as fotos MUST ser salvos **somente no aparelho** (RN-007)
+  e MUST continuar disponíveis após fechar o app.
+
+### 3.7 Perfil (B7)
+
+- **RF-035**: O perfil MUST exibir cartão do usuário (nome, foto, selo de nível),
+  estatísticas (módulos concluídos, notícias salvas, pontuação), conquistas e atalhos.
+- **RF-036**: O usuário MUST poder editar seus dados (nome) e trocar a foto de perfil.
+
+### 3.8 Configurações (B8)
+
+- **RF-037**: As configurações MUST listar as seções Conta ("Dados pessoais"), Notificações,
+  Segurança ("Alterar senha") e Acessibilidade, e a ação de sair da conta. Toda linha MUST
+  levar a uma tela funcional (nenhuma linha "morta").
+
+### 3.9 Acessibilidade (B9)
+
+- **RF-038**: O usuário MUST poder escolher o tamanho da fonte do app (pelo menos 3 níveis
+  acima do padrão), aplicado em todas as telas.
+- **RF-039**: O usuário MUST poder ativar um tema de **alto contraste**.
+- **RF-040**: O usuário MUST poder ativar a **leitura automática em voz alta** do conteúdo
+  principal ao abrir o detalhe de uma notícia ou uma lição.
+- **RF-041**: As preferências de acessibilidade MUST ser salvas no aparelho e aplicadas já no
+  splash da próxima abertura.
 
 ---
 
 ## 4. Requisitos Não-Funcionais (RNFs)
 
-- **RNF-001 (Desempenho)**: O feed inicial MUST ser exibido (dado cache ou resposta de API já
-  recebida) em até 2 segundos em condição de rede 4G/Wi-Fi típica; a paginação subsequente
-  MUST carregar a próxima página sem bloquear a rolagem da lista já carregada.
-- **RNF-002 (Offline-first / cache local)**: O sistema MUST persistir localmente o último
-  feed obtido com sucesso e as notícias favoritadas, permitindo leitura completa sem conexão.
-  Ações que exigem rede (denunciar, favoritar-sincronizar, checar) MUST ser desabilitadas ou
-  enfileiradas com aviso claro quando o dispositivo estiver offline.
-- **RNF-003 (Usabilidade)**: A navegação entre feed → detalhe → denúncia MUST ser possível em
-  no máximo 3 toques a partir da tela inicial. O app MUST suportar tema claro e escuro através
-  do `app_theme` já existente no `core/`.
-- **RNF-004 (Acessibilidade)**: Todo elemento interativo MUST possuir rótulo semântico
-  (`Semantics`/`label`) compatível com leitores de tela; contraste de cor MUST atender no
-  mínimo o nível AA do WCAG 2.1; o app MUST respeitar a escala de fonte do sistema
-  operacional.
-- **RNF-005 (Consumo eficiente da API via Dio)**: Toda comunicação HTTP MUST passar pelo
-  `ApiClient` único (Seção V da constituição), reaproveitando a mesma instância de `Dio`
-  (timeout de conexão/recebimento configurado, hoje 10s). Buscas textuais (RF-010) MUST usar
-  debounce e `CancelToken` para cancelar requisições obsoletas antes de disparar uma nova.
-- **RNF-006 (Internacionalização)**: Toda string visível ao usuário MUST vir de
-  `easy_localization`, sem literais hardcoded na UI (alinhado à Seção IV da constituição).
-- **RNF-007 (Segurança de sessão)**: O token de sessão MUST NOT ser exposto em logs, mesmo em
-  modo debug. Enquanto a persistência segura entre reinicializações do app (ex.: armazenamento
-  criptografado local) não estiver implementada, isso MUST ser tratado como lacuna conhecida e
-  registrado no plano técnico correspondente — não como comportamento aceito silenciosamente.
+- **RNF-001 (Desempenho)**: O feed inicial MUST aparecer em até 2 s em 4G/Wi-Fi típico (cache ou
+  resposta da API). A paginação MUST carregar sem travar a rolagem.
+- **RNF-002 (Offline)**: O último feed carregado, as notícias salvas e a central de ajuda
+  (contatos oficiais e pessoais) MUST funcionar sem internet. Ações que exigem rede MUST ficar
+  desabilitadas com aviso claro.
+- **RNF-003 (Usabilidade para idosos)**: Alvos de toque MUST ter no mínimo 48×48 dp, o texto base
+  MUST ter no mínimo 16 sp, os textos MUST usar linguagem simples e toda ação destrutiva
+  (remover contato, sair) MUST pedir confirmação.
+- **RNF-004 (Acessibilidade)**: Todo elemento interativo MUST ter rótulo semântico para
+  TalkBack/VoiceOver, o contraste MUST atender WCAG 2.1 AA (e AAA no tema de alto contraste) e o
+  app MUST respeitar também a escala de fonte do sistema operacional.
+- **RNF-005 (Consumo da API)**: Toda comunicação HTTP MUST passar pelo `ApiClient` único. A busca
+  MUST usar debounce e cancelar a requisição anterior.
+- **RNF-006 (Internacionalização)**: Todo texto visível MUST vir de `easy_localization`
+  (pt-BR obrigatório; en-US mantido em paralelo).
+- **RNF-007 (Segurança de sessão)**: O token MUST ficar em armazenamento criptografado do
+  aparelho e MUST NOT aparecer em logs.
+- **RNF-008 (Privacidade / LGPD)**: Contatos pessoais e fotos de contato MUST NOT ser enviados a
+  nenhum servidor.
 
 ---
 
-## 5. Regras de Negócio e Critérios de Aceite
+## 5. Regras de Negócio
 
-- **RN-001 (Validação de e-mail/senha)**: Um cadastro (RF-001) só é aceito se o e-mail tiver
-  formato válido e a senha tiver no mínimo 8 caracteres, contendo ao menos uma letra e um
-  número. Falha nessa validação MUST bloquear o envio antes de qualquer chamada de rede.
-- **RN-002 (Veracidade nunca nasce "verificada")**: Toda notícia nova entra no sistema com
-  `VeracityStatus.unverified` por padrão. Somente uma ação explícita de um Validador (RF-016)
-  MUST poder alterar esse status.
-- **RN-003 (Denúncia é idempotente por usuário)**: Um mesmo usuário Leitor MUST NOT conseguir
-  registrar mais de uma denúncia ativa para a mesma notícia; uma segunda tentativa MUST ser
-  rejeitada com mensagem informativa, não com erro genérico.
-- **RN-004 (Autorização por papel)**: Toda ação de validação (RF-016) requisitada por um
-  usuário cujo papel não seja Validador MUST ser rejeitada antes de qualquer efeito colateral,
-  com mensagem clara de permissão insuficiente.
-- **RN-005 (Sessão governa navegação)**: Sempre que `UserSessionStatus == unauthenticated`,
-  qualquer tentativa de acessar uma funcionalidade que exija autenticação (favoritar, denunciar,
-  editar perfil, fila de validação) MUST redirecionar para a tela de login antes de qualquer
-  chamada de API.
-- **RN-006 (Fila priorizada por volume de denúncias)**: Uma notícia cujo número de denúncias
-  ativas ultrapassar um limiar configurável MUST ser promovida automaticamente para o topo da
-  fila de checagem do Validador (RF-016), sem exigir ação manual de priorização.
+- **RN-001 (Senha e e-mail)**: O cadastro só é enviado se o e-mail tiver formato válido e a senha
+  tiver no mínimo 8 caracteres, com ao menos uma letra e um número. A validação MUST acontecer
+  antes de qualquer chamada de rede.
+- **RN-002 (Veracidade é da API)**: O app nunca altera o `VeracityStatus` de uma notícia. Valor
+  desconhecido vindo da API MUST ser tratado como `unverified`.
+- **RN-003 (Limites do visitante)**: O visitante pode ler notícias, ver Reels, fazer atividades e
+  usar a central de ajuda. Salvar notícia, curtir, notificações, perfil e editar dados exigem
+  conta: ao tentar, o app MUST mostrar um convite para entrar ou se cadastrar, **sem** chamar a
+  API.
+- **RN-004 (Onboarding único)**: Depois de concluído ou pulado, o onboarding MUST NOT voltar a
+  aparecer naquele aparelho (flag local).
+- **RN-005 (Conclusão e pontuação)**: Um módulo está concluído quando todas as lições foram
+  marcadas como lidas e todos os exercícios foram respondidos. A pontuação é
+  `acertos na primeira tentativa / total de exercícios`, e vale a melhor pontuação obtida.
+- **RN-006 (Progresso do visitante)**: O progresso do visitante vale só para a sessão atual.
+  Ao concluir um módulo como visitante, o app MUST exibir o aviso de login (RF-030) antes da
+  tela de conclusão.
+- **RN-007 (Contatos locais)**: Contatos pessoais pertencem ao aparelho, não à conta: sair da
+  conta MUST NOT apagar os contatos.
+- **RN-008 (Nível do perfil)**: O selo de nível do perfil é derivado do número de módulos
+  concluídos (faixas definidas pela API; ver [api-contract.md](api-contract.md)).
 
-**Critério de aceite geral**: uma User Story dos Casos de Uso (Seção 2.3) só é considerada
-aceita quando (a) o critério RN correspondente é validado por teste automatizado (TDD, Seção
-III da constituição) e (b) o comportamento de erro associado (Seção 6) também está coberto.
+**Critério de aceite geral**: um caso de uso só é aceito quando a RN correspondente tem teste
+automatizado (TDD, Seção III da constituição) e o comportamento de erro associado (§6) também
+está coberto.
 
 ---
 
 ## 6. Casos de Borda e Fluxos de Exceção
 
-- **CB-001 (Sem conexão ao abrir o app)**: Se não houver conexão e existir cache local
-  (RNF-002), o sistema MUST exibir o feed em cache com um indicador visível de "modo offline"
-  e MUST desabilitar ações que exigem rede.
-- **CB-002 (Sem conexão durante uma ação de rede)**: Toda chamada que falhar por ausência de
-  conexão ou tempo esgotado MUST resultar em uma `ConnectionFailure`, exibida com a mensagem
-  amigável "Sem conexão com a internet. Verifique sua rede." — nunca uma exceção técnica
-  (`DioException`, `SocketException`, `ApiException`) exposta à UI.
-- **CB-003 (Token expirado / 401)**: Qualquer resposta 401 MUST disparar logout automático via
-  `UserSessionService.logout()`, seguido de redirecionamento para a tela de login com a
-  mensagem "Sua sessão expirou, faça login novamente." O usuário MUST NOT permanecer em uma
-  tela autenticada após um 401.
-- **CB-004 (Erro inesperado do servidor, 5xx)**: Deve ser mapeado para `ServerFailure` com
-  mensagem genérica amigável ("Não foi possível completar a ação. Tente novamente mais
-  tarde."); detalhes técnicos (status code, corpo bruto) só MUST aparecer em log quando
-  `EnvironmentConfig.debugMode` estiver ativo.
-- **CB-005 (Resposta malformada / campo ausente)**: Falhas de parsing (`TypeError`,
-  `FormatException`) ao converter a resposta em modelo tipado MUST ser capturadas na camada de
-  dados e tratadas como erro genérico (`ServerFailure`); é proibido deixar uma exceção de
-  parsing vazar até a UI sem tratamento (alinhado à Seção V da constituição).
-- **CB-006 (Denúncia duplicada)**: Ao tentar denunciar uma notícia já denunciada pelo mesmo
-  usuário (RN-003), o sistema MUST informar "Você já denunciou esta notícia" sem chamar a API
-  novamente, quando o estado de denúncia do usuário já for conhecido localmente.
-- **CB-007 (Busca sem resultados)**: Uma busca (RF-010) sem correspondências MUST exibir um
-  estado vazio explicativo ("Nenhuma notícia encontrada para sua busca"), nunca uma tela em
-  branco ou um erro.
-- **CB-008 (Fim da paginação)**: Ao rolar além do último item do feed, o sistema MUST parar de
-  disparar novas requisições de página e MUST NOT duplicar itens já exibidos.
-- **CB-009 (Ação de Validador sem permissão)**: Uma tentativa de acesso à fila de validação
-  (RF-016) por um usuário Leitor MUST ser bloqueada na própria navegação (RN-004), sem sequer
-  chegar a fazer a chamada de rede correspondente.
+- **CB-001 (Sem conexão ao abrir)**: Com cache disponível, o feed MUST abrir do cache com
+  indicador de "modo offline". Sem cache, MUST mostrar estado de erro com "Tentar novamente".
+- **CB-002 (Sem conexão durante ação)**: MUST resultar em `ConnectionFailure` com a mensagem
+  "Sem conexão com a internet. Verifique sua rede."
+- **CB-003 (Sessão expirada / 401)**: MUST encerrar a sessão (`UnauthorizedFailure`) e levar ao
+  login com "Sua sessão expirou, faça login novamente."
+- **CB-004 (Erro do servidor)**: 5xx e erros não tratados MUST virar `ServerFailure` com
+  mensagem genérica. Detalhes técnicos só em log com `DEBUG_MODE`.
+- **CB-005 (Resposta malformada)**: Falha de parse MUST virar `ServerFailure`, nunca travar a tela.
+- **CB-006 (Busca sem resultado / filtro vazio)**: MUST exibir estado vazio explicativo.
+- **CB-007 (Fim da paginação)**: MUST parar de pedir páginas e MUST NOT duplicar itens.
+- **CB-008 (Voz indisponível)**: Se o aparelho não tiver mecanismo de voz, os botões de ouvir
+  MUST ficar ocultos, sem erro.
+- **CB-009 (Aparelho sem telefonia)**: Em tablet ou sem chip, "Ligar" MUST mostrar o número em
+  destaque com opção de copiar.
+- **CB-010 (Permissão de câmera/galeria negada)**: O contato MUST poder ser salvo sem foto, com
+  avatar de iniciais, e o app MUST explicar como liberar a permissão.
+- **CB-011 (Visitante em ação restrita)**: Ver RN-003: convite para entrar, sem chamada de rede.
+- **CB-012 (Módulo sem exercícios ou lição vazia na API)**: O módulo MUST ser exibido com as
+  partes disponíveis, sem travar o fluxo de conclusão.
 
 ---
 
 ## 7. Suposições e Dependências
 
-- Assume-se que existirá um backend/API própria (fora do escopo deste documento) que fornece
-  os endpoints de notícias, denúncia e validação consumidos via `ApiClient`.
-- Assume-se conectividade instável, mas não ausência permanente de rede — o modo offline
-  (RNF-002) cobre janelas de indisponibilidade, não uso 100% offline por tempo indeterminado.
-- O papel de Administrador (gestão de usuários/validadores, banimento, configuração do limiar
-  de RN-006) é considerado fora do escopo da v1 e tratado como evolução futura.
-- A definição do mecanismo de persistência segura de token entre reinicializações (RNF-007)
-  fica para o plano técnico (`plan.md`), não é decidida neste documento de negócio.
+- Existe uma **API própria** do projeto que fornece autenticação, notícias, Reels, favoritos,
+  curtidas, notificações, módulos de atividades, progresso e perfil. O contrato esperado pelo
+  app está em [api-contract.md](api-contract.md) e **precisa ser confirmado** com a API real
+  antes de cada integração (Passo 0 do guia de integração).
+- A lista de contatos oficiais é embarcada no app (assets) para funcionar offline em uma
+  emergência (RNF-002).
+- O onboarding e o splash já existem no código (módulos `splash` e `onboarding`), assim como o
+  design system (`SafeButton`, `SafeCard`, `SafeTextField`, `SafeBadge`) e o style guide.
+
+---
+
+## 8. Evoluções futuras (v2)
+
+Requisitos que existiam na v1.0.x desta especificação e foram adiados. Ficam registrados para
+não serem perdidos:
+
+- Denúncia de notícia pelo leitor, com motivo estruturado (`ReportReason`) e bloqueio de
+  denúncia duplicada.
+- Papel de Validador, fila de checagem priorizada pelo volume de denúncias e registro de
+  veredito com justificativa obrigatória.
+- Histórico auditável de mudanças de `VeracityStatus` e exibição das fontes da checagem.
+- Notificações push.
 
 ---
 
 ## Governança deste documento
 
-Este documento descreve requisitos de **negócio e produto**; conflitos entre um RF/RNF/RN
-aqui definido e uma regra técnica da [constitution.md](constitution.md) MUST ser resolvidos
-sem violar a constituição — se um requisito de negócio exigir violar um princípio técnico
-(ex.: um RF que só seria viável acoplando UI a `Dio` diretamente), o requisito MUST ser
-redesenhado, não a constituição contornada. Alterações de escopo (novos RFs, mudança de
-personas) exigem atualizar a versão deste documento e registrar a mudança em uma futura seção
-de changelog.
+Este documento descreve requisitos de **negócio e produto**. Se um requisito exigir violar a
+[constitution.md](constitution.md), o requisito MUST ser redesenhado. Mudanças de escopo exigem
+nova versão e registro no changelog.
 
-**Versão**: 1.0.1 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-09-26
+**Versão**: 2.0.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-09-26
 
 ## Changelog
 
-- **1.0.1 (2026-09-26)**: sem mudança de escopo. `VeracityStatus.false` renomeado para
-  `fake` (`false` é palavra reservada em Dart). CB-002, CB-004 e CB-005 passam a citar as
-  `Failure` que chegam à UI (`ConnectionFailure`, `ServerFailure`) em vez de `ApiException`,
-  que após a constituição v1.1.0 fica restrita à camada de dados.
+- **2.0.0 (2026-09-26)**: MAJOR, porque o escopo passou a seguir o wireframe do Lovable. Foco
+  no público idoso e proteção contra golpes. Entram modo visitante, Reels, notificações,
+  trilha de atividades com exercícios, central de ajuda, perfil, configurações e
+  acessibilidade. Checagem colaborativa (denúncia, Validador, fila, histórico) foi movida para
+  a v2 (§8). Todos os IDs de RF/RN/CB foram renumerados.
+- **1.0.1 (2026-09-26)**: `VeracityStatus.false` renomeado para `fake`. CB-002/004/005 passaram
+  a citar as `Failure`.

@@ -497,7 +497,7 @@ void main() {
   NewsEntity news(String id, DateTime? at) => NewsEntity(
       id: id, title: id, veracityStatus: VeracityStatus.verified, publishedAt: at);
 
-  test('ordena da mais recente para a mais antiga (RF-008)', () async {
+  test('ordena da mais recente para a mais antiga (RF-010)', () async {
     repository.result = Right([
       news('old', DateTime(2026, 1, 1)),
       news('new', DateTime(2026, 3, 1)),
