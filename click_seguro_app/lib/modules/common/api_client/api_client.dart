@@ -42,8 +42,9 @@ class ApiException implements Exception {
   /// Status HTTP, quando houve resposta do servidor.
   final int? statusCode;
 
-  /// Código de erro de negócio devolvido pela API no campo `error`
-  /// (ex.: `INVALID_CREDENTIALS`).
+  /// Código de erro de negócio devolvido pela API no campo `code` do corpo
+  /// (ex.: `INVALID_CREDENTIALS`). Nulo quando o corpo não segue o formato
+  /// `{code, message}` (ex.: erro de validação do Zod, página HTML).
   final String? errorCode;
 
   /// Mensagem técnica, para log e debug. MUST NOT ser exibida ao usuário.
@@ -99,18 +100,26 @@ extension ApiResponseMapper on Response {
 }
 
 class ApiClient {
+  /// Renova o par de tokens (`{refreshToken}` → `{accessToken, refreshToken}`).
+  static const String refreshPath = '/auth/app/refresh';
+
   final Dio _dio;
 
+  /// Renovação em andamento, compartilhada pelos pedidos recusados ao mesmo
+  /// tempo (FR-005).
+  Future<bool>? _renewal;
+
   ApiClient({Dio? dio})
-      : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: EnvironmentConfig.apiBaseUrl,
-                connectTimeout: const Duration(seconds: 10),
-                receiveTimeout: const Duration(seconds: 10),
-                headers: {'Content-Type': 'application/json'},
-              ),
-            ) {
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
+              baseUrl: EnvironmentConfig.apiBaseUrl,
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+              headers: {'Content-Type': 'application/json'},
+            ),
+          ) {
     // Ativa o LogInterceptor apenas se estiver em modo Debug
     if (EnvironmentConfig.debugMode) {
       _dio.interceptors.add(
@@ -125,12 +134,14 @@ class ApiClient {
     }
   }
 
+  UserSessionService get _session => GetIt.instance<UserSessionService>();
+
   // Gera as opções com o token de autenticação se necessário
   Options _makeOptions({bool requiresAuth = true}) {
     final headers = <String, dynamic>{};
 
     if (requiresAuth) {
-      final token = GetIt.instance<UserSessionService>().token;
+      final token = _session.accessToken;
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
@@ -143,17 +154,22 @@ class ApiClient {
   // Métodos HTTP diretos
   // ---------------------------------------------------------------------------
 
+  /// [cancelToken] permite descartar a consulta antes da resposta; o
+  /// pedido cancelado termina com [ApiErrorType.cancelled].
   Future<Response> get(
     String path, {
     Map<String, dynamic>? queryParameters,
     bool requiresAuth = true,
+    CancelToken? cancelToken,
   }) {
-    return _safeRequest(
-      () => _dio.get(
+    return _send(
+      (options) => _dio.get(
         path,
         queryParameters: queryParameters,
-        options: _makeOptions(requiresAuth: requiresAuth),
+        options: options,
+        cancelToken: cancelToken,
       ),
+      requiresAuth: requiresAuth,
     );
   }
 
@@ -163,49 +179,46 @@ class ApiClient {
     Map<String, dynamic>? queryParameters,
     bool requiresAuth = true,
   }) {
-    return _safeRequest(
-      () => _dio.post(
+    return _send(
+      (options) => _dio.post(
         path,
         data: data,
         queryParameters: queryParameters,
-        options: _makeOptions(requiresAuth: requiresAuth),
+        options: options,
       ),
+      requiresAuth: requiresAuth,
     );
   }
 
-  Future<Response> put(
-    String path, {
-    dynamic data,
-    bool requiresAuth = true,
-  }) {
-    return _safeRequest(
-      () => _dio.put(
-        path,
-        data: data,
-        options: _makeOptions(requiresAuth: requiresAuth),
-      ),
+  Future<Response> put(String path, {dynamic data, bool requiresAuth = true}) {
+    return _send(
+      (options) => _dio.put(path, data: data, options: options),
+      requiresAuth: requiresAuth,
     );
   }
 
-  Future<Response> delete(
-    String path, {
-    bool requiresAuth = true,
-  }) {
-    return _safeRequest(
-      () => _dio.delete(
-        path,
-        options: _makeOptions(requiresAuth: requiresAuth),
-      ),
+  Future<Response> delete(String path, {bool requiresAuth = true}) {
+    return _send(
+      (options) => _dio.delete(path, options: options),
+      requiresAuth: requiresAuth,
     );
   }
 
   // ---------------------------------------------------------------------------
-  // Interceptador e tratamento centralizado de erros
+  // Envio e tratamento centralizado de erros
   // ---------------------------------------------------------------------------
 
-  Future<Response> _safeRequest(Future<Response> Function() requestCall) async {
+  /// Executa [call] com as [Options] montadas na hora (com o token atual da
+  /// sessão), aplica a regra de renovação e converte qualquer falha em
+  /// [ApiException]. Regras: specs/002-apiclient-renovacao-sessao/data-model.md.
+  Future<Response> _send(
+    Future<Response> Function(Options options) call, {
+    required bool requiresAuth,
+  }) async {
     try {
-      return await requestCall();
+      return await _sendWithRenewal(call, requiresAuth: requiresAuth);
+    } on ApiException {
+      rethrow;
     } on DioException catch (e) {
       throw _mapDioException(e);
     } catch (e) {
@@ -214,6 +227,80 @@ class ApiClient {
         message: 'Erro desconhecido: $e',
       );
     }
+  }
+
+  /// Envia; num 401 renovável, renova (ou aproveita uma renovação que já
+  /// trocou o token) e repete **uma** vez. Lança [DioException] ou
+  /// [ApiException].
+  Future<Response> _sendWithRenewal(
+    Future<Response> Function(Options options) call, {
+    required bool requiresAuth,
+  }) async {
+    final sentToken = _session.accessToken;
+    try {
+      return await call(_makeOptions(requiresAuth: requiresAuth));
+    } on DioException catch (e) {
+      if (!_shouldRenew(e)) rethrow;
+      // Token igual ao enviado: precisa renovar. Diferente: outra renovação
+      // já trocou o token enquanto este pedido voava, basta repetir.
+      if (_session.accessToken == sentToken && !await _renew()) rethrow;
+    }
+
+    try {
+      return await call(_makeOptions(requiresAuth: requiresAuth));
+    } on DioException catch (e) {
+      // Recusado de novo logo após renovar: sem nova renovação (SC-004).
+      if (e.response?.statusCode == 401) unawaited(_session.expire());
+      rethrow;
+    }
+  }
+
+  bool _shouldRenew(DioException e) => e.response?.statusCode == 401;
+
+  Future<bool> _renew() =>
+      _renewal ??= _refreshTokens().whenComplete(() => _renewal = null);
+
+  /// `true` = novo par salvo; `false` = renovação recusada (sessão expirada)
+  /// ou sem efeito (sessão mudou durante a renovação). Falha de rede ou do
+  /// servidor sobe como [ApiException] e vira o erro do pedido original.
+  Future<bool> _refreshTokens() async {
+    final session = _session;
+    final refreshToken = session.refreshToken;
+    if (refreshToken == null) return false;
+
+    final Response response;
+    try {
+      response = await _dio.post(
+        refreshPath,
+        data: {'refreshToken': refreshToken},
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        await session.expire();
+        return false;
+      }
+      throw _mapDioException(e);
+    }
+
+    final data = response.data;
+    final newAccessToken = data is Map ? data['accessToken'] : null;
+    final newRefreshToken = data is Map ? data['refreshToken'] : null;
+    if (newAccessToken is! String ||
+        newAccessToken.isEmpty ||
+        newRefreshToken is! String ||
+        newRefreshToken.isEmpty) {
+      throw ApiException(
+        type: ApiErrorType.invalidResponse,
+        statusCode: response.statusCode,
+        message: 'Resposta de renovação sem o par de tokens',
+      );
+    }
+
+    return session.replaceTokens(
+      previousRefreshToken: refreshToken,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    );
   }
 
   ApiException _mapDioException(DioException e) {
@@ -252,12 +339,6 @@ class ApiClient {
     final body = response?.data;
     final json = body is Map ? body : const <String, dynamic>{};
 
-    // Token expirado ou não autorizado (401) -> encerra a sessão como expirada.
-    // Sem await: a memória muda na hora e a exceção segue para o repository.
-    if (statusCode == 401) {
-      unawaited(GetIt.instance<UserSessionService>().expire());
-    }
-
     return ApiException(
       type: switch (statusCode) {
         401 => ApiErrorType.unauthorized,
@@ -266,7 +347,7 @@ class ApiClient {
         _ => ApiErrorType.unknown,
       },
       statusCode: statusCode,
-      errorCode: json['error']?.toString(),
+      errorCode: json['code'] is String ? json['code'] as String : null,
       message: json['message']?.toString() ?? 'Erro HTTP $statusCode',
     );
   }

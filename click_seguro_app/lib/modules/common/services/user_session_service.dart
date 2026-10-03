@@ -10,7 +10,8 @@ enum UserSessionStatus { authenticated, guest, unauthenticated }
 enum SessionEndReason { userLogout, expired }
 
 /// Sessão do aparelho: estado observável em memória + um único registro JSON
-/// no armazenamento seguro (ver specs/001-sessao-persistente-visitante).
+/// no armazenamento seguro (ver specs/001-sessao-persistente-visitante e o
+/// registro v2 de specs/002-apiclient-renovacao-sessao/data-model.md).
 ///
 /// Toda transição atualiza os campos e notifica [sessionStatus] antes de
 /// gravar no disco; falhas de armazenamento nunca sobem para quem chama.
@@ -25,8 +26,9 @@ class UserSessionService {
 
   final SecureStorageService _storage;
 
-  String? token;
-  String? userId;
+  String? accessToken;
+  String? refreshToken;
+  String? email;
   String? userName;
   SessionEndReason? endReason;
 
@@ -60,8 +62,9 @@ class UserSessionService {
       return;
     }
 
-    token = record['token'] as String?;
-    userId = record['userId'] as String?;
+    accessToken = record['accessToken'] as String?;
+    refreshToken = record['refreshToken'] as String?;
+    email = record['email'] as String?;
     userName = record['userName'] as String?;
     endReason = null;
     sessionStatus.value = record['status'] == _statusGuest
@@ -72,38 +75,53 @@ class UserSessionService {
   /// Inicia (ou troca) a sessão conectada. Chamado pelo repository de
   /// autenticação após login ou cadastro.
   Future<void> saveSession({
-    required String token,
-    required String userId,
+    required String accessToken,
+    required String refreshToken,
+    required String email,
     String? userName,
   }) async {
-    if (token.isEmpty) throw ArgumentError.value(token, 'token', 'vazio');
-    if (userId.isEmpty) throw ArgumentError.value(userId, 'userId', 'vazio');
+    for (final (name, value) in [
+      ('accessToken', accessToken),
+      ('refreshToken', refreshToken),
+      ('email', email),
+    ]) {
+      if (value.isEmpty) throw ArgumentError.value(value, name, 'vazio');
+    }
 
-    this.token = token;
-    this.userId = userId;
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
+    this.email = email;
     this.userName = userName;
     endReason = null;
     sessionStatus.value = UserSessionStatus.authenticated;
 
-    await _safely(
-      () => _storage.write(
-        storageKey,
-        jsonEncode({
-          'status': _statusAuthenticated,
-          'token': token,
-          'userId': userId,
-          'userName': ?userName,
-        }),
-      ),
-    );
+    await _persistAuthenticated();
+  }
+
+  /// Troca o par de tokens depois de uma renovação. Só aplica se a sessão
+  /// ainda for a mesma que pediu a renovação (conectada e com
+  /// [previousRefreshToken]); senão devolve `false` (ex.: o usuário saiu da
+  /// conta durante a renovação). Não notifica [sessionStatus]: o estado não
+  /// muda.
+  Future<bool> replaceTokens({
+    required String previousRefreshToken,
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    if (!isAuthenticated || this.refreshToken != previousRefreshToken) {
+      return false;
+    }
+
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
+    await _persistAuthenticated();
+    return true;
   }
 
   /// Entra como visitante (RF-005): sem conta e sem credencial. O estado é
   /// lembrado entre aberturas até o login ou a saída do modo visitante.
   Future<void> startGuestSession() async {
-    token = null;
-    userId = null;
-    userName = null;
+    _clearIdentity();
     endReason = null;
     sessionStatus.value = UserSessionStatus.guest;
 
@@ -131,11 +149,29 @@ class UserSessionService {
   }
 
   void _setUnauthenticated() {
-    token = null;
-    userId = null;
-    userName = null;
+    _clearIdentity();
     sessionStatus.value = UserSessionStatus.unauthenticated;
   }
+
+  void _clearIdentity() {
+    accessToken = null;
+    refreshToken = null;
+    email = null;
+    userName = null;
+  }
+
+  Future<void> _persistAuthenticated() => _safely(
+    () => _storage.write(
+      storageKey,
+      jsonEncode({
+        'status': _statusAuthenticated,
+        'accessToken': accessToken,
+        'refreshToken': refreshToken,
+        'email': email,
+        'userName': ?userName,
+      }),
+    ),
+  );
 
   /// Devolve o registro se ele respeitar as regras do SessionRecord
   /// (data-model.md), ou null se for inválido.
@@ -154,13 +190,15 @@ class UserSessionService {
       case _statusAuthenticated:
         final validName =
             decoded['userName'] == null || decoded['userName'] is String;
-        return isFilled(decoded['token']) &&
-                isFilled(decoded['userId']) &&
+        return isFilled(decoded['accessToken']) &&
+                isFilled(decoded['refreshToken']) &&
+                isFilled(decoded['email']) &&
                 validName
             ? decoded
             : null;
       case _statusGuest:
-        return decoded.containsKey('token') ? null : decoded;
+        const credentialKeys = ['token', 'accessToken', 'refreshToken'];
+        return credentialKeys.any(decoded.containsKey) ? null : decoded;
       default:
         return null;
     }

@@ -31,7 +31,7 @@ Mockito/mocktail), rodam offline e resetam o `GetIt` no `tearDown`.
 
 **Purpose**: confirmar a base antes de mudar contratos usados pelos testes da 001.
 
-- [ ] T001 Dentro de `click_seguro_app/`, rodar `flutter analyze` e `flutter test` e anotar a contagem de testes verdes (linha de base). Nenhum arquivo muda nesta tarefa. Se algo já estiver vermelho, parar e reportar antes de seguir
+- [X] T001 Dentro de `click_seguro_app/`, rodar `flutter analyze` e `flutter test` e anotar a contagem de testes verdes (linha de base). Nenhum arquivo muda nesta tarefa. Se algo já estiver vermelho, parar e reportar antes de seguir
 
 ---
 
@@ -45,7 +45,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T002 Em `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, migrar todos os testes para o contrato v2 ([data-model](data-model.md)):
+- [X] T002 Em `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, migrar todos os testes para o contrato v2 ([data-model](data-model.md)):
   - `saveSession(accessToken:, refreshToken:, email:, userName:)` no lugar de `saveSession(token:, userId:, userName:)`;
   - `session.accessToken`, `session.refreshToken` e `session.email` no lugar de `session.token` e `session.userId`;
   - registro esperado `{"status":"authenticated","accessToken":…,"refreshToken":…,"email":…,"userName":…}`;
@@ -54,7 +54,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
   Novos casos na lista de registros inválidos: `authenticated` sem `refreshToken`, sem `email`, e
   o **formato da 001** `{"status":"authenticated","token":"t","userId":"u"}`. Os três são
   apagados e deixam desconectado (FR-011). Mais um caso: `guest` com `refreshToken` → inválido.
-- [ ] T003 [P] Em `click_seguro_app/test/modules/common/api_client/fake_http_client_adapter.dart`, adicionar o modo por roteiro sem quebrar o modo atual:
+- [X] T003 [P] Em `click_seguro_app/test/modules/common/api_client/fake_http_client_adapter.dart`, adicionar o modo por roteiro sem quebrar o modo atual:
   - `class FakeResponse { final int statusCode; final Object? body; final Duration delay; }`;
   - campo `FakeResponse Function(RequestOptions options)? responder`: quando definido, tem
     precedência sobre `statusCode`/`body`;
@@ -62,7 +62,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
   - com `delay > Duration.zero`, esperar o atraso **ou** o `cancelFuture`, o que vier primeiro.
     Se o cancelamento vier antes, lançar
     `DioException.requestCancelled(requestOptions: options, reason: 'cancelado')`.
-- [ ] T004 Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`:
+- [X] T004 Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`:
   - ajustar as chamadas existentes para `saveSession(accessToken: 'acesso-1', refreshToken: 'renovacao-1', email: 'maria@exemplo.com')`;
   - novo grupo `F0.2 código de erro`: corpo `{"code":"USER_EMAIL_ALREADY_EXISTS","message":"Email already registered"}` com 409 → `errorCode == 'USER_EMAIL_ALREADY_EXISTS'`; corpo antigo `{"error":"X"}` → `errorCode == null`;
   - novo grupo `F0.2 cancelamento`: `get('/app/news', cancelToken: token)` com o adapter
@@ -72,7 +72,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Implementação
 
-- [ ] T005 Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, aplicar o registro v2 (faz T002 passar):
+- [X] T005 Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, aplicar o registro v2 (faz T002 passar):
   - renomear o campo `token` para `accessToken`;
   - adicionar `String? refreshToken` e `String? email`;
   - remover `userId`;
@@ -85,8 +85,8 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
   - `_setUnauthenticated` e `startGuestSession` zeram os três campos novos.
 
   Manter as garantias da 001 (notifica depois de preencher, nunca lança por falha de storage).
-- [ ] T006 Criar `click_seguro_app/lib/modules/common/api_client/api_error_codes.dart` com `abstract final class ApiErrorCodes { static const String invalidCredentials = 'INVALID_CREDENTIALS'; static const String userNotFound = 'USER_NOT_FOUND'; }` e um comentário dizendo que ali ficam só os códigos usados pelo `common` ([R9](research.md))
-- [ ] T007 Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, refatorar sem mudar regra de sessão (faz T004 passar):
+- [X] T006 Criar `click_seguro_app/lib/modules/common/api_client/api_error_codes.dart` com `abstract final class ApiErrorCodes { static const String invalidCredentials = 'INVALID_CREDENTIALS'; static const String userNotFound = 'USER_NOT_FOUND'; }` e um comentário dizendo que ali ficam só os códigos usados pelo `common` ([R9](research.md))
+- [X] T007 Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, refatorar sem mudar regra de sessão (faz T004 passar):
   - `_makeOptions` lê `session.accessToken`;
   - novo método privado `_send(Future<Response> Function(Options options) call, {required bool requiresAuth})`.
     Ele monta as `Options` **a cada chamada** (pelo `_makeOptions`), executa `call`, captura
@@ -111,7 +111,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T008 [P] [US1] Em `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, grupo `US1 replaceTokens`:
+- [X] T008 [P] [US1] Em `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, grupo `US1 replaceTokens`:
   - com sessão `authenticated` e `refreshToken == 'renovacao-1'`,
     `replaceTokens(previousRefreshToken: 'renovacao-1', accessToken: 'acesso-2', refreshToken: 'renovacao-2')`
     devolve `true`, atualiza memória e registro e **não** notifica `sessionStatus` (contar
@@ -120,7 +120,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
   - depois de `logout()` → `false`, e a sessão continua desconectada;
   - como visitante → `false`;
   - falha de escrita (`failOnWrite`) → devolve `true` e mantém em memória, sem lançar.
-- [ ] T009 [P] [US1] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, grupo `US1 renovação`, usando o `responder` (T003). O servidor falso aceita `Bearer acesso-2` e recusa `Bearer acesso-1` com 401 `{"code":"TOKEN_INVALID"}`; `/auth/app/refresh` responde conforme o caso:
+- [X] T009 [P] [US1] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, grupo `US1 renovação`, usando o `responder` (T003). O servidor falso aceita `Bearer acesso-2` e recusa `Bearer acesso-1` com 401 `{"code":"TOKEN_INVALID"}`; `/auth/app/refresh` responde conforme o caso:
   1. refresh 200 `{accessToken:'acesso-2', refreshToken:'renovacao-2'}` → o `get('/users/me/news/saved')` devolve 200; a sessão fica com `acesso-2`/`renovacao-2`; o request de refresh foi `POST` com corpo `{"refreshToken":"renovacao-1"}` e **sem** header `Authorization`;
   2. refresh 401 `{"code":"TOKEN_INVALID"}` → `ApiException(unauthorized)`, sessão `unauthenticated` com `endReason == expired`;
   3. refresh com erro de conexão → `ApiException(connection)`, sessão continua `authenticated` com `acesso-1` (FR-004);
@@ -138,8 +138,8 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar `Future<bool> replaceTokens({required String previousRefreshToken, required String accessToken, required String refreshToken})`: só aplica se `isAuthenticated && this.refreshToken == previousRefreshToken`, atualiza os campos, regrava o registro v2 com `_safely` e devolve `true`; senão devolve `false`. Não altera `sessionStatus` (faz T008 passar)
-- [ ] T011 [US1] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, implementar a renovação no `_send` (faz T009 passar; regras em [data-model "Decisão do ApiClient"](data-model.md) e [R1–R3](research.md)):
+- [X] T010 [US1] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar `Future<bool> replaceTokens({required String previousRefreshToken, required String accessToken, required String refreshToken})`: só aplica se `isAuthenticated && this.refreshToken == previousRefreshToken`, atualiza os campos, regrava o registro v2 com `_safely` e devolve `true`; senão devolve `false`. Não altera `sessionStatus` (faz T008 passar)
+- [X] T011 [US1] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, implementar a renovação no `_send` (faz T009 passar; regras em [data-model "Decisão do ApiClient"](data-model.md) e [R1–R3](research.md)):
   - `static const String refreshPath = '/auth/app/refresh';`;
   - o `_send` guarda o token que **enviou**. Em `DioException` do tipo `badResponse` com 401
     (nesta história, **qualquer** 401; as exceções de "sem token" e `INVALID_CREDENTIALS` entram
