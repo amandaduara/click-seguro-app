@@ -254,8 +254,10 @@ está coberto.
   indicador de "modo offline". Sem cache, MUST mostrar estado de erro com "Tentar novamente".
 - **CB-002 (Sem conexão durante ação)**: MUST resultar em `ConnectionFailure` com a mensagem
   "Sem conexão com a internet. Verifique sua rede."
-- **CB-003 (Sessão expirada / 401)**: MUST encerrar a sessão (`UnauthorizedFailure`) e levar ao
-  login com "Sua sessão expirou, faça login novamente."
+- **CB-003 (Sessão expirada / 401)**: MUST encerrar a sessão (`UnauthorizedFailure`) e exibir
+  "Sua sessão expirou, faça login novamente." **sem tirar o usuário da tela atual**. O login é
+  pedido na próxima ação que exigir conta ou na próxima abertura do app. Se a recusa acontecer
+  na abertura do app, vai direto ao login. (Esclarecido em `specs/001-sessao-persistente-visitante`.)
 - **CB-004 (Erro do servidor)**: 5xx e erros não tratados MUST virar `ServerFailure` com
   mensagem genérica. Detalhes técnicos só em log com `DEBUG_MODE`.
 - **CB-005 (Resposta malformada)**: Falha de parse MUST virar `ServerFailure`, nunca travar a tela.

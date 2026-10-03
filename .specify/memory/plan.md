@@ -166,8 +166,11 @@ visitante, mostra o mesmo convite no lugar do conteúdo.
   `startGuestSession`, `logout`, `isAuthenticated`, `isGuest`.
 - Quem chama `saveSession` é o `AuthRepositoryImpl`, depois de um login ou cadastro bem-sucedido.
   Controllers nunca falam com o serviço.
-- O `go_router` escuta `sessionStatus` (`refreshListenable`): quando vira `unauthenticated`
-  (logout ou 401, CB-003), vai para `/login`.
+- O encerramento guarda o **motivo** (`userLogout` ou `expired`). Com `userLogout`, o
+  `go_router` (via `refreshListenable`) leva a `/login`. Com `expired` (401 durante o uso,
+  CB-003), o usuário **fica na tela**: o `AppShell` mostra o aviso de sessão expirada com o botão
+  "Entrar", e o `requireAccount` pede login na próxima ação restrita. Não há renovação automática
+  de credencial enquanto o [api-contract](api-contract.md) não confirmar esse recurso.
 
 ### 3.2 Acessibilidade — `AccessibilityController` (módulo `settings`, Fase 0 + B9)
 
@@ -189,7 +192,7 @@ Cada um é um contrato abstrato + implementação + fake em `test/fakes/`:
 
 | Serviço | Pacote | Métodos |
 |---|---|---|
-| `SecureStorageService` | flutter_secure_storage | `readToken`, `writeToken`, `clear` |
+| `SecureStorageService` | flutter_secure_storage | `read(key)`, `write(key, value)`, `delete(key)`. A sessão fica num único registro JSON (ver `specs/001-sessao-persistente-visitante/research.md` R2/R3) |
 | `LocalCacheService` | shared_preferences | `readJson`, `writeJson`, `remove` |
 | `TextToSpeechService` | flutter_tts | `isAvailable`, `speak(text, rate)`, `stop`, `isSpeaking` (stream) |
 | `ExternalLauncherService` | url_launcher | `canCall`, `call(phone)`, `openUrl(url)` |

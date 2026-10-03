@@ -49,8 +49,8 @@ do wireframe do Lovable
   - Adicionar `flutter_secure_storage`, `flutter_tts`, `url_launcher`, `share_plus`,
     `image_picker` e `path_provider` ao `pubspec.yaml`, com versão explícita.
   - Android: permissão `INTERNET` no `AndroidManifest.xml` principal (hoje só existe em debug;
-    sem ela o build de release não acessa a API), `<queries>` para `tel:` e `https:` e permissão
-    de câmera.
+    sem ela o build de release não acessa a API), `<queries>` para `tel:` e `https:` e
+    `allowBackup="false"`. **Sem** permissão de câmera (ver research R10 da feature 001).
   - iOS: `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription` e
     `LSApplicationQueriesSchemes` (`tel`, `https`) no `Info.plist`.
 - [ ] **F0.2 `ApiClient` com `CancelToken`**: parâmetro opcional em `get`, com teste em que o
