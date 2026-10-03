@@ -2,19 +2,25 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.0.0
+**Versão**: 2.1.0
 
 **Criado em**: 2026-09-07
 
 **Status**: Rascunho (Draft)
 
 **Alinhado a**: [constitution.md](constitution.md) v1.1.0 (o COMO), [specification.md](specification.md)
-v2.0.0 (o QUE, com IDs `RF-/RNF-/RN-/CB-`) e [api-contract.md](api-contract.md) (endpoints
-esperados, a confirmar). Como escrever cada camada está no
+v2.1.0 (o QUE, com IDs `RF-/RNF-/RN-/CB-`) e [api-contract.md](api-contract.md) v1.0.0
+(resumo do [openapi.json](openapi.json) da API real). Como escrever cada camada está no
 [guia de integração](../../click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md). Este plano diz **o
 que** existe e **onde**; o guia diz **como** escrever.
 
 ## Nota de alinhamento
+
+**v2.1.0 (2026-10-03)**: alinhado à API real. Sessão com par de tokens e renovação no
+`ApiClient`; `notifications` vira alertas locais (datasource próprio sobre `/app/news`);
+`activities` segue o modelo da API (pergunta de múltipla escolha por lição, correção e
+pontuação no servidor, sem `sealed class` de exercícios); `profile` monta as estatísticas com
+chamadas próprias e calcula nível e conquistas no app; sai o `VeracityStatus`.
 
 **v2.0.0 (2026-09-26)**: o plano passa a seguir o wireframe do Lovable e a divisão em duas
 trilhas (A: conteúdo e notícias; B: educação, ajuda e conta). O módulo `fact_check` saiu da v1
@@ -55,10 +61,10 @@ serviço com interface em `common/services/`, para que os testes usem fakes (Se�
 | `onboarding` | A1 | data/domain/presentation | já existe |
 | `authentication` | A2 | data/domain/presentation | login, cadastro, visitante, recuperar senha |
 | `news` | A3, A4, A5 | data/domain/presentation | feed, busca, Reels, detalhe, favoritos, curtidas |
-| `notifications` | A6 | data/domain/presentation | lista, não lidas, `NotificationBellButton` |
-| `activities` | B1–B4 | data/domain/presentation | painel, lições, exercícios, conclusão |
+| `notifications` | A6 | data/domain/presentation | alertas locais de notícias novas, não lidos, `NotificationBellButton` |
+| `activities` | B1–B4 | data/domain/presentation | painel, perguntas, feedback, conclusão |
 | `help` | B6 | data/domain/presentation | contatos oficiais (asset) e pessoais (local) |
-| `profile` | B7 | data/domain/presentation | perfil, estatísticas, conquistas, edição |
+| `profile` | B7 | data/domain/presentation | perfil, estatísticas, nível e conquistas (calculados), edição, foto |
 | `settings` | B8, B9 | data/domain/presentation | configurações, alterar senha, acessibilidade |
 
 B5 do wireframe ("tela antiga de atividades") não tem equivalente no Flutter: só o fluxo novo
@@ -89,7 +95,9 @@ lib/modules/{modulo}/
   - `splash` → `onboarding` (usecase `CheckOnboardingSeenUseCase`, já existe) e `common` (sessão).
   - `shell` → `notifications` (`NotificationBellButton`).
   - `news` → nenhuma. Atividades relacionadas usam só a rota `/activities/:moduleId` (§2).
-  - `profile` → nenhuma. As estatísticas vêm de `GET /me/profile`, não de outros módulos.
+  - `profile` → nenhuma. As estatísticas vêm de chamadas próprias à API (`/users/me`,
+    `/app/educational/modules`, `/users/me/news/saved`), não de outros módulos.
+  - `notifications` → nenhuma. Busca as notícias novas com datasource próprio sobre `/app/news`.
   - Todo módulo → `common` e `core`.
 - `common` e `core` não dependem de nenhum módulo de feature.
 
@@ -129,15 +137,15 @@ As abas usam `StatefulShellRoute.indexedStack` (o estado de cada aba é preserva
 | `/` | Splash | splash | raiz |
 | `/onboarding` | Onboarding | onboarding | raiz |
 | `/login` | Login/Cadastro | authentication | raiz |
-| `/forgot-password` | Recuperar senha | authentication | raiz |
+| `/forgot-password` | Recuperar senha (e-mail → código → nova senha) | authentication | raiz |
 | `/home` | Feed | news | **aba 1** |
 | `/activities` | Painel de atividades | activities | **aba 2** |
 | `/help` | Central de ajuda | help | **aba 3** |
 | `/profile` | Perfil | profile | **aba 4** |
 | `/reels?start=:newsId` | Reels | news | tela cheia, sem abas |
 | `/news/:id` | Detalhe | news | sobre as abas |
-| `/notifications` | Notificações | notifications | sobre as abas |
-| `/activities/:moduleId` | Lições → exercícios → conclusão | activities | sobre as abas |
+| `/notifications` | Alertas | notifications | sobre as abas |
+| `/activities/:moduleId` | Perguntas → feedback → conclusão | activities | sobre as abas |
 | `/help/contact/new`, `/help/contact/:id` | Formulário de contato | help | sobre as abas |
 | `/profile/edit` | Editar dados e foto | profile | sobre as abas (também aberta por Configurações → Dados pessoais) |
 | `/settings`, `/settings/account`, `/settings/security`, `/settings/accessibility` | Configurações | settings | sobre as abas |
@@ -160,17 +168,22 @@ visitante, mostra o mesmo convite no lugar do conteúdo.
 ### 3.1 Sessão — `UserSessionService` (Fase 0)
 
 - `UserSessionStatus` ganha o valor `guest` (RF-005/RF-007).
-- Persistência do token no `SecureStorageService`; `restoreSession()` chamado no `_setup()`
-  antes do `runApp`.
-- API pública: `token`, `userId`, `userName` (saudação do feed, RF-009), `sessionStatus` (`ValueNotifier`), `saveSession`,
+- Persistência do `accessToken` e do `refreshToken` no `SecureStorageService` (um único
+  registro JSON); `restoreSession()` chamado no `_setup()` antes do `runApp`.
+- API pública: `token`, `refreshToken`, `userName` (saudação do feed, RF-009), `sessionStatus` (`ValueNotifier`), `saveSession`,
   `startGuestSession`, `logout`, `isAuthenticated`, `isGuest`.
 - Quem chama `saveSession` é o `AuthRepositoryImpl`, depois de um login ou cadastro bem-sucedido.
   Controllers nunca falam com o serviço.
 - O encerramento guarda o **motivo** (`userLogout` ou `expired`). Com `userLogout`, o
   `go_router` (via `refreshListenable`) leva a `/login`. Com `expired` (401 durante o uso,
   CB-003), o usuário **fica na tela**: o `AppShell` mostra o aviso de sessão expirada com o botão
-  "Entrar", e o `requireAccount` pede login na próxima ação restrita. Não há renovação automática
-  de credencial enquanto o [api-contract](api-contract.md) não confirmar esse recurso.
+  "Entrar", e o `requireAccount` pede login na próxima ação restrita.
+- **Renovação (F0.2):** antes de expirar, o `ApiClient` tenta `POST /auth/app/refresh` uma vez,
+  salva o novo par e repete o request. Requests simultâneos compartilham a mesma renovação.
+  401 com `INVALID_CREDENTIALS` (senha atual errada) não mexe na sessão (CB-013). Regras
+  completas em [api-contract.md](api-contract.md#sessão-e-tokens).
+- **Validação na abertura:** depois do `restoreSession()`, `GET /users/me` atualiza o nome. 404
+  `USER_NOT_FOUND` encerra a sessão (CB-014); falta de rede mantém a sessão local.
 
 ### 3.2 Acessibilidade — `AccessibilityController` (módulo `settings`, Fase 0 + B9)
 
@@ -214,31 +227,42 @@ Todas seguem o guia: `RemoteDataSource` (ApiClient) e/ou `LocalDataSource` → `
 
 | Feature | Fontes | Repository | Usecases principais | Regras nos usecases |
 |---|---|---|---|---|
-| Auth (A2) | remote | `AuthRepository` | `Login`, `Register`, `EnterAsGuest`, `RequestPasswordReset` | RN-001 (`CredentialsValidator`) |
-| Feed/Busca (A3) | remote + local (cache) | `NewsRepository` | `GetNewsFeed`, `GetCategories`, `SearchNews` | ordenação (RF-010) |
-| Reels (A4) | remote | `NewsRepository` | `GetReels`, `ToggleLike` | — |
-| Detalhe (A5) | remote + local (favoritos) | `NewsRepository` | `GetNewsDetail`, `ToggleFavorite`, `GetFavorites` | — |
-| Notificações (A6) | remote | `NotificationsRepository` | `GetNotifications`, `GetUnreadCount`, `MarkAsRead`, `MarkAllAsRead` | agrupamento por data (RF-020) |
-| Atividades (B1–B4) | remote + memória (visitante) | `ActivitiesRepository` | `GetModules`, `GetModuleDetail`, `GetProgress`, `SaveProgress`, `EvaluateAnswer`, `CalculateScore` | RN-005, RN-006, embaralhar (RF-027) |
+| Auth (A2) | remote | `AuthRepository` | `Login`, `Register` (cadastra e já faz login), `EnterAsGuest`, `RequestPasswordReset`, `VerifyResetCode`, `ResetPassword` | RN-001 (`CredentialsValidator`) |
+| Feed/Busca (A3) | remote + local (cache) | `NewsRepository` | `GetNewsFeed` (cursor), `GetNewsByCategory`, `GetCategories`, `SearchNews` | escolha de endpoint com/sem filtro |
+| Reels (A4) | remote | `NewsRepository` | `GetReels` (cursor), `ToggleLike` | — |
+| Detalhe (A5) | remote + local (salvas) | `NewsRepository` | `GetNewsDetail`, `MarkAsRead`, `ToggleSave`, `GetSavedNews` | — |
+| Alertas (A6) | remote (`/app/news?startDate`) + local | `NotificationsRepository` | `CheckNewAlerts`, `GetAlerts`, `GetUnreadCount`, `MarkAsRead`, `MarkAllAsRead` | sem duplicar alerta, agrupamento por data (RF-020) |
+| Atividades (B1–B4) | remote + memória (visitante) | `ActivitiesRepository` | `GetModules`, `GetModuleDetail`, `AnswerLesson` | RN-005, RN-006 |
 | Ajuda (B6) | asset + local | `HelpRepository` | `GetOfficialContacts`, `GetPersonalContacts`, `SavePersonalContact`, `DeletePersonalContact` | RN-007 |
-| Perfil (B7) | remote | `ProfileRepository` | `GetProfile`, `UpdateProfile`, `UpdateAvatar` | nível (RN-008) |
+| Perfil (B7) | remote | `ProfileRepository` | `GetProfile` (junta perfil + atividades + salvas), `UpdateProfile`, `UpdateAvatar`, `RemoveAvatar`, `SetReceiveAlerts` | nível e conquistas (RN-008) |
 | Configurações (B8) | remote + sessão | `SettingsRepository` | `ChangePassword`, `Logout` (limpa a sessão via `UserSessionService`; contatos ficam, RN-007) | RN-001 na senha nova |
 | Acessibilidade (B9) | local | `AccessibilityRepository` | `GetAccessibilityPreferences`, `SaveAccessibilityPreferences` | — |
 
 Pontos específicos:
 
-- **Offline do feed (RNF-002/CB-001):** `NewsRepositoryImpl` guarda a 1ª página sem filtro e os
-  favoritos no `LocalCacheService`. Com `ApiErrorType.connection`/`timeout` devolve o cache e
+- **Offline do feed (RNF-002/CB-001):** `NewsRepositoryImpl` guarda a 1ª carga do feed sem
+  filtro (destaques + recentes) e a lista de salvas no `LocalCacheService`. Com `ApiErrorType.connection`/`timeout` devolve o cache e
   marca `lastFetchWasFromCache`. Com cache vazio, `Left(ConnectionFailure())`.
 - **Busca (RNF-005):** o debounce fica no `FeedController`, e o cancelamento via `CancelToken`
   fica dentro do `NewsRemoteDataSourceImpl` (exige o parâmetro `cancelToken` no `ApiClient.get`,
   tarefa F0.2). `ApiErrorType.cancelled` é ignorado pelo repository (não vira erro na tela).
-- **Exercícios:** `ExerciseEntity` é uma `sealed class` com uma subclasse por tipo
-  (`MultipleChoiceExercise`, `TrueFalseExercise`, `ChecklistExercise`, `ScenarioExercise`,
-  `OrderingExercise`), e o model faz o `switch` no `type` do JSON. Tipo desconhecido é descartado,
-  sem quebrar o módulo (CB-012). `EvaluateAnswerUseCase` usa `switch` exaustivo sobre a sealed class.
+- **Perguntas:** `LessonEntity` = `{id, order, question, explanation?, imageUrl?, options,
+  isCompleted}`. O app não sabe a resposta certa: `AnswerLessonUseCase` envia a escolha e recebe
+  `{isCorrect, correctOptionId, explanation}`. A ordem das opções é a da API (já embaralhada,
+  RF-027). Lição com menos de duas opções é descartada no model (CB-012).
+- **Pontuação (RN-005):** cadastrado → depois de responder, recarrega o `progress` do módulo
+  (`GET /app/educational/modules/{id}`). Visitante → `GuestProgressStore` em memória com o
+  resultado mais recente de cada lição.
 - **Progresso do visitante (RN-006):** `ActivitiesRepositoryImpl` recebe o `UserSessionService`.
-  Para `guest`, guarda o progresso num mapa em memória e não chama a API.
+  Para `guest`, chama a API **sem token** (a correção funciona, mas não é salva) e junta o
+  resultado com o `GuestProgressStore`.
+- **Alertas locais (A6):** `CheckNewAlertsUseCase` roda ao abrir o app e ao voltar ao feed.
+  Busca `/app/news?startDate=<última verificação>`, cria um alerta por notícia ainda sem alerta
+  (chave = `newsId`), guarda até 50 alertas dos últimos 30 dias e atualiza a última verificação.
+  Na primeira execução só marca o horário, sem gerar alertas antigos.
+- **Perfil (B7):** o `ProfileRemoteDataSource` chama as três fontes em paralelo. Faixas de nível
+  e regras de conquista ficam numa extension/usecase testável, definidas na feature da B7.
+- **Multipart:** upload de avatar exige `ApiClient.postMultipart` (campo `avatar`), na F0.2.
 - **Contatos pessoais (RN-007/RNF-008):** JSON no `LocalCacheService` e fotos pelo
   `ImageStorageService`. Nada vai para a API. O logout não apaga.
 - **Contatos oficiais:** `assets/data/official_contacts.json` lido pelo
@@ -250,7 +274,7 @@ Pontos específicos:
 
 - Controllers seguem o §6 do guia: estado somente leitura, `isLoading`/`failure`/dados, falam só
   com usecases, sem `BuildContext`.
-- Regras de exibição (selo, datas "Hoje/Ontem", rótulo de nível, cor de status do módulo) ficam
+- Regras de exibição (chips de categoria, datas "Hoje/Ontem", rótulo de nível, cor de status do módulo) ficam
   em **extensions** com teste.
 - Widgets de lista recebem valores prontos (strings/flags), nunca a entity.
 - Voz: um `ReadAloudController` (em `common`, Fase 0) envolve o `TextToSpeechService` com estado
@@ -316,17 +340,17 @@ Critério de pronto de toda tarefa: teste antes (TDD), `flutter analyze` sem err
 | RF-013, RF-019 (curtir) | news | A4 |
 | RF-014 a RF-018, RF-019 (salvar), CB-008 | news | A5 |
 | RF-020 a RF-022 | notifications, shell | A6 |
-| RF-023 | activities | B1 |
+| RF-023, CB-012 (módulo vazio) | activities | B1 |
 | RF-024, RF-040 | activities | B2 |
 | RF-025 a RF-028, RN-005, CB-012 | activities | B3 |
 | RF-029, RF-030, RN-006 | activities | B4 |
 | RF-031 a RF-034, RN-007, RNF-008, CB-009, CB-010 | help | B6 |
 | RF-035, RF-036, RN-008 | profile | B7 |
-| RF-037 | settings | B8 |
+| RF-037, CB-013 | settings | B8 |
 | RF-038 a RF-041, RNF-004 | settings, core/theme | F0, B9 |
 | RN-003, CB-011 | shell (`requireAccount`) + cada tela restrita | F0 + A3–A6, B7 |
 | RNF-003, RNF-004 | core/widgets + todas | F0, C3 |
-| RNF-007 | common | F0 |
+| RNF-007, RF-007 (renovação), CB-003, CB-013, CB-014 | common (`ApiClient`, sessão) | F0.2, F0.13 |
 
 ---
 
@@ -336,4 +360,4 @@ Este plano é o insumo de [tasks.md](tasks.md). Desvio encontrado durante a impl
 (método a mais num contrato, rota nova, dependência nova) MUST atualizar este plano, e o
 [api-contract.md](api-contract.md) quando for de API, antes de a tarefa ser marcada como concluída.
 
-**Versão**: 2.0.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-09-26
+**Versão**: 2.1.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-03
