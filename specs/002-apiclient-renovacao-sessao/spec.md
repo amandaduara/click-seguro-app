@@ -14,6 +14,14 @@ CB-014 da [especificação do produto](../../.specify/memory/specification.md) v
 completa as pendências da feature [001](../001-sessao-persistente-visitante/spec.md) (FR-008 e
 FR-008a).
 
+## Clarifications
+
+### Session 2026-10-03
+
+- Q: Ao abrir o app com uma sessão salva, a tela de abertura deve esperar a resposta do serviço (até 3 s) ou entrar logo e conferir em segundo plano? → A: Esperar na tela de abertura até 3 s. Com resposta, segue (conta confirmada) ou vai ao login (conta desativada ou renovação recusada); sem resposta no prazo, entra com a sessão guardada.
+- Q: O app deve tentar renovar em qualquer recusa de pedido feito com credencial (exceto "credenciais inválidas") ou só quando o motivo for explicitamente de credencial vencida/inválida? → A: Em qualquer recusa de pedido com credencial, exceto o motivo "credenciais inválidas" (lista de exceções). Recusa sem motivo ou com motivo desconhecido também tenta renovar.
+- Q: Se o serviço informar "usuário não encontrado" durante o uso, o app deve encerrar a sessão automaticamente ou deixar cada tela tratar como erro comum? → A: Encerrar automaticamente em qualquer pedido com credencial, como sessão expirada (usuário fica na tela, vê o aviso e faz login na próxima ação restrita). Na abertura, vale o FR-008 (vai direto ao login).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Continuar usando o app quando a credencial vence (Priority: P1)
@@ -94,7 +102,12 @@ resultado de cada uma.
    app é aberto, **Then** o usuário segue conectado com os dados guardados.
 4. **Given** a credencial de acesso salva venceu, **When** o app é aberto, **Then** a renovação
    da história 1 acontece durante a conferência, e o usuário segue conectado.
-5. **Given** o usuário é visitante, **When** o app é aberto, **Then** nenhuma conferência com o
+5. **Given** a credencial de acesso salva venceu e a renovação é recusada, **When** o app é
+   aberto, **Then** a sessão é encerrada e o usuário vai direto para o login, sem passar pelo
+   conteúdo (CB-003, regra da abertura).
+6. **Given** existe uma sessão salva e o serviço não responde em 3 segundos, **When** o app é
+   aberto, **Then** o usuário segue conectado com os dados guardados, sem esperar mais.
+7. **Given** o usuário é visitante, **When** o app é aberto, **Then** nenhuma conferência com o
    serviço é feita.
 
 ---
@@ -158,6 +171,9 @@ serviço o recebe no campo esperado, com a credencial do usuário.
   ciclo infinito.
 - **Usuário sai da conta enquanto uma renovação está em andamento:** o resultado da renovação é
   descartado, e o usuário continua desconectado.
+- **Conta desativada durante o uso:** o próximo pedido com credencial que receber "usuário não
+  encontrado" encerra a sessão como expirada (FR-008a); o usuário continua na tela e vê o
+  aviso.
 - **Visitante:** pedidos de visitante nunca enviam credencial e nunca disparam renovação, nem
   encerramento de sessão.
 - **Sessão salva por uma versão anterior do app** (sem credencial de renovação): o app trata como
@@ -166,7 +182,8 @@ serviço o recebe no campo esperado, com a credencial do usuário.
 - **Credencial ou credencial de renovação em registros de diagnóstico:** nenhuma das duas pode
   aparecer, nem no pedido de renovação, nem com o modo de desenvolvimento ligado (RNF-007).
 - **Conferência na abertura demorando:** a abertura não pode ficar presa esperando o serviço;
-  passado o limite de tempo, o app segue com a sessão guardada.
+  passados 3 segundos, o app segue com a sessão guardada, e uma resposta que chegue depois é
+  ignorada nessa abertura (a validade volta a ser conferida na próxima ação que usar o serviço).
 - **Conta com papel diferente de usuário do app** (conta do painel administrativo): fica para a
   tarefa A2, que trata o login. Esta entrega não decide nada sobre papéis.
 
@@ -178,8 +195,9 @@ serviço o recebe no campo esperado, com a credencial do usuário.
 
 - **FR-001**: A sessão conectada MUST guardar duas credenciais: a de acesso e a de renovação,
   ambas apenas no armazenamento protegido do aparelho (RNF-007).
-- **FR-002**: Quando um pedido feito com credencial for recusado por credencial inválida ou
-  vencida, o app MUST pedir ao serviço uma nova credencial usando a de renovação e, se
+- **FR-002**: Quando um pedido feito com credencial receber recusa de autorização, com
+  **qualquer motivo exceto "credenciais inválidas"** (inclusive sem motivo ou com motivo
+  desconhecido), o app MUST pedir ao serviço uma nova credencial usando a de renovação e, se
   conseguir, MUST guardar as novas credenciais e repetir o pedido original uma única vez.
 - **FR-003**: Se a renovação for recusada pelo serviço, o app MUST encerrar a sessão como
   expirada, com o comportamento já definido na feature 001 (usuário fica na tela e vê o aviso).
@@ -192,11 +210,18 @@ serviço o recebe no campo esperado, com a credencial do usuário.
 - **FR-007**: Recusas em pedidos feitos sem credencial (login, cadastro, recuperação de senha,
   pedidos de visitante) MUST NOT encerrar a sessão nem disparar renovação.
 - **FR-008**: Ao abrir o app com uma sessão conectada salva, o app MUST conferir a conta com o
-  serviço e atualizar nome e e-mail guardados com a resposta. Se o serviço informar que a conta
-  não existe, MUST encerrar a sessão e levar ao login (CB-014). Se não houver resposta por falta
-  de conexão, erro do servidor ou tempo esgotado, MUST manter a sessão guardada.
-- **FR-009**: A conferência da abertura MUST NOT atrasar a primeira tela além do limite do
-  SC-002 da feature 001 (3 segundos).
+  serviço **durante a tela de abertura, antes de mostrar a primeira tela**, e atualizar nome e
+  e-mail guardados com a resposta. Se o serviço informar que a conta não existe (CB-014) ou
+  recusar a renovação (CB-003), MUST encerrar a sessão e levar direto ao login. Se não houver
+  resposta por falta de conexão, erro do servidor ou tempo esgotado, MUST manter a sessão
+  guardada.
+- **FR-008a**: Em qualquer pedido feito com credencial durante o uso, a resposta "usuário não
+  encontrado" (conta desativada) MUST encerrar a sessão como expirada, com o mesmo
+  comportamento de FR-003, sem que cada tela precise tratar o caso (CB-014). Na abertura do
+  app vale o FR-008.
+- **FR-009**: A conferência da abertura, incluindo uma eventual renovação, MUST esperar no
+  máximo 3 segundos (limite do SC-002 da feature 001). Passado o prazo, o app MUST seguir com a
+  sessão guardada e ignorar a resposta atrasada nessa abertura.
 - **FR-010**: A sessão MUST identificar o usuário pelo e-mail (e guardar o nome de exibição), já
   que o serviço não fornece um identificador numérico. Substitui o "identificador do usuário"
   da feature 001 (FR-011 de lá).
