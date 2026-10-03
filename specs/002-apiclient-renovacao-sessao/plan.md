@@ -63,7 +63,7 @@ repetição).
 - 2 arquivos novos em `lib/` (`api_error_codes.dart`, `session_validation_service.dart`), 1
   interceptor de log;
 - mudanças em `api_client.dart`, `user_session_service.dart`, `common_module.dart`;
-- cerca de 4 arquivos de teste novos ou alterados;
+- 5 arquivos de teste novos ou alterados;
 - documentação no guia de integração e no plan/tasks do produto.
 
 ## Constitution Check
@@ -72,7 +72,7 @@ repetição).
 
 | Princípio | Como esta feature cumpre | Status |
 |---|---|---|
-| **I. Clean Architecture & Modularização** | Tudo é infraestrutura do `common` (`api_client/`, `services/`), registrada no `CommonModule`. Nenhum controller muda nesta feature. O `SplashController` (A1) vai consumir um serviço do `common` registrado no GetIt, como a constituição permite para capacidades transversais | ✅ |
+| **I. Clean Architecture & Modularização** | Tudo é infraestrutura do `common` (`api_client/`, `services/`), registrada no `CommonModule`. Nenhum controller muda nesta feature. O `SplashController` (A1) vai consumir o `SessionValidationService` **por meio de um usecase** do splash (`ValidateStoredSessionUseCase`), mantendo "controller → usecase" | ✅ |
 | **II. SOLID, DRY, KISS** | Renovação dentro do `ApiClient` em vez de interceptor + segundo `Dio` ([R1](research.md)). Sem `TokenRefresher` abstrato: uma implementação só ([R3](research.md)). `ApiErrorCodes` só com os códigos do `common` ([R9](research.md)) | ✅ |
 | **III. TDD** | Cada regra da tabela de decisão do [data-model](data-model.md) tem teste antes da implementação, com caminho feliz, erro e borda (concorrência, corrida com logout, prazo). Testes offline com adapter falso e `GetIt.reset()` | ✅ |
 | **IV. Stack e DI** | Só Dio, via `ApiClient`; datasources continuam sem `FormData` ([R11](research.md)). GetIt para o novo serviço. `CancelToken` é tipo do Dio, mas circula só na camada `data/` (datasources), que já usa `Response` do Dio | ✅ |
@@ -141,8 +141,9 @@ e o `postMultipart`, usados só por B7/B8.
 
 ## Impacto nas próximas tarefas
 
-- **A1 (splash):** chamar `SessionValidationService.validateStoredSession()` em paralelo com o
-  tempo mínimo e decidir a rota depois dos dois.
+- **A1 (splash):** criar `ValidateStoredSessionUseCase` em `splash/domain/usecases/` (delega ao
+  `SessionValidationService`), chamar no `SplashController` em paralelo com o tempo mínimo e
+  decidir a rota depois dos dois.
 - **A2 (login/cadastro):** `saveSession(accessToken:, refreshToken:, email:, userName:)` após
   `login` + `GET /users/me`. Mapear `ApiErrorCodes.invalidCredentials` antes do `toFailure()`.
   O log de `/auth/*` já sai sem corpo, o que encerra o "risco herdado" da 001.

@@ -113,6 +113,7 @@ class SessionValidationService {
 ```
 
 - Registro: `CommonModule`, `registerLazySingleton`.
-- **Quem chama:** `SplashController` (tarefa A1), em paralelo com o tempo mínimo do splash. Depois
+- **Quem chama:** `SplashController` (tarefa A1), via `ValidateStoredSessionUseCase` do splash,
+  em paralelo com o tempo mínimo do splash. Depois
   dos dois terminarem, a rota sai de `sessionStatus` (`authenticated`/`guest` → `/home`,
   senão `/login`). Ver [research R8](../research.md).

@@ -141,8 +141,9 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 - [ ] T010 [US1] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar `Future<bool> replaceTokens({required String previousRefreshToken, required String accessToken, required String refreshToken})`: só aplica se `isAuthenticated && this.refreshToken == previousRefreshToken`, atualiza os campos, regrava o registro v2 com `_safely` e devolve `true`; senão devolve `false`. Não altera `sessionStatus` (faz T008 passar)
 - [ ] T011 [US1] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, implementar a renovação no `_send` (faz T009 passar; regras em [data-model "Decisão do ApiClient"](data-model.md) e [R1–R3](research.md)):
   - `static const String refreshPath = '/auth/app/refresh';`;
-  - o `_send` guarda o token que **enviou**. Em `DioException` do tipo `badResponse` com 401,
-    token enviado não nulo e `code != ApiErrorCodes.invalidCredentials`:
+  - o `_send` guarda o token que **enviou**. Em `DioException` do tipo `badResponse` com 401
+    (nesta história, **qualquer** 401; as exceções de "sem token" e `INVALID_CREDENTIALS` entram
+    na T013, para que a T012 falhe primeiro):
     - se o token atual da sessão já é outro → repete uma vez;
     - senão aguarda `_renew()` (que devolve um `Future<bool>`): com `true`, repete uma vez;
       com `false`, devolve `unauthorized`;
@@ -189,7 +190,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, conferir e ajustar o `_send` para que a T012 passe: renovação e `expire()` só quando o request **enviou** `Authorization` (token não nulo no `_makeOptions`) **e** o `code` não é `ApiErrorCodes.invalidCredentials`. Atualizar o dartdoc de `ApiErrorType.unauthorized` ("401; a sessão só é encerrada pelo `ApiClient` quando a renovação falha ou o pedido repetido é recusado")
+- [ ] T013 [US2] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, no `_send`, só renovar ou expirar quando o request **enviou** `Authorization` (token não nulo no `_makeOptions`) **e** `code != ApiErrorCodes.invalidCredentials`; nos outros casos, devolver o `ApiException(unauthorized)` sem tocar na sessão (faz T012 passar). Atualizar o dartdoc de `ApiErrorType.unauthorized` ("401; a sessão só é encerrada pelo `ApiClient` quando a renovação falha ou o pedido repetido é recusado")
 
 **Checkpoint**: US1 + US2. A A2 (login) e a B8 (troca de senha) já podem confiar no `errorCode`.
 
@@ -322,7 +323,10 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 - **Setup (Phase 1)**: sem dependências.
 - **Foundational (Phase 2)**: depende da T001. T002 → T005; T003 ∥ T002; T004 depende de T003 e T005 (usa o novo `saveSession`); T006 → T007; T007 depende de T004.
 - **US1 (Phase 3)**: depende da Phase 2. T008 → T010; T009 → T011; T011 depende de T010.
-- **US2 (Phase 4)**: depende da US1 (o `_send` com renovação é onde entra a condição).
+- **US2 (Phase 4)**: depende da US1 (o `_send` com renovação é onde entra a condição). Fazer
+  logo depois da US1: entre as duas, um 401 de senha errada tentaria renovar. Sem dano real,
+  porque `_refreshTokens()` devolve `false` sem request quando não há `refreshToken` e o
+  `expire()` não age fora de `authenticated`, mas a US2 não deve ficar para depois.
 - **US3 (Phase 5)**: depende da Phase 2 (`CancelToken`) e da US1 (cenários 3 e 4 da T016 usam a renovação). T014 → T017; T015 → T018; T016 → T019 → T020.
 - **US4 (Phase 6)**: depende só da Phase 2. T023 pode ir em paralelo com tudo.
 - **US5 (Phase 7)**: depende da US1 (o caso de repetição do multipart).

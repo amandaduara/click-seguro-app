@@ -118,8 +118,14 @@ Decisões técnicas da feature 002. Cada item cita os requisitos que resolve.
     `expire()` (R3/R5): a sessão fica `unauthenticated`, e quem decide a rota vai ao login.
   - Com erro de conexão, 5xx ou corpo inválido, mantém a sessão.
 
-  **Quem chama:** o `SplashController` (tarefa A1), em paralelo com os 2 s mínimos do splash.
-  A rota é escolhida depois dos dois terminarem. Esta feature entrega o serviço testado e
+  **Prazo e renovação:** o cancelamento no fim do prazo atinge só o `GET /users/me`. Uma
+  renovação em andamento continua, porque é compartilhada com outros pedidos (R2) e não pode ser
+  cancelada por um deles. Se ela for recusada depois do prazo, vale o CB-003 normal (aviso na
+  tela), registrado nos Edge Cases da spec.
+
+  **Quem chama:** o `SplashController` (tarefa A1), por meio de um `ValidateStoredSessionUseCase`
+  do splash (constituição I: controller só fala com usecase), em paralelo com os 2 s mínimos do
+  splash. A rota é escolhida depois dos dois terminarem. Esta feature entrega o serviço testado e
   registra o uso na A1 do [tasks.md do produto](../../.specify/memory/tasks.md).
 - **Racional:** chamar no `_setup()` (antes do `runApp`) somaria até 3 s ao splash de 2 s,
   estourando o SC-005. Em paralelo no splash, o pior caso é max(2 s, 3 s) = 3 s. O

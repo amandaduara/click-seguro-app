@@ -184,6 +184,9 @@ serviço o recebe no campo esperado, com a credencial do usuário.
 - **Conferência na abertura demorando:** a abertura não pode ficar presa esperando o serviço;
   passados 3 segundos, o app segue com a sessão guardada, e uma resposta que chegue depois é
   ignorada nessa abertura (a validade volta a ser conferida na próxima ação que usar o serviço).
+  Se o prazo acabar com uma **renovação** em andamento, ela continua; se for recusada depois,
+  vale o comportamento normal de sessão recusada durante o uso (CB-003: o usuário fica na tela
+  e vê o aviso).
 - **Conta com papel diferente de usuário do app** (conta do painel administrativo): fica para a
   tarefa A2, que trata o login. Esta entrega não decide nada sobre papéis.
 
@@ -274,8 +277,7 @@ serviço o recebe no campo esperado, com a credencial do usuário.
 - **SC-005**: Na abertura com sessão salva, a primeira tela útil aparece em até 3 segundos, com
   ou sem resposta do serviço.
 - **SC-006**: Em 100% das aberturas sem internet com sessão salva, o usuário continua conectado.
-- **SC-007**: 100% dos códigos de negócio listados no contrato da API chegam intactos a quem fez
-  o pedido, e 0 respostas fora do formato causam fechamento inesperado do app.
+- **SC-007**: Qualquer código de negócio enviado pelo serviço chega intacto a quem fez o pedido, e 0 respostas fora do formato causam fechamento inesperado do app.
 - **SC-008**: Nenhuma ocorrência de credencial (de acesso ou de renovação) é encontrada em
   registros de diagnóstico numa auditoria com o modo de desenvolvimento ligado.
 
@@ -284,7 +286,10 @@ serviço o recebe no campo esperado, com a credencial do usuário.
 - **Fora do escopo:** telas de login, cadastro e recuperação de senha (A2), tela de troca de
   senha (B8), busca do feed (A3) e foto de perfil (B7). Esta entrega fornece as capacidades que
   essas telas usam, verificadas por testes automatizados. O aviso de sessão expirada na tela
-  continua sendo da tarefa F0.9.
+  continua sendo da tarefa F0.9. Também fica fora a **chamada da conferência na tela de
+  abertura**: esta entrega fornece a conferência pronta, com prazo de 3 s e testada (FR-008,
+  FR-009), e a tarefa A1 a liga ao splash, em paralelo com o tempo mínimo da tela. O SC-005 é
+  verificado aqui pelo prazo do serviço e, na tela, pela A1.
 - O comportamento do serviço é o descrito no [openapi.json](../../.specify/memory/openapi.json):
   renovação devolve um novo par de credenciais, recusa da renovação vem com o motivo
   "credencial inválida", e a conferência da conta informa "usuário não encontrado" para conta
