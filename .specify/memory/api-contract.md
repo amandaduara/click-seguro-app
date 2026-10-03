@@ -32,6 +32,11 @@ Legenda de status: ⚠️ a confirmar · ✅ confirmado · ❌ não existe na AP
 
 `user`: `{ id, name, email, avatarUrl?, level? }`
 
+> ⚠️ **Pendência — renovação de credencial:** confirmar se a API devolve uma credencial de
+> renovação (refresh token) no login/cadastro e se há um endpoint de renovação (ex.:
+> `POST /auth/refresh`). Até a confirmação, o app não renova: credencial vencida → login
+> (decisão da feature `specs/001-sessao-persistente-visitante`).
+
 > Atenção: um 401 do `/auth/login` é credencial inválida, não sessão expirada. O
 > `AuthRepositoryImpl` MUST tratar esse caso antes do `toFailure()` padrão (o `ApiClient` chama
 > `logout()` em todo 401, o que é inofensivo aqui porque ainda não há sessão).

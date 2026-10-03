@@ -2,10 +2,12 @@ import 'package:click_seguro_app/core/routing/app_router.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/modules/authentication/authentication.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/onboarding/onboarding.dart';
 import 'package:click_seguro_app/modules/splash/splash.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
@@ -35,6 +37,8 @@ Future<ModuleManagerInterface> _setup() async {
     OnboardingModule(),
     SplashModule(),
   ]);
+  // Antes do runApp: a primeira tela já encontra o estado da sessão (FR-002).
+  await GetIt.instance<UserSessionService>().restoreSession();
   return moduleManager;
 }
 

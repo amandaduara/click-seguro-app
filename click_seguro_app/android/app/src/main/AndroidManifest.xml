@@ -1,7 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Necessária no build de release para acessar a API (FR-015). Não declarar CAMERA:
+         o image_picker usa a câmera do sistema via intent (research R10). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- allowBackup=false: o backup do Android quebra a chave do flutter_secure_storage ao
+         restaurar ("Failed to unwrap key") e o produto não guarda dados pessoais na nuvem. -->
     <application
         android:label="click_seguro_app"
         android:name="${applicationName}"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
@@ -40,6 +46,15 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- url_launcher: ligar (central de ajuda) e abrir a fonte da notícia no navegador. -->
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>
