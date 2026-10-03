@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.0.0
+**Versão**: 2.1.0
 
 **Criado em**: 2026-09-07
 
@@ -10,8 +10,9 @@
 
 **Alinhado a**: [constitution.md](constitution.md) v1.1.0. Este documento descreve O QUE o
 sistema faz. O COMO (arquitetura, stack, camadas) é regido pela constituição e detalhado em
-[plan.md](plan.md). A fonte visual é o wireframe do Lovable (divisão em trilhas A/B/C, reproduzida
-em [tasks.md](tasks.md)).
+[plan.md](plan.md). A fonte visual é o wireframe do Lovable (`wireframe/` na raiz do repositório,
+divisão em trilhas A/B/C reproduzida em [tasks.md](tasks.md)). A fonte da API é o
+[openapi.json](openapi.json), resumido em [api-contract.md](api-contract.md).
 
 ---
 
@@ -33,10 +34,10 @@ abordado, faltam três coisas:
 O SafeNews é um aplicativo Flutter, pensado para o público idoso, que reúne três frentes num
 único lugar:
 
-- **Informar:** feed de notícias por categoria, com selo de veracidade, Reels para consumo
-  rápido e notificações de alertas.
-- **Educar:** trilha de atividades em módulos, com lições curtas, leitura em voz alta e
-  exercícios práticos (quiz, verdadeiro/falso, checklist, cenário, ordenação).
+- **Informar:** feed de notícias por categoria, Reels para consumo rápido e alertas de
+  notícias novas.
+- **Educar:** trilha de atividades em módulos, cada um com perguntas práticas de múltipla
+  escolha, explicação após a resposta e leitura em voz alta.
 - **Socorrer:** central de ajuda com contatos oficiais e contatos pessoais de confiança, com
   ligação em um toque.
 
@@ -46,9 +47,12 @@ em voz alta.
 ### 1.3 Fora de escopo (v1)
 
 - **Checagem colaborativa de notícias (v2):** denúncia de notícia pelo leitor, papel de
-  Validador, fila de checagem e histórico auditável de vereditos. Na v1 o selo de veracidade
-  vem pronto da API e o app só o exibe (ver §8, Evoluções futuras).
-- Notificações push (a v1 tem apenas a lista de notificações dentro do app).
+  Validador, fila de checagem e histórico auditável de vereditos. A API não tem selo de
+  veracidade: a v1 classifica as notícias só por categoria (ver §8, Evoluções futuras).
+- Notificações push e notificações vindas do servidor (a v1 tem alertas gerados no próprio
+  app a partir das notícias novas).
+- Recursos de IA da API (análise de mensagem ou imagem suspeita, chat com assistente).
+- Desativação de conta pelo app.
 - Rede social entre usuários (comentários, seguir, ranking público).
 - Produção de conteúdo dentro do app (notícias, módulos e lições vêm da API).
 - Painel de administração.
@@ -80,10 +84,10 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 | UC-04 | Todos | Consumir notícias em formato Reels | A4 |
 | UC-05 | Todos | Ler (ou ouvir) uma notícia completa, compartilhar e ir para atividades relacionadas | A5 |
 | UC-06 | Cadastrado | Salvar notícias e curtir Reels | A3–A5 |
-| UC-07 | Cadastrado | Ver e marcar notificações como lidas | A6 |
+| UC-07 | Cadastrado | Ver alertas de notícias novas e marcar como lidos | A6 |
 | UC-08 | Todos | Acompanhar o painel de atividades e abrir um módulo | B1 |
-| UC-09 | Todos | Ler (ou ouvir) as lições de um módulo | B2 |
-| UC-10 | Todos | Responder os exercícios e receber feedback | B3 |
+| UC-09 | Todos | Percorrer as perguntas de um módulo, ouvindo o enunciado | B2 |
+| UC-10 | Todos | Responder as perguntas e receber a explicação | B3 |
 | UC-11 | Todos | Concluir um módulo (visitante é convidado a criar conta) | B4 |
 | UC-12 | Todos | Ligar para um contato oficial ou pessoal pela central de ajuda | B6 |
 | UC-13 | Todos | Cadastrar contatos pessoais de confiança com foto | B6 |
@@ -108,53 +112,65 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 - **RF-004**: O sistema MUST permitir login com e-mail e senha, alternando com o cadastro na
   mesma tela, com opção de mostrar/ocultar a senha.
 - **RF-005**: O sistema MUST permitir **entrar como visitante**, sem conta (RN-003).
-- **RF-006**: O sistema MUST oferecer recuperação de senha pelo e-mail cadastrado.
+- **RF-006**: O sistema MUST oferecer recuperação de senha em três passos: informar o e-mail,
+  digitar o código recebido por e-mail (validado antes de seguir) e definir a nova senha.
 - **RF-007**: A sessão MUST sobreviver ao fechamento do app e MUST ter estado observável
-  (`UserSessionStatus`: `authenticated`, `unauthenticated`, `guest`).
+  (`UserSessionStatus`: `authenticated`, `unauthenticated`, `guest`). Quando a credencial de
+  acesso vencer, o app MUST renová-la sem pedir login, enquanto a credencial de renovação for
+  válida.
 - **RF-008**: O sistema MUST permitir sair da conta, limpando token e dados de sessão.
 
 ### 3.3 Notícias (A3, A4, A5)
 
 - **RF-009**: O feed MUST exibir saudação com o nome do usuário (ou genérica para visitante),
-  filtros por categoria, um carrossel horizontal de Reels e a lista de notícias.
+  filtros por categoria, um carrossel horizontal de Reels, os destaques, as recomendações
+  (só para cadastrado, quando houver) e a lista de notícias recentes.
 - **RF-010**: O feed MUST ser paginado, ordenado da mais recente para a mais antiga.
 - **RF-011**: O sistema MUST permitir buscar notícias por texto, com estado vazio explicativo.
-- **RF-012**: Todo card e todo detalhe de notícia MUST exibir o selo de veracidade
-  (`VeracityStatus`: `verified`, `unverified`, `underReview`, `fake`), vindo da API (RN-002).
+- **RF-012**: Todo card e todo detalhe de notícia MUST exibir as categorias da notícia (ex.:
+  "Phishing", "Golpes Bancários"), vindas da API (RN-002). *(Até a v2.0.0 era o selo de
+  veracidade, que não existe na API.)*
 - **RF-013**: A tela de Reels MUST exibir uma notícia por vez em tela cheia (imagem, título,
-  resumo), com navegação vertical por gesto de arrastar e também por botões, e ações de
-  curtir, salvar e abrir a fonte.
-- **RF-014**: O detalhe da notícia MUST exibir título, imagem, texto completo, fonte, data e
-  autor (quando houver).
+  trecho do texto), com navegação vertical por gesto de arrastar e também por botões, e ações
+  de curtir, salvar e abrir a fonte.
+- **RF-014**: O detalhe da notícia MUST exibir título, imagem (quando houver), texto completo,
+  fonte, data da publicação original e número de curtidas.
 - **RF-015**: O detalhe MUST oferecer **leitura em voz alta** do conteúdo, com controle de
   velocidade (lenta, normal, rápida).
 - **RF-016**: O detalhe MUST permitir compartilhar a notícia pelo menu nativo do aparelho.
 - **RF-017**: O detalhe MUST permitir abrir a fonte original no navegador externo.
-- **RF-018**: O detalhe MUST exibir um bloco de **atividades relacionadas** que leva ao módulo
-  correspondente na trilha de atividades.
+- **RF-018**: Quando a API sugerir um módulo, o detalhe MUST exibir um bloco de **atividade
+  relacionada** que leva a esse módulo na trilha de atividades. Sem sugestão, o bloco não
+  aparece.
 - **RF-019**: O usuário cadastrado MUST poder **salvar** (favoritar) notícias e **curtir** Reels.
 
-### 3.4 Notificações (A6)
+### 3.4 Alertas de notícias novas (A6)
 
-- **RF-020**: O sistema MUST listar as notificações do usuário agrupadas por data ("Hoje",
-  "Ontem", "Anteriores").
-- **RF-021**: O topo do app MUST exibir um contador de notificações não lidas.
-- **RF-022**: O usuário MUST poder marcar uma notificação como lida (ao abri-la) e marcar todas
-  como lidas.
+- **RF-020**: O sistema MUST gerar, no próprio aparelho, um alerta para cada notícia publicada
+  desde a última verificação, e MUST listá-los agrupados por data ("Hoje", "Ontem",
+  "Anteriores"). Tocar num alerta abre a notícia. Com "Receber alertas" desligado no perfil,
+  nenhum alerta novo é gerado.
+- **RF-021**: O topo do app MUST exibir um contador de alertas não lidos.
+- **RF-022**: O usuário MUST poder marcar um alerta como lido (ao abri-lo) e marcar todos
+  como lidos. Alertas e marcações ficam salvos no aparelho.
 
 ### 3.5 Atividades educativas (B1, B2, B3, B4)
 
-- **RF-023**: O painel de atividades MUST exibir o progresso geral, a grade de módulos e o
-  status de cada módulo (não iniciado, em andamento, concluído).
-- **RF-024**: Cada módulo MUST ter lições apresentadas passo a passo, com avanço e retorno,
-  leitura em voz alta e marcação individual de lição lida.
-- **RF-025**: Cada módulo MUST ter exercícios dos tipos: múltipla escolha, verdadeiro/falso,
-  checklist, cenário (situação simulada com escolha de atitude) e ordenação de passos.
-- **RF-026**: Os exercícios MUST ter um rodapé fixo com o botão de confirmar resposta e um
-  painel deslizante de feedback (acerto ou erro, com explicação).
-- **RF-027**: As alternativas de múltipla escolha e cenário MUST ser embaralhadas a cada
-  tentativa.
-- **RF-028**: O sistema MUST calcular e guardar a pontuação por módulo (RN-005).
+- **RF-023**: O painel de atividades MUST exibir o progresso geral (lições concluídas de todas
+  as disponíveis), a grade de módulos e o status de cada módulo (não iniciado, em andamento,
+  concluído).
+- **RF-024**: Cada módulo MUST apresentar suas lições passo a passo, na ordem da API, com avanço
+  e retorno e indicação das já concluídas. Cada lição é uma pergunta, com imagem opcional, e
+  MUST oferecer leitura em voz alta do enunciado e das alternativas.
+- **RF-025**: Toda lição MUST ser uma pergunta de múltipla escolha com uma única alternativa
+  correta. *(Até a v2.0.0 eram cinco tipos de exercício; a API só tem este. Os demais tipos
+  foram para a v2.)*
+- **RF-026**: As perguntas MUST ter um rodapé fixo com o botão de confirmar resposta e um
+  painel deslizante de feedback (acerto ou erro, alternativa correta destacada e explicação).
+  A correção é feita pela API.
+- **RF-027**: As alternativas MUST aparecer em ordem diferente a cada tentativa (a API já as
+  devolve embaralhadas; o app MUST NOT reordená-las).
+- **RF-028**: O sistema MUST exibir a pontuação do módulo calculada pela API (RN-005).
 - **RF-029**: Ao final do módulo o sistema MUST exibir uma tela de conclusão com a pontuação e a
   opção de compartilhar a conquista.
 - **RF-030**: O visitante MUST ver um aviso convidando a criar conta para salvar o progresso
@@ -173,12 +189,14 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 ### 3.7 Perfil (B7)
 
 - **RF-035**: O perfil MUST exibir cartão do usuário (nome, foto, selo de nível),
-  estatísticas (módulos concluídos, notícias salvas, pontuação), conquistas e atalhos.
-- **RF-036**: O usuário MUST poder editar seus dados (nome) e trocar a foto de perfil.
+  estatísticas (módulos concluídos, lições concluídas, notícias salvas), conquistas e atalhos.
+  Nível e conquistas são calculados no app (RN-008).
+- **RF-036**: O usuário MUST poder editar seus dados (nome, e-mail e telefone), trocar e
+  remover a foto de perfil e ligar/desligar "Receber alertas".
 
 ### 3.8 Configurações (B8)
 
-- **RF-037**: As configurações MUST listar as seções Conta ("Dados pessoais"), Notificações,
+- **RF-037**: As configurações MUST listar as seções Conta ("Dados pessoais"), Alertas,
   Segurança ("Alterar senha") e Acessibilidade, e a ação de sair da conta. Toda linha MUST
   levar a uma tela funcional (nenhuma linha "morta").
 
@@ -188,7 +206,7 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   acima do padrão), aplicado em todas as telas.
 - **RF-039**: O usuário MUST poder ativar um tema de **alto contraste**.
 - **RF-040**: O usuário MUST poder ativar a **leitura automática em voz alta** do conteúdo
-  principal ao abrir o detalhe de uma notícia ou uma lição.
+  principal ao abrir o detalhe de uma notícia ou uma pergunta de atividade.
 - **RF-041**: As preferências de acessibilidade MUST ser salvas no aparelho e aplicadas já no
   splash da próxima abertura.
 
@@ -211,7 +229,7 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   MUST usar debounce e cancelar a requisição anterior.
 - **RNF-006 (Internacionalização)**: Todo texto visível MUST vir de `easy_localization`
   (pt-BR obrigatório; en-US mantido em paralelo).
-- **RNF-007 (Segurança de sessão)**: O token MUST ficar em armazenamento criptografado do
+- **RNF-007 (Segurança de sessão)**: As credenciais (de acesso e de renovação) MUST ficar em armazenamento criptografado do
   aparelho e MUST NOT aparecer em logs.
 - **RNF-008 (Privacidade / LGPD)**: Contatos pessoais e fotos de contato MUST NOT ser enviados a
   nenhum servidor.
@@ -220,27 +238,33 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 
 ## 5. Regras de Negócio
 
-- **RN-001 (Senha e e-mail)**: O cadastro só é enviado se o e-mail tiver formato válido e a senha
-  tiver no mínimo 8 caracteres, com ao menos uma letra e um número. A validação MUST acontecer
-  antes de qualquer chamada de rede.
-- **RN-002 (Veracidade é da API)**: O app nunca altera o `VeracityStatus` de uma notícia. Valor
-  desconhecido vindo da API MUST ser tratado como `unverified`.
+- **RN-001 (Nome, senha e e-mail)**: O cadastro só é enviado se o nome tiver de 6 a 150
+  caracteres, o e-mail tiver formato válido (até 255 caracteres) e a senha tiver de 8 a 64
+  caracteres com ao menos uma letra maiúscula, uma minúscula, um número e um caractere especial
+  (mesmas regras da API). A mesma regra de senha vale para a nova senha na recuperação e na
+  troca de senha. A validação MUST acontecer antes de qualquer chamada de rede.
+- **RN-002 (Classificação é da API)**: As categorias de uma notícia vêm da API e o app nunca as
+  altera. Notícia sem categoria MUST ser exibida normalmente, sem rótulo. *(Até a v2.0.0 esta
+  regra tratava do `VeracityStatus`.)*
 - **RN-003 (Limites do visitante)**: O visitante pode ler notícias, ver Reels, fazer atividades e
-  usar a central de ajuda. Salvar notícia, curtir, notificações, perfil e editar dados exigem
+  usar a central de ajuda. Salvar notícia, curtir, alertas, perfil e editar dados exigem
   conta: ao tentar, o app MUST mostrar um convite para entrar ou se cadastrar, **sem** chamar a
   API.
 - **RN-004 (Onboarding único)**: Depois de concluído ou pulado, o onboarding MUST NOT voltar a
   aparecer naquele aparelho (flag local).
-- **RN-005 (Conclusão e pontuação)**: Um módulo está concluído quando todas as lições foram
-  marcadas como lidas e todos os exercícios foram respondidos. A pontuação é
-  `acertos na primeira tentativa / total de exercícios`, e vale a melhor pontuação obtida.
+- **RN-005 (Conclusão e pontuação)**: Para o cadastrado, conclusão e pontuação são as da API:
+  o módulo está concluído quando `progress.isCompleted` é verdadeiro, e a pontuação é
+  `score / totalScore`, considerando a resposta **mais recente** de cada lição. Para o
+  visitante, o app calcula igual, em memória: concluído quando todas as lições foram
+  respondidas, pontuação = acertos na resposta mais recente / total de lições.
 - **RN-006 (Progresso do visitante)**: O progresso do visitante vale só para a sessão atual.
   Ao concluir um módulo como visitante, o app MUST exibir o aviso de login (RF-030) antes da
   tela de conclusão.
 - **RN-007 (Contatos locais)**: Contatos pessoais pertencem ao aparelho, não à conta: sair da
   conta MUST NOT apagar os contatos.
-- **RN-008 (Nível do perfil)**: O selo de nível do perfil é derivado do número de módulos
-  concluídos (faixas definidas pela API; ver [api-contract.md](api-contract.md)).
+- **RN-008 (Nível e conquistas)**: O selo de nível do perfil é derivado do número de módulos
+  concluídos, e as conquistas, das estatísticas do perfil. As faixas e as regras são fixas
+  no app (a API não as fornece) e são definidas na feature da tarefa B7.
 
 **Critério de aceite geral**: um caso de uso só é aceito quando a RN correspondente tem teste
 automatizado (TDD, Seção III da constituição) e o comportamento de erro associado (§6) também
@@ -254,7 +278,8 @@ está coberto.
   indicador de "modo offline". Sem cache, MUST mostrar estado de erro com "Tentar novamente".
 - **CB-002 (Sem conexão durante ação)**: MUST resultar em `ConnectionFailure` com a mensagem
   "Sem conexão com a internet. Verifique sua rede."
-- **CB-003 (Sessão expirada / 401)**: MUST encerrar a sessão (`UnauthorizedFailure`) e exibir
+- **CB-003 (Sessão expirada / 401)**: O app MUST tentar renovar a credencial uma vez. Se a
+  renovação falhar, MUST encerrar a sessão (`UnauthorizedFailure`) e exibir
   "Sua sessão expirou, faça login novamente." **sem tirar o usuário da tela atual**. O login é
   pedido na próxima ação que exigir conta ou na próxima abertura do app. Se a recusa acontecer
   na abertura do app, vai direto ao login. (Esclarecido em `specs/001-sessao-persistente-visitante`.)
@@ -270,19 +295,28 @@ está coberto.
 - **CB-010 (Permissão de câmera/galeria negada)**: O contato MUST poder ser salvo sem foto, com
   avatar de iniciais, e o app MUST explicar como liberar a permissão.
 - **CB-011 (Visitante em ação restrita)**: Ver RN-003: convite para entrar, sem chamada de rede.
-- **CB-012 (Módulo sem exercícios ou lição vazia na API)**: O módulo MUST ser exibido com as
-  partes disponíveis, sem travar o fluxo de conclusão.
+- **CB-012 (Módulo sem lições ou lição sem alternativas na API)**: Módulo sem lições MUST
+  aparecer como indisponível no painel; lição com menos de duas alternativas MUST ser pulada,
+  sem travar o fluxo de conclusão.
+- **CB-013 (Senha atual errada)**: Na troca de senha, a recusa da senha atual MUST mostrar
+  "Senha atual incorreta" e MUST NOT encerrar a sessão.
+- **CB-014 (Conta desativada)**: Se a API informar que o usuário não existe mais ao restaurar
+  a sessão, o app MUST encerrar a sessão e ir ao login.
 
 ---
 
 ## 7. Suposições e Dependências
 
-- Existe uma **API própria** do projeto que fornece autenticação, notícias, Reels, favoritos,
-  curtidas, notificações, módulos de atividades, progresso e perfil. O contrato esperado pelo
-  app está em [api-contract.md](api-contract.md) e **precisa ser confirmado** com a API real
-  antes de cada integração (Passo 0 do guia de integração).
+- Existe uma **API própria** do projeto (Click Seguro API) que fornece autenticação com
+  renovação de credencial, notícias, Reels, salvar e curtir, módulos de atividades com
+  correção e progresso, e perfil. O contrato está no [openapi.json](openapi.json), resumido
+  em [api-contract.md](api-contract.md). Cada integração confirma o endpoint com o servidor
+  real no primeiro request (Passo 0 do guia de integração).
+- A API **não** tem selo de veracidade, notificações, estatísticas/conquistas de perfil nem
+  outros tipos de exercício além de múltipla escolha. A especificação foi ajustada a isso na
+  v2.1.0.
 - A lista de contatos oficiais é embarcada no app (assets) para funcionar offline em uma
-  emergência (RNF-002).
+  emergência (RNF-002), mesmo existindo um endpoint de contatos na API.
 - O onboarding e o splash já existem no código (módulos `splash` e `onboarding`), assim como o
   design system (`SafeButton`, `SafeCard`, `SafeTextField`, `SafeBadge`) e o style guide.
 
@@ -297,8 +331,15 @@ não serem perdidos:
   denúncia duplicada.
 - Papel de Validador, fila de checagem priorizada pelo volume de denúncias e registro de
   veredito com justificativa obrigatória.
-- Histórico auditável de mudanças de `VeracityStatus` e exibição das fontes da checagem.
-- Notificações push.
+- Selo de veracidade (`VeracityStatus`) e histórico auditável das mudanças, com as fontes da
+  checagem (depende de novo campo na API).
+- Notificações push e notificações do servidor.
+- Outros tipos de exercício: verdadeiro/falso, checklist, cenário e ordenação (dependem da API).
+- Lições teóricas separadas das perguntas.
+- IA: análise de mensagem/imagem suspeita, chat com assistente e histórico (endpoints
+  `/app/ai/*` já existem na API).
+- Contatos oficiais sincronizados com `GET /app/official-contacts`.
+- Desativar conta (`DELETE /users/me/deactivate`).
 
 ---
 
@@ -308,9 +349,18 @@ Este documento descreve requisitos de **negócio e produto**. Se um requisito ex
 [constitution.md](constitution.md), o requisito MUST ser redesenhado. Mudanças de escopo exigem
 nova versão e registro no changelog.
 
-**Versão**: 2.0.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-09-26
+**Versão**: 2.1.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-03
 
 ## Changelog
+
+- **2.1.0 (2026-10-03)**: alinhada à API real ([openapi.json](openapi.json)). IDs mantidos,
+  texto revisado: RF-012/RN-002 trocam o selo de veracidade pelas categorias; RF-020 a RF-022
+  viram alertas locais de notícias novas; RF-024 a RF-028 e RN-005 seguem o modelo da API
+  (uma pergunta de múltipla escolha por lição, correção e pontuação no servidor); RF-006 em
+  três passos com código; RF-007 e CB-003 com renovação de credencial; RF-035/RF-036 e RN-008
+  com estatísticas montadas no app e edição de e-mail, telefone e foto; RN-001 com as regras de
+  senha e nome da API. Novos CB-013 (senha atual errada) e CB-014 (conta desativada). IA,
+  outros tipos de exercício e veracidade vão para a v2 (§8).
 
 - **2.0.0 (2026-09-26)**: MAJOR, porque o escopo passou a seguir o wireframe do Lovable. Foco
   no público idoso e proteção contra golpes. Entram modo visitante, Reels, notificações,

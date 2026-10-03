@@ -2,12 +2,13 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.0.0
+**Versão**: 2.1.0
 
 **Criado em**: 2026-09-07
 
 **Insumos**: [constitution.md](constitution.md) v1.1.0 · [specification.md](specification.md)
-v2.0.0 · [plan.md](plan.md) v2.0.0 · [api-contract.md](api-contract.md) ·
+v2.1.0 · [plan.md](plan.md) v2.1.0 · [api-contract.md](api-contract.md) v1.0.0 ·
+[openapi.json](openapi.json) · wireframe em `wireframe/` (React, referência visual) ·
 [guia de integração](../../click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md) · divisão em trilhas
 do wireframe do Lovable
 
@@ -21,8 +22,12 @@ do wireframe do Lovable
 - Cada tarefa lista **sub-passos na ordem do guia** (contrato → model → datasource → repository →
   usecase → controller → extension → widget/página → rotas/i18n). Em todo sub-passo com código,
   o teste vem antes (Red → Green → Refactor, Seção III da constituição), com Fakes à mão.
-- **Portão de API:** antes da camada `data/` de uma feature remota, a linha correspondente em
-  [api-contract.md](api-contract.md) MUST estar ✅ confirmada com a API real.
+- **Portão de API:** antes da camada `data/` de uma feature remota, confira a linha em
+  [api-contract.md](api-contract.md) e o schema no [openapi.json](openapi.json). Depois do
+  primeiro request real que funcionar, troque 🧪 por ✅ no contrato.
+- **Wireframe:** o React em `wireframe/src/components/screens/` é a referência visual (layout,
+  textos, ícones). Os dados mockados dele (`mockData.ts`, `types.ts`) **não** são contrato: vale
+  a API.
 - Caminhos relativos a `click_seguro_app/`.
 - **Cada tarefa vira uma feature do Spec Kit** ([plan.md §6](plan.md)): `/speckit-specify` (cria a
   branch `NNN-slug` e `specs/NNN-slug/spec.md`) → `/speckit-clarify` → `/speckit-plan` →
@@ -53,8 +58,12 @@ do wireframe do Lovable
     `allowBackup="false"`. **Sem** permissão de câmera (ver research R10 da feature 001).
   - iOS: `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription` e
     `LSApplicationQueriesSchemes` (`tel`, `https`) no `Info.plist`.
-- [ ] **F0.2 `ApiClient` com `CancelToken`**: parâmetro opcional em `get`, com teste em que o
-  cancelamento vira `ApiErrorType.cancelled` — `lib/modules/common/api_client/api_client.dart`.
+- [ ] **F0.2 Ajustes do `ApiClient` à API real** — `lib/modules/common/api_client/api_client.dart`
+  - Ler o código de erro de `code` (hoje lê `error`), com teste para o corpo `{code, message}` e
+    para o corpo de validação do Zod (`{statusCode, message, errors}`).
+  - `CancelToken` opcional em `get`, com teste em que o cancelamento vira `ApiErrorType.cancelled`.
+  - `postMultipart` (upload do avatar, campo `avatar`), com teste.
+  - Atualizar o §4.1 do guia de integração (`code` no lugar de `error`).
 - [x] **F0.3 Storages** (specs/001-sessao-persistente-visitante): `SecureStorageService` e `LocalCacheService` (contrato + impl + fake), com
   testes — `lib/modules/common/services/`.
 - [x] **F0.4 Sessão persistente com visitante** (RF-005, RF-007, RNF-007) (specs/001-sessao-persistente-visitante)
@@ -64,6 +73,15 @@ do wireframe do Lovable
     renovação de credencial. Entram numa feature própria quando confirmados.
   - Testes: restaurar, salvar, visitante, logout.
   - Registrar no `CommonModule` e chamar `restoreSession()` no `_setup()` do `main.dart`.
+- [ ] **F0.13 Renovação e validação da sessão** (RF-007, CB-003, CB-013, CB-014)
+  - Sessão passa a guardar `accessToken` + `refreshToken` (migração do registro salvo pela
+    feature 001: registro antigo sem `refreshToken` → sessão encerrada, vai ao login).
+  - `ApiClient`: em 401 de request autenticado, `INVALID_CREDENTIALS` não mexe na sessão; outros
+    401 tentam `POST /auth/app/refresh` uma vez (requests simultâneos esperam a mesma
+    renovação) e repetem o request; falhou → `expire()`. Com testes.
+  - Na abertura, depois do `restoreSession()`: `GET /users/me` atualiza o nome; 404
+    `USER_NOT_FOUND` encerra a sessão; sem rede mantém a sessão local. Com testes.
+  - Fecha a pendência registrada na F0.4.
 - [ ] **F0.5 Serviços de plataforma e voz**
   - `TextToSpeechService`, `ExternalLauncherService`, `ShareService` e `ImageStorageService`
     (contrato + impl + fake em `test/fakes/`).
@@ -95,9 +113,9 @@ do wireframe do Lovable
   (RNF-003). Adicionar ao style guide.
 - [ ] **F0.11 Testes base**: substituir `test/widget_test.dart` por um smoke test que sobe o app
   com fakes e navega pelas 4 abas.
-- [ ] **F0.12 Contrato da API**: revisar [api-contract.md](api-contract.md) com a API real. As
-  linhas que não puderem ser confirmadas agora ficam como ⚠️, e cada trilha confirma as suas no
-  primeiro sub-passo da tarefa.
+- [x] **F0.12 Contrato da API** (2026-10-03): [api-contract.md](api-contract.md) v1.0.0 reescrito
+  a partir do [openapi.json](openapi.json); especificação e plano ajustados (v2.1.0). As linhas
+  ficam 🧪 até o primeiro request real de cada trilha.
 
 **Checkpoint Fase 0:** o app abre no aparelho, passa pelo splash, entra como visitante, navega
 pelas 4 abas vazias, muda fonte/contraste pela infraestrutura, e `flutter analyze`/`flutter test`
@@ -115,57 +133,80 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
   - Testes do `OnboardingController` (hoje sem teste).
   - Conferir textos e slides com o wireframe.
 - [ ] **A2 Login / cadastro / visitante / recuperar senha** (RF-003 a RF-006, RN-001)
-  - Confirmar os endpoints de auth no api-contract.
-  - `UserEntity` + `UserModel` com teste.
-  - `AuthRemoteDataSource` + impl com teste (`FakeHttpClientAdapter`).
-  - `AuthRepositoryImpl`: chama `saveSession` no sucesso; 401 no login → `InvalidCredentialsFailure`;
-    409 no cadastro → `EmailAlreadyExistsFailure`; demais → `toFailure()`. Com teste.
-  - `CredentialsValidator` (RN-001) com teste.
+  - Depende da F0.13 (par de tokens na sessão).
+  - `UserEntity` + `UserModel` (`GET /users/me`: name, email, phone, avatarUrl, role) e
+    `AuthTokensModel`, com teste.
+  - `AuthRemoteDataSource` + impl (`register`, `login`, `getMe`, `forgotPassword`, `verifyCode`,
+    `resetPassword`) com teste (`FakeHttpClientAdapter`).
+  - `AuthRepositoryImpl`: login = `login` → `getMe` → `saveSession`; cadastro = `register` →
+    `login` → `getMe` → `saveSession` (a API não devolve token no cadastro). 401
+    `INVALID_CREDENTIALS` → `InvalidCredentialsFailure`; `role` diferente de `USER` → idem; 409
+    `USER_EMAIL_ALREADY_EXISTS` → `EmailAlreadyExistsFailure`; 401 `INVALID_RECOVERY_CODE` →
+    `InvalidRecoveryCodeFailure`; demais → `toFailure()`. Com teste.
+  - `CredentialsValidator` (RN-001: nome 6–150, e-mail, senha 8–64 com maiúscula, minúscula,
+    número e especial) com teste.
   - `LoginUseCase`, `RegisterUseCase` (valida antes da rede), `EnterAsGuestUseCase`,
-    `RequestPasswordResetUseCase`, com testes.
+    `RequestPasswordResetUseCase`, `VerifyResetCodeUseCase`, `ResetPasswordUseCase`, com testes.
   - `AuthenticationController` (modo login/cadastro, mostrar senha, `isLoading`/`failure`) com
     teste.
   - `LoginPage` (alternância, ícones, olho da senha, "Entrar como visitante") e
-    `ForgotPasswordPage`, com widget test. Remover `LoginPlaceholderPage`.
-- [ ] **A3 Feed (Início)** (RF-009 a RF-012, RNF-002, RNF-005, CB-001, CB-006, CB-007)
-  - Confirmar `/news` e `/news/categories`.
-  - `VeracityStatus` com `fromJson` tolerante, `NewsEntity`, `CategoryEntity` e models, com teste.
-  - `NewsRemoteDataSource` + impl (feed, categorias, busca com cancelamento), com teste.
-  - `NewsLocalDataSource` (cache da 1ª página e favoritos) sobre `LocalCacheService`, com teste.
+    `ForgotPasswordPage` em 3 passos (e-mail → código → nova senha), com widget test. Remover
+    `LoginPlaceholderPage`.
+- [ ] **A3 Feed (Início)** (RF-009 a RF-012, RN-002, RNF-002, RNF-005, CB-001, CB-006, CB-007)
+  - Endpoints: `/app/news/feed` (cursor), `/app/news` (categoria/busca, por página),
+    `/categories`, `/app/news/reels` (carrossel).
+  - `NewsEntity` (categorias, interação opcional), `CategoryEntity`, `NewsFeedEntity`
+    (destaques, recomendados, recentes + cursor) e models, com teste.
+  - `NewsRemoteDataSource` + impl (feed, lista filtrada, categorias, busca com cancelamento),
+    com teste. Visitante chama sem token.
+  - `NewsLocalDataSource` (cache da 1ª carga do feed) sobre `LocalCacheService`, com teste.
   - `NewsRepositoryImpl` com fallback offline e `cancelled` ignorado, com teste.
-  - `GetNewsFeedUseCase` (ordenação), `GetCategoriesUseCase`, `SearchNewsUseCase`, com teste.
-  - `FeedController`: categoria, paginação sem duplicar, fim da lista, busca com debounce,
-    `isFromCache`. Com teste.
-  - `NewsPresentationExtension` (rótulo/cor do selo, data relativa) com teste.
-  - Widgets `NewsCardWidget`, `CategoryFilterBar`, `ReelsCarousel` e `FeedPage` (saudação,
-    loading, erro, vazio, banner offline), com widget test.
+  - `GetNewsFeedUseCase`, `GetNewsByCategoryUseCase`, `GetCategoriesUseCase`,
+    `SearchNewsUseCase`, com teste.
+  - `FeedController`: categoria (troca de endpoint), paginação por cursor e por página sem
+    duplicar, fim da lista, busca com debounce, `isFromCache`. Com teste.
+  - `NewsPresentationExtension` (chips de categoria, data relativa de `originalPublishedAt`)
+    com teste.
+  - Widgets `NewsCardWidget`, `CategoryFilterBar`, `HighlightsSection`, `ReelsCarousel` e
+    `FeedPage` (saudação, loading, erro, vazio, banner offline), com widget test.
 - [ ] **A4 Reels** (RF-013, RF-019 curtir)
-  - Confirmar `/reels` e `/news/{id}/like`.
-  - `GetReelsUseCase` e `ToggleLikeUseCase`, com teste.
+  - Endpoints: `/app/news/reels` (cursor), `POST /app/news/{id}/like` e `/save` (alternam).
+  - `ReelEntity` (com `content`, `likesCount`, `isSaved`) + model, com teste. O reel não traz
+    `isLiked`: o estado vem do retorno do toggle.
+  - `GetReelsUseCase`, `ToggleLikeUseCase` e `ToggleSaveUseCase`, com teste.
   - `ReelsController` com teste.
   - `ReelsPage` com `PageView` vertical (swipe), botões de navegação, curtir/salvar (visitante →
     `requireAccount`) e abrir fonte (`ExternalLauncherService`), com widget test.
 - [ ] **A5 Detalhe da notícia** (RF-014 a RF-019, CB-008)
-  - Confirmar `/news/{id}` e `/me/favorites`.
-  - `GetNewsDetailUseCase`, `ToggleFavoriteUseCase` e `GetFavoritesUseCase` (cache offline), com
-    teste.
+  - Endpoints: `/app/news/{id}`, `POST /app/news/{id}/read`, `/save`,
+    `GET /users/me/news/saved`.
+  - `NewsDetailEntity` (+ `suggestedModule` opcional) + model, com teste.
+  - `GetNewsDetailUseCase` (cadastrado: registra leitura sem bloquear a tela),
+    `ToggleSaveUseCase` e `GetSavedNewsUseCase` (cache offline), com teste.
   - `NewsDetailController` com teste.
   - `NewsDetailPage`:
     - ouvir com velocidade (`ReadAloudController`) e leitura automática se `autoReadAloud`;
     - compartilhar (`ShareService`);
     - abrir fonte no navegador externo;
     - salvar (visitante → `requireAccount`);
-    - bloco de atividades relacionadas → `context.push('/activities/$moduleId')`.
+    - bloco de atividade relacionada (só com `suggestedModule`) →
+      `context.push('/activities/$moduleId')`.
     - Com widget test.
-- [ ] **A6 Notificações** (RF-020 a RF-022)
-  - Confirmar os endpoints `/me/notifications*`.
-  - `NotificationEntity`/model, datasource e repository, com testes.
-  - Usecases `GetNotifications`, `GetUnreadCount`, `MarkAsRead`, `MarkAllAsRead`, e o agrupamento
-    Hoje/Ontem/Anteriores num usecase ou extension testável.
+- [ ] **A6 Alertas locais** (RF-020 a RF-022) — a API não tem notificações
+  - `AlertEntity` `{newsId, title, source, publishedAt, isRead}` + model, com teste.
+  - `AlertsRemoteDataSource` próprio (`GET /app/news?startDate=...&sortBy=publishedAt`), sem
+    importar o módulo `news`, com teste.
+  - `AlertsLocalDataSource` (alertas, lidos e última verificação no `LocalCacheService`), com
+    teste.
+  - `NotificationsRepositoryImpl` com teste.
+  - `CheckNewAlertsUseCase` (sem duplicar por `newsId`; 1ª execução só marca o horário; limite
+    de 50 alertas/30 dias; respeita `receiveNotifications`), `GetAlerts`, `GetUnreadCount`,
+    `MarkAsRead`, `MarkAllAsRead`, e o agrupamento Hoje/Ontem/Anteriores numa extension
+    testável. Com testes.
   - `NotificationsController` com teste.
   - `NotificationBellButton` real (contador; visitante → `requireAccount`) e `NotificationsPage`
-    (grupos, "marcar todas como lidas", tocar → marcar lida e abrir a notícia se houver
-    `newsId`), com widget test.
+    (grupos, "marcar todas como lidas", tocar → marcar lido e abrir `/news/:id`), com widget
+    test.
 
 ---
 
@@ -173,34 +214,37 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
 
 Módulos: `activities`, `help`, `profile`, `settings`.
 
-- [ ] **B1 Atividades: painel** (RF-023)
-  - Confirmar `/modules` e `/me/progress`.
-  - `ModuleSummaryEntity`, `ModuleProgressEntity` e models, com teste.
-  - `ActivitiesRemoteDataSource` + impl, com teste.
-  - `ActivitiesRepositoryImpl` com progresso em memória para visitante (RN-006), com teste.
-  - `GetActivitiesDashboardUseCase` (junta módulos + progresso, calcula progresso geral e status
-    de cada módulo), com teste.
+- [ ] **B1 Atividades: painel** (RF-023, CB-012)
+  - Endpoint: `GET /app/educational/modules` (o progresso já vem junto).
+  - `ModuleSummaryEntity` (`completedCount`, `progressPercent`) e `ActivitiesDashboardEntity`
+    (totais) + models, com teste.
+  - `ActivitiesRemoteDataSource` + impl, com teste. Visitante chama sem token.
+  - `ActivitiesRepositoryImpl` com `GuestProgressStore` em memória para visitante (RN-006), com
+    teste.
+  - `GetActivitiesDashboardUseCase` (status de cada módulo: não iniciado / em andamento /
+    concluído / indisponível sem lições), com teste.
   - `ActivitiesDashboardController` com teste.
   - Extension de status (rótulo, cor, ícone) com teste.
   - `ModuleCardWidget` e `ActivitiesDashboardPage`, com widget test.
-- [ ] **B2 Atividades: lições** (RF-024, RF-040)
-  - Confirmar `/modules/{id}`.
-  - `ModuleDetailEntity` e `LessonEntity` + models, com teste.
-  - `GetModuleDetailUseCase` e `MarkLessonReadUseCase` (salva progresso), com teste.
-  - `LessonController` (passo atual, avançar/voltar, lidas) com teste.
-  - `LessonContentPage` com ouvir e leitura automática, com widget test.
-- [ ] **B3 Atividades: exercícios e feedback** (RF-025 a RF-028, RN-005, CB-012)
-  - `ExerciseEntity` como `sealed class` (5 tipos) + model com `switch` no `type` e tipo
-    desconhecido descartado, com teste de cada tipo.
-  - `EvaluateAnswerUseCase` (switch exaustivo) com teste por tipo.
-  - `ShuffleExerciseUseCase` (recebe `Random` para ser testável).
-  - `CalculateScoreUseCase` (acertos na 1ª tentativa; guarda a melhor), com teste.
-  - `QuizController` (exercício atual, resposta, confirmar, feedback, avançar), com teste.
-  - Widgets por tipo: `MultipleChoiceWidget`, `TrueFalseWidget`, `ChecklistWidget`,
-    `ScenarioWidget` e `OrderingWidget` (arrastar para reordenar, com alternativa por botões
-    para acessibilidade). Também `ConfirmAnswerFooter` e `FeedbackSheet`. Com widget tests.
-- [ ] **B4 Atividades: conclusão e aviso de login** (RF-029, RF-030, RN-006)
-  - `CompletionPage` (pontuação, compartilhar conquista via `ShareService`).
+- [ ] **B2 Atividades: navegação pelas perguntas** (RF-024, RF-040, CB-012)
+  - Endpoint: `GET /app/educational/modules/{moduleId}`.
+  - `ModuleDetailEntity`, `LessonEntity` (pergunta, imagem, opções, concluída) e
+    `ModuleProgressEntity` + models, com teste (lição com < 2 opções descartada).
+  - `GetModuleDetailUseCase`, com teste.
+  - `LessonController` (pergunta atual, avançar/voltar, concluídas) com teste.
+  - `LessonPage` (enunciado, imagem, alternativas, ouvir enunciado + alternativas e leitura
+    automática), com widget test.
+- [ ] **B3 Atividades: resposta e feedback** (RF-025 a RF-028, RN-005)
+  - Endpoint: `POST /app/educational/modules/{moduleId}/lessons/{lessonId}/answer`.
+  - `AnswerResultEntity` `{isCorrect, correctOptionId, explanation}` + model, com teste.
+  - `AnswerLessonUseCase` (cadastrado: depois recarrega o `progress`; visitante: registra no
+    `GuestProgressStore`), com teste. 400 `EDUCATIONAL_INVALID_OPTION` → recarregar o módulo.
+  - `QuizController` (seleção, confirmar, feedback, avançar, pontuação), com teste.
+  - `MultipleChoiceWidget` (sem reordenar as opções), `ConfirmAnswerFooter` e `FeedbackSheet`
+    (acerto/erro, correta destacada, explicação). Com widget tests.
+- [ ] **B4 Atividades: conclusão e aviso de login** (RF-029, RF-030, RN-005, RN-006)
+  - `CompletionPage` (pontuação `score/totalScore` da API, ou do `GuestProgressStore` para
+    visitante; compartilhar conquista via `ShareService`).
   - `GuestProgressAlert` antes da conclusão, para visitante, com botões "Criar conta" e "Continuar
     sem salvar".
   - Widget tests dos dois fluxos (cadastrado e visitante).
@@ -217,25 +261,31 @@ Módulos: `activities`, `help`, `profile`, `settings`.
     `ContactFormPage` (foto circular de galeria/câmera; permissão negada → salva com iniciais;
     remover com confirmação), com widget test.
 - [ ] **B7 Perfil** (RF-035, RF-036, RN-008)
-  - Confirmar `/me/profile`, `PATCH /me/profile` e `/me/avatar`. Se `/me/avatar` não existir,
-    a foto de perfil fica local via `ImageStorageService`: atualizar o api-contract.
+  - Endpoints: `GET`/`PATCH /users/me`, `POST`/`DELETE /users/me/avatar` (multipart, F0.2),
+    e para as estatísticas `GET /app/educational/modules` e `GET /users/me/news/saved?limit=1`.
+  - Definir na spec da feature as faixas de nível e as regras das conquistas (RN-008, fixas no
+    app).
   - `ProfileEntity`, `StatsEntity`, `AchievementEntity`, `LevelEntity` + models, com teste.
-  - Datasource e repository, com teste.
-  - `GetProfileUseCase` (calcula o nível, RN-008), `UpdateProfileUseCase`, `UpdateAvatarUseCase`,
-    com teste.
+  - `ProfileRemoteDataSource` (três fontes em paralelo) e repository, com teste. 409
+    `USER_EMAIL_ALREADY_EXISTS` → `EmailAlreadyExistsFailure`.
+  - `GetProfileUseCase` (estatísticas, nível e conquistas), `UpdateProfileUseCase` (nome 6–150,
+    e-mail, telefone `+55`), `UpdateAvatarUseCase`, `RemoveAvatarUseCase`,
+    `SetReceiveAlertsUseCase`, com teste.
   - `ProfileController` e `EditProfileController`, com teste.
   - Extension de nível/conquista com teste.
   - `ProfilePage` (cartão, selo, estatísticas, conquistas, atalhos; visitante → convite) e
-    `EditProfilePage` (`/profile/edit`), com widget test.
-- [ ] **B8 Configurações** (RF-037)
-  - Confirmar `/me/change-password`.
+    `EditProfilePage` (`/profile/edit`: nome, e-mail, telefone, foto, "Receber alertas"), com
+    widget test.
+- [ ] **B8 Configurações** (RF-037, CB-013)
+  - Endpoint: `PATCH /users/me/change-password`. 401 `INVALID_CREDENTIALS` → "Senha atual
+    incorreta" sem sair da conta (depende da F0.13); 409 `USER_NEW_PASSWORD_EQUALS_OLD`.
   - `SettingsRepositoryImpl` com `changePassword` e `logout` (via `UserSessionService`, sem
     apagar contatos, RN-007), com teste.
   - `ChangePasswordUseCase` (RN-001 na nova senha) e `LogoutUseCase`, com teste.
   - `SettingsController` e `ChangePasswordController`, com teste.
   - `SettingsPage` com as linhas:
     - Dados pessoais → `/profile/edit`;
-    - Notificações → `/notifications`;
+    - Alertas → `/notifications`;
     - Segurança → `/settings/security`;
     - Acessibilidade → `/settings/accessibility`;
     - Sair (com confirmação).
@@ -258,13 +308,13 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - Fluxos ponta a ponta:
     - visitante → atividade → aviso → cadastro;
     - notícia → atividade relacionada;
-    - notificação → notícia;
-    - 401 → login.
+    - alerta → notícia;
+    - token vencido → renovação transparente; renovação recusada → login.
   - Revisão de textos pt-BR e en-US.
   - Auditoria de acessibilidade (RNF-003/RNF-004): `Semantics` em todo interativo, TalkBack, fonte
     em 1,5× sem overflow, contraste AA/AAA.
   - Teste em aparelho físico, com build de release.
-- [ ] **C4 Auditoria de requisitos**: para cada RF/RNF/RN/CB da especificação v2.0.0, apontar o
+- [ ] **C4 Auditoria de requisitos**: para cada RF/RNF/RN/CB da especificação v2.1.0, apontar o
   teste que o cobre (tabela de rastreabilidade do plan). Lacuna vira tarefa antes da entrega.
 
 ---
@@ -289,6 +339,9 @@ Dependências entre trilhas (as únicas):
 
 ## Notas
 
+- **Fora da v1 (decisão 2026-10-03):** endpoints de IA (`/app/ai/*`), contatos oficiais pela
+  API, desativar conta e os quatro tipos de exercício que a API não tem. Ver §8 da
+  especificação.
 - Tarefa que precisar de endpoint diferente do api-contract: atualize o contrato (e o plan, se
   mudar um repository) antes de marcar a tarefa como concluída.
 - Evite PRs grandes: um PR por sub-bloco (ex.: "A3 data", "A3 presentation") facilita a revisão
@@ -296,4 +349,4 @@ Dependências entre trilhas (as únicas):
 - As tarefas da versão 1.x (checagem colaborativa) estão preservadas no histórico do Git e na §8
   da especificação, para a v2.
 
-**Versão**: 2.0.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-09-26
+**Versão**: 2.1.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-03
