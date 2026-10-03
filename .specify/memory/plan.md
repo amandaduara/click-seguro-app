@@ -138,7 +138,7 @@ As abas usam `StatefulShellRoute.indexedStack` (o estado de cada aba é preserva
 | `/onboarding` | Onboarding | onboarding | raiz |
 | `/login` | Login/Cadastro | authentication | raiz |
 | `/forgot-password` | Recuperar senha (e-mail → código → nova senha) | authentication | raiz |
-| `/home` | Feed | news | **aba 1** |
+| `/home` | Feed (até a F0.9: `HomePlaceholderPage` provisória em `core/routing/`, feature 003) | news | **aba 1** |
 | `/activities` | Painel de atividades | activities | **aba 2** |
 | `/help` | Central de ajuda | help | **aba 3** |
 | `/profile` | Perfil | profile | **aba 4** |

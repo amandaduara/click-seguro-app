@@ -63,7 +63,8 @@ real · ❌ não existe na API (ver alternativa) · ⏸️ existe na API, fora d
 
 - **Cadastro não devolve token.** Fluxo do `AuthRepositoryImpl.register`: `register` → `login`
   com as mesmas credenciais → `GET /users/me` → `saveSession`.
-- **Login não devolve o usuário.** Fluxo do `login`: `login` → `GET /users/me` → `saveSession`.
+- **Login não devolve o usuário.** Fluxo do `login`: `login` → `GET /users/me` (com o token
+  recém-recebido, via `ApiClient.get(authToken:)`, feature 003) → papel `USER`? → `saveSession`.
 - O token não traz `id` utilizável no app. A sessão guarda `name`/`email` do `/users/me`.
 
 `profile` (`GetProfileResponseDto`): `{ name, email, phone?, avatarUrl?, role, receiveNotifications }`.
