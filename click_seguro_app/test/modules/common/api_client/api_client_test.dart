@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../../fakes/fake_secure_storage_service.dart';
 import 'fake_http_client_adapter.dart';
 
 void main() {
@@ -13,7 +14,7 @@ void main() {
 
   setUp(() {
     adapter = FakeHttpClientAdapter();
-    session = UserSessionService();
+    session = UserSessionService(FakeSecureStorageService());
     GetIt.instance.registerSingleton<UserSessionService>(session);
     client = ApiClient(
       dio: Dio(BaseOptions(baseUrl: 'https://api.test'))
@@ -33,7 +34,7 @@ void main() {
 
   group('requisição', () {
     test('envia o Bearer token quando requiresAuth = true', () async {
-      session.saveSession(newToken: 'abc');
+      await session.saveSession(token: 'abc', userId: 'u1');
 
       await client.get('/news');
 
@@ -41,7 +42,7 @@ void main() {
     });
 
     test('não envia Authorization quando requiresAuth = false', () async {
-      session.saveSession(newToken: 'abc');
+      await session.saveSession(token: 'abc', userId: 'u1');
 
       await client.post('/login', requiresAuth: false);
 
@@ -68,8 +69,8 @@ void main() {
       expect(client.get('/news'), apiException(ApiErrorType.timeout));
     });
 
-    test('401 vira unauthorized e encerra a sessão', () async {
-      session.saveSession(newToken: 'abc');
+    test('401 com sessão conectada encerra a sessão como expirada', () async {
+      await session.saveSession(token: 'abc', userId: 'u1');
       adapter
         ..statusCode = 401
         ..body = {'message': 'Token expirado'};
@@ -78,7 +79,22 @@ void main() {
         client.get('/news'),
         apiException(ApiErrorType.unauthorized, statusCode: 401),
       );
-      expect(session.isAuthenticated, isFalse);
+      expect(session.sessionStatus.value, UserSessionStatus.unauthenticated);
+      expect(session.endReason, SessionEndReason.expired);
+    });
+
+    test('401 sem sessão (senha errada no login) não gera aviso de expirada',
+        () async {
+      adapter
+        ..statusCode = 401
+        ..body = {'error': 'INVALID_CREDENTIALS'};
+
+      await expectLater(
+        client.post('/auth/login', requiresAuth: false),
+        apiException(ApiErrorType.unauthorized, statusCode: 401),
+      );
+      expect(session.sessionStatus.value, UserSessionStatus.unauthenticated);
+      expect(session.endReason, isNull);
     });
 
     test('4xx vira client e expõe error/message do corpo', () async {

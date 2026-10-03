@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/modules/common/config/environment_config.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:dio/dio.dart';
@@ -113,7 +115,8 @@ class ApiClient {
     if (EnvironmentConfig.debugMode) {
       _dio.interceptors.add(
         LogInterceptor(
-          requestHeader: true,
+          // Headers fora do log: o Authorization carrega o token (FR-010).
+          requestHeader: false,
           requestBody: true,
           responseBody: true,
           error: true,
@@ -249,9 +252,10 @@ class ApiClient {
     final body = response?.data;
     final json = body is Map ? body : const <String, dynamic>{};
 
-    // Token expirado ou não autorizado (401) -> Desloga automaticamente
+    // Token expirado ou não autorizado (401) -> encerra a sessão como expirada.
+    // Sem await: a memória muda na hora e a exceção segue para o repository.
     if (statusCode == 401) {
-      GetIt.instance<UserSessionService>().logout();
+      unawaited(GetIt.instance<UserSessionService>().expire());
     }
 
     return ApiException(

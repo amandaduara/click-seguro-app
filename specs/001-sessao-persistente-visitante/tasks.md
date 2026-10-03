@@ -31,14 +31,14 @@ Mockito/mocktail), rodam offline e resetam o `GetIt` no `tearDown`.
 **Purpose**: dependências e preparação de plataforma (tarefa F0.1 do produto, FR-015,
 [research R1/R9/R10](research.md)).
 
-- [ ] T001 Adicionar ao `click_seguro_app/pubspec.yaml`, em `dependencies`, com estas restrições exatas: `flutter_secure_storage: ^11.2.0`, `flutter_tts: ^4.2.5`, `url_launcher: ^6.3.2`, `share_plus: ^13.3.0`, `image_picker: ^1.2.3`, `path_provider: ^2.1.6`. Rodar `flutter pub get` dentro de `click_seguro_app/` e versionar o `pubspec.lock` atualizado
-- [ ] T002 [P] Em `click_seguro_app/android/app/src/main/AndroidManifest.xml`:
+- [X] T001 Adicionar ao `click_seguro_app/pubspec.yaml`, em `dependencies`, com estas restrições exatas: `flutter_secure_storage: ^11.2.0`, `flutter_tts: ^4.2.5`, `url_launcher: ^6.3.2`, `share_plus: ^13.3.0`, `image_picker: ^1.2.3`, `path_provider: ^2.1.6`. Rodar `flutter pub get` dentro de `click_seguro_app/` e versionar o `pubspec.lock` atualizado
+- [X] T002 [P] Em `click_seguro_app/android/app/src/main/AndroidManifest.xml`:
   - adicionar `<uses-permission android:name="android.permission.INTERNET"/>` antes de `<application>`. **Não** declarar `CAMERA`: o `image_picker` usa a câmera do sistema via intent, e declarar a permissão sem pedi-la em tempo de execução faz a captura falhar (research R10);
   - adicionar `android:allowBackup="false"` na tag `<application>`;
   - dentro do `<queries>` existente, adicionar `<intent>` com `ACTION_DIAL`/`data android:scheme="tel"` e `<intent>` com `ACTION_VIEW`/`data android:scheme="https"`;
   - não alterar o `minSdk` (Flutter 3.47 já usa 24, exigido pelo `flutter_secure_storage` 11).
-- [ ] T003 [P] Em `click_seguro_app/ios/Runner/Info.plist`, adicionar `NSCameraUsageDescription` ("Usamos a câmera para tirar a foto dos seus contatos de confiança."), `NSPhotoLibraryUsageDescription` ("Usamos suas fotos para a imagem dos seus contatos de confiança.") e `LSApplicationQueriesSchemes` com os itens `tel` e `https`
-- [ ] T004 [P] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, trocar `requestHeader: true` por `requestHeader: false` no `LogInterceptor`, para o header `Authorization: Bearer ...` nunca ir para o log (FR-010, research R9). Não alterar mais nada nesta tarefa
+- [X] T003 [P] Em `click_seguro_app/ios/Runner/Info.plist`, adicionar `NSCameraUsageDescription` ("Usamos a câmera para tirar a foto dos seus contatos de confiança."), `NSPhotoLibraryUsageDescription` ("Usamos suas fotos para a imagem dos seus contatos de confiança.") e `LSApplicationQueriesSchemes` com os itens `tel` e `https`
+- [X] T004 [P] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, trocar `requestHeader: true` por `requestHeader: false` no `LogInterceptor`, para o header `Authorization: Bearer ...` nunca ir para o log (FR-010, research R9). Não alterar mais nada nesta tarefa
 
 ---
 
@@ -51,8 +51,8 @@ Mockito/mocktail), rodam offline e resetam o `GetIt` no `tearDown`.
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T005 [P] Criar `click_seguro_app/test/modules/common/services/secure_storage_service_test.dart` testando o `FlutterSecureStorageService` com `FlutterSecureStorage.setMockInitialValues({})`: `write` seguido de `read` devolve o valor; `read` de chave inexistente devolve `null`; `delete` remove só a chave pedida (outra chave continua)
-- [ ] T006 [P] Criar `click_seguro_app/test/modules/common/services/local_cache_service_test.dart` testando o `SharedPreferencesLocalCacheService` com `SharedPreferences.setMockInitialValues({})`:
+- [X] T005 [P] Criar `click_seguro_app/test/modules/common/services/secure_storage_service_test.dart` testando o `FlutterSecureStorageService` com `FlutterSecureStorage.setMockInitialValues({})`: `write` seguido de `read` devolve o valor; `read` de chave inexistente devolve `null`; `delete` remove só a chave pedida (outra chave continua)
+- [X] T006 [P] Criar `click_seguro_app/test/modules/common/services/local_cache_service_test.dart` testando o `SharedPreferencesLocalCacheService` com `SharedPreferences.setMockInitialValues({})`:
   - `writeJson` seguido de `readJson` devolve o mesmo `Map`;
   - chave inexistente → `null`;
   - valor que não é objeto JSON (ex.: string `"abc"` gravada direto) → `null`, sem exceção;
@@ -60,11 +60,11 @@ Mockito/mocktail), rodam offline e resetam o `GetIt` no `tearDown`.
 
 ### Implementação
 
-- [ ] T007 [P] Criar `click_seguro_app/lib/modules/common/services/secure_storage_service.dart` com `abstract class SecureStorageService { Future<String?> read(String key); Future<void> write(String key, String value); Future<void> delete(String key); }` e `class FlutterSecureStorageService implements SecureStorageService`, que recebe um `FlutterSecureStorage` opcional pelo construtor (padrão `const FlutterSecureStorage()`) e delega a ele (faz T005 passar)
-- [ ] T008 [P] Criar `click_seguro_app/lib/modules/common/services/local_cache_service.dart` com `abstract class LocalCacheService { Future<Map<String, dynamic>?> readJson(String key); Future<void> writeJson(String key, Map<String, dynamic> value); Future<void> remove(String key); }` e `class SharedPreferencesLocalCacheService implements LocalCacheService`, que recebe `SharedPreferences` pelo construtor, grava com `jsonEncode` e lê com `jsonDecode`, devolvendo `null` quando o valor não existe ou não é um objeto JSON (faz T006 passar)
-- [ ] T009 [P] Criar `click_seguro_app/test/fakes/fake_secure_storage_service.dart`: `class FakeSecureStorageService implements SecureStorageService`, com `final Map<String, String> values`, flags `bool failOnRead = false` e `bool failOnWrite = false` (lançam `Exception` em `read` e em `write`/`delete`, respectivamente), e contadores `readCalls`, `writeCalls` e `deleteCalls`
-- [ ] T010 [P] Criar `click_seguro_app/test/fakes/fake_local_cache_service.dart`: `class FakeLocalCacheService implements LocalCacheService`, com um `Map<String, Map<String, dynamic>>` em memória e o contador `writeCalls`
-- [ ] T011 Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`:
+- [X] T007 [P] Criar `click_seguro_app/lib/modules/common/services/secure_storage_service.dart` com `abstract class SecureStorageService { Future<String?> read(String key); Future<void> write(String key, String value); Future<void> delete(String key); }` e `class FlutterSecureStorageService implements SecureStorageService`, que recebe um `FlutterSecureStorage` opcional pelo construtor (padrão `const FlutterSecureStorage()`) e delega a ele (faz T005 passar)
+- [X] T008 [P] Criar `click_seguro_app/lib/modules/common/services/local_cache_service.dart` com `abstract class LocalCacheService { Future<Map<String, dynamic>?> readJson(String key); Future<void> writeJson(String key, Map<String, dynamic> value); Future<void> remove(String key); }` e `class SharedPreferencesLocalCacheService implements LocalCacheService`, que recebe `SharedPreferences` pelo construtor, grava com `jsonEncode` e lê com `jsonDecode`, devolvendo `null` quando o valor não existe ou não é um objeto JSON (faz T006 passar)
+- [X] T009 [P] Criar `click_seguro_app/test/fakes/fake_secure_storage_service.dart`: `class FakeSecureStorageService implements SecureStorageService`, com `final Map<String, String> values`, flags `bool failOnRead = false` e `bool failOnWrite = false` (lançam `Exception` em `read` e em `write`/`delete`, respectivamente), e contadores `readCalls`, `writeCalls` e `deleteCalls`
+- [X] T010 [P] Criar `click_seguro_app/test/fakes/fake_local_cache_service.dart`: `class FakeLocalCacheService implements LocalCacheService`, com um `Map<String, Map<String, dynamic>>` em memória e o contador `writeCalls`
+- [X] T011 Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`:
   - adicionar `enum SessionEndReason { userLogout, expired }`;
   - adicionar o valor `guest` ao `UserSessionStatus` (fica `authenticated, guest, unauthenticated`);
   - o construtor passa a receber `SecureStorageService` (`UserSessionService(this._storage)`);
@@ -72,12 +72,12 @@ Mockito/mocktail), rodam offline e resetam o `GetIt` no `tearDown`.
 
   Manter por enquanto os métodos atuais (`saveSession`, `logout`) funcionando em memória, para
   não quebrar a compilação.
-- [ ] T012 Em `click_seguro_app/lib/modules/common/common_module.dart`, tornar `registerServices` `async` e registrar:
+- [X] T012 Em `click_seguro_app/lib/modules/common/common_module.dart`, tornar `registerServices` `async` e registrar:
   - `registerLazySingleton<SecureStorageService>(() => FlutterSecureStorageService())`;
   - `final prefs = await SharedPreferences.getInstance();`;
   - `registerLazySingleton<LocalCacheService>(() => SharedPreferencesLocalCacheService(prefs))`;
   - `registerLazySingleton(() => UserSessionService(injector<SecureStorageService>()))`, mantendo o `ApiClient`.
-- [ ] T013 Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, trocar `UserSessionService()` por `UserSessionService(FakeSecureStorageService())` no `setUp` e ajustar o que for preciso para compilar. Rodar `flutter test` e confirmar que os 13 testes existentes continuam verdes
+- [X] T013 Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, trocar `UserSessionService()` por `UserSessionService(FakeSecureStorageService())` no `setUp` e ajustar o que for preciso para compilar. Rodar `flutter test` e confirmar que os 13 testes existentes continuam verdes
 
 **Checkpoint**: `flutter analyze` sem erros e `flutter test` verde. Storages e fakes prontos.
 
@@ -97,7 +97,7 @@ o **mesmo** fake (simula fechar e reabrir), chamar `restoreSession()` e verifica
 
 > **Escrever primeiro e garantir que FALHEM antes da T015**
 
-- [ ] T014 [US1] Criar `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, com `group('US1 persistência e restauração')` e os casos abaixo:
+- [X] T014 [US1] Criar `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, com `group('US1 persistência e restauração')` e os casos abaixo:
   - **(a) Grava o registro:** `saveSession(token: 't', userId: 'u', userName: 'Maria')` grava em `storageKey` o JSON `{"status":"authenticated","token":"t","userId":"u","userName":"Maria"}`.
   - **(b) Restaura:** um novo serviço com o mesmo fake, após `restoreSession()`, fica `authenticated` com os mesmos campos e `endReason == null`.
   - **(c) Sem registro:** `restoreSession()` → `unauthenticated`, sem exceção.
@@ -114,7 +114,7 @@ o **mesmo** fake (simula fechar e reabrir), chamar `restoreSession()` e verifica
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar conforme o [data-model.md](data-model.md):
+- [X] T015 [US1] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar conforme o [data-model.md](data-model.md):
   - `Future<void> saveSession({required String token, required String userId, String? userName})`:
     1. valida os argumentos não vazios (`ArgumentError`);
     2. atualiza os campos e `endReason = null`;
@@ -128,7 +128,7 @@ o **mesmo** fake (simula fechar e reabrir), chamar `restoreSession()` e verifica
   - Getter `isAuthenticated` baseado em `sessionStatus`.
 
   Faz T014 passar.
-- [ ] T016 [US1] Em `click_seguro_app/lib/main.dart`, dentro de `_setup()`, depois de `registerModules(...)` e antes do `return`, adicionar `await GetIt.instance<UserSessionService>().restoreSession();`, com os imports correspondentes (FR-002, research R8)
+- [X] T016 [US1] Em `click_seguro_app/lib/main.dart`, dentro de `_setup()`, depois de `registerModules(...)` e antes do `return`, adicionar `await GetIt.instance<UserSessionService>().restoreSession();`, com os imports correspondentes (FR-002, research R8)
 
 **Checkpoint**: US1 funcional e testada de forma independente (MVP da feature).
 
@@ -144,7 +144,7 @@ chamar `restoreSession()` e verificar `guest`/`isGuest == true`.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T017 [US2] Em `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, adicionar `group('US2 visitante')` com os casos:
+- [X] T017 [US2] Em `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, adicionar `group('US2 visitante')` com os casos:
   - **(a)** `startGuestSession()` grava exatamente `{"status":"guest"}` e deixa `sessionStatus == guest`, `isGuest == true`, `token == null`.
   - **(b)** Um novo serviço com o mesmo fake, após `restoreSession()`, fica `guest`.
   - **(c)** `saveSession(...)` a partir de `guest` → `authenticated`, com o registro gravado sem `"status":"guest"` e `isGuest == false` (FR-007).
@@ -153,7 +153,7 @@ chamar `restoreSession()` e verificar `guest`/`isGuest == true`.
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar `Future<void> startGuestSession()`: zera `token`/`userId`/`userName`, faz `endReason = null`, muda `sessionStatus` para `guest` e grava `{"status":"guest"}` (falha engolida). Adicionar o getter `bool get isGuest => sessionStatus.value == UserSessionStatus.guest`. Garantir que o `restoreSession` da T015 aceita o registro `guest` (faz T017 passar)
+- [X] T018 [US2] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar `Future<void> startGuestSession()`: zera `token`/`userId`/`userName`, faz `endReason = null`, muda `sessionStatus` para `guest` e grava `{"status":"guest"}` (falha engolida). Adicionar o getter `bool get isGuest => sessionStatus.value == UserSessionStatus.guest`. Garantir que o `restoreSession` da T015 aceita o registro `guest` (faz T017 passar)
 
 **Checkpoint**: US1 e US2 funcionam de forma independente.
 
@@ -170,7 +170,7 @@ continua intacta. Repetir com `expire()` esperando `expired`.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T019 [P] [US3] Em `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, adicionar `group('US3 encerramento')` com os casos:
+- [X] T019 [P] [US3] Em `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, adicionar `group('US3 encerramento')` com os casos:
   - **(a)** `logout()` a partir de `authenticated` → `unauthenticated`, `token`/`userId`/`userName` nulos, `endReason == SessionEndReason.userLogout` e `delete(storageKey)` chamado.
   - **(b)** `logout()` a partir de `guest` → `unauthenticated` e `userLogout`.
   - **(c)** `expire()` a partir de `authenticated` → `unauthenticated` e `endReason == SessionEndReason.expired`.
@@ -179,20 +179,20 @@ continua intacta. Repetir com `expire()` esperando `expired`.
   - **(f)** Após `expire()`, um novo `saveSession` volta `endReason` a `null`.
   - **(g)** Listener de `sessionStatus` já lê o `endReason` preenchido na notificação.
   - **(h)** Com `failOnWrite = true`, `logout()` não lança e o estado em memória fica `unauthenticated`.
-- [ ] T020 [P] [US3] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, ajustar o teste de 401:
+- [X] T020 [P] [US3] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, ajustar o teste de 401:
   - com a sessão `authenticated` (via `saveSession`), um 401 deixa `unauthenticated` e `endReason == SessionEndReason.expired`;
   - novo teste: um 401 **sem** sessão (`unauthenticated`, como num login com senha errada) mantém `endReason == null`.
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar:
+- [X] T021 [US3] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar:
   - `Future<void> logout()`: zera os campos, `endReason = SessionEndReason.userLogout`, `sessionStatus` → `unauthenticated` e `delete(storageKey)` num `try/catch`;
   - `Future<void> expire()`: só age se `sessionStatus.value == authenticated`, com o mesmo efeito, mas `endReason = SessionEndReason.expired`;
   - em ambos, os campos e o `endReason` são atribuídos **antes** de mudar o `sessionStatus`;
   - nenhum dos dois toca em outra chave.
 
   Faz T019 passar.
-- [ ] T022 [US3] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, no `_mapBadResponse`, trocar `GetIt.instance<UserSessionService>().logout();` por `unawaited(GetIt.instance<UserSessionService>().expire());` (import `dart:async`). Em `click_seguro_app/lib/core/errors/unauthorized_failure.dart`, atualizar o comentário para citar `expire()` (faz T020 passar)
+- [X] T022 [US3] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, no `_mapBadResponse`, trocar `GetIt.instance<UserSessionService>().logout();` por `unawaited(GetIt.instance<UserSessionService>().expire());` (import `dart:async`). Em `click_seguro_app/lib/core/errors/unauthorized_failure.dart`, atualizar o comentário para citar `expire()` (faz T020 passar)
 
 **Checkpoint**: as três histórias funcionam de forma independente.
 
@@ -202,13 +202,18 @@ continua intacta. Repetir com `expire()` esperando `expired`.
 
 **Purpose**: validação final e documentação.
 
-- [ ] T023 Rodar `flutter analyze` e `flutter test` em `click_seguro_app/`. Resultado esperado: zero erros ou warnings novos e todos os testes verdes. Corrigir o que falhar antes de seguir
-- [ ] T024 [P] Em `.specify/memory/tasks.md` (mapa do produto), marcar F0.1, F0.3 e F0.4 como `[x]`, acrescentando `(specs/001-sessao-persistente-visitante)`. Na F0.4, registrar que a validação na abertura (`GET /users/me`) e a renovação de credencial ficaram pendentes do contrato da API
-- [ ] T025 Executar as seções 2 e 3 do [quickstart.md](quickstart.md) no aparelho físico:
+- [X] T023 Rodar `flutter analyze` e `flutter test` em `click_seguro_app/`. Resultado esperado: zero erros ou warnings novos e todos os testes verdes. Corrigir o que falhar antes de seguir
+- [X] T024 [P] Em `.specify/memory/tasks.md` (mapa do produto), marcar F0.1, F0.3 e F0.4 como `[x]`, acrescentando `(specs/001-sessao-persistente-visitante)`. Na F0.4, registrar que a validação na abertura (`GET /users/me`) e a renovação de credencial ficaram pendentes do contrato da API
+- [X] T025 Executar as seções 2 e 3 do [quickstart.md](quickstart.md) no aparelho físico:
   - auditoria do log com `DEBUG_MODE=true`: nenhuma ocorrência de `Bearer`/`Authorization` (SC-006);
   - `flutter build apk --release` + `flutter install`: o app abre sem erro (FR-015).
 
   Registrar o resultado no PR.
+
+  **Resultado (2026-10-03, SM S921B / Android 16):**
+  - Build de release (49 MB) instalado e aberto sem erro (sem `FATAL` no logcat).
+  - `INTERNET: granted=true` e `ALLOW_BACKUP` ausente das flags do pacote.
+  - Auditoria de log: estática, porque ainda não há `API_URL` para uma chamada autenticada real. O único logger de rede é o `LogInterceptor`, com `requestHeader: false`. Repetir a auditoria dinâmica com `DEBUG_MODE=true` quando a A2 fizer a primeira chamada autenticada.
 
 ---
 

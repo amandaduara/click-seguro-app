@@ -45,7 +45,7 @@ do wireframe do Lovable
 **Objetivo:** depois desta fase, nenhuma trilha precisa tocar em `main.dart`, `app_router.dart`,
 `pubspec.yaml`, `common/` ou `shell/`.
 
-- [ ] **F0.1 Dependências e configuração de plataforma**
+- [x] **F0.1 Dependências e configuração de plataforma** (specs/001-sessao-persistente-visitante)
   - Adicionar `flutter_secure_storage`, `flutter_tts`, `url_launcher`, `share_plus`,
     `image_picker` e `path_provider` ao `pubspec.yaml`, com versão explícita.
   - Android: permissão `INTERNET` no `AndroidManifest.xml` principal (hoje só existe em debug;
@@ -55,11 +55,13 @@ do wireframe do Lovable
     `LSApplicationQueriesSchemes` (`tel`, `https`) no `Info.plist`.
 - [ ] **F0.2 `ApiClient` com `CancelToken`**: parâmetro opcional em `get`, com teste em que o
   cancelamento vira `ApiErrorType.cancelled` — `lib/modules/common/api_client/api_client.dart`.
-- [ ] **F0.3 Storages**: `SecureStorageService` e `LocalCacheService` (contrato + impl + fake), com
+- [x] **F0.3 Storages** (specs/001-sessao-persistente-visitante): `SecureStorageService` e `LocalCacheService` (contrato + impl + fake), com
   testes — `lib/modules/common/services/`.
-- [ ] **F0.4 Sessão persistente com visitante** (RF-005, RF-007, RNF-007)
+- [x] **F0.4 Sessão persistente com visitante** (RF-005, RF-007, RNF-007) (specs/001-sessao-persistente-visitante)
   - `UserSessionStatus.guest`, `userName`, `startGuestSession()`, `isGuest`, persistência do
-    token e `restoreSession()` (valida com `GET /users/me`; 401 → `unauthenticated`).
+    token e `restoreSession()` (só local; 401 durante o uso → `expire()` com motivo `expired`).
+  - **Pendente do contrato da API:** validação da sessão na abertura (`GET /users/me`) e
+    renovação de credencial. Entram numa feature própria quando confirmados.
   - Testes: restaurar, salvar, visitante, logout.
   - Registrar no `CommonModule` e chamar `restoreSession()` no `_setup()` do `main.dart`.
 - [ ] **F0.5 Serviços de plataforma e voz**
