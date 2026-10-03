@@ -130,6 +130,8 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
 - [ ] **A1 Splash + onboarding** (RF-001, RF-002, RN-004)
   - Teste + ajuste do `SplashController`: onboarding não visto → `/onboarding`; sessão
     `authenticated`/`guest` → `/home`; senão `/login`.
+  - Chamar `SessionValidationService.validateStoredSession()` (feature 002) em paralelo com o
+    tempo mínimo do splash e decidir a rota depois dos dois (conta desativada → `/login`).
   - Testes do `OnboardingController` (hoje sem teste).
   - Conferir textos e slides com o wireframe.
 - [ ] **A2 Login / cadastro / visitante / recuperar senha** (RF-003 a RF-006, RN-001)

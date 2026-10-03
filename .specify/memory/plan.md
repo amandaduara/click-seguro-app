@@ -170,7 +170,8 @@ visitante, mostra o mesmo convite no lugar do conteúdo.
 - `UserSessionStatus` ganha o valor `guest` (RF-005/RF-007).
 - Persistência do `accessToken` e do `refreshToken` no `SecureStorageService` (um único
   registro JSON); `restoreSession()` chamado no `_setup()` antes do `runApp`.
-- API pública: `token`, `refreshToken`, `userName` (saudação do feed, RF-009), `sessionStatus` (`ValueNotifier`), `saveSession`,
+- API pública (feature 002): `accessToken`, `refreshToken`, `email`, `userName` (saudação do
+  feed, RF-009), `sessionStatus` (`ValueNotifier`), `saveSession`,
   `startGuestSession`, `logout`, `isAuthenticated`, `isGuest`.
 - Quem chama `saveSession` é o `AuthRepositoryImpl`, depois de um login ou cadastro bem-sucedido.
   Controllers nunca falam com o serviço.
@@ -182,8 +183,10 @@ visitante, mostra o mesmo convite no lugar do conteúdo.
   salva o novo par e repete o request. Requests simultâneos compartilham a mesma renovação.
   401 com `INVALID_CREDENTIALS` (senha atual errada) não mexe na sessão (CB-013). Regras
   completas em [api-contract.md](api-contract.md#sessão-e-tokens).
-- **Validação na abertura:** depois do `restoreSession()`, `GET /users/me` atualiza o nome. 404
-  `USER_NOT_FOUND` encerra a sessão (CB-014); falta de rede mantém a sessão local.
+- **Validação na abertura:** `SessionValidationService.validateStoredSession()` (feature 002)
+  faz `GET /users/me` com prazo de 3 s e atualiza nome e e-mail. 404 `USER_NOT_FOUND` encerra a
+  sessão (CB-014); falta de rede ou prazo esgotado mantém a sessão local. Quem chama é o
+  `SplashController` (A1), em paralelo com o tempo mínimo do splash, e não o `_setup()`.
 
 ### 3.2 Acessibilidade — `AccessibilityController` (módulo `settings`, Fase 0 + B9)
 
