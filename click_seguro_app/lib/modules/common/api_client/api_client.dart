@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:click_seguro_app/modules/common/api_client/api_error_codes.dart';
+import 'package:click_seguro_app/modules/common/api_client/redacting_log_interceptor.dart';
 import 'package:click_seguro_app/modules/common/config/environment_config.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:dio/dio.dart';
@@ -18,7 +20,9 @@ enum ApiErrorType {
   /// Requisição cancelada via `CancelToken`.
   cancelled,
 
-  /// 401 — a sessão já foi encerrada pelo [ApiClient].
+  /// 401. A sessão só é encerrada pelo [ApiClient] quando a renovação é
+  /// recusada ou o pedido repetido é recusado de novo; `INVALID_CREDENTIALS`
+  /// nunca mexe na sessão.
   unauthorized,
 
   /// Demais 4xx (ex.: 400, 403, 404, 409, 422).
@@ -103,6 +107,12 @@ class ApiClient {
   /// Renova o par de tokens (`{refreshToken}` → `{accessToken, refreshToken}`).
   static const String refreshPath = '/auth/app/refresh';
 
+  /// Rotas cujos corpos nunca vão para o log (senhas e tokens, FR-017).
+  static const List<String> sensitivePathPrefixes = [
+    '/auth/',
+    '/users/me/change-password',
+  ];
+
   final Dio _dio;
 
   /// Renovação em andamento, compartilhada pelos pedidos recusados ao mesmo
@@ -123,13 +133,7 @@ class ApiClient {
     // Ativa o LogInterceptor apenas se estiver em modo Debug
     if (EnvironmentConfig.debugMode) {
       _dio.interceptors.add(
-        LogInterceptor(
-          // Headers fora do log: o Authorization carrega o token (FR-010).
-          requestHeader: false,
-          requestBody: true,
-          responseBody: true,
-          error: true,
-        ),
+        RedactingLogInterceptor(sensitivePathPrefixes: sensitivePathPrefixes),
       );
     }
   }
@@ -197,6 +201,45 @@ class ApiClient {
     );
   }
 
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    bool requiresAuth = true,
+  }) {
+    return _send(
+      (options) => _dio.patch(path, data: data, options: options),
+      requiresAuth: requiresAuth,
+    );
+  }
+
+  /// Envia o arquivo em [filePath] como `multipart/form-data`, no campo
+  /// [fieldName] e com o tipo [contentType] (ex.: `image/jpeg`). O `FormData`
+  /// é montado a cada tentativa, porque o Dio não reenvia o mesmo depois de
+  /// uma renovação.
+  Future<Response> postMultipart(
+    String path, {
+    required String fieldName,
+    required String filePath,
+    required String contentType,
+    bool requiresAuth = true,
+  }) {
+    return _send(
+      (options) async => _dio.post(
+        path,
+        data: FormData.fromMap({
+          fieldName: await MultipartFile.fromFile(
+            filePath,
+            contentType: DioMediaType.parse(contentType),
+          ),
+        }),
+        options: options.copyWith(
+          contentType: Headers.multipartFormDataContentType,
+        ),
+      ),
+      requiresAuth: requiresAuth,
+    );
+  }
+
   Future<Response> delete(String path, {bool requiresAuth = true}) {
     return _send(
       (options) => _dio.delete(path, options: options),
@@ -236,10 +279,14 @@ class ApiClient {
     Future<Response> Function(Options options) call, {
     required bool requiresAuth,
   }) async {
-    final sentToken = _session.accessToken;
+    // Token que vai no header; null = pedido sem credencial (visitante,
+    // login...), que nunca renova nem mexe na sessão (FR-007).
+    final sentToken = requiresAuth ? _session.accessToken : null;
     try {
       return await call(_makeOptions(requiresAuth: requiresAuth));
     } on DioException catch (e) {
+      if (sentToken == null) rethrow;
+      _expireIfAccountGone(e);
       if (!_shouldRenew(e)) rethrow;
       // Token igual ao enviado: precisa renovar. Diferente: outra renovação
       // já trocou o token enquanto este pedido voava, basta repetir.
@@ -251,11 +298,31 @@ class ApiClient {
     } on DioException catch (e) {
       // Recusado de novo logo após renovar: sem nova renovação (SC-004).
       if (e.response?.statusCode == 401) unawaited(_session.expire());
+      _expireIfAccountGone(e);
       rethrow;
     }
   }
 
-  bool _shouldRenew(DioException e) => e.response?.statusCode == 401;
+  /// Conta desativada (404 `USER_NOT_FOUND`) num pedido com token encerra a
+  /// sessão como expirada, sem cada tela tratar o caso (FR-008a).
+  void _expireIfAccountGone(DioException e) {
+    if (e.response?.statusCode == 404 &&
+        _errorCodeOf(e.response) == ApiErrorCodes.userNotFound) {
+      unawaited(_session.expire());
+    }
+  }
+
+  /// 401 com qualquer código, exceto senha errada (CB-013), que só é
+  /// repassado a quem pediu.
+  bool _shouldRenew(DioException e) =>
+      e.response?.statusCode == 401 &&
+      _errorCodeOf(e.response) != ApiErrorCodes.invalidCredentials;
+
+  String? _errorCodeOf(Response? response) {
+    final body = response?.data;
+    final code = body is Map ? body['code'] : null;
+    return code is String ? code : null;
+  }
 
   Future<bool> _renew() =>
       _renewal ??= _refreshTokens().whenComplete(() => _renewal = null);
@@ -347,7 +414,7 @@ class ApiClient {
         _ => ApiErrorType.unknown,
       },
       statusCode: statusCode,
-      errorCode: json['code'] is String ? json['code'] as String : null,
+      errorCode: _errorCodeOf(response),
       message: json['message']?.toString() ?? 'Erro HTTP $statusCode',
     );
   }

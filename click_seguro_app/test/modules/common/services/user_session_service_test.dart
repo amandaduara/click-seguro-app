@@ -469,4 +469,52 @@ void main() {
       expect(session.accessToken, 'acesso-2');
     });
   });
+
+  group('US3 updateProfile (feature 002)', () {
+    test('conectado atualiza nome e e-mail e preserva os tokens', () async {
+      await session.saveSession(
+        accessToken: 'acesso-1',
+        refreshToken: 'renovacao-1',
+        email: 'maria@exemplo.com',
+        userName: 'Maria',
+      );
+
+      await session.updateProfile(name: 'Maria Silva', email: 'maria@novo.com');
+
+      expect(session.userName, 'Maria Silva');
+      expect(session.email, 'maria@novo.com');
+      expect(stored(), {
+        'status': 'authenticated',
+        'accessToken': 'acesso-1',
+        'refreshToken': 'renovacao-1',
+        'email': 'maria@novo.com',
+        'userName': 'Maria Silva',
+      });
+    });
+
+    test('visitante e desconectado não mudam nem gravam', () async {
+      await session.updateProfile(name: 'X', email: 'x@x.com');
+      expect(session.userName, isNull);
+      expect(storage.writeCalls, 0);
+
+      await session.startGuestSession();
+      final writes = storage.writeCalls;
+      await session.updateProfile(name: 'X', email: 'x@x.com');
+      expect(session.userName, isNull);
+      expect(storage.writeCalls, writes);
+    });
+
+    test('falha de escrita não lança', () async {
+      await session.saveSession(
+        accessToken: 'acesso-1',
+        refreshToken: 'renovacao-1',
+        email: 'maria@exemplo.com',
+      );
+      storage.failOnWrite = true;
+
+      await session.updateProfile(name: 'Maria Silva', email: 'maria@novo.com');
+
+      expect(session.userName, 'Maria Silva');
+    });
+  });
 }

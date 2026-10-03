@@ -58,7 +58,7 @@ do wireframe do Lovable
     `allowBackup="false"`. **Sem** permissão de câmera (ver research R10 da feature 001).
   - iOS: `NSCameraUsageDescription`, `NSPhotoLibraryUsageDescription` e
     `LSApplicationQueriesSchemes` (`tel`, `https`) no `Info.plist`.
-- [ ] **F0.2 Ajustes do `ApiClient` à API real** — `lib/modules/common/api_client/api_client.dart`
+- [x] **F0.2 Ajustes do `ApiClient` à API real** (specs/002-apiclient-renovacao-sessao) — `lib/modules/common/api_client/api_client.dart`
   - Ler o código de erro de `code` (hoje lê `error`), com teste para o corpo `{code, message}` e
     para o corpo de validação do Zod (`{statusCode, message, errors}`).
   - `CancelToken` opcional em `get`, com teste em que o cancelamento vira `ApiErrorType.cancelled`.
@@ -73,7 +73,7 @@ do wireframe do Lovable
     renovação de credencial. Entram numa feature própria quando confirmados.
   - Testes: restaurar, salvar, visitante, logout.
   - Registrar no `CommonModule` e chamar `restoreSession()` no `_setup()` do `main.dart`.
-- [ ] **F0.13 Renovação e validação da sessão** (RF-007, CB-003, CB-013, CB-014)
+- [x] **F0.13 Renovação e validação da sessão** (RF-007, CB-003, CB-013, CB-014) (specs/002-apiclient-renovacao-sessao)
   - Sessão passa a guardar `accessToken` + `refreshToken` (migração do registro salvo pela
     feature 001: registro antigo sem `refreshToken` → sessão encerrada, vai ao login).
   - `ApiClient`: em 401 de request autenticado, `INVALID_CREDENTIALS` não mexe na sessão; outros

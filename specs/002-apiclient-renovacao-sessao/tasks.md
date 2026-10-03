@@ -174,7 +174,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T012 [US2] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, grupo `US2 credenciais inválidas`:
+- [X] T012 [US2] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, grupo `US2 credenciais inválidas`:
   - sessão conectada + 401 `{"code":"INVALID_CREDENTIALS","message":"Invalid email or password"}`
     em `post('/users/me/change-password')` (a API real usa `PATCH`, que só entra na US5; para esta
     regra o método não importa) → `ApiException(unauthorized)` com
@@ -190,7 +190,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, no `_send`, só renovar ou expirar quando o request **enviou** `Authorization` (token não nulo no `_makeOptions`) **e** `code != ApiErrorCodes.invalidCredentials`; nos outros casos, devolver o `ApiException(unauthorized)` sem tocar na sessão (faz T012 passar). Atualizar o dartdoc de `ApiErrorType.unauthorized` ("401; a sessão só é encerrada pelo `ApiClient` quando a renovação falha ou o pedido repetido é recusado")
+- [X] T013 [US2] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, no `_send`, só renovar ou expirar quando o request **enviou** `Authorization` (token não nulo no `_makeOptions`) **e** `code != ApiErrorCodes.invalidCredentials`; nos outros casos, devolver o `ApiException(unauthorized)` sem tocar na sessão (faz T012 passar). Atualizar o dartdoc de `ApiErrorType.unauthorized` ("401; a sessão só é encerrada pelo `ApiClient` quando a renovação falha ou o pedido repetido é recusado")
 
 **Checkpoint**: US1 + US2. A A2 (login) e a B8 (troca de senha) já podem confiar no `errorCode`.
 
@@ -204,9 +204,9 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T014 [P] [US3] Em `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, grupo `US3 updateProfile`: conectado → `updateProfile(name: 'Maria Silva', email: 'maria@novo.com')` atualiza memória e registro (`accessToken`/`refreshToken` preservados); visitante e desconectado → nada muda e nada é gravado (`writeCalls` igual); falha de escrita não lança
-- [ ] T015 [P] [US3] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, grupo `US3 conta desativada (FR-008a)`: conectado + 404 `{"code":"USER_NOT_FOUND"}` em `get('/users/me/news/saved')` → `ApiException(client, statusCode: 404)` e sessão `unauthenticated` com `endReason == expired`; conectado + 404 `{"code":"NEWS_NOT_FOUND"}` → sessão mantida; visitante + 404 `USER_NOT_FOUND` → continua visitante
-- [ ] T016 [P] [US3] Criar `click_seguro_app/test/modules/common/services/session_validation_service_test.dart`, com `ApiClient` sobre `FakeHttpClientAdapter`, sessão com `FakeSecureStorageService` registrada no `GetIt` e `SessionValidationService(apiClient, session, timeout: const Duration(milliseconds: 100))`:
+- [X] T014 [P] [US3] Em `click_seguro_app/test/modules/common/services/user_session_service_test.dart`, grupo `US3 updateProfile`: conectado → `updateProfile(name: 'Maria Silva', email: 'maria@novo.com')` atualiza memória e registro (`accessToken`/`refreshToken` preservados); visitante e desconectado → nada muda e nada é gravado (`writeCalls` igual); falha de escrita não lança
+- [X] T015 [P] [US3] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, grupo `US3 conta desativada (FR-008a)`: conectado + 404 `{"code":"USER_NOT_FOUND"}` em `get('/users/me/news/saved')` → `ApiException(client, statusCode: 404)` e sessão `unauthenticated` com `endReason == expired`; conectado + 404 `{"code":"NEWS_NOT_FOUND"}` → sessão mantida; visitante + 404 `USER_NOT_FOUND` → continua visitante
+- [X] T016 [P] [US3] Criar `click_seguro_app/test/modules/common/services/session_validation_service_test.dart`, com `ApiClient` sobre `FakeHttpClientAdapter`, sessão com `FakeSecureStorageService` registrada no `GetIt` e `SessionValidationService(apiClient, session, timeout: const Duration(milliseconds: 100))`:
   1. 200 `{"name":"Maria Silva","email":"maria@novo.com","role":"USER","receiveNotifications":true}` → `userName == 'Maria Silva'`, `email == 'maria@novo.com'`, continua `authenticated`;
   2. 404 `USER_NOT_FOUND` → `unauthenticated`;
   3. 401 + refresh 401 → `unauthenticated`;
@@ -221,9 +221,9 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Implementation for User Story 3
 
-- [ ] T017 [US3] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar `Future<void> updateProfile({required String name, required String email})`: só age se `isAuthenticated`, atualiza `userName`/`email` e regrava o registro v2 com `_safely`, sem notificar `sessionStatus` (faz T014 passar)
-- [ ] T018 [US3] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, no `_send`: resposta 404 com `code == ApiErrorCodes.userNotFound` a um request que enviou token → `unawaited(session.expire())` antes de devolver o `ApiException` (faz T015 passar; [R5](research.md))
-- [ ] T019 [US3] Criar `click_seguro_app/lib/modules/common/services/session_validation_service.dart` com `class SessionValidationService` conforme o [contrato](contracts/api-client-and-session.md) (faz T016 passar):
+- [X] T017 [US3] Em `click_seguro_app/lib/modules/common/services/user_session_service.dart`, implementar `Future<void> updateProfile({required String name, required String email})`: só age se `isAuthenticated`, atualiza `userName`/`email` e regrava o registro v2 com `_safely`, sem notificar `sessionStatus` (faz T014 passar)
+- [X] T018 [US3] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, no `_send`: resposta 404 com `code == ApiErrorCodes.userNotFound` a um request que enviou token → `unawaited(session.expire())` antes de devolver o `ApiException` (faz T015 passar; [R5](research.md))
+- [X] T019 [US3] Criar `click_seguro_app/lib/modules/common/services/session_validation_service.dart` com `class SessionValidationService` conforme o [contrato](contracts/api-client-and-session.md) (faz T016 passar):
   - construtor `(ApiClient apiClient, UserSessionService session, {Duration timeout = const Duration(seconds: 3)})`;
   - `validateStoredSession()`:
     - retorna se `!session.isAuthenticated`;
@@ -235,7 +235,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
     - `ApiException` de qualquer tipo → retorna (o `ApiClient` já encerrou a sessão quando
       era o caso);
     - nunca lança. Constante `static const String mePath = '/users/me';`
-- [ ] T020 [US3] Em `click_seguro_app/lib/modules/common/common_module.dart`, registrar `injector.registerLazySingleton(() => SessionValidationService(injector<ApiClient>(), injector<UserSessionService>()))` depois do `ApiClient`
+- [X] T020 [US3] Em `click_seguro_app/lib/modules/common/common_module.dart`, registrar `injector.registerLazySingleton(() => SessionValidationService(injector<ApiClient>(), injector<UserSessionService>()))` depois do `ApiClient`
 
 **Checkpoint**: US3 pronta para a A1 ligar no `SplashController` (não ligar aqui; ver [R8](research.md)).
 
@@ -249,7 +249,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T021 [US4] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, grupo `US4 formatos de erro`:
+- [X] T021 [US4] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, grupo `US4 formatos de erro`:
   - 400 Zod `{"statusCode":400,"message":"Validation failed","errors":[{"code":"custom","message":"…","path":["options"]}]}`
     → `type == client`, `errorCode == null`, `message == 'Validation failed'`;
   - 400 com `message` em lista (`{"message":["a","b"]}`) → não lança, `message` não vazia;
@@ -258,8 +258,8 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Implementation for User Story 4
 
-- [ ] T022 [US4] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, no `_mapBadResponse`: `message` = `json['message']` se for `String`, senão `json['message']?.toString()`, senão `'Erro HTTP $statusCode'`; `errorCode` só quando `json['code'] is String` (faz T021 passar)
-- [ ] T023 [P] [US4] Atualizar `click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md` (FR-018):
+- [X] T022 [US4] *(já coberto pela T013: `_errorCodeOf` só aceita `String` e `message?.toString()` trata a lista; os testes da T021 passaram sem mudança de código)* Em `click_seguro_app/lib/modules/common/api_client/api_client.dart`, no `_mapBadResponse`: `message` = `json['message']` se for `String`, senão `json['message']?.toString()`, senão `'Erro HTTP $statusCode'`; `errorCode` só quando `json['code'] is String` (faz T021 passar)
+- [X] T023 [P] [US4] Atualizar `click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md` (FR-018):
   - §4.1: `errorCode` vem de `code`; exemplo de corpo `{ "code": "...", "message": "..." }`;
     "401 já chama `logout()`" vira a regra de renovação e expiração do
     [contrato](contracts/api-client-and-session.md); repositories testam
@@ -278,7 +278,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T024 [US5] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, grupo `US5 patch e multipart`:
+- [X] T024 [US5] Em `click_seguro_app/test/modules/common/api_client/api_client_test.dart`, grupo `US5 patch e multipart`:
   - `patch('/users/me', data: {'name':'Maria Silva'})` → método `PATCH`, corpo JSON, `Authorization` com o token atual;
   - `postMultipart('/users/me/avatar', fieldName: 'avatar', filePath: <arquivo temporário criado com Directory.systemTemp.createTemp e 10 bytes>, contentType: 'image/png')` → método `POST`, `contentType` do request começa com `multipart/form-data`, `data` é `FormData` com um arquivo no campo `avatar` e `contentType` `image/png`;
   - `postMultipart` com 401 `TOKEN_INVALID` + refresh 200 → o segundo request também é multipart com o arquivo (um `FormData` **novo**, com instância diferente da primeira) e termina 200;
@@ -286,7 +286,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 ### Implementation for User Story 5
 
-- [ ] T025 [US5] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart` (faz T024 passar):
+- [X] T025 [US5] Em `click_seguro_app/lib/modules/common/api_client/api_client.dart` (faz T024 passar):
   - `patch(String path, {dynamic data, bool requiresAuth = true})` via `_send`;
   - `postMultipart(String path, {required String fieldName, required String filePath, required String contentType, bool requiresAuth = true})`
     via `_send`. A função passada ao `_send` cria
@@ -302,7 +302,7 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
 
 **Purpose**: credenciais fora do log (FR-017, SC-008), docs e validação final.
 
-- [ ] T026 [P] Criar `click_seguro_app/test/modules/common/api_client/redacting_log_interceptor_test.dart`, com um `logPrint` falso que acumula as linhas:
+- [X] T026 [P] Criar `click_seguro_app/test/modules/common/api_client/redacting_log_interceptor_test.dart`, com um `logPrint` falso que acumula as linhas:
   - request `POST /auth/app/refresh` com corpo `{"refreshToken":"renovacao-1"}` e resposta
     `{"accessToken":"acesso-2","refreshToken":"renovacao-2"}` → nenhuma linha contém
     `renovacao-1`, `acesso-2` ou `renovacao-2`, mas há uma linha com o caminho e o status;
@@ -310,9 +310,9 @@ falso por roteiro. Todas as histórias dependem disto ([R1](research.md), [R6](r
   - `PATCH /users/me/change-password` → corpo omitido;
   - `GET /app/news` → o corpo da resposta aparece;
   - nenhum header `Authorization` em nenhuma linha.
-- [ ] T027 Criar `click_seguro_app/lib/modules/common/api_client/redacting_log_interceptor.dart`: `class RedactingLogInterceptor extends LogInterceptor`, com construtor `({required List<String> sensitivePathPrefixes, void Function(Object) logPrint = print})`, que chama `super(requestHeader: false, requestBody: true, responseBody: true, error: true, logPrint: logPrint)`. Para requests cujo `options.path` começa com um prefixo sensível, sobrescrever `onRequest`/`onResponse`/`onError` para registrar só método, caminho e status, sem corpo. No `ApiClient`, adicionar `static const List<String> sensitivePathPrefixes = ['/auth/', '/users/me/change-password'];` e trocar o `LogInterceptor` por `RedactingLogInterceptor(sensitivePathPrefixes: sensitivePathPrefixes)` (faz T026 passar)
-- [ ] T028 [P] Em `.specify/memory/tasks.md`, marcar `[x] **F0.2 …** (specs/002-apiclient-renovacao-sessao)` e `[x] **F0.13 …** (specs/002-apiclient-renovacao-sessao)`. Em `.specify/memory/constitution.md` **não** mexer: nenhuma regra mudou
-- [ ] T029 Dentro de `click_seguro_app/`, rodar `flutter analyze` (sem erro nem warning novo) e `flutter test` (tudo verde) e conferir os cenários da tabela da seção 1 do [quickstart](quickstart.md). Reportar a contagem de testes em relação à linha de base da T001
+- [X] T027 Criar `click_seguro_app/lib/modules/common/api_client/redacting_log_interceptor.dart`: `class RedactingLogInterceptor extends LogInterceptor`, com construtor `({required List<String> sensitivePathPrefixes, void Function(Object) logPrint = print})`, que chama `super(requestHeader: false, requestBody: true, responseBody: true, error: true, logPrint: logPrint)`. Para requests cujo `options.path` começa com um prefixo sensível, sobrescrever `onRequest`/`onResponse`/`onError` para registrar só método, caminho e status, sem corpo. No `ApiClient`, adicionar `static const List<String> sensitivePathPrefixes = ['/auth/', '/users/me/change-password'];` e trocar o `LogInterceptor` por `RedactingLogInterceptor(sensitivePathPrefixes: sensitivePathPrefixes)` (faz T026 passar)
+- [X] T028 [P] Em `.specify/memory/tasks.md`, marcar `[x] **F0.2 …** (specs/002-apiclient-renovacao-sessao)` e `[x] **F0.13 …** (specs/002-apiclient-renovacao-sessao)`. Em `.specify/memory/constitution.md` **não** mexer: nenhuma regra mudou
+- [X] T029 Dentro de `click_seguro_app/`, rodar `flutter analyze` (sem erro nem warning novo) e `flutter test` (tudo verde) e conferir os cenários da tabela da seção 1 do [quickstart](quickstart.md). Reportar a contagem de testes em relação à linha de base da T001
 
 ---
 

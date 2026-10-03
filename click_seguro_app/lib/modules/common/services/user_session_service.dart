@@ -118,6 +118,19 @@ class UserSessionService {
     return true;
   }
 
+  /// Atualiza nome e e-mail com o que o serviço informou (conferência na
+  /// abertura). Só age se conectado; não notifica [sessionStatus].
+  Future<void> updateProfile({
+    required String name,
+    required String email,
+  }) async {
+    if (!isAuthenticated) return;
+
+    userName = name;
+    this.email = email;
+    await _persistAuthenticated();
+  }
+
   /// Entra como visitante (RF-005): sem conta e sem credencial. O estado é
   /// lembrado entre aberturas até o login ou a saída do modo visitante.
   Future<void> startGuestSession() async {

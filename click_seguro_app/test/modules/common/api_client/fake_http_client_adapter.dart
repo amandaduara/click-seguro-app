@@ -37,6 +37,8 @@ class FakeHttpClientAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     requests.add(options);
+    // Consome o corpo como um adapter real (ex.: fecha o arquivo do upload).
+    await requestStream?.drain<void>();
     if (error != null) throw error!(options);
 
     final response = responder != null

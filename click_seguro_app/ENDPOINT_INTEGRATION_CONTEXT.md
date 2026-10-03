@@ -33,7 +33,9 @@ Princípios:
   transforma `ApiException` em `Failure`.
 - **Presentation** renderiza e orquestra estado (controllers); regras de exibição ficam em
   **extensions** da camada presentation.
-- A URL base vem de `--dart-define=API_URL=...`, lida só em `EnvironmentConfig`.
+- A URL base vem de `--dart-define=API_URL=...`, lida só em `EnvironmentConfig`. Ela já inclui
+  `/api/v1` (ex.: `https://<host>/api/v1`); os datasources usam caminhos como `/app/news`.
+  Contrato da API: `.specify/memory/api-contract.md` e `openapi.json`.
 
 ---
 
@@ -115,17 +117,37 @@ Não recrie nada disto; só use.
 `lib/modules/common/api_client/api_client.dart`, registrado como singleton no `CommonModule`.
 
 ```dart
-final response = await apiClient.get('/news', queryParameters: {'page': 1});
-final response = await apiClient.post('/login', data: body, requiresAuth: false);
+final response = await apiClient.get('/app/news', queryParameters: {'page': 1});
+final response = await apiClient.post('/auth/app/login', data: body, requiresAuth: false);
+final response = await apiClient.patch('/users/me', data: {'name': name});
 // put / delete seguem o mesmo formato. requiresAuth = true envia o Bearer da sessão.
+
+// Busca que pode ser descartada (ex.: usuário digitou de novo): cancelar → ApiErrorType.cancelled
+final response = await apiClient.get('/app/news', queryParameters: q, cancelToken: token);
+
+// Upload (ex.: avatar): o ApiClient monta o FormData; o datasource só passa o arquivo
+final response = await apiClient.postMultipart('/users/me/avatar',
+    fieldName: 'avatar', filePath: path, contentType: 'image/jpeg');
 ```
 
 - Qualquer falha HTTP sai como **`ApiException`**, com:
   - `type` (`ApiErrorType`): `connection`, `timeout`, `cancelled`, `unauthorized`, `client` (4xx),
     `server` (5xx), `invalidResponse`, `unknown`;
-  - `statusCode` (`int?`), `errorCode` (campo `error` do corpo, ex.: `INVALID_CREDENTIALS`) e
-    `message` (**técnica**, só para log, nunca para o usuário).
-- **401** já chama `UserSessionService.logout()` dentro do `ApiClient`. Não trate isso de novo.
+  - `statusCode` (`int?`), `errorCode` (campo **`code`** do corpo `{ "code": "...", "message": "..." }`,
+    ex.: `USER_EMAIL_ALREADY_EXISTS`; `null` quando o corpo não segue esse formato, como no erro
+    de validação do Zod) e `message` (**técnica**, só para log, nunca para o usuário).
+- **401 e sessão** já são decididos dentro do `ApiClient`. Não trate isso de novo:
+  - pedido com token recusado → renova a credencial (`/auth/app/refresh`) uma vez e repete o
+    pedido; renovação recusada → `UserSessionService.expire()`;
+  - `INVALID_CREDENTIALS` (senha errada no login ou na troca de senha) **nunca** mexe na sessão.
+    Ele chega como `ApiErrorType.unauthorized`, então o repository MUST testar
+    `e.errorCode == ApiErrorCodes.invalidCredentials` **antes** do `toFailure()` (senão vira
+    `UnauthorizedFailure`);
+  - 404 `USER_NOT_FOUND` (conta desativada) com token → `expire()`.
+
+  Regras completas: `specs/002-apiclient-renovacao-sessao/contracts/api-client-and-session.md`.
+- Códigos de negócio que o repository compara MUST ser constantes nomeadas (constituição V).
+  Os do `common` ficam em `ApiErrorCodes`; os da feature, no próprio repository.
 - Parse: `response.toModel(XModel.fromJson)` (objeto) e `response.toModelList(XModel.fromJson)`
   (array na raiz). Se o JSON não bater com o model (`TypeError`/`FormatException`), eles lançam
   `ApiException(type: ApiErrorType.invalidResponse)`, então o datasource não precisa de `try/catch`.
@@ -171,10 +193,11 @@ Exemplo: feature fictícia **"Notícias"** (módulo `news`), que lista o feed.
 ### Passo 0 — Documente o contrato do endpoint
 
 ```
-GET /news?page=1   (autenticado)
-200 → [ { "id": "n1", "title": "...", "veracityStatus": "VERIFIED",
-          "publishedAt": "2026-09-01T10:00:00Z" } ]
-403 → { "statusCode": 403, "error": "FORBIDDEN", "message": "..." }
+GET /app/news?page=1&limit=20   (auth opcional)
+200 → { "data": [ { "id": "n1", "title": "...", "source": "...",
+                    "originalPublishedAt": "2026-09-01T10:00:00Z" } ],
+        "meta": { "page": 1, "hasNextPage": true } }
+403 → { "code": "FORBIDDEN", "message": "Access denied for this context" }
 ```
 
 Liste **todos os status de erro** e o que o usuário deve ver em cada um. Essa lista vira a tabela
@@ -833,7 +856,8 @@ static const String newsErrorForbidden = 'news_error_forbidden';
 - ❌ Controller chamando datasource, repository ou `ApiClient` diretamente.
 - ❌ Exibir `ApiException.message` para o usuário. Exiba `failure.message.tr()`.
 - ❌ Comparar `statusCode == 0` para detectar falta de conexão. Use `ApiErrorType.connection`.
-- ❌ Tratar 401 no repository ou na tela chamando `logout()`. O `ApiClient` já faz isso.
+- ❌ Tratar 401 no repository ou na tela chamando `logout()`/`expire()` ou renovando o token. O
+  `ApiClient` já faz isso (exceção: mapear `INVALID_CREDENTIALS` para a `Failure` da feature).
 - ❌ Getters de apresentação (`.tr()`, formatação) dentro da entity.
 - ❌ Widget de lista recebendo a entity e decidindo o que mostrar.
 - ❌ Enum parseado com `values.byName(...)` sem fallback. Use `fromJson` tolerante.
