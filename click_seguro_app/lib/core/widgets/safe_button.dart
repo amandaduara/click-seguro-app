@@ -71,9 +71,11 @@ class _SafeButtonState extends State<SafeButton> {
           gradient: AppColors.gradient,
         );
       case SafeButtonTone.secondary:
+        // Texto claro sobre o azul-escuro, como no wireframe
+        // (text-secondary-foreground); o escuro sumia no fundo.
         return (
           bg: AppColors.secondary,
-          fg: AppColors.textForeground,
+          fg: AppColors.textPrimaryForeground,
           gradient: null,
         );
       case SafeButtonTone.ghost:
