@@ -221,6 +221,9 @@ Cada um é um contrato abstrato + implementação + fake em `test/fakes/`:
 alvo de toque ≥ 48 dp e fonte base ≥ 16 sp (RNF-003), para que as telas não precisem repetir
 isso.
 
+Tokens, componentes e divergências com o wireframe: [design-system.md](design-system.md)
+(referência também para a versão web do SafeNews).
+
 ---
 
 ## 4. Camada de dados por feature
