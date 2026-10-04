@@ -228,8 +228,10 @@ novamente" chama a ação de repetir; conferir tamanhos de toque e de texto.
   opcional), erro (mensagem + "Tentar novamente"), vazio (ícone, mensagem e ação opcional) e
   aviso de sem internet.
 - **FR-016**: Botões dos estados, da barra inferior, da barra superior e do convite MUST ter no
-  mínimo 48×48 dp; textos, no mínimo 16 sp, exceto os rótulos das abas, que seguem o tamanho do
-  tema sem cortar com fonte grande.
+  mínimo 48×48 dp. Textos de leitura (mensagens dos estados, explicação e botões do convite,
+  aviso de sessão expirada) MUST ter no mínimo 16 sp. Textos complementares seguem o design
+  system com piso de 12 sp: subtítulo da barra superior 14 sp e rótulos das abas 12 sp. Nenhum
+  texto pode ser cortado com fonte grande.
 - **FR-017**: Todo elemento interativo desta feature MUST ter rótulo para leitor de tela
   (inclusive o botão central, as abas e os botões só com ícone).
 - **FR-018**: Os quatro estados MUST aparecer no style guide com exemplo.
@@ -273,8 +275,8 @@ novamente" chama a ação de repetir; conferir tamanhos de toque e de texto.
 - **SC-003**: Em 100% das recusas de sessão durante o uso, a pessoa permanece na tela e vê o
   aviso uma única vez (fecha o SC-008 da feature 001); em 100% das saídas, vai ao login.
 - **SC-004**: Todos os caminhos do plano do produto abrem uma tela (provisória ou real) sem erro.
-- **SC-005**: Todos os botões desta feature medem pelo menos 48×48 dp e todos os textos dos
-  estados e do convite têm pelo menos 16 sp.
+- **SC-005**: Todos os botões desta feature medem pelo menos 48×48 dp, os textos de leitura dos
+  estados e do convite têm pelo menos 16 sp e nenhum texto fica abaixo de 12 sp.
 - **SC-006**: A partir do fim desta feature, uma trilha consegue construir a sua primeira tela
   real mexendo só nos arquivos do seu módulo (e no seu bloco de textos).
 - **SC-007**: O teste de fumaça e os demais testes passam, e a análise estática não ganha avisos
