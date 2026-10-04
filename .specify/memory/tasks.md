@@ -127,7 +127,7 @@ estão limpos.
 
 Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
 
-- [ ] **A1 Splash + onboarding** (RF-001, RF-002, RN-004)
+- [x] **A1 Splash + onboarding** (RF-001, RF-002, RN-004) (specs/004-splash-onboarding-sessao)
   - Teste + ajuste do `SplashController`: onboarding não visto → `/onboarding`; sessão
     `authenticated`/`guest` → `/home`; senão `/login`.
   - Criar `ValidateStoredSessionUseCase` em `lib/modules/splash/domain/usecases/` (delega ao

@@ -1,6 +1,8 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/splash/presentation/controller/splash_controller.dart';
+import 'package:click_seguro_app/modules/splash/presentation/controller/splash_destination.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -25,9 +27,9 @@ class _SplashPageState extends State<SplashPage> {
     final SplashController controller = context.read<SplashController>();
     await controller.resolveDestination();
 
-    final String? route = controller.destinationRoute;
-    if (mounted && route != null) {
-      context.go(route);
+    final SplashDestination? destination = controller.destination;
+    if (destination != null && mounted) {
+      context.go(destination.path);
     }
   }
 
@@ -49,6 +51,13 @@ class _SplashPageState extends State<SplashPage> {
               AppStrings.appTitle.tr(),
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
                 color: AppColors.textPrimaryForeground,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s2),
+            Text(
+              AppStrings.splashTagline.tr(),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textPrimaryForeground.withValues(alpha: 0.8),
               ),
             ),
           ],
