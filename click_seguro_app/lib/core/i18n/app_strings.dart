@@ -65,6 +65,7 @@ abstract class AppStrings {
       'auth_reset_confirm_password_placeholder';
   static const String authResetSave = 'auth_reset_save';
   static const String authResetSuccess = 'auth_reset_success';
+  static const String authSlowServer = 'auth_slow_server';
   static const String homePlaceholderGreeting = 'home_placeholder_greeting';
   static const String homePlaceholderWelcome = 'home_placeholder_welcome';
   static const String homePlaceholderBody = 'home_placeholder_body';

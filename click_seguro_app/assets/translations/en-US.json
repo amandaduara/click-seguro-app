@@ -51,6 +51,7 @@
   "auth_reset_confirm_password_placeholder": "Confirm the new password",
   "auth_reset_save": "Save new password",
   "auth_reset_success": "Password changed. Sign in with your new password.",
+  "auth_slow_server": "Connecting to the server. This may take up to a minute.",
   "home_placeholder_greeting": "Hi, {}",
   "home_placeholder_welcome": "Welcome",
   "home_placeholder_body": "Home is coming soon.",

@@ -126,7 +126,9 @@ class ApiClient {
             BaseOptions(
               baseUrl: EnvironmentConfig.apiBaseUrl,
               connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
+              // O servidor (Render, plano gratuito) leva ~40 s para responder
+              // quando está parado; 10 s virava "sem conexão" falso.
+              receiveTimeout: const Duration(seconds: 60),
               headers: {'Content-Type': 'application/json'},
             ),
           ) {

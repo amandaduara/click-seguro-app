@@ -51,6 +51,7 @@
   "auth_reset_confirm_password_placeholder": "Confirme a nova senha",
   "auth_reset_save": "Salvar nova senha",
   "auth_reset_success": "Senha alterada. Entre com a nova senha.",
+  "auth_slow_server": "Conectando ao servidor. Isso pode levar até um minuto.",
   "home_placeholder_greeting": "Olá, {}",
   "home_placeholder_welcome": "Bem-vindo",
   "home_placeholder_body": "O Início chega em breve.",

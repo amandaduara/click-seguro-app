@@ -5,6 +5,7 @@ import 'package:click_seguro_app/core/theme/app_colors.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
+import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/reset_step.dart';
@@ -123,6 +124,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ResetStep.code => _codeStep(controller, textTheme),
                   ResetStep.newPassword => _newPasswordStep(controller),
                 },
+                SlowRequestNotice(
+                  active: controller.isSubmitting,
+                  message: AppStrings.authSlowServer.tr(),
+                ),
                 if (controller.failure != null) ...[
                   const SizedBox(height: AppSpacing.s4),
                   Semantics(

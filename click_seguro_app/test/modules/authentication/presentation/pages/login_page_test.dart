@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
@@ -212,6 +214,26 @@ void main() {
 
       expect(find.text('HOME'), findsOneWidget);
       expect(repository.guestCalls, 1);
+    });
+  });
+
+  group('servidor lento', () {
+    testWidgets('mostra o aviso depois de 5 s esperando', (tester) async {
+      repository.gate = Completer<void>();
+      await pumpLogin(tester);
+      await fillLogin(tester);
+
+      await tester.tap(find.widgetWithText(SafeButton, 'Entrar').last);
+      await tester.pump(); // reconstrói com isSubmitting = true
+      await tester.pump(const Duration(seconds: 6));
+
+      expect(
+        find.text('Conectando ao servidor. Isso pode levar até um minuto.'),
+        findsOneWidget,
+      );
+      repository.gate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('HOME'), findsOneWidget);
     });
   });
 }

@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_colors.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
+import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
@@ -221,6 +222,10 @@ class _LoginPageState extends State<LoginPage> {
                   loading: controller.isSubmitting,
                   shadow: true,
                   onPressed: _submit,
+                ),
+                SlowRequestNotice(
+                  active: controller.isSubmitting,
+                  message: AppStrings.authSlowServer.tr(),
                 ),
                 const SizedBox(height: AppSpacing.s6),
                 const OrDivider(),
