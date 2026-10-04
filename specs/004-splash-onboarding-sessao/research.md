@@ -83,9 +83,10 @@ Ambos os módulos são da Trilha A.
 
 **Decision**: `SplashController` recebe `minimumDisplayDuration` opcional no construtor (padrão
 2 s, a constante atual). Os testes da tabela de decisão passam `Duration.zero`. O teste de
-paralelismo usa fakes cuja resposta é liberada por um `Completer`: com o mínimo ainda correndo e a
-validação já liberada, o destino continua `null`; com o mínimo vencido e a validação pendente,
-também; só com os dois resolvidos o destino aparece.
+paralelismo roda em `testWidgets`, cujo relógio falso controla o `Future.delayed` do controller
+(`tester.pump(Duration)`), e libera a validação por um `Completer`: com o mínimo ainda correndo e
+a validação já liberada, o destino continua `null`; com o mínimo vencido e a validação pendente,
+também; só com os dois resolvidos o destino aparece. Nenhuma espera real.
 
 **Rationale**: os testes ficam rápidos e determinísticos (Princípio III), sem adicionar
 `fake_async` como dependência direta.

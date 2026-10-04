@@ -48,13 +48,15 @@ armazenamento seguro, já restaurada antes do `runApp`.
 **Project Type**: mobile-app
 
 **Performance Goals**: splash por 2 s para visitante ou sem sessão; até cerca de 3 s para sessão
-conectada (prazo da conferência). Limite do SC-003: 4 s.
+conectada (prazo da conferência). Limite do SC-003: 4 s. O prazo de 3 s é da feature 002 e
+já tem teste lá.
 
 **Constraints**: nunca prender o usuário no splash (falhas viram um destino); conferência sem
 bloquear além do prazo da feature 002; textos traduzidos (pt-BR e en-US).
 
-**Scale/Scope**: 2 módulos (`splash`, `onboarding`), cerca de 4 arquivos de produção alterados,
-2 novos, e 5 arquivos de teste.
+**Scale/Scope**: 2 módulos (`splash`, `onboarding`); 6 arquivos de produção alterados
+(controller, página e módulo do splash, `app_strings.dart` e os 2 JSONs), 2 novos (usecase e
+enum), 6 arquivos de teste e 4 de fakes.
 
 ## Constitution Check
 

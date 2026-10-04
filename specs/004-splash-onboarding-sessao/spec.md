@@ -229,7 +229,7 @@ instalação usando "Pular" no primeiro slide: mesmo resultado.
   fica fora de escopo, para não introduzir animação contínua na tela de abertura do público
   idoso.
 - **Sem mensagem de "sessão expirada" no splash**: quando a conferência encerra a sessão na
-  abertura, a pessoa vai direto ao login (CB-003); o aviso fica para a tela de login, se já
-  existir lá.
+  abertura, a pessoa vai direto ao login (CB-003). Mostrar um aviso no login fica fora do
+  escopo: a tela de login não exibe esse aviso hoje.
 - **Dependências**: features 001 (sessão persistente), 002 (conferência da conta na abertura) e
   003 (login e área principal provisória), todas concluídas.
