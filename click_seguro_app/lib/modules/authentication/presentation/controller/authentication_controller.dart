@@ -3,6 +3,7 @@ import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.
 import 'package:click_seguro_app/modules/authentication/domain/enums/field_error.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
+import 'package:click_seguro_app/modules/authentication/domain/usecases/enter_as_guest_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/evaluate_password_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/login_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/register_usecase.dart';
@@ -17,13 +18,16 @@ class AuthenticationController extends ChangeNotifier {
     required LoginUseCase login,
     required RegisterUseCase register,
     required EvaluatePasswordUseCase evaluatePassword,
+    required EnterAsGuestUseCase enterAsGuest,
   }) : _login = login,
        _register = register,
-       _evaluatePassword = evaluatePassword;
+       _evaluatePassword = evaluatePassword,
+       _enterAsGuest = enterAsGuest;
 
   final LoginUseCase _login;
   final RegisterUseCase _register;
   final EvaluatePasswordUseCase _evaluatePassword;
+  final EnterAsGuestUseCase _enterAsGuest;
 
   AuthMode _mode = AuthMode.login;
   AuthMode get mode => _mode;
@@ -71,6 +75,9 @@ class AuthenticationController extends ChangeNotifier {
         ? _login(email: email, password: password)
         : _register(name: name, email: email, password: password),
   );
+
+  /// "Continuar sem login" (FR-010).
+  Future<void> continueAsGuest() => _run(_enterAsGuest.call);
 
   void togglePasswordVisibility() {
     _isPasswordVisible = !_isPasswordVisible;

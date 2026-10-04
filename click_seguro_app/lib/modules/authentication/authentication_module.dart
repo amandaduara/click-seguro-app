@@ -4,6 +4,7 @@ import 'package:click_seguro_app/modules/authentication/data/datasources/auth_re
 import 'package:click_seguro_app/modules/authentication/data/datasources/auth_remote_data_source_impl.dart';
 import 'package:click_seguro_app/modules/authentication/data/repositories/auth_repository_impl.dart';
 import 'package:click_seguro_app/modules/authentication/domain/repositories/auth_repository.dart';
+import 'package:click_seguro_app/modules/authentication/domain/usecases/enter_as_guest_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/evaluate_password_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/login_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/register_usecase.dart';
@@ -44,6 +45,9 @@ class AuthenticationModule implements ModuleInterface {
       )
       ..registerLazySingleton(
         () => EvaluatePasswordUseCase(injector<CredentialsValidator>()),
+      )
+      ..registerLazySingleton(
+        () => EnterAsGuestUseCase(injector<AuthRepository>()),
       );
   }
 
@@ -55,6 +59,7 @@ class AuthenticationModule implements ModuleInterface {
           login: injector<LoginUseCase>(),
           register: injector<RegisterUseCase>(),
           evaluatePassword: injector<EvaluatePasswordUseCase>(),
+          enterAsGuest: injector<EnterAsGuestUseCase>(),
         ),
       ),
     ];

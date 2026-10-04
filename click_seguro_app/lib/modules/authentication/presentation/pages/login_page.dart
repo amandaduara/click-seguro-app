@@ -10,6 +10,7 @@ import 'package:click_seguro_app/modules/authentication/presentation/controller/
 import 'package:click_seguro_app/modules/authentication/presentation/extensions/auth_presentation_extension.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_mode_switch.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/widgets/or_divider.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/password_rules_list.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -175,6 +176,14 @@ class _LoginPageState extends State<LoginPage> {
                   loading: controller.isSubmitting,
                   shadow: true,
                   onPressed: _submit,
+                ),
+                const SizedBox(height: AppSpacing.s6),
+                const OrDivider(),
+                const SizedBox(height: AppSpacing.s6),
+                SafeButton(
+                  label: AppStrings.authContinueAsGuest.tr(),
+                  tone: SafeButtonTone.secondary,
+                  onPressed: controller.continueAsGuest,
                 ),
               ],
             ),

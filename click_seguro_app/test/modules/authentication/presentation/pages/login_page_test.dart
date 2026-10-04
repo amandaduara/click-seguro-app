@@ -195,4 +195,23 @@ void main() {
       );
     });
   });
+
+  group('US3', () {
+    testWidgets('continuar sem login aparece nos dois modos e leva ao Início', (
+      tester,
+    ) async {
+      await pumpLogin(tester);
+      expect(find.text('ou'), findsOneWidget);
+      expect(find.text('Continuar sem login'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('auth-mode-register')));
+      await tester.pumpAndSettle();
+      expect(find.text('Continuar sem login'), findsOneWidget);
+
+      await tapPrimary(tester, 'Continuar sem login');
+
+      expect(find.text('HOME'), findsOneWidget);
+      expect(repository.guestCalls, 1);
+    });
+  });
 }

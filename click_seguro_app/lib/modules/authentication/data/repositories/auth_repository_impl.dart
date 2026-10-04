@@ -60,8 +60,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> enterAsGuest() async =>
-      const Left(ServerFailure());
+  Future<Either<Failure, Unit>> enterAsGuest() async {
+    await _session.startGuestSession();
+    return const Right(unit);
+  }
 
   @override
   Future<Either<Failure, Unit>> requestPasswordReset(String email) async =>

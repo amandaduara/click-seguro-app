@@ -147,4 +147,24 @@ void main() {
       expect(controller.authenticated, isFalse);
     });
   });
+
+  group('US3', () {
+    test('continuar sem login marca authenticated', () async {
+      await controller.continueAsGuest();
+
+      expect(controller.authenticated, isTrue);
+      expect(repository.guestCalls, 1);
+    });
+
+    test('ignorado enquanto outro envio está em andamento', () async {
+      repository.gate = Completer<void>();
+
+      final login = submitLogin();
+      await controller.continueAsGuest();
+      repository.gate!.complete();
+      await login;
+
+      expect(repository.guestCalls, 0);
+    });
+  });
 }

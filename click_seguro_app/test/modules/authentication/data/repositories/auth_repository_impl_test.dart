@@ -147,4 +147,14 @@ void main() {
       expect(await registerFailure(), isA<ConnectionFailure>());
     });
   });
+
+  group('guest', () {
+    test('entra como visitante sem chamar o serviço', () async {
+      final result = await repository.enterAsGuest();
+
+      expect(result.isRight(), isTrue);
+      expect(session.sessionStatus.value, UserSessionStatus.guest);
+      expect(remote.calls, isEmpty);
+    });
+  });
 }

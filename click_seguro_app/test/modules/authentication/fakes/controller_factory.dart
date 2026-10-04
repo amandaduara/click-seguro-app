@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/modules/authentication/domain/usecases/enter_as_guest_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/evaluate_password_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/login_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/register_usecase.dart';
@@ -15,5 +16,6 @@ AuthenticationController buildAuthenticationController(
     login: LoginUseCase(repository, validator),
     register: RegisterUseCase(repository, validator),
     evaluatePassword: const EvaluatePasswordUseCase(validator),
+    enterAsGuest: EnterAsGuestUseCase(repository),
   );
 }

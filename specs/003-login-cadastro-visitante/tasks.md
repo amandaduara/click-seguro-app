@@ -240,14 +240,14 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T040 [P] [US3] Em `tauth/data/repositories/auth_repository_impl_test.dart`, grupo `guest`: `enterAsGuest()` → `Right(unit)`, `sessionStatus == guest` e 0 chamadas ao datasource
-- [ ] T041 [P] [US3] Criar `tauth/domain/usecases/enter_as_guest_usecase_test.dart` e, em `authentication_controller_test.dart`, grupo `US3`: `continueAsGuest()` → `authenticated == true` e `guestCalls == 1`; ignorado enquanto `isSubmitting`
-- [ ] T042 [P] [US3] Em `tauth/presentation/pages/login_page_test.dart`, grupo `US3`: `OrDivider` e o botão "Continuar sem login" aparecem nos dois modos; tocar → `HOME`
+- [X] T040 [P] [US3] Em `tauth/data/repositories/auth_repository_impl_test.dart`, grupo `guest`: `enterAsGuest()` → `Right(unit)`, `sessionStatus == guest` e 0 chamadas ao datasource
+- [X] T041 [P] [US3] Criar `tauth/domain/usecases/enter_as_guest_usecase_test.dart` e, em `authentication_controller_test.dart`, grupo `US3`: `continueAsGuest()` → `authenticated == true` e `guestCalls == 1`; ignorado enquanto `isSubmitting`
+- [X] T042 [P] [US3] Em `tauth/presentation/pages/login_page_test.dart`, grupo `US3`: `OrDivider` e o botão "Continuar sem login" aparecem nos dois modos; tocar → `HOME`
 
 ### Implementation for User Story 3
 
-- [ ] T043 [US3] Implementar `enterAsGuest` em `auth/data/repositories/auth_repository_impl.dart` (`session.startGuestSession()`) e criar `auth/domain/usecases/enter_as_guest_usecase.dart` (faz T040 e a parte de usecase da T041 passarem)
-- [ ] T044 [US3] No `AuthenticationController`, adicionar `continueAsGuest()`. Na `LoginPage`, adicionar `OrDivider` e `SafeButton(large, secondary)` "Continuar sem login" no fim do formulário. Registrar `EnterAsGuestUseCase` no módulo (faz T041 e T042 passarem)
+- [X] T043 [US3] Implementar `enterAsGuest` em `auth/data/repositories/auth_repository_impl.dart` (`session.startGuestSession()`) e criar `auth/domain/usecases/enter_as_guest_usecase.dart` (faz T040 e a parte de usecase da T041 passarem)
+- [X] T044 [US3] No `AuthenticationController`, adicionar `continueAsGuest()`. Na `LoginPage`, adicionar `OrDivider` e `SafeButton(large, secondary)` "Continuar sem login" no fim do formulário. Registrar `EnterAsGuestUseCase` no módulo (faz T041 e T042 passarem)
 
 **Checkpoint**: as três formas de entrar funcionando.
 
