@@ -309,8 +309,8 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
 - [X] T056 [P] Em `tauth/presentation/pages/login_page_test.dart` e `forgot_password_page_test.dart`, grupo `acessibilidade` (FR-019, SC-007): com `MediaQuery(textScaler: TextScaler.linear(1.5))` e tela de 360×690, nenhum overflow (`tester.takeException()` nulo) e o botão principal alcançável por rolagem; cada interativo tem rótulo semântico (`find.bySemanticsLabel`) e tamanho ≥ 48×48 (`tester.getSize`)
 - [X] T057 Revisar os textos en-US e pt-BR em `assets/translations/` (sem chave faltando: um teste em `tauth/presentation/i18n_keys_test.dart` lê os dois JSONs e confere que toda chave `auth_*`/`home_placeholder_*` de `AppStrings` existe nos dois)
 - [X] T058 Dentro de `click_seguro_app/`, rodar `flutter analyze` (sem erro ou warning novo) e `flutter test` (tudo verde) e comparar com a linha de base da T001
-- [ ] T059 Build e instalação no aparelho (`flutter build apk --debug` + `flutter install --debug -d RQGYB02P7HD`), conferir que a tela de login abre e navega entre os modos sem erro no log. Se houver `API_URL` disponível, seguir a seção 2 do [quickstart](quickstart.md) e trocar 🧪 por ✅ nas linhas de autenticação do `.specify/memory/api-contract.md`; senão, registrar que a validação contra o servidor ficou pendente
-- [ ] T060 Em `.specify/memory/tasks.md`, marcar `[x] **A2 …** (specs/003-login-cadastro-visitante)`
+- [X] T059 *(aparelho ok; validação contra o servidor pendente: sem `API_URL`)* Build e instalação no aparelho (`flutter build apk --debug` + `flutter install --debug -d RQGYB02P7HD`), conferir que a tela de login abre e navega entre os modos sem erro no log. Se houver `API_URL` disponível, seguir a seção 2 do [quickstart](quickstart.md) e trocar 🧪 por ✅ nas linhas de autenticação do `.specify/memory/api-contract.md`; senão, registrar que a validação contra o servidor ficou pendente
+- [X] T060 Em `.specify/memory/tasks.md`, marcar `[x] **A2 …** (specs/003-login-cadastro-visitante)`
 
 ---
 
