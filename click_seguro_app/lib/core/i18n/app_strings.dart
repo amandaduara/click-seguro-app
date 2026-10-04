@@ -2,6 +2,7 @@ abstract class AppStrings {
   AppStrings._();
 
   static const String appTitle = 'app_title';
+  static const String splashTagline = 'splash_tagline';
 
   static const String onboardingPage1Title = 'onboarding_page1_title';
   static const String onboardingPage1Description =

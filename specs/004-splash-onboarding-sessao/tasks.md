@@ -37,7 +37,7 @@ usam.
 
 **Purpose**: linha de base.
 
-- [ ] T001 Dentro de `click_seguro_app/`, rodar `flutter analyze` e `flutter test` e anotar a linha de base (esperado: 219 testes verdes, 0 erros, 0 warnings, 28 infos existentes). Se algo estiver vermelho, parar e reportar
+- [X] T001 Dentro de `click_seguro_app/`, rodar `flutter analyze` e `flutter test` e anotar a linha de base (esperado: 219 testes verdes, 0 erros, 0 warnings, 28 infos existentes). Se algo estiver vermelho, parar e reportar
 
 ---
 
@@ -47,12 +47,12 @@ usam.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 [P] Criar `splash/presentation/controller/splash_destination.dart` com `enum SplashDestination { onboarding('/onboarding'), home('/home'), login('/login'); const SplashDestination(this.path); final String path; }` e dartdoc citando a [tabela de decisão](data-model.md) ([R3](research.md))
-- [ ] T003 [P] Criar `tsplash/fakes/fake_session_validation_service.dart`: `FakeSessionValidationService implements SessionValidationService`, com `int calls`, um `Future<void> Function()? onValidate` (executado dentro de `validateStoredSession`, para simular o efeito na sessão: `session.expire()`, `session.updateProfile(...)`, lançar um erro ou esperar um `Completer`). Não chama rede
-- [ ] T004 [P] Criar o esqueleto `splash/domain/usecases/validate_stored_session_usecase.dart` (construtor `ValidateStoredSessionUseCase(SessionValidationService, UserSessionService)` e `Future<UserSessionStatus> call()` lançando `UnimplementedError()`, para os testes compilarem e falharem) e `tsplash/fakes/fake_splash_usecases.dart` com:
+- [X] T002 [P] Criar `splash/presentation/controller/splash_destination.dart` com `enum SplashDestination { onboarding('/onboarding'), home('/home'), login('/login'); const SplashDestination(this.path); final String path; }` e dartdoc citando a [tabela de decisão](data-model.md) ([R3](research.md))
+- [X] T003 [P] Criar `tsplash/fakes/fake_session_validation_service.dart`: `FakeSessionValidationService implements SessionValidationService`, com `int calls`, um `Future<void> Function()? onValidate` (executado dentro de `validateStoredSession`, para simular o efeito na sessão: `session.expire()`, `session.updateProfile(...)`, lançar um erro ou esperar um `Completer`). Não chama rede
+- [X] T004 [P] Criar o esqueleto `splash/domain/usecases/validate_stored_session_usecase.dart` (construtor `ValidateStoredSessionUseCase(SessionValidationService, UserSessionService)` e `Future<UserSessionStatus> call()` lançando `UnimplementedError()`, para os testes compilarem e falharem) e `tsplash/fakes/fake_splash_usecases.dart` com:
   - `FakeCheckOnboardingSeenUseCase implements CheckOnboardingSeenUseCase`: devolve um `Either<Failure, bool>` configurável (padrão `Right(true)`) ou espera um `Completer<Either<Failure, bool>>` opcional;
   - `FakeValidateStoredSessionUseCase implements ValidateStoredSessionUseCase`: devolve um `UserSessionStatus` configurável (padrão `authenticated`) ou espera um `Completer<UserSessionStatus>` opcional, e conta as chamadas (`calls`)
-- [ ] T005 [P] Criar `tonb/fakes/fake_onboarding_repository.dart`: `FakeOnboardingRepository implements OnboardingRepository`, com `bool seen`, `bool failOnRead`, `bool failOnComplete` (→ `Left(CacheFailure())`) e `int completeCalls`
+- [X] T005 [P] Criar `tonb/fakes/fake_onboarding_repository.dart`: `FakeOnboardingRepository implements OnboardingRepository`, com `bool seen`, `bool failOnRead`, `bool failOnComplete` (→ `Left(CacheFailure())`) e `int completeCalls`
 
 **Checkpoint**: enum e fakes prontos; `flutter analyze` limpo.
 
@@ -66,12 +66,12 @@ usam.
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T006 [P] [US1] Criar `tsplash/domain/usecases/validate_stored_session_usecase_test.dart` com `UserSessionService(FakeSecureStorageService())` real (de `click_seguro_app/test/fakes/`) e `FakeSessionValidationService`:
+- [X] T006 [P] [US1] Criar `tsplash/domain/usecases/validate_stored_session_usecase_test.dart` com `UserSessionService(FakeSecureStorageService())` real (de `click_seguro_app/test/fakes/`) e `FakeSessionValidationService`:
   - sessão conectada (`saveSession(accessToken: 'acesso-1', refreshToken: 'renovacao-1', email: 'maria@exemplo.com', userName: 'Maria')`) e conferência que não muda nada → devolve `UserSessionStatus.authenticated` e `calls == 1`;
   - visitante (`startGuestSession()`) → devolve `guest`;
   - sem sessão → devolve `unauthenticated`.
   (O serviço real já sai cedo para visitante e desconectado; aqui o usecase só delega e lê o estado depois.)
-- [ ] T007 [P] [US1] Criar `tsplash/presentation/controller/splash_controller_test.dart` com `FakeCheckOnboardingSeenUseCase`, `FakeValidateStoredSessionUseCase` e `minimumDisplayDuration: Duration.zero`, cobrindo as linhas 1, 2, 3, 6 e 7 da [tabela de decisão](data-model.md):
+- [X] T007 [P] [US1] Criar `tsplash/presentation/controller/splash_controller_test.dart` com `FakeCheckOnboardingSeenUseCase`, `FakeValidateStoredSessionUseCase` e `minimumDisplayDuration: Duration.zero`, cobrindo as linhas 1, 2, 3, 6 e 7 da [tabela de decisão](data-model.md):
   - onboarding não visto (`Right(false)`) com sessão `authenticated` → `destination == SplashDestination.onboarding`;
   - leitura com falha (`Left(CacheFailure())`) → `onboarding`;
   - visto + `authenticated` → `home`;
@@ -79,7 +79,7 @@ usam.
   - visto + `unauthenticated` → `login`;
   - `destination` é `null` antes de `resolveDestination()` e o controller notifica os ouvintes exatamente uma vez ao decidir;
   - chamar `resolveDestination()` duas vezes seguidas (sem esperar a primeira) → a validação e a leitura do onboarding acontecem **uma** vez cada e os ouvintes são notificados uma única vez (caso de borda "app enviado para segundo plano" da spec).
-- [ ] T008 [P] [US1] Criar `tsplash/presentation/pages/splash_page_test.dart` com `pumpLocalized(router: ...)` (de `click_seguro_app/test/helpers/localized_app.dart`), um `GoRouter` de teste com `/` → `SplashPage` (dentro de `ChangeNotifierProvider<SplashController>` com os fakes e `Duration.zero`) e `/onboarding`, `/home`, `/login` → `Scaffold` com um `Text` identificador:
+- [X] T008 [P] [US1] Criar `tsplash/presentation/pages/splash_page_test.dart` com `pumpLocalized(router: ...)` (de `click_seguro_app/test/helpers/localized_app.dart`), um `GoRouter` de teste com `/` → `SplashPage` (dentro de `ChangeNotifierProvider<SplashController>` com os fakes e `Duration.zero`) e `/onboarding`, `/home`, `/login` → `Scaffold` com um `Text` identificador:
   - mostra "SafeNews" e "Sua segurança em primeiro lugar" enquanto decide (use um `Completer` no fake de validação para segurar a decisão);
   - visto + `authenticated` → abre a tela de `/home`;
   - visto + `unauthenticated` → abre a de `/login`;
@@ -88,16 +88,16 @@ usam.
 
 ### Implementação
 
-- [ ] T009 [US1] Implementar `splash/domain/usecases/validate_stored_session_usecase.dart` (substituindo o esqueleto da T004): `ValidateStoredSessionUseCase(this._validation, this._session)` recebendo `SessionValidationService` e `UserSessionService` (de `click_seguro_app/lib/modules/common/services/`); `Future<UserSessionStatus> call() async { await _validation.validateStoredSession(); return _session.sessionStatus.value; }`. Dartdoc: delega à feature 002, devolve o estado **depois** da conferência e nunca lança ([R1](research.md)). Faz a T006 passar
-- [ ] T010 [US1] Reescrever `splash/presentation/controller/splash_controller.dart`:
+- [X] T009 [US1] Implementar `splash/domain/usecases/validate_stored_session_usecase.dart` (substituindo o esqueleto da T004): `ValidateStoredSessionUseCase(this._validation, this._session)` recebendo `SessionValidationService` e `UserSessionService` (de `click_seguro_app/lib/modules/common/services/`); `Future<UserSessionStatus> call() async { await _validation.validateStoredSession(); return _session.sessionStatus.value; }`. Dartdoc: delega à feature 002, devolve o estado **depois** da conferência e nunca lança ([R1](research.md)). Faz a T006 passar
+- [X] T010 [US1] Reescrever `splash/presentation/controller/splash_controller.dart`:
   - construtor `SplashController(this._checkOnboardingSeenUseCase, this._validateStoredSessionUseCase, {Duration minimumDisplayDuration = defaultMinimumDisplayDuration})`, com `static const Duration defaultMinimumDisplayDuration = Duration(seconds: 2)` ([R5](research.md));
   - trocar `String? destinationRoute` por `SplashDestination? destination`;
   - `resolveDestination()`: dispara juntos o `Future.delayed(minimumDisplayDuration)`, o `_checkOnboardingSeenUseCase()` e o `_validateStoredSessionUseCase()` e espera os três; onboarding não visto ou falha na leitura → `onboarding` (manter o comentário do fallback seguro); senão `authenticated`/`guest` → `home`; senão → `login` ([R2](research.md)); `notifyListeners()` uma vez. As três chamadas são **disparadas** antes do primeiro `await` (futures em variáveis e depois `Future.wait`), não em sequência;
   - guardar o `Future<void>` da primeira chamada num campo privado (`Future<void>? _resolving`) e devolvê-lo nas chamadas seguintes (`return _resolving ??= _resolve();`), para nunca conferir nem notificar duas vezes.
   Faz a T007 passar
-- [ ] T011 [US1] Em `splash/splash_module.dart`, registrar em `registerServices`: `injector.registerLazySingleton(() => ValidateStoredSessionUseCase(injector<SessionValidationService>(), injector<UserSessionService>()))`, e passar `injector<ValidateStoredSessionUseCase>()` ao `SplashController` em `providers`
-- [ ] T012 [P] [US1] Adicionar a chave `splash_tagline` em `click_seguro_app/lib/core/i18n/app_strings.dart` (`static const String splashTagline = 'splash_tagline';`, logo abaixo de `appTitle`), em `click_seguro_app/assets/translations/pt-BR.json` ("Sua segurança em primeiro lugar") e em `click_seguro_app/assets/translations/en-US.json` ("Your safety comes first") ([R6](research.md))
-- [ ] T013 [US1] Em `splash/presentation/pages/splash_page.dart`: guardar `final SplashDestination? destination = controller.destination;` e, se `destination != null && mounted`, chamar `context.go(destination.path)` (sem `!`, seção "Regras Globais" da constituição); abaixo do título, `SizedBox(height: AppSpacing.s2)` + `Text(AppStrings.splashTagline.tr())` com `textTheme.bodyMedium` na cor `AppColors.textPrimaryForeground` com opacidade de 80% (`withValues(alpha: 0.8)`), como no wireframe. Faz a T008 passar
+- [X] T011 [US1] Em `splash/splash_module.dart`, registrar em `registerServices`: `injector.registerLazySingleton(() => ValidateStoredSessionUseCase(injector<SessionValidationService>(), injector<UserSessionService>()))`, e passar `injector<ValidateStoredSessionUseCase>()` ao `SplashController` em `providers`
+- [X] T012 [P] [US1] Adicionar a chave `splash_tagline` em `click_seguro_app/lib/core/i18n/app_strings.dart` (`static const String splashTagline = 'splash_tagline';`, logo abaixo de `appTitle`), em `click_seguro_app/assets/translations/pt-BR.json` ("Sua segurança em primeiro lugar") e em `click_seguro_app/assets/translations/en-US.json` ("Your safety comes first") ([R6](research.md))
+- [X] T013 [US1] Em `splash/presentation/pages/splash_page.dart`: guardar `final SplashDestination? destination = controller.destination;` e, se `destination != null && mounted`, chamar `context.go(destination.path)` (sem `!`, seção "Regras Globais" da constituição); abaixo do título, `SizedBox(height: AppSpacing.s2)` + `Text(AppStrings.splashTagline.tr())` com `textTheme.bodyMedium` na cor `AppColors.textPrimaryForeground` com opacidade de 80% (`withValues(alpha: 0.8)`), como no wireframe. Faz a T008 passar
 
 **Checkpoint**: `flutter test test/modules/splash` verde; no aparelho, reabrir conectado ou como visitante leva à área principal.
 
@@ -111,12 +111,12 @@ usam.
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T014 [P] [US2] Em `tsplash/domain/usecases/validate_stored_session_usecase_test.dart`, acrescentar (linhas 3, 4, 5 e 8 da [tabela](data-model.md)):
+- [X] T014 [P] [US2] Em `tsplash/domain/usecases/validate_stored_session_usecase_test.dart`, acrescentar (linhas 3, 4, 5 e 8 da [tabela](data-model.md)):
   - conferência confirma e atualiza o perfil (`onValidate` chama `session.updateProfile(name: 'Maria Silva', email: 'maria@novo.com')`) → `authenticated` e `session.userName == 'Maria Silva'`;
   - conferência recusa (`onValidate` chama `session.expire()`) → `unauthenticated`;
   - conferência sem efeito (simula sem rede / prazo esgotado) → `authenticated`;
   - `onValidate` lança `StateError('inesperado')` → o usecase **não** lança e devolve o estado atual (`authenticated`) (FR-008).
-- [ ] T015 [P] [US2] Em `tsplash/presentation/controller/splash_controller_test.dart`, grupo `paralelismo` ([R5](research.md)), **com `testWidgets`** (relógio falso: `tester.pump(Duration)` avança o `Future.delayed` do controller sem esperar tempo real), `minimumDisplayDuration: Duration(seconds: 2)` e o fake de validação preso num `Completer<UserSessionStatus>`:
+- [X] T015 [P] [US2] Em `tsplash/presentation/controller/splash_controller_test.dart`, grupo `paralelismo` ([R5](research.md)), **com `testWidgets`** (relógio falso: `tester.pump(Duration)` avança o `Future.delayed` do controller sem esperar tempo real), `minimumDisplayDuration: Duration(seconds: 2)` e o fake de validação preso num `Completer<UserSessionStatus>`:
   - validação completada logo (`authenticated`) → após `tester.pump(Duration(milliseconds: 1999))`, `destination` continua `null`; após mais `tester.pump(Duration(milliseconds: 1))`, `destination == home`;
   - mínimo vencido (`tester.pump(Duration(seconds: 2))`) com a validação pendente → `destination` continua `null`; ao completar com `unauthenticated` e `tester.pump()` → `login`;
   - logo após chamar `resolveDestination()`, sem avançar o relógio, a validação já foi chamada (`calls == 1`): ela começa junto com o mínimo, não depois;
@@ -125,8 +125,8 @@ usam.
 
 ### Implementação
 
-- [ ] T016 [US2] Em `splash/domain/usecases/validate_stored_session_usecase.dart`, envolver a chamada ao serviço num `try { ... } catch (_) { }` de proteção e sempre devolver `_session.sessionStatus.value` no fim; comentário curto citando o FR-008 desta feature (o serviço já não lança; isto só impede que um erro inesperado prenda o splash). Faz a T014 passar
-- [ ] T017 [US2] Verificação, sem código novo esperado: rodar a T015 contra `splash/presentation/controller/splash_controller.dart` (o disparo simultâneo já foi pedido na T010). Só ajustar o controller se a T015 falhar
+- [X] T016 [US2] Em `splash/domain/usecases/validate_stored_session_usecase.dart`, envolver a chamada ao serviço num `try { ... } catch (_) { }` de proteção e sempre devolver `_session.sessionStatus.value` no fim; comentário curto citando o FR-008 desta feature (o serviço já não lança; isto só impede que um erro inesperado prenda o splash). Faz a T014 passar
+- [X] T017 [US2] Verificação, sem código novo esperado: rodar a T015 contra `splash/presentation/controller/splash_controller.dart` (o disparo simultâneo já foi pedido na T010). Só ajustar o controller se a T015 falhar
 
 **Checkpoint**: `flutter test test/modules/splash` verde, com as 8 linhas da tabela de decisão cobertas entre usecase e controller.
 
