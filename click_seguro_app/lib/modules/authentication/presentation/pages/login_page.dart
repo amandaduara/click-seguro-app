@@ -30,6 +30,7 @@ class _LoginPageState extends State<LoginPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _nameFocus = FocusNode();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
 
@@ -44,6 +45,16 @@ class _LoginPageState extends State<LoginPage> {
     _controller = context.read<AuthenticationController>();
     WidgetsBinding.instance.addPostFrameCallback((_) => _controller.reset());
     _controller.addListener(_onControllerChanged);
+    // Ao sair de um campo, o erro dele (se houver) passa a aparecer.
+    for (final (focus, field) in [
+      (_nameFocus, AuthField.name),
+      (_emailFocus, AuthField.email),
+      (_passwordFocus, AuthField.password),
+    ]) {
+      focus.addListener(() {
+        if (!focus.hasFocus) _controller.markTouched(field);
+      });
+    }
   }
 
   @override
@@ -52,6 +63,7 @@ class _LoginPageState extends State<LoginPage> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _nameFocus.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
     super.dispose();
@@ -83,9 +95,16 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _emailController.text = email;
       _passwordController.clear();
+      _onFormChanged();
       _passwordWasReset = true;
     });
   }
+
+  void _onFormChanged([String _ = '']) => _controller.updateForm(
+    name: _nameController.text,
+    email: _emailController.text,
+    password: _passwordController.text,
+  );
 
   String? _errorFor(AuthenticationController controller, AuthField field) =>
       controller.fieldErrors[field]?.messageKey.tr();
@@ -128,6 +147,8 @@ class _LoginPageState extends State<LoginPage> {
                 if (isRegister) ...[
                   SafeTextField(
                     controller: _nameController,
+                    focusNode: _nameFocus,
+                    onChanged: _onFormChanged,
                     placeholder: AppStrings.authNamePlaceholder.tr(),
                     semanticsLabel: AppStrings.authNamePlaceholder.tr(),
                     leftIcon: const Icon(Icons.person_outline),
@@ -141,6 +162,7 @@ class _LoginPageState extends State<LoginPage> {
                 SafeTextField(
                   controller: _emailController,
                   focusNode: _emailFocus,
+                  onChanged: _onFormChanged,
                   placeholder: AppStrings.authEmailPlaceholder.tr(),
                   semanticsLabel: AppStrings.authEmailPlaceholder.tr(),
                   leftIcon: const Icon(Icons.mail_outline),
@@ -164,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
                         ? AutofillHints.newPassword
                         : AutofillHints.password,
                   ],
-                  onChanged: isRegister ? controller.onPasswordChanged : null,
+                  onChanged: _onFormChanged,
                   onSubmitted: (_) => _submit(),
                   error: _errorFor(controller, AuthField.password),
                   rightIcon: IconButton(
@@ -220,7 +242,10 @@ class _LoginPageState extends State<LoginPage> {
                 SafeButton(
                   label: primaryLabel,
                   loading: controller.isSubmitting,
-                  shadow: true,
+                  // Só com todos os campos corretos (no cadastro, a senha
+                  // cumprindo as 5 regras).
+                  disabled: !controller.canSubmit && !controller.isSubmitting,
+                  shadow: controller.canSubmit,
                   onPressed: _submit,
                 ),
                 SlowRequestNotice(

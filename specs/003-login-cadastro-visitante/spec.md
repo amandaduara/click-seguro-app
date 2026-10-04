@@ -14,6 +14,13 @@ v2.1.0 · seção "Autenticação" do [contrato da API](../../.specify/memory/ap
 usa a sessão das features [001](../001-sessao-persistente-visitante/spec.md) e
 [002](../002-apiclient-renovacao-sessao/spec.md) · visual: `wireframe/src/components/screens/LoginScreen.tsx`.
 
+## Clarifications
+
+### Session 2026-10-04 (ajustes após teste no aparelho)
+
+- Q: Quando os botões "Entrar" e "Criar conta" ficam disponíveis? → A: Desabilitados até todos os campos estarem corretos; no cadastro, a senha precisa cumprir as 5 regras. O erro de um campo aparece quando a pessoa sai dele (ou ao tentar enviar pelo teclado).
+- Q: Como o seletor "Entrar" / "Criar conta" anima? → A: Uma única pílula desliza até o segmento tocado; só ele muda de aparência.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Entrar com e-mail e senha (Priority: P1)
@@ -171,6 +178,9 @@ Errar o código e ver a mensagem, sem avançar.
   marcar cada uma quando atendida.
 - **FR-006**: Durante um envio, o botão MUST ficar desabilitado e indicar processamento; um novo
   toque MUST NOT gerar outro pedido.
+- **FR-006a**: O botão principal ("Entrar" / "Criar conta") MUST ficar desabilitado até todos os
+  campos do modo estarem corretos (no cadastro, a senha cumprindo as 5 regras). O erro de cada
+  campo MUST aparecer quando a pessoa sai dele, não enquanto ainda digita.
 
 **Entrada, cadastro e visitante**
 

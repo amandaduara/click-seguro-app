@@ -2,6 +2,9 @@ import 'package:click_seguro_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// Seletor em pílula "Entrar" / "Criar conta" (wireframe, LoginScreen).
+///
+/// Uma única pílula clara desliza até o segmento escolhido; os rótulos só
+/// trocam de cor. Assim só o segmento tocado tem efeito visual.
 class AuthModeSwitch extends StatelessWidget {
   const AuthModeSwitch({
     super.key,
@@ -10,6 +13,8 @@ class AuthModeSwitch extends StatelessWidget {
     required this.isRegister,
     required this.onChanged,
   });
+
+  static const Duration _duration = Duration(milliseconds: 200);
 
   final String loginLabel;
   final String registerLabel;
@@ -26,19 +31,43 @@ class AuthModeSwitch extends StatelessWidget {
         color: AppColors.input,
         borderRadius: BorderRadius.all(Radius.circular(999)),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          _Segment(
-            key: const ValueKey('auth-mode-login'),
-            label: loginLabel,
-            selected: !isRegister,
-            onTap: () => onChanged(false),
+          Positioned.fill(
+            child: AnimatedAlign(
+              duration: _duration,
+              curve: Curves.easeOut,
+              alignment: isRegister
+                  ? Alignment.centerRight
+                  : Alignment.centerLeft,
+              child: const FractionallySizedBox(
+                widthFactor: 0.5,
+                heightFactor: 1,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.all(Radius.circular(999)),
+                    boxShadow: AppColors.shadowSm,
+                  ),
+                ),
+              ),
+            ),
           ),
-          _Segment(
-            key: const ValueKey('auth-mode-register'),
-            label: registerLabel,
-            selected: isRegister,
-            onTap: () => onChanged(true),
+          Row(
+            children: [
+              _Segment(
+                key: const ValueKey('auth-mode-login'),
+                label: loginLabel,
+                selected: !isRegister,
+                onTap: () => onChanged(false),
+              ),
+              _Segment(
+                key: const ValueKey('auth-mode-register'),
+                label: registerLabel,
+                selected: isRegister,
+                onTap: () => onChanged(true),
+              ),
+            ],
           ),
         ],
       ),
@@ -60,30 +89,25 @@ class _Segment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelLarge?.copyWith(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+      color: selected ? AppColors.secondary : AppColors.textMutedForeground,
+    );
     return Expanded(
       child: Semantics(
         button: true,
         selected: selected,
         child: GestureDetector(
-          onTap: onTap,
+          onTap: selected ? null : onTap,
           behavior: HitTestBehavior.opaque,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+          child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 48),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: selected ? AppColors.background : Colors.transparent,
-              borderRadius: const BorderRadius.all(Radius.circular(999)),
-              boxShadow: selected ? AppColors.shadowSm : null,
-            ),
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: selected
-                    ? AppColors.secondary
-                    : AppColors.textMutedForeground,
+            child: Center(
+              child: AnimatedDefaultTextStyle(
+                duration: AuthModeSwitch._duration,
+                style: style ?? const TextStyle(),
+                child: Text(label, textAlign: TextAlign.center),
               ),
             ),
           ),

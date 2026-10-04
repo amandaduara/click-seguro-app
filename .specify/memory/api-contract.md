@@ -61,7 +61,7 @@ real · ❌ não existe na API (ver alternativa) · ⏸️ existe na API, fora d
 | ✅ | `POST /auth/app/login` `{email, password}` → `{accessToken, refreshToken}` | não | RF-004 | 401 `INVALID_CREDENTIALS` |
 | ✅ | `POST /auth/app/refresh` `{refreshToken}` → `{accessToken, refreshToken}` | não | RF-007 | 401 `TOKEN_INVALID` → `expire()` |
 | ✅ | `GET /users/me` → `profile` | sim | RF-007, RF-009 (nome), RF-035 | 401, 404 `USER_NOT_FOUND` (conta desativada → tratar como sessão encerrada) |
-| 🧪 | `POST /auth/forgot-password` `{email}` → 204 | não | RF-006 passo 1 | sempre 204 (não revela se o e-mail existe) |
+| 🧪 | `POST /auth/forgot-password` `{email}` → 204 | não | RF-006 passo 1 | sempre 204 (não revela se o e-mail existe). ⚠️ 2026-10-04: com e-mail **cadastrado** levou 123 s (o servidor envia o e-mail antes de responder); sem conta, 2 s. Passa do tempo de espera do app (60 s) |
 | ✅ | `POST /auth/forgot-password/verify` `{email, code}` → 204 | não | RF-006 passo 2 | 401 `INVALID_RECOVERY_CODE` |
 | 🧪 | `POST /auth/forgot-password/reset` `{email, code, newPassword}` → 204 | não | RF-006 passo 3 | sempre 204, por isso o passo 2 é obrigatório antes |
 

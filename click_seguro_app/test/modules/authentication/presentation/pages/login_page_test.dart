@@ -52,6 +52,7 @@ void main() {
   }) async {
     await tester.enterText(field('seu@email.com'), email);
     await tester.enterText(field('Senha'), 'Senha@123');
+    await tester.pump(); // habilita o botão com o formulário válido
   }
 
   Future<void> tapPrimary(WidgetTester tester, String label) async {
@@ -93,13 +94,32 @@ void main() {
       expect(find.text('maria@exemplo.com'), findsOneWidget);
     });
 
-    testWidgets('e-mail inválido é marcado sem chamar o serviço', (
+    testWidgets('Entrar fica desabilitado até os campos estarem corretos', (
+      tester,
+    ) async {
+      bool disabled() => tester
+          .widget<SafeButton>(find.widgetWithText(SafeButton, 'Entrar').last)
+          .disabled;
+      await pumpLogin(tester);
+      expect(disabled(), isTrue);
+
+      await fillLogin(tester, email: 'maria@');
+      expect(disabled(), isTrue);
+
+      await fillLogin(tester);
+      expect(disabled(), isFalse);
+    });
+
+    testWidgets('e-mail inválido mostra o erro ao sair do campo', (
       tester,
     ) async {
       await pumpLogin(tester);
-      await fillLogin(tester, email: 'maria@');
+      await tester.enterText(field('seu@email.com'), 'maria@');
+      await tester.pump();
+      expect(find.text('Digite um e-mail válido.'), findsNothing);
 
-      await tapPrimary(tester, 'Entrar');
+      await tester.tap(field('Senha')); // sai do campo de e-mail
+      await tester.pumpAndSettle();
 
       expect(find.text('Digite um e-mail válido.'), findsOneWidget);
       expect(repository.loginCalls, 0);
@@ -142,6 +162,28 @@ void main() {
       expect(field('Seu nome'), findsOneWidget);
       expect(find.byType(PasswordRulesList), findsOneWidget);
       expect(find.text('maria@exemplo.com'), findsOneWidget);
+    });
+
+    testWidgets('Criar conta só habilita com a senha cumprindo as regras', (
+      tester,
+    ) async {
+      bool disabled() => tester
+          .widget<SafeButton>(
+            find.widgetWithText(SafeButton, 'Criar conta').last,
+          )
+          .disabled;
+      await pumpLogin(tester);
+      await openRegister(tester);
+      await tester.enterText(field('Seu nome'), 'Maria Silva');
+      await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
+
+      await tester.enterText(field('Senha'), 'Senha1234');
+      await tester.pump();
+      expect(disabled(), isTrue);
+
+      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.pump();
+      expect(disabled(), isFalse);
     });
 
     testWidgets('senha forte marca as 5 regras', (tester) async {

@@ -35,15 +35,50 @@ void main() {
       expect(controller.failure, isNull);
     });
 
-    test('formulário inválido vai para fieldErrors', () async {
-      await controller.submit(email: 'maria@', password: '');
+    test(
+      'enviar formulário inválido não chama o serviço e mostra os erros',
+      () async {
+        await controller.submit(email: 'maria@', password: '');
+
+        expect(controller.fieldErrors, {
+          AuthField.email: FieldError.emailInvalid,
+          AuthField.password: FieldError.required,
+        });
+        expect(repository.loginCalls, 0);
+        expect(controller.failure, isNull);
+        expect(controller.authenticated, isFalse);
+      },
+    );
+
+    test('botão só habilita com o formulário válido', () {
+      expect(controller.canSubmit, isFalse);
+
+      controller.updateForm(email: 'maria@', password: 'x');
+      expect(controller.canSubmit, isFalse);
+
+      controller.updateForm(email: 'maria@exemplo.com', password: 'x');
+      expect(controller.canSubmit, isTrue);
+    });
+
+    test('erro do campo só aparece depois de sair dele', () {
+      controller.updateForm(email: 'maria@', password: '');
+      expect(controller.fieldErrors, isEmpty);
+
+      controller.markTouched(AuthField.email);
 
       expect(controller.fieldErrors, {
         AuthField.email: FieldError.emailInvalid,
-        AuthField.password: FieldError.required,
       });
-      expect(controller.failure, isNull);
-      expect(controller.authenticated, isFalse);
+    });
+
+    test('desabilitado enquanto envia', () async {
+      repository.gate = Completer<void>();
+
+      final pending = submitLogin();
+
+      expect(controller.canSubmit, isFalse);
+      repository.gate!.complete();
+      await pending;
     });
 
     test('senha errada vai para failure', () async {
@@ -107,13 +142,41 @@ void main() {
     });
 
     test('regras da senha acompanham a digitação', () {
-      controller.onPasswordChanged('Ab1');
+      controller.setMode(AuthMode.register);
+      controller.updateForm(name: '', email: '', password: 'Ab1');
 
       expect(controller.passwordRules, {
         PasswordRule.uppercase,
         PasswordRule.lowercase,
         PasswordRule.digit,
       });
+    });
+
+    test('cadastro só habilita com a senha cumprindo as 5 regras', () {
+      controller.setMode(AuthMode.register);
+
+      controller.updateForm(
+        name: 'Maria Silva',
+        email: 'maria@exemplo.com',
+        password: 'Senha1234',
+      );
+      expect(controller.canSubmit, isFalse);
+
+      controller.updateForm(
+        name: 'Maria Silva',
+        email: 'maria@exemplo.com',
+        password: 'Senha@123',
+      );
+      expect(controller.canSubmit, isTrue);
+    });
+
+    test('trocar para cadastro reavalia o formulário', () {
+      controller.updateForm(email: 'maria@exemplo.com', password: 'x');
+      expect(controller.canSubmit, isTrue);
+
+      controller.setMode(AuthMode.register);
+
+      expect(controller.canSubmit, isFalse);
     });
 
     test('cadastro com sucesso marca authenticated', () async {

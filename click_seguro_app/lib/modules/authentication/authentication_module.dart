@@ -9,6 +9,7 @@ import 'package:click_seguro_app/modules/authentication/domain/usecases/evaluate
 import 'package:click_seguro_app/modules/authentication/domain/usecases/login_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/register_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/request_password_reset_usecase.dart';
+import 'package:click_seguro_app/modules/authentication/domain/usecases/validate_auth_form_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/reset_password_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/verify_reset_code_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/validators/credentials_validator.dart';
@@ -51,6 +52,9 @@ class AuthenticationModule implements ModuleInterface {
         () => EvaluatePasswordUseCase(injector<CredentialsValidator>()),
       )
       ..registerLazySingleton(
+        () => ValidateAuthFormUseCase(injector<CredentialsValidator>()),
+      )
+      ..registerLazySingleton(
         () => EnterAsGuestUseCase(injector<AuthRepository>()),
       )
       ..registerLazySingleton(
@@ -81,6 +85,7 @@ class AuthenticationModule implements ModuleInterface {
           login: injector<LoginUseCase>(),
           register: injector<RegisterUseCase>(),
           evaluatePassword: injector<EvaluatePasswordUseCase>(),
+          validateForm: injector<ValidateAuthFormUseCase>(),
           enterAsGuest: injector<EnterAsGuestUseCase>(),
         ),
       ),
