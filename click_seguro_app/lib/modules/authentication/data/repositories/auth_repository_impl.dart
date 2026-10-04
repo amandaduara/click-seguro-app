@@ -13,6 +13,7 @@ import 'package:fpdart/fpdart.dart';
 /// Códigos de negócio que só este repository compara.
 abstract final class _AuthErrorCodes {
   static const String emailAlreadyExists = 'USER_EMAIL_ALREADY_EXISTS';
+  static const String invalidRecoveryCode = 'INVALID_RECOVERY_CODE';
 }
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -66,21 +67,46 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> requestPasswordReset(String email) async =>
-      const Left(ServerFailure());
+  Future<Either<Failure, Unit>> requestPasswordReset(String email) =>
+      _guard(() => _remote.forgotPassword(email));
 
   @override
   Future<Either<Failure, Unit>> verifyResetCode({
     required String email,
     required String code,
-  }) async => const Left(ServerFailure());
+  }) => _guard(
+    () => _remote.verifyCode(email: email, code: code),
+    onError: (e) => e.errorCode == _AuthErrorCodes.invalidRecoveryCode
+        ? const InvalidRecoveryCodeFailure()
+        : null,
+  );
 
   @override
   Future<Either<Failure, Unit>> resetPassword({
     required String email,
     required String code,
     required String newPassword,
-  }) async => const Left(ServerFailure());
+  }) => _guard(
+    () => _remote.resetPassword(
+      email: email,
+      code: code,
+      newPassword: newPassword,
+    ),
+  );
+
+  /// Executa [action] e converte [ApiException] em [Failure]: primeiro o
+  /// caso específico de [onError] (se houver), depois o mapeamento padrão.
+  Future<Either<Failure, Unit>> _guard(
+    Future<void> Function() action, {
+    Failure? Function(ApiException e)? onError,
+  }) async {
+    try {
+      await action();
+      return const Right(unit);
+    } on ApiException catch (e) {
+      return Left(onError?.call(e) ?? e.toFailure());
+    }
+  }
 
   /// login → `/users/me` com o token novo → papel de usuário do app? →
   /// salva a sessão. Lança [ApiException].

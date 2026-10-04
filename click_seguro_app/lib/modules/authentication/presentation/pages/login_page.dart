@@ -34,6 +34,9 @@ class _LoginPageState extends State<LoginPage> {
 
   late final AuthenticationController _controller;
 
+  /// Aviso de "senha alterada" ao voltar da recuperação (FR-016).
+  bool _passwordWasReset = false;
+
   @override
   void initState() {
     super.initState();
@@ -61,11 +64,26 @@ class _LoginPageState extends State<LoginPage> {
 
   void _submit() {
     FocusScope.of(context).unfocus();
+    setState(() => _passwordWasReset = false);
     _controller.submit(
       name: _nameController.text,
       email: _emailController.text,
       password: _passwordController.text,
     );
+  }
+
+  Future<void> _openForgotPassword() async {
+    final email = await context.push<String>(
+      '/forgot-password',
+      extra: _emailController.text.trim(),
+    );
+    if (email == null || !mounted) return;
+    _controller.setMode(AuthMode.login);
+    setState(() {
+      _emailController.text = email;
+      _passwordController.clear();
+      _passwordWasReset = true;
+    });
   }
 
   String? _errorFor(AuthenticationController controller, AuthField field) =>
@@ -98,9 +116,12 @@ class _LoginPageState extends State<LoginPage> {
                   loginLabel: AppStrings.authModeLogin.tr(),
                   registerLabel: AppStrings.authModeRegister.tr(),
                   isRegister: isRegister,
-                  onChanged: (register) => controller.setMode(
-                    register ? AuthMode.register : AuthMode.login,
-                  ),
+                  onChanged: (register) {
+                    setState(() => _passwordWasReset = false);
+                    controller.setMode(
+                      register ? AuthMode.register : AuthMode.login,
+                    );
+                  },
                 ),
                 const SizedBox(height: AppSpacing.s6),
                 if (isRegister) ...[
@@ -167,6 +188,30 @@ class _LoginPageState extends State<LoginPage> {
                           met: controller.passwordRules.contains(rule),
                         ),
                     ],
+                  ),
+                ],
+                if (!isRegister)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _openForgotPassword,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        minimumSize: const Size(48, 48),
+                      ),
+                      child: Text(AppStrings.authForgotPassword.tr()),
+                    ),
+                  ),
+                if (_passwordWasReset) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      AppStrings.authResetSuccess.tr(),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(color: AppColors.success),
+                    ),
                   ),
                 ],
                 ..._failureMessage(controller),

@@ -8,8 +8,12 @@ import 'package:click_seguro_app/modules/authentication/domain/usecases/enter_as
 import 'package:click_seguro_app/modules/authentication/domain/usecases/evaluate_password_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/login_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/register_usecase.dart';
+import 'package:click_seguro_app/modules/authentication/domain/usecases/request_password_reset_usecase.dart';
+import 'package:click_seguro_app/modules/authentication/domain/usecases/reset_password_usecase.dart';
+import 'package:click_seguro_app/modules/authentication/domain/usecases/verify_reset_code_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/validators/credentials_validator.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/controller/forgot_password_controller.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -48,6 +52,24 @@ class AuthenticationModule implements ModuleInterface {
       )
       ..registerLazySingleton(
         () => EnterAsGuestUseCase(injector<AuthRepository>()),
+      )
+      ..registerLazySingleton(
+        () => RequestPasswordResetUseCase(
+          injector<AuthRepository>(),
+          injector<CredentialsValidator>(),
+        ),
+      )
+      ..registerLazySingleton(
+        () => VerifyResetCodeUseCase(
+          injector<AuthRepository>(),
+          injector<CredentialsValidator>(),
+        ),
+      )
+      ..registerLazySingleton(
+        () => ResetPasswordUseCase(
+          injector<AuthRepository>(),
+          injector<CredentialsValidator>(),
+        ),
       );
   }
 
@@ -60,6 +82,14 @@ class AuthenticationModule implements ModuleInterface {
           register: injector<RegisterUseCase>(),
           evaluatePassword: injector<EvaluatePasswordUseCase>(),
           enterAsGuest: injector<EnterAsGuestUseCase>(),
+        ),
+      ),
+      ChangeNotifierProvider(
+        create: (_) => ForgotPasswordController(
+          requestReset: injector<RequestPasswordResetUseCase>(),
+          verifyCode: injector<VerifyResetCodeUseCase>(),
+          resetPassword: injector<ResetPasswordUseCase>(),
+          evaluatePassword: injector<EvaluatePasswordUseCase>(),
         ),
       ),
     ];

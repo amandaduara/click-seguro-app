@@ -125,4 +125,43 @@ void main() {
       );
     });
   });
+
+  group('recuperação', () {
+    test(
+      'os três passos usam os caminhos e corpos certos, sem token',
+      () async {
+        adapter.statusCode = 204;
+
+        await dataSource.forgotPassword('maria@exemplo.com');
+        await dataSource.verifyCode(email: 'maria@exemplo.com', code: '123456');
+        await dataSource.resetPassword(
+          email: 'maria@exemplo.com',
+          code: '123456',
+          newPassword: 'Nova@1234',
+        );
+
+        final requests = adapter.requests;
+        expect(requests.map((r) => r.path), [
+          AuthRemoteDataSourceImpl.forgotPasswordPath,
+          AuthRemoteDataSourceImpl.verifyCodePath,
+          AuthRemoteDataSourceImpl.resetPasswordPath,
+        ]);
+        expect(requests.map((r) => r.method), everyElement('POST'));
+        expect(requests[0].data, {'email': 'maria@exemplo.com'});
+        expect(requests[1].data, {
+          'email': 'maria@exemplo.com',
+          'code': '123456',
+        });
+        expect(requests[2].data, {
+          'email': 'maria@exemplo.com',
+          'code': '123456',
+          'newPassword': 'Nova@1234',
+        });
+        expect(
+          requests.every((r) => !r.headers.containsKey('Authorization')),
+          isTrue,
+        );
+      },
+    );
+  });
 }

@@ -157,4 +157,53 @@ void main() {
       expect(remote.calls, isEmpty);
     });
   });
+
+  group('recuperação', () {
+    test('os três passos com sucesso', () async {
+      expect(
+        (await repository.requestPasswordReset('maria@exemplo.com')).isRight(),
+        isTrue,
+      );
+      expect(
+        (await repository.verifyResetCode(
+          email: 'maria@exemplo.com',
+          code: '123456',
+        )).isRight(),
+        isTrue,
+      );
+      expect(
+        (await repository.resetPassword(
+          email: 'maria@exemplo.com',
+          code: '123456',
+          newPassword: 'Nova@1234',
+        )).isRight(),
+        isTrue,
+      );
+      expect(remote.calls, ['forgotPassword', 'verifyCode', 'resetPassword']);
+      expect(session.isAuthenticated, isFalse);
+    });
+
+    test('código inválido vira InvalidRecoveryCodeFailure', () async {
+      remote.verifyError = apiError(
+        ApiErrorType.unauthorized,
+        statusCode: 401,
+        errorCode: 'INVALID_RECOVERY_CODE',
+      );
+
+      final result = await repository.verifyResetCode(
+        email: 'maria@exemplo.com',
+        code: '000000',
+      );
+
+      expect(result.getLeft().toNullable(), isA<InvalidRecoveryCodeFailure>());
+    });
+
+    test('sem conexão vira ConnectionFailure', () async {
+      remote.forgotError = apiError(ApiErrorType.connection);
+
+      final result = await repository.requestPasswordReset('maria@exemplo.com');
+
+      expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+    });
+  });
 }

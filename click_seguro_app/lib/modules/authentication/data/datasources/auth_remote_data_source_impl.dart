@@ -9,6 +9,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   static const String registerPath = '/auth/app/register';
   static const String loginPath = '/auth/app/login';
   static const String mePath = '/users/me';
+  static const String forgotPasswordPath = '/auth/forgot-password';
+  static const String verifyCodePath = '/auth/forgot-password/verify';
+  static const String resetPasswordPath = '/auth/forgot-password/reset';
 
   final ApiClient _apiClient;
 
@@ -45,16 +48,33 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> forgotPassword(String email) => throw UnimplementedError('US4');
+  Future<void> forgotPassword(String email) async {
+    await _apiClient.post(
+      forgotPasswordPath,
+      data: {'email': email},
+      requiresAuth: false,
+    );
+  }
 
   @override
-  Future<void> verifyCode({required String email, required String code}) =>
-      throw UnimplementedError('US4');
+  Future<void> verifyCode({required String email, required String code}) async {
+    await _apiClient.post(
+      verifyCodePath,
+      data: {'email': email, 'code': code},
+      requiresAuth: false,
+    );
+  }
 
   @override
   Future<void> resetPassword({
     required String email,
     required String code,
     required String newPassword,
-  }) => throw UnimplementedError('US4');
+  }) async {
+    await _apiClient.post(
+      resetPasswordPath,
+      data: {'email': email, 'code': code, 'newPassword': newPassword},
+      requiresAuth: false,
+    );
+  }
 }

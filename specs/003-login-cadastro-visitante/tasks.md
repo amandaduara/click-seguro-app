@@ -261,10 +261,10 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T045 [P] [US4] Em `tauth/data/datasources/auth_remote_data_source_impl_test.dart`, grupo `recuperação`: `forgotPassword` → `POST /auth/forgot-password` `{"email"}`; `verifyCode` → `POST /auth/forgot-password/verify` `{"email","code"}`; `resetPassword` → `POST /auth/forgot-password/reset` `{"email","code","newPassword"}`. Todos com `requiresAuth: false`
-- [ ] T046 [P] [US4] Em `tauth/data/repositories/auth_repository_impl_test.dart`, grupo `recuperação`: os três com 204 → `Right(unit)`; `verifyCode` com 401 `INVALID_RECOVERY_CODE` → `InvalidRecoveryCodeFailure`; `connection` → `ConnectionFailure`. A sessão nunca é alterada
-- [ ] T047 [P] [US4] Criar os testes dos usecases `request_password_reset_usecase_test.dart` (e-mail inválido barrado), `verify_reset_code_usecase_test.dart` (código com 5 caracteres barrado) e `reset_password_usecase_test.dart` (senha fraca e confirmação diferente barradas), todos em `tauth/domain/usecases/`
-- [ ] T048 [P] [US4] Criar `tauth/presentation/controller/forgot_password_controller_test.dart`, com relógio falso (`DateTime now`, avançado à mão):
+- [X] T045 [P] [US4] Em `tauth/data/datasources/auth_remote_data_source_impl_test.dart`, grupo `recuperação`: `forgotPassword` → `POST /auth/forgot-password` `{"email"}`; `verifyCode` → `POST /auth/forgot-password/verify` `{"email","code"}`; `resetPassword` → `POST /auth/forgot-password/reset` `{"email","code","newPassword"}`. Todos com `requiresAuth: false`
+- [X] T046 [P] [US4] Em `tauth/data/repositories/auth_repository_impl_test.dart`, grupo `recuperação`: os três com 204 → `Right(unit)`; `verifyCode` com 401 `INVALID_RECOVERY_CODE` → `InvalidRecoveryCodeFailure`; `connection` → `ConnectionFailure`. A sessão nunca é alterada
+- [X] T047 [P] [US4] Criar os testes dos usecases `request_password_reset_usecase_test.dart` (e-mail inválido barrado), `verify_reset_code_usecase_test.dart` (código com 5 caracteres barrado) e `reset_password_usecase_test.dart` (senha fraca e confirmação diferente barradas), todos em `tauth/domain/usecases/`
+- [X] T048 [P] [US4] Criar `tauth/presentation/controller/forgot_password_controller_test.dart`, com relógio falso (`DateTime now`, avançado à mão):
   - `start('maria@exemplo.com')` → `step == email`, `email` preenchido;
   - `submitEmail` ok → `step == code`, `secondsUntilResend == 60`;
   - avançar 59 s → 1; avançar 60 s → 0;
@@ -274,7 +274,7 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
   - `submitNewPassword` ok → `completed == true`;
   - `back()` volta um passo e devolve `false` no passo `email`;
   - envio duplicado ignorado.
-- [ ] T049 [P] [US4] Criar `tauth/presentation/pages/forgot_password_page_test.dart` e, em `login_page_test.dart`, grupo `US4`:
+- [X] T049 [P] [US4] Criar `tauth/presentation/pages/forgot_password_page_test.dart` e, em `login_page_test.dart`, grupo `US4`:
   - "Esqueci minha senha" só no modo "Entrar" e abre a recuperação com o e-mail já digitado;
   - fluxo completo → volta à `LoginPage` com o e-mail e "Senha alterada. Entre com a nova senha.";
   - código inválido → mensagem e continua no passo do código;
@@ -283,11 +283,11 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
 
 ### Implementation for User Story 4
 
-- [ ] T050 [US4] Implementar `forgotPassword`, `verifyCode` e `resetPassword` em `auth/data/datasources/auth_remote_data_source_impl.dart` (constantes `forgotPasswordPath`, `verifyCodePath`, `resetPasswordPath`) e os três métodos em `auth/data/repositories/auth_repository_impl.dart`, com `_AuthErrorCodes.invalidRecoveryCode = 'INVALID_RECOVERY_CODE'` (faz T045 e T046 passarem)
-- [ ] T051 [P] [US4] Criar `auth/domain/usecases/request_password_reset_usecase.dart`, `verify_reset_code_usecase.dart` e `reset_password_usecase.dart`, cada um validando antes ([data-model](data-model.md)) (faz T047 passar)
-- [ ] T052 [US4] Criar `auth/presentation/controller/forgot_password_controller.dart` conforme o [data-model](data-model.md) e o [R7](research.md): construtor com os três usecases e `{DateTime Function()? now}` (padrão `DateTime.now`), `static const Duration resendCooldown = Duration(seconds: 60)` (faz T048 passar)
-- [ ] T053 [P] [US4] Criar `auth/presentation/widgets/resend_code_button.dart`, que recebe `secondsUntilResend` e `onPressed`. Com contagem > 0, fica desabilitado com `auth_reset_resend_in` e os segundos; com 0, `auth_reset_resend`
-- [ ] T054 [US4] Implementar `auth/presentation/pages/forgot_password_page.dart`:
+- [X] T050 [US4] Implementar `forgotPassword`, `verifyCode` e `resetPassword` em `auth/data/datasources/auth_remote_data_source_impl.dart` (constantes `forgotPasswordPath`, `verifyCodePath`, `resetPasswordPath`) e os três métodos em `auth/data/repositories/auth_repository_impl.dart`, com `_AuthErrorCodes.invalidRecoveryCode = 'INVALID_RECOVERY_CODE'` (faz T045 e T046 passarem)
+- [X] T051 [P] [US4] Criar `auth/domain/usecases/request_password_reset_usecase.dart`, `verify_reset_code_usecase.dart` e `reset_password_usecase.dart`, cada um validando antes ([data-model](data-model.md)) (faz T047 passar)
+- [X] T052 [US4] Criar `auth/presentation/controller/forgot_password_controller.dart` conforme o [data-model](data-model.md) e o [R7](research.md): construtor com os três usecases e `{DateTime Function()? now}` (padrão `DateTime.now`), `static const Duration resendCooldown = Duration(seconds: 60)` (faz T048 passar)
+- [X] T053 [P] [US4] Criar `auth/presentation/widgets/resend_code_button.dart`, que recebe `secondsUntilResend` e `onPressed`. Com contagem > 0, fica desabilitado com `auth_reset_resend_in` e os segundos; com 0, `auth_reset_resend`
+- [X] T054 [US4] Implementar `auth/presentation/pages/forgot_password_page.dart`:
   - `AppBar` com voltar (`auth_back`) e título `auth_reset_title`;
   - `PopScope` chamando `controller.back()` ([R7](research.md));
   - por passo:
@@ -296,7 +296,7 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
     - **nova senha:** nova senha com olho e `PasswordRulesList`, confirmação e "Salvar nova senha".
 
   `initState` → `controller.start(widget.initialEmail)`. Em `completed`, `context.pop(controller.email)` e `reset()` (faz a parte de página da T049 passar)
-- [ ] T055 [US4] Na `LoginPage`, adicionar "Esqueci minha senha" (`TextButton` alinhado à direita, cor `AppColors.primary`, só no modo login): `final email = await context.push<String>('/forgot-password', extra: emailController.text.trim())`. Com retorno, preencher o e-mail e mostrar `auth_reset_success` como aviso de sucesso (`AppColors.success`). Registrar os usecases e o provider `ForgotPasswordController` em `auth/authentication_module.dart` (faz T049 passar)
+- [X] T055 [US4] Na `LoginPage`, adicionar "Esqueci minha senha" (`TextButton` alinhado à direita, cor `AppColors.primary`, só no modo login): `final email = await context.push<String>('/forgot-password', extra: emailController.text.trim())`. Com retorno, preencher o e-mail e mostrar `auth_reset_success` como aviso de sucesso (`AppColors.success`). Registrar os usecases e o provider `ForgotPasswordController` em `auth/authentication_module.dart` (faz T049 passar)
 
 **Checkpoint**: as quatro histórias funcionando.
 
