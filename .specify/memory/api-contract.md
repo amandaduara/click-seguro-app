@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.0 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-03
+**Versão**: 1.0.1 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-03
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -16,7 +16,9 @@ real · ❌ não existe na API (ver alternativa) · ⏸️ existe na API, fora d
 
 ## Convenções gerais
 
-- **URL base**: `--dart-define=API_URL=https://<host>/api/v1`. Os caminhos abaixo são relativos a
+- **URL base**: `--dart-define=API_URL=https://clickseguro-api.onrender.com/api/v1` (servidor de
+  desenvolvimento no Render, plano gratuito: depois de parado, a 1ª resposta leva ~40 s; por isso o
+  `ApiClient` espera até 60 s pela resposta e as telas mostram "Conectando ao servidor…" após 5 s). Os caminhos abaixo são relativos a
   `/api/v1` (o datasource chama `/auth/app/login`, não `/api/v1/auth/app/login`).
 - **Autenticação**: `Authorization: Bearer <accessToken>`.
 - **Endpoints de auth opcional** (marcados "opcional"): funcionam sem token. Com token, trazem o
@@ -24,9 +26,9 @@ real · ❌ não existe na API (ver alternativa) · ⏸️ existe na API, fora d
   token inválido enviado gera 401 `TOKEN_INVALID`.
 - **Corpo de erro**: `{ "code": "CODIGO_DE_NEGOCIO", "message": "..." }`. O `ApiClient` MUST ler
   `code` em `ApiException.errorCode`. Hoje ele lê `error` (correção na tarefa F0.2).
-  - Erro de validação do Zod (400) pode vir em outro formato:
-    `{ "statusCode": 400, "message": "Validation failed", "errors": [{code, message, path}] }`.
-    Sem `code` no topo → `errorCode` nulo → `ValidationFailure`/`ServerFailure` padrão.
+  - Erro de validação (400), confirmado em 2026-10-03: `{ code, message, statusCode, errors, path,
+    timestamp }`, com `errors: [{code, message, path}]`. Tem `code` no topo, então chega como
+    `errorCode`; o app valida antes e não depende disso.
 - **Datas**: ISO-8601 UTC.
 - **Paginação por página**: `?page=1&limit=20` (limit ≤ 100). Resposta `{ data: [], meta }`, com
   `meta = { page, limit, total, totalPages, hasNextPage, hasPreviousPage }`. Fim da lista =
@@ -40,6 +42,8 @@ real · ❌ não existe na API (ver alternativa) · ⏸️ existe na API, fora d
 - Login devolve **dois tokens**: `accessToken` e `refreshToken`. Os dois MUST ser guardados no
   `SecureStorageService` (RNF-007).
 - **Renovação existe**: `POST /auth/app/refresh` `{refreshToken}` → novo par de tokens.
+  Confirmado: o refresh token **muda a cada renovação e o anterior passa a ser recusado** (401
+  `TOKEN_INVALID`), por isso a renovação é única e compartilhada (feature 002).
 - Regra do `ApiClient` para 401 em request **com** token (tarefa F0.2):
   1. `errorCode` = `INVALID_CREDENTIALS` (senha atual errada no alterar senha) → **não** mexe na
      sessão, só devolve o erro.
@@ -53,12 +57,12 @@ real · ❌ não existe na API (ver alternativa) · ⏸️ existe na API, fora d
 
 | Status | Método e caminho | Auth | Uso | Erros que a UI distingue |
 |---|---|---|---|---|
-| 🧪 | `POST /auth/app/register` `{name, email, password}` → 201 `{name, email}` | não | RF-003 | 409 `USER_EMAIL_ALREADY_EXISTS` |
-| 🧪 | `POST /auth/app/login` `{email, password}` → `{accessToken, refreshToken}` | não | RF-004 | 401 `INVALID_CREDENTIALS` |
-| 🧪 | `POST /auth/app/refresh` `{refreshToken}` → `{accessToken, refreshToken}` | não | RF-007 | 401 `TOKEN_INVALID` → `expire()` |
-| 🧪 | `GET /users/me` → `profile` | sim | RF-007, RF-009 (nome), RF-035 | 401, 404 `USER_NOT_FOUND` (conta desativada → tratar como sessão encerrada) |
+| ✅ | `POST /auth/app/register` `{name, email, password}` → 201 `{name, email}` | não | RF-003 | 409 `USER_EMAIL_ALREADY_EXISTS` |
+| ✅ | `POST /auth/app/login` `{email, password}` → `{accessToken, refreshToken}` | não | RF-004 | 401 `INVALID_CREDENTIALS` |
+| ✅ | `POST /auth/app/refresh` `{refreshToken}` → `{accessToken, refreshToken}` | não | RF-007 | 401 `TOKEN_INVALID` → `expire()` |
+| ✅ | `GET /users/me` → `profile` | sim | RF-007, RF-009 (nome), RF-035 | 401, 404 `USER_NOT_FOUND` (conta desativada → tratar como sessão encerrada) |
 | 🧪 | `POST /auth/forgot-password` `{email}` → 204 | não | RF-006 passo 1 | sempre 204 (não revela se o e-mail existe) |
-| 🧪 | `POST /auth/forgot-password/verify` `{email, code}` → 204 | não | RF-006 passo 2 | 401 `INVALID_RECOVERY_CODE` |
+| ✅ | `POST /auth/forgot-password/verify` `{email, code}` → 204 | não | RF-006 passo 2 | 401 `INVALID_RECOVERY_CODE` |
 | 🧪 | `POST /auth/forgot-password/reset` `{email, code, newPassword}` → 204 | não | RF-006 passo 3 | sempre 204, por isso o passo 2 é obrigatório antes |
 
 - **Cadastro não devolve token.** Fluxo do `AuthRepositoryImpl.register`: `register` → `login`
@@ -166,7 +170,7 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 | 🧪 | `PATCH /users/me` `{name?, email?, phone?, receiveNotifications?}` → 204 | sim | RF-036, switch de alertas | 409 `USER_EMAIL_ALREADY_EXISTS` |
 | 🧪 | `POST /users/me/avatar` multipart, campo `avatar` (JPEG/PNG/WebP ≤ 5 MB) → `{avatarUrl}` | sim | RF-036 | 400 arquivo inválido, 500 `UPLOAD_FAILED` |
 | 🧪 | `DELETE /users/me/avatar` → 204 | sim | RF-036 remover foto | 500 `DELETE_FAILED` |
-| 🧪 | `PATCH /users/me/change-password` `{currentPassword, newPassword}` → 204 | sim | RF-037 | 401 `INVALID_CREDENTIALS` (senha atual errada, **não** expira a sessão), 409 `USER_NEW_PASSWORD_EQUALS_OLD` |
+| ✅ | `PATCH /users/me/change-password` `{currentPassword, newPassword}` → 204 | sim | RF-037 | 401 `INVALID_CREDENTIALS` (senha atual errada, **não** expira a sessão), 409 `USER_NEW_PASSWORD_EQUALS_OLD` |
 | 🧪 | `GET /app/educational/modules` | sim | estatísticas do perfil (módulos concluídos, lições) | — |
 | 🧪 | `GET /users/me/news/saved?limit=1` → `meta.total` | sim | estatística "notícias salvas" | — |
 
@@ -197,6 +201,11 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 | Tudo em `/cms/*`, `/auth/cms/*`, `/users/cms/*` | painel administrativo (outro projeto) |
 
 ## Changelog
+
+- **1.0.1 (2026-10-03)**: autenticação confirmada no servidor real (cadastro, login, `/users/me`,
+  renovação com rotação, código de recuperação inválido, senha atual errada); URL do servidor;
+  formato real do 400; tempo de inicialização do Render. Envio do código e redefinição de senha
+  seguem 🧪 (exigem um e-mail real).
 
 - **1.0.0 (2026-10-03)**: contrato reescrito a partir do OpenAPI real. Caminhos com
   `/api/v1` e `/app/`; erro em `code`; par de tokens com renovação; recuperação de senha em 3
