@@ -140,25 +140,25 @@ usam.
 
 ### Testes
 
-- [ ] T018 [P] [US3] Criar `tonb/presentation/controller/onboarding_controller_test.dart` com `CompleteOnboardingUseCase(FakeOnboardingRepository())`:
+- [X] T018 [P] [US3] Criar `tonb/presentation/controller/onboarding_controller_test.dart` com `CompleteOnboardingUseCase(FakeOnboardingRepository())`:
   - começa em `currentPage == 0` e `isLastPage == false`;
   - `next()` no 1º e no 2º slide devolve `false`, avança a página, notifica e não grava a marcação (`completeCalls == 0`);
   - `next()` no último slide devolve `true` e grava a marcação (`completeCalls == 1`);
   - `onPageChanged(2)` (deslizar) atualiza `currentPage`, faz `isLastPage == true` e notifica;
   - `skip()` em qualquer slide devolve `true` e grava a marcação;
   - com `failOnComplete = true`, `next()` no último slide e `skip()` ainda devolvem `true` (FR-010).
-- [ ] T019 [P] [US3] Criar `tonb/presentation/pages/onboarding_page_test.dart` com `pumpLocalized(router: ...)`, `GoRouter` de teste (`/onboarding` → `OnboardingPage` dentro de `ChangeNotifierProvider<OnboardingController>`; `/login` → `Scaffold` com `Text('login')`):
+- [X] T019 [P] [US3] Criar `tonb/presentation/pages/onboarding_page_test.dart` com `pumpLocalized(router: ...)`, `GoRouter` de teste (`/onboarding` → `OnboardingPage` dentro de `ChangeNotifierProvider<OnboardingController>`; `/login` → `Scaffold` com `Text('login')`):
   - 1º slide mostra "Proteja-se de golpes", "Pular" e o botão "Continuar";
   - tocar em "Continuar" duas vezes mostra "Aprenda na prática" e o botão "Começar";
   - deslizar (`tester.fling` no `PageView` para a esquerda) até o 3º slide também troca o botão para "Começar";
   - "Começar" abre `/login`;
   - "Pular" no 1º slide abre `/login`;
   - com `failOnComplete = true`, "Pular" ainda abre `/login`.
-- [ ] T020 [P] [US3] Criar `tonb/presentation/i18n_keys_test.dart` no padrão de `click_seguro_app/test/modules/authentication/presentation/i18n_keys_test.dart`, com `RegExp(r"'((?:onboarding|splash)_[a-z0-9_]+)'")`: toda chave `onboarding_*`/`splash_*` de `AppStrings` existe em pt-BR e en-US com texto não vazio; e os textos pt-BR dos slides são exatamente os do wireframe (`onboarding_page1_title` = "Proteja-se de golpes", `onboarding_page2_title` = "Notícias verificadas", `onboarding_page3_title` = "Aprenda na prática", as três descrições, "Continuar", "Começar", "Pular" e `splash_tagline` = "Sua segurança em primeiro lugar") (FR-012)
+- [X] T020 [P] [US3] Criar `tonb/presentation/i18n_keys_test.dart` no padrão de `click_seguro_app/test/modules/authentication/presentation/i18n_keys_test.dart`, com `RegExp(r"'((?:onboarding|splash)_[a-z0-9_]+)'")`: toda chave `onboarding_*`/`splash_*` de `AppStrings` existe em pt-BR e en-US com texto não vazio; e os textos pt-BR dos slides são exatamente os do wireframe (`onboarding_page1_title` = "Proteja-se de golpes", `onboarding_page2_title` = "Notícias verificadas", `onboarding_page3_title` = "Aprenda na prática", as três descrições, "Continuar", "Começar", "Pular" e `splash_tagline` = "Sua segurança em primeiro lugar") (FR-012)
 
 ### Implementação
 
-- [ ] T021 [US3] Rodar `flutter test test/modules/onboarding`. Esperado: verde sem mexer em `onb/`. Se algum teste revelar defeito, corrigir o mínimo em `onb/presentation/` e registrar a mudança em [research.md](research.md) (R7)
+- [X] T021 [US3] Rodar `flutter test test/modules/onboarding`. Esperado: verde sem mexer em `onb/`. Se algum teste revelar defeito, corrigir o mínimo em `onb/presentation/` e registrar a mudança em [research.md](research.md) (R7)
 
 **Checkpoint**: as três histórias verdes de forma independente.
 
@@ -166,7 +166,7 @@ usam.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T022 Formatar só os arquivos tocados (`dart format` com os caminhos de `splash/`, `tsplash/`, `tonb/` e `app_strings.dart`), depois `flutter analyze` (sem avisos novos além dos 28 infos da linha de base) e `flutter test` (todos verdes)
+- [X] T022 Formatar só os arquivos tocados (`dart format` com os caminhos de `splash/`, `tsplash/`, `tonb/` e `app_strings.dart`), depois `flutter analyze` (sem avisos novos além dos 28 infos da linha de base) e `flutter test` (todos verdes)
 - [ ] T023 Validar no aparelho os 9 passos do [quickstart.md](quickstart.md) (servidor acordado, conta de teste). Anotar no fim desta tarefa o resultado de cada passo. O limite superior do SC-003 (≤ 4 s) vem do prazo de 3 s do `SessionValidationService`, já coberto por `click_seguro_app/test/modules/common/services/session_validation_service_test.dart` (feature 002); aqui ele só é observado no passo 5
 - [ ] T024 Em `.specify/memory/tasks.md`, marcar a A1 como `[x] **A1 Splash + onboarding** (RF-001, RF-002, RN-004) (specs/004-splash-onboarding-sessao)`
 

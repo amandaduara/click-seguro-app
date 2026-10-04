@@ -65,10 +65,13 @@ void main() {
       expect(await useCase(), UserSessionStatus.authenticated);
     });
 
-    test('erro inesperado não sobe e devolve o estado atual (FR-008)', () async {
-      validation.onValidate = () async => throw StateError('inesperado');
+    test(
+      'erro inesperado não sobe e devolve o estado atual (FR-008)',
+      () async {
+        validation.onValidate = () async => throw StateError('inesperado');
 
-      expect(await useCase(), UserSessionStatus.authenticated);
-    });
+        expect(await useCase(), UserSessionStatus.authenticated);
+      },
+    );
   });
 }

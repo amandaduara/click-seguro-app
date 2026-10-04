@@ -62,16 +62,19 @@ void main() {
   });
 
   group('notificação', () {
-    test('destino nulo antes de decidir e uma notificação ao decidir', () async {
-      final controller = build();
-      var notifications = 0;
-      controller.addListener(() => notifications++);
+    test(
+      'destino nulo antes de decidir e uma notificação ao decidir',
+      () async {
+        final controller = build();
+        var notifications = 0;
+        controller.addListener(() => notifications++);
 
-      expect(controller.destination, isNull);
-      await controller.resolveDestination();
+        expect(controller.destination, isNull);
+        await controller.resolveDestination();
 
-      expect(notifications, 1);
-    });
+        expect(notifications, 1);
+      },
+    );
 
     test('duas chamadas seguidas conferem e notificam uma única vez', () async {
       final controller = build();
