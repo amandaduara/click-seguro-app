@@ -93,9 +93,12 @@ lib/modules/{modulo}/
   nunca por arquivo interno. O que não está no barrel é privado do módulo.
 - Dependências permitidas na v1 (e só estas):
   - `splash` → `onboarding` (usecase `CheckOnboardingSeenUseCase`, já existe) e `common` (sessão).
-  - `shell` → `notifications` (`NotificationBellButton`).
-  - `news` → nenhuma. Atividades relacionadas usam só a rota `/activities/:moduleId` (§2).
-  - `profile` → nenhuma. As estatísticas vêm de chamadas próprias à API (`/users/me`,
+  - `shell` → `notifications` (`NotificationBellButton`, que só desenha o botão e recebe
+    `onPressed`).
+  - Todo módulo de feature → `shell` (`requireAccount`, `AppTopBar`), **exceto**
+    `notifications`, para não formar ciclo (decidido em `specs/005-shell-navegacao-base`).
+  - `news` → só `shell`. Atividades relacionadas usam só a rota `/activities/:moduleId` (§2).
+  - `profile` → só `shell`. As estatísticas vêm de chamadas próprias à API (`/users/me`,
     `/app/educational/modules`, `/users/me/news/saved`), não de outros módulos.
   - `notifications` → nenhuma. Busca as notícias novas com datasource próprio sobre `/app/news`.
   - Todo módulo → `common` e `core`.
