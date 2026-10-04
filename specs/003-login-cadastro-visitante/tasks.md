@@ -191,20 +191,20 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T028 [P] [US2] Em `tauth/data/datasources/auth_remote_data_source_impl_test.dart`, grupo `register`: `POST /auth/app/register` com `{"name","email","password"}` e `requiresAuth: false`; 409 `USER_EMAIL_ALREADY_EXISTS` → `ApiException(client, errorCode: 'USER_EMAIL_ALREADY_EXISTS')`
-- [ ] T029 [P] [US2] Em `tauth/data/repositories/auth_repository_impl_test.dart`, grupo `register`:
+- [X] T028 [P] [US2] Em `tauth/data/datasources/auth_remote_data_source_impl_test.dart`, grupo `register`: `POST /auth/app/register` com `{"name","email","password"}` e `requiresAuth: false`; 409 `USER_EMAIL_ALREADY_EXISTS` → `ApiException(client, errorCode: 'USER_EMAIL_ALREADY_EXISTS')`
+- [X] T029 [P] [US2] Em `tauth/data/repositories/auth_repository_impl_test.dart`, grupo `register`:
   - sucesso → chama `register`, depois `login` e `getMe` com as mesmas credenciais, salva a sessão e devolve `Right(user)`;
   - 409 → `EmailAlreadyExistsFailure`, sem chamar `login`;
   - `register` ok mas `login` com `connection` → `AccountCreatedFailure` e nada salvo;
   - `register` ok mas papel ≠ USER → `AccountCreatedFailure`.
-- [ ] T030 [P] [US2] Criar `tauth/domain/usecases/register_usecase_test.dart` (nome curto, e-mail inválido e senha fraca → `InvalidFormFailure` com os campos certos e `registerCalls == 0`; válido → repassa `name.trim()` e `email.trim()`) e `tauth/domain/usecases/evaluate_password_usecase_test.dart` (`'Senha@123'` → as 5 regras)
-- [ ] T031 [P] [US2] Em `tauth/presentation/controller/authentication_controller_test.dart`, grupo `US2`:
+- [X] T030 [P] [US2] Criar `tauth/domain/usecases/register_usecase_test.dart` (nome curto, e-mail inválido e senha fraca → `InvalidFormFailure` com os campos certos e `registerCalls == 0`; válido → repassa `name.trim()` e `email.trim()`) e `tauth/domain/usecases/evaluate_password_usecase_test.dart` (`'Senha@123'` → as 5 regras)
+- [X] T031 [P] [US2] Em `tauth/presentation/controller/authentication_controller_test.dart`, grupo `US2`:
   - `setMode(register)` limpa `fieldErrors` e `failure`;
   - `onPasswordChanged('Ab1')` → `passwordRules == {uppercase, lowercase, digit}`;
   - `submit` no cadastro com sucesso → `authenticated`;
   - `EmailAlreadyExistsFailure` → `failure` e o modo continua `register`;
   - `AccountCreatedFailure` → `mode == login` e `failure is AccountCreatedFailure`.
-- [ ] T032 [P] [US2] Em `tauth/presentation/pages/login_page_test.dart`, grupo `US2`:
+- [X] T032 [P] [US2] Em `tauth/presentation/pages/login_page_test.dart`, grupo `US2`:
   - tocar em "Criar conta" no seletor mostra o campo de nome e a lista de regras, e o e-mail digitado continua;
   - digitar `Senha@123` marca as 5 regras;
   - cadastro válido → `HOME`;
@@ -213,12 +213,12 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
 
 ### Implementation for User Story 2
 
-- [ ] T033 [US2] Implementar `register` em `auth/data/datasources/auth_remote_data_source_impl.dart` (`registerPath = '/auth/app/register'`) (faz T028 passar)
-- [ ] T034 [US2] Implementar `register` em `auth/data/repositories/auth_repository_impl.dart` ([R5](research.md)), com `_AuthErrorCodes.emailAlreadyExists = 'USER_EMAIL_ALREADY_EXISTS'` (faz T029 passar)
-- [ ] T035 [P] [US2] Criar `auth/domain/usecases/register_usecase.dart` e `auth/domain/usecases/evaluate_password_usecase.dart` (síncrono: `Set<PasswordRule> call(String password)`) (faz T030 passar)
-- [ ] T036 [US2] No `AuthenticationController`: `mode` com `AuthMode { login, register }`, `setMode`, `onPasswordChanged`, `passwordRules`, e `submit(name:, email:, password:)` decidindo entre `LoginUseCase` e `RegisterUseCase` e tratando `AccountCreatedFailure`/`EmailAlreadyExistsFailure` ([data-model](data-model.md)) (faz T031 passar)
-- [ ] T037 [P] [US2] Criar `auth/presentation/widgets/auth_mode_switch.dart` (pílula com fundo `AppColors.input`, raio total e dois botões de 48 de altura; o selecionado em fundo `AppColors.background`, texto `AppColors.secondary` e sombra leve, o outro em muted; `Semantics(button: true, selected: …)`) e `auth/presentation/widgets/password_rules_list.dart` (as 5 regras, ícone `Icons.check_circle` em `AppColors.success` quando atendida e `Icons.radio_button_unchecked` muted quando não; texto ≥ 14 com `labelKey.tr()`)
-- [ ] T038 [US2] Na `LoginPage`:
+- [X] T033 [US2] Implementar `register` em `auth/data/datasources/auth_remote_data_source_impl.dart` (`registerPath = '/auth/app/register'`) (faz T028 passar)
+- [X] T034 [US2] Implementar `register` em `auth/data/repositories/auth_repository_impl.dart` ([R5](research.md)), com `_AuthErrorCodes.emailAlreadyExists = 'USER_EMAIL_ALREADY_EXISTS'` (faz T029 passar)
+- [X] T035 [P] [US2] Criar `auth/domain/usecases/register_usecase.dart` e `auth/domain/usecases/evaluate_password_usecase.dart` (síncrono: `Set<PasswordRule> call(String password)`) (faz T030 passar)
+- [X] T036 [US2] No `AuthenticationController`: `mode` com `AuthMode { login, register }`, `setMode`, `onPasswordChanged`, `passwordRules`, e `submit(name:, email:, password:)` decidindo entre `LoginUseCase` e `RegisterUseCase` e tratando `AccountCreatedFailure`/`EmailAlreadyExistsFailure` ([data-model](data-model.md)) (faz T031 passar)
+- [X] T037 [P] [US2] Criar `auth/presentation/widgets/auth_mode_switch.dart` (pílula com fundo `AppColors.input`, raio total e dois botões de 48 de altura; o selecionado em fundo `AppColors.background`, texto `AppColors.secondary` e sombra leve, o outro em muted; `Semantics(button: true, selected: …)`) e `auth/presentation/widgets/password_rules_list.dart` (as 5 regras, ícone `Icons.check_circle` em `AppColors.success` quando atendida e `Icons.radio_button_unchecked` muted quando não; texto ≥ 14 com `labelKey.tr()`)
+- [X] T038 [US2] Na `LoginPage`:
   - `AuthModeSwitch` abaixo do header;
   - campo de nome (`Icons.person_outline`, `AutofillHints.name`, `TextInputAction.next`) só no cadastro;
   - `PasswordRulesList` sob a senha só no cadastro, alimentada por `onChanged` → `onPasswordChanged`;
@@ -226,7 +226,7 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
   - aviso `EmailAlreadyExistsFailure` com `SafeButton(compact, ghost)` "Entrar com este e-mail" → `setMode(login)`.
 
   O `TextEditingController` do e-mail é o mesmo nos dois modos (faz T032 passar)
-- [ ] T039 [US2] Registrar `RegisterUseCase` e `EvaluatePasswordUseCase` em `auth/authentication_module.dart` e passá-los ao `AuthenticationController`
+- [X] T039 [US2] Registrar `RegisterUseCase` e `EvaluatePasswordUseCase` em `auth/authentication_module.dart` e passá-los ao `AuthenticationController`
 
 **Checkpoint**: login e cadastro completos.
 

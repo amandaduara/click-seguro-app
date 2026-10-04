@@ -4,7 +4,9 @@ import 'package:click_seguro_app/modules/authentication/data/datasources/auth_re
 import 'package:click_seguro_app/modules/authentication/data/datasources/auth_remote_data_source_impl.dart';
 import 'package:click_seguro_app/modules/authentication/data/repositories/auth_repository_impl.dart';
 import 'package:click_seguro_app/modules/authentication/domain/repositories/auth_repository.dart';
+import 'package:click_seguro_app/modules/authentication/domain/usecases/evaluate_password_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/login_usecase.dart';
+import 'package:click_seguro_app/modules/authentication/domain/usecases/register_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/validators/credentials_validator.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
@@ -33,6 +35,15 @@ class AuthenticationModule implements ModuleInterface {
           injector<AuthRepository>(),
           injector<CredentialsValidator>(),
         ),
+      )
+      ..registerLazySingleton(
+        () => RegisterUseCase(
+          injector<AuthRepository>(),
+          injector<CredentialsValidator>(),
+        ),
+      )
+      ..registerLazySingleton(
+        () => EvaluatePasswordUseCase(injector<CredentialsValidator>()),
       );
   }
 
@@ -40,8 +51,11 @@ class AuthenticationModule implements ModuleInterface {
   List<SingleChildWidget> providers(GetIt injector) {
     return [
       ChangeNotifierProvider(
-        create: (_) =>
-            AuthenticationController(login: injector<LoginUseCase>()),
+        create: (_) => AuthenticationController(
+          login: injector<LoginUseCase>(),
+          register: injector<RegisterUseCase>(),
+          evaluatePassword: injector<EvaluatePasswordUseCase>(),
+        ),
       ),
     ];
   }

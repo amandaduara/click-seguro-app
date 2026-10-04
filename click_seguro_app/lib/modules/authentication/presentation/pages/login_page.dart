@@ -4,9 +4,13 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
+import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
+import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/extensions/auth_presentation_extension.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_mode_switch.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/widgets/password_rules_list.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -21,8 +25,10 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
 
   late final AuthenticationController _controller;
@@ -38,8 +44,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void dispose() {
     _controller.removeListener(_onControllerChanged);
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocus.dispose();
     _passwordFocus.dispose();
     super.dispose();
   }
@@ -53,6 +61,7 @@ class _LoginPageState extends State<LoginPage> {
   void _submit() {
     FocusScope.of(context).unfocus();
     _controller.submit(
+      name: _nameController.text,
       email: _emailController.text,
       password: _passwordController.text,
     );
@@ -64,7 +73,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<AuthenticationController>();
-    final failure = controller.failure;
+    final isRegister = controller.mode == AuthMode.register;
+    final primaryLabel = isRegister
+        ? AppStrings.authModeRegister.tr()
+        : AppStrings.authModeLogin.tr();
 
     return Scaffold(
       body: SafeArea(
@@ -81,8 +93,31 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const AuthHeader(),
                 const SizedBox(height: AppSpacing.s7),
+                AuthModeSwitch(
+                  loginLabel: AppStrings.authModeLogin.tr(),
+                  registerLabel: AppStrings.authModeRegister.tr(),
+                  isRegister: isRegister,
+                  onChanged: (register) => controller.setMode(
+                    register ? AuthMode.register : AuthMode.login,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s6),
+                if (isRegister) ...[
+                  SafeTextField(
+                    controller: _nameController,
+                    placeholder: AppStrings.authNamePlaceholder.tr(),
+                    semanticsLabel: AppStrings.authNamePlaceholder.tr(),
+                    leftIcon: const Icon(Icons.person_outline),
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.name],
+                    onSubmitted: (_) => _emailFocus.requestFocus(),
+                    error: _errorFor(controller, AuthField.name),
+                  ),
+                  const SizedBox(height: AppSpacing.s3),
+                ],
                 SafeTextField(
                   controller: _emailController,
+                  focusNode: _emailFocus,
                   placeholder: AppStrings.authEmailPlaceholder.tr(),
                   semanticsLabel: AppStrings.authEmailPlaceholder.tr(),
                   leftIcon: const Icon(Icons.mail_outline),
@@ -101,7 +136,12 @@ class _LoginPageState extends State<LoginPage> {
                   leftIcon: const Icon(Icons.lock_outline),
                   obscureText: !controller.isPasswordVisible,
                   textInputAction: TextInputAction.done,
-                  autofillHints: const [AutofillHints.password],
+                  autofillHints: [
+                    isRegister
+                        ? AutofillHints.newPassword
+                        : AutofillHints.password,
+                  ],
+                  onChanged: isRegister ? controller.onPasswordChanged : null,
                   onSubmitted: (_) => _submit(),
                   error: _errorFor(controller, AuthField.password),
                   rightIcon: IconButton(
@@ -116,21 +156,22 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                if (failure != null) ...[
-                  const SizedBox(height: AppSpacing.s4),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      failure.message.tr(),
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.destructive,
-                      ),
-                    ),
+                if (isRegister) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  PasswordRulesList(
+                    rules: [
+                      for (final rule in PasswordRule.values)
+                        (
+                          label: rule.labelKey.tr(),
+                          met: controller.passwordRules.contains(rule),
+                        ),
+                    ],
                   ),
                 ],
+                ..._failureMessage(controller),
                 const SizedBox(height: AppSpacing.s5),
                 SafeButton(
-                  label: AppStrings.authModeLogin.tr(),
+                  label: primaryLabel,
                   loading: controller.isSubmitting,
                   shadow: true,
                   onPressed: _submit,
@@ -141,5 +182,35 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  List<Widget> _failureMessage(AuthenticationController controller) {
+    final failure = controller.failure;
+    if (failure == null) return const [];
+    final isInfo = failure is AccountCreatedFailure;
+    return [
+      const SizedBox(height: AppSpacing.s4),
+      Semantics(
+        liveRegion: true,
+        child: Text(
+          failure.message.tr(),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: isInfo ? AppColors.secondary : AppColors.destructive,
+          ),
+        ),
+      ),
+      if (failure is EmailAlreadyExistsFailure) ...[
+        const SizedBox(height: AppSpacing.s2),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SafeButton(
+            label: AppStrings.authActionSignInWithEmail.tr(),
+            size: SafeButtonSize.compact,
+            tone: SafeButtonTone.ghost,
+            onPressed: () => controller.setMode(AuthMode.login),
+          ),
+        ),
+      ],
+    ];
   }
 }

@@ -86,4 +86,65 @@ void main() {
       expect(session.isAuthenticated, isFalse);
     });
   });
+
+  group('register', () {
+    Future<Object?> registerFailure() async => (await repository.register(
+      name: 'Maria Silva',
+      email: 'maria@exemplo.com',
+      password: 'Senha@123',
+    )).getLeft().toNullable();
+
+    test('cadastra, entra e salva a sessão', () async {
+      final result = await repository.register(
+        name: 'Maria Silva',
+        email: 'maria@exemplo.com',
+        password: 'Senha@123',
+      );
+
+      expect(result.isRight(), isTrue);
+      expect(remote.calls, ['register', 'login', 'getMe']);
+      expect(session.isAuthenticated, isTrue);
+      expect(session.userName, 'Maria Silva');
+    });
+
+    test('e-mail duplicado não tenta entrar', () async {
+      remote.registerError = apiError(
+        ApiErrorType.client,
+        statusCode: 409,
+        errorCode: 'USER_EMAIL_ALREADY_EXISTS',
+      );
+
+      expect(await registerFailure(), isA<EmailAlreadyExistsFailure>());
+      expect(remote.calls, ['register']);
+    });
+
+    test(
+      'conta criada mas login sem rede vira AccountCreatedFailure',
+      () async {
+        remote.loginError = apiError(ApiErrorType.connection);
+
+        expect(await registerFailure(), isA<AccountCreatedFailure>());
+        expect(session.isAuthenticated, isFalse);
+      },
+    );
+
+    test(
+      'conta criada mas papel inválido vira AccountCreatedFailure',
+      () async {
+        remote.me = const UserModel(
+          name: 'Maria Silva',
+          email: 'maria@exemplo.com',
+          role: UserRole.unknown,
+        );
+
+        expect(await registerFailure(), isA<AccountCreatedFailure>());
+      },
+    );
+
+    test('cadastro sem conexão vira ConnectionFailure', () async {
+      remote.registerError = apiError(ApiErrorType.connection);
+
+      expect(await registerFailure(), isA<ConnectionFailure>());
+    });
+  });
 }

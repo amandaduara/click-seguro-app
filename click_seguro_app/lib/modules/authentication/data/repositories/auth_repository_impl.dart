@@ -10,6 +10,11 @@ import 'package:click_seguro_app/modules/common/api_client/api_failure_mapper.da
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:fpdart/fpdart.dart';
 
+/// Códigos de negócio que só este repository compara.
+abstract final class _AuthErrorCodes {
+  static const String emailAlreadyExists = 'USER_EMAIL_ALREADY_EXISTS';
+}
+
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._remote, this._session);
 
@@ -33,7 +38,26 @@ class AuthRepositoryImpl implements AuthRepository {
     required String name,
     required String email,
     required String password,
-  }) async => const Left(ServerFailure());
+  }) async {
+    try {
+      await _remote.register(name: name, email: email, password: password);
+    } on ApiException catch (e) {
+      return Left(
+        e.errorCode == _AuthErrorCodes.emailAlreadyExists
+            ? const EmailAlreadyExistsFailure()
+            : e.toFailure(),
+      );
+    }
+
+    // A conta existe; se a entrada automática falhar, a pessoa entra depois
+    // com e-mail e senha (FR-009).
+    try {
+      final signedIn = await _signIn(email: email, password: password);
+      return signedIn.mapLeft((_) => const AccountCreatedFailure());
+    } on ApiException {
+      return const Left(AccountCreatedFailure());
+    }
+  }
 
   @override
   Future<Either<Failure, Unit>> enterAsGuest() async =>

@@ -80,4 +80,49 @@ void main() {
       );
     });
   });
+
+  group('register', () {
+    test('POST /auth/app/register sem Authorization', () async {
+      adapter
+        ..statusCode = 201
+        ..body = {'name': 'Maria Silva', 'email': 'maria@exemplo.com'};
+
+      await dataSource.register(
+        name: 'Maria Silva',
+        email: 'maria@exemplo.com',
+        password: 'Senha@123',
+      );
+
+      final request = adapter.lastRequest!;
+      expect(request.method, 'POST');
+      expect(request.path, AuthRemoteDataSourceImpl.registerPath);
+      expect(request.data, {
+        'name': 'Maria Silva',
+        'email': 'maria@exemplo.com',
+        'password': 'Senha@123',
+      });
+      expect(request.headers.containsKey('Authorization'), isFalse);
+    });
+
+    test('e-mail duplicado vira ApiException com o código', () async {
+      adapter
+        ..statusCode = 409
+        ..body = {'code': 'USER_EMAIL_ALREADY_EXISTS', 'message': 'dup'};
+
+      await expectLater(
+        dataSource.register(
+          name: 'Maria Silva',
+          email: 'maria@exemplo.com',
+          password: 'Senha@123',
+        ),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.errorCode,
+            'errorCode',
+            'USER_EMAIL_ALREADY_EXISTS',
+          ),
+        ),
+      );
+    });
+  });
 }

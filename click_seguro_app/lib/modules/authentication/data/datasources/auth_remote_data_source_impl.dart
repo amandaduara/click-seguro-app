@@ -6,6 +6,7 @@ import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthRemoteDataSourceImpl(this._apiClient);
 
+  static const String registerPath = '/auth/app/register';
   static const String loginPath = '/auth/app/login';
   static const String mePath = '/users/me';
 
@@ -35,7 +36,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String name,
     required String email,
     required String password,
-  }) => throw UnimplementedError('US2');
+  }) async {
+    await _apiClient.post(
+      registerPath,
+      data: {'name': name, 'email': email, 'password': password},
+      requiresAuth: false,
+    );
+  }
 
   @override
   Future<void> forgotPassword(String email) => throw UnimplementedError('US4');

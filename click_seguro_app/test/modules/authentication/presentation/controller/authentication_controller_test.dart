@@ -1,26 +1,23 @@
+import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
 import 'dart:async';
 
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/field_error.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
-import 'package:click_seguro_app/modules/authentication/domain/usecases/login_usecase.dart';
-import 'package:click_seguro_app/modules/authentication/domain/validators/credentials_validator.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 
+import '../../fakes/controller_factory.dart';
 import '../../fakes/fake_auth_repository.dart';
 
 void main() {
-  const validator = CredentialsValidator();
   late FakeAuthRepository repository;
   late AuthenticationController controller;
 
   setUp(() {
     repository = FakeAuthRepository();
-    controller = AuthenticationController(
-      login: LoginUseCase(repository, validator),
-    );
+    controller = buildAuthenticationController(repository);
   });
 
   Future<void> submitLogin({String password = 'Senha@123'}) =>
@@ -87,6 +84,66 @@ void main() {
       expect(controller.failure, isNull);
       expect(controller.fieldErrors, isEmpty);
       expect(controller.isPasswordVisible, isFalse);
+      expect(controller.authenticated, isFalse);
+    });
+  });
+
+  group('US2', () {
+    Future<void> submitRegister() => controller.submit(
+      name: 'Maria Silva',
+      email: 'maria@exemplo.com',
+      password: 'Senha@123',
+    );
+
+    test('trocar de modo limpa erros e falha', () async {
+      await controller.submit(email: 'maria@', password: '');
+      repository.loginResult = const Left(InvalidCredentialsFailure());
+
+      controller.setMode(AuthMode.register);
+
+      expect(controller.mode, AuthMode.register);
+      expect(controller.fieldErrors, isEmpty);
+      expect(controller.failure, isNull);
+    });
+
+    test('regras da senha acompanham a digitação', () {
+      controller.onPasswordChanged('Ab1');
+
+      expect(controller.passwordRules, {
+        PasswordRule.uppercase,
+        PasswordRule.lowercase,
+        PasswordRule.digit,
+      });
+    });
+
+    test('cadastro com sucesso marca authenticated', () async {
+      controller.setMode(AuthMode.register);
+
+      await submitRegister();
+
+      expect(repository.registerCalls, 1);
+      expect(repository.loginCalls, 0);
+      expect(controller.authenticated, isTrue);
+    });
+
+    test('e-mail duplicado fica em failure e no modo cadastro', () async {
+      repository.registerResult = const Left(EmailAlreadyExistsFailure());
+      controller.setMode(AuthMode.register);
+
+      await submitRegister();
+
+      expect(controller.failure, isA<EmailAlreadyExistsFailure>());
+      expect(controller.mode, AuthMode.register);
+    });
+
+    test('conta criada sem login volta ao modo entrar com o aviso', () async {
+      repository.registerResult = const Left(AccountCreatedFailure());
+      controller.setMode(AuthMode.register);
+
+      await submitRegister();
+
+      expect(controller.mode, AuthMode.login);
+      expect(controller.failure, isA<AccountCreatedFailure>());
       expect(controller.authenticated, isFalse);
     });
   });
