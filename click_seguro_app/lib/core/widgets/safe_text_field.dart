@@ -120,29 +120,34 @@ class _SafeTextFieldState extends State<SafeTextField> {
                     const SizedBox(width: AppSpacing.s1),
                   ],
                   Expanded(
-                    child: Semantics(
-                      label: widget.semanticsLabel,
-                      textField: true,
-                      child: TextField(
-                        controller: widget.controller,
-                        focusNode: _focusNode,
-                        obscureText: widget.obscureText,
-                        onChanged: widget.onChanged,
-                        keyboardType: widget.keyboardType,
-                        textInputAction: widget.textInputAction,
-                        onSubmitted: widget.onSubmitted,
-                        autofillHints: widget.autofillHints,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textForeground,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: widget.placeholder,
-                          hintStyle: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: AppColors.textMutedForeground),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
+                    // MergeSemantics: rótulo e campo viram um só nó para o
+                    // leitor de tela (sem anunciar o campo duas vezes).
+                    child: MergeSemantics(
+                      child: Semantics(
+                        label: widget.semanticsLabel,
+                        textField: true,
+                        child: TextField(
+                          controller: widget.controller,
+                          focusNode: _focusNode,
+                          obscureText: widget.obscureText,
+                          onChanged: widget.onChanged,
+                          keyboardType: widget.keyboardType,
+                          textInputAction: widget.textInputAction,
+                          onSubmitted: widget.onSubmitted,
+                          autofillHints: widget.autofillHints,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: AppColors.textForeground),
+                          decoration: InputDecoration(
+                            hintText: widget.placeholder,
+                            hintStyle: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.textMutedForeground,
+                                ),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
                           ),
                         ),
                       ),

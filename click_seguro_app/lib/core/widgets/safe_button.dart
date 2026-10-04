@@ -37,7 +37,7 @@ class SafeButton extends StatefulWidget {
 
 class _SafeButtonState extends State<SafeButton> {
   bool _pressed = false;
-  
+
   bool get _isDisabled => widget.disabled || widget.loading;
 
   EdgeInsets get _padding {
@@ -94,9 +94,7 @@ class _SafeButtonState extends State<SafeButton> {
   @override
   Widget build(BuildContext context) {
     final style = _toneStyle;
-    final opacity = _isDisabled
-        ? 0.4
-        : 1.0;
+    final opacity = _isDisabled ? 0.4 : 1.0;
 
     final content = Row(
       mainAxisSize: widget.size == SafeButtonSize.large
@@ -119,12 +117,17 @@ class _SafeButtonState extends State<SafeButton> {
             child: widget.icon!,
           ),
         if (widget.loading || widget.icon != null) const SizedBox(width: 8),
-        Text(
-          widget.label,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontSize: _fontSize,
-            fontWeight: FontWeight.w700,
-            color: style.fg,
+        // Flexible: com fonte ampliada (RNF-003) o rótulo quebra a linha em
+        // vez de estourar a largura do botão.
+        Flexible(
+          child: Text(
+            widget.label,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontSize: _fontSize,
+              fontWeight: FontWeight.w700,
+              color: style.fg,
+            ),
           ),
         ),
         if (widget.iconRight != null) ...[
@@ -153,9 +156,7 @@ class _SafeButtonState extends State<SafeButton> {
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
             padding: _padding,
-            width: widget.size == SafeButtonSize.large
-                ? double.infinity
-                : null,
+            width: widget.size == SafeButtonSize.large ? double.infinity : null,
             decoration: BoxDecoration(
               color: style.bg,
               gradient: style.gradient,
