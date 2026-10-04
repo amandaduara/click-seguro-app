@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/modules/onboarding/domain/usecases/check_onboarding_seen_usecase.dart';
+import 'package:click_seguro_app/modules/onboarding/onboarding.dart';
 import 'package:flutter/foundation.dart';
 
 class SplashController extends ChangeNotifier {
