@@ -210,6 +210,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Continuar sem login'), findsOneWidget);
 
+      // Visual do wireframe: fundo claro, borda fina e texto azul-escuro.
+      expect(
+        tester
+            .widget<SafeButton>(
+              find.widgetWithText(SafeButton, 'Continuar sem login'),
+            )
+            .tone,
+        SafeButtonTone.ghost,
+      );
+
       await tapPrimary(tester, 'Continuar sem login');
 
       expect(find.text('HOME'), findsOneWidget);

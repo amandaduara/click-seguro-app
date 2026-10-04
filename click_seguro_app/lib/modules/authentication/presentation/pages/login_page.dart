@@ -232,7 +232,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: AppSpacing.s6),
                 SafeButton(
                   label: AppStrings.authContinueAsGuest.tr(),
-                  tone: SafeButtonTone.secondary,
+                  tone: SafeButtonTone.ghost,
                   onPressed: controller.continueAsGuest,
                 ),
               ],
