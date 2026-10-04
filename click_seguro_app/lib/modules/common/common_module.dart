@@ -4,6 +4,7 @@ import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/services/local_cache_service.dart';
 import 'package:click_seguro_app/modules/common/services/secure_storage_service.dart';
+import 'package:click_seguro_app/modules/common/services/session_validation_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/single_child_widget.dart';
@@ -29,5 +30,11 @@ class CommonModule implements ModuleInterface {
       () => UserSessionService(injector<SecureStorageService>()),
     );
     injector.registerLazySingleton(() => ApiClient());
+    injector.registerLazySingleton(
+      () => SessionValidationService(
+        injector<ApiClient>(),
+        injector<UserSessionService>(),
+      ),
+    );
   }
 }
