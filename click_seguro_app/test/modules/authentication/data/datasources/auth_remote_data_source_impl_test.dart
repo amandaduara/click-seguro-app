@@ -1,0 +1,83 @@
+import 'package:click_seguro_app/modules/authentication/data/datasources/auth_remote_data_source_impl.dart';
+import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
+
+import '../../../../fakes/fake_secure_storage_service.dart';
+import '../../../common/api_client/fake_http_client_adapter.dart';
+
+void main() {
+  late FakeHttpClientAdapter adapter;
+  late AuthRemoteDataSourceImpl dataSource;
+
+  setUp(() {
+    adapter = FakeHttpClientAdapter();
+    GetIt.instance.registerSingleton<UserSessionService>(
+      UserSessionService(FakeSecureStorageService()),
+    );
+    dataSource = AuthRemoteDataSourceImpl(
+      ApiClient(
+        dio: Dio(BaseOptions(baseUrl: 'https://api.test'))
+          ..httpClientAdapter = adapter,
+      ),
+    );
+  });
+
+  tearDown(() => GetIt.instance.reset());
+
+  group('login', () {
+    test('POST /auth/app/login sem Authorization devolve os tokens', () async {
+      adapter.body = {'accessToken': 'acesso-1', 'refreshToken': 'renovacao-1'};
+
+      final tokens = await dataSource.login(
+        email: 'maria@exemplo.com',
+        password: 'Senha@123',
+      );
+
+      final request = adapter.lastRequest!;
+      expect(request.method, 'POST');
+      expect(request.path, AuthRemoteDataSourceImpl.loginPath);
+      expect(request.data, {
+        'email': 'maria@exemplo.com',
+        'password': 'Senha@123',
+      });
+      expect(request.headers.containsKey('Authorization'), isFalse);
+      expect(tokens.accessToken, 'acesso-1');
+      expect(tokens.refreshToken, 'renovacao-1');
+    });
+
+    test('getMe usa o token informado', () async {
+      adapter.body = {
+        'name': 'Maria Silva',
+        'email': 'maria@exemplo.com',
+        'role': 'USER',
+        'receiveNotifications': true,
+      };
+
+      final user = await dataSource.getMe('acesso-1');
+
+      final request = adapter.lastRequest!;
+      expect(request.method, 'GET');
+      expect(request.path, AuthRemoteDataSourceImpl.mePath);
+      expect(request.headers['Authorization'], 'Bearer acesso-1');
+      expect(user.name, 'Maria Silva');
+    });
+
+    test('senha errada vira ApiException com INVALID_CREDENTIALS', () async {
+      adapter
+        ..statusCode = 401
+        ..body = {'code': 'INVALID_CREDENTIALS', 'message': 'Invalid'};
+
+      await expectLater(
+        dataSource.login(email: 'maria@exemplo.com', password: 'x'),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.type, 'type', ApiErrorType.unauthorized)
+              .having((e) => e.errorCode, 'errorCode', 'INVALID_CREDENTIALS'),
+        ),
+      );
+    });
+  });
+}

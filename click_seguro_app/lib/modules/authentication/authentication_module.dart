@@ -1,21 +1,48 @@
 import 'dart:async';
 
-import 'package:click_seguro_app/modules/authentication/authentication.dart';
+import 'package:click_seguro_app/modules/authentication/data/datasources/auth_remote_data_source.dart';
+import 'package:click_seguro_app/modules/authentication/data/datasources/auth_remote_data_source_impl.dart';
+import 'package:click_seguro_app/modules/authentication/data/repositories/auth_repository_impl.dart';
+import 'package:click_seguro_app/modules/authentication/domain/repositories/auth_repository.dart';
+import 'package:click_seguro_app/modules/authentication/domain/usecases/login_usecase.dart';
+import 'package:click_seguro_app/modules/authentication/domain/validators/credentials_validator.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
+import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 class AuthenticationModule implements ModuleInterface {
   @override
-  List<SingleChildWidget> providers(GetIt injector) {
-    return [
-      ChangeNotifierProvider(
-        create: (_) => AuthenticationController(),
-      ),
-    ];
+  FutureOr<void> registerServices(GetIt injector) {
+    injector
+      ..registerLazySingleton<AuthRemoteDataSource>(
+        () => AuthRemoteDataSourceImpl(injector<ApiClient>()),
+      )
+      ..registerLazySingleton<AuthRepository>(
+        () => AuthRepositoryImpl(
+          injector<AuthRemoteDataSource>(),
+          injector<UserSessionService>(),
+        ),
+      )
+      ..registerLazySingleton(() => const CredentialsValidator())
+      ..registerLazySingleton(
+        () => LoginUseCase(
+          injector<AuthRepository>(),
+          injector<CredentialsValidator>(),
+        ),
+      );
   }
 
   @override
-  FutureOr<void> registerServices(GetIt injector) {}
+  List<SingleChildWidget> providers(GetIt injector) {
+    return [
+      ChangeNotifierProvider(
+        create: (_) =>
+            AuthenticationController(login: injector<LoginUseCase>()),
+      ),
+    ];
+  }
 }

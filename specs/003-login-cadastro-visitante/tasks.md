@@ -47,12 +47,12 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T005 [P] Criar `tauth/domain/validators/credentials_validator_test.dart` cobrindo o [R3](research.md):
+- [X] T005 [P] Criar `tauth/domain/validators/credentials_validator_test.dart` cobrindo o [R3](research.md):
   - `passwordRules`: `'abc'` atende só `lowercase`; `'Senha@123'` atende todas; 7 caracteres falham `length`; 65 caracteres falham `length`; espaço conta como `special`;
   - `validateRegistration`: nome `'Ana'` → `name: nameLength`; nome `'  Maria Silva  '` válido (trim); nome com 151 caracteres → `nameLength`; e-mail `'maria@'` → `email: emailInvalid`; e-mail `'.maria@x.com'` e `'ma..ria@x.com'` → `emailInvalid`; e-mail com 256 caracteres → `emailInvalid`; senha `'senha123'` → `password: passwordRules`; tudo válido → mapa vazio; campo vazio → `required`;
   - `validateLogin`: senha `'x'` com e-mail válido → vazio (no login só exige não vazia); senha vazia → `password: required`;
   - `validateEmail`, `validateCode` (`'12345'` → `code: codeLength`; `'123456'` válido) e `validateNewPassword` (confirmação diferente → `passwordConfirmation: passwordMismatch`; senha fraca → `password: passwordRules`).
-- [ ] T006 [P] Criar `tauth/data/models/user_model_test.dart` e `tauth/data/models/auth_tokens_model_test.dart`:
+- [X] T006 [P] Criar `tauth/data/models/user_model_test.dart` e `tauth/data/models/auth_tokens_model_test.dart`:
   - `UserModel.fromJson` com `{"name":"Maria Silva","email":"maria@exemplo.com","phone":null,"avatarUrl":null,"role":"USER","receiveNotifications":true}` → `toEntity()` com `role == UserRole.user`;
   - `role` `"PUBLISHER"`/`"ADMIN"` → `publisher`/`admin`; `"XYZ"` → `unknown`;
   - sem `name` → `TypeError` (o `toModel` do `ApiClient` converte em `invalidResponse`);
@@ -60,11 +60,11 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
 
 ### Implementação
 
-- [ ] T007 [P] Criar os enums em `auth/domain/enums/`: `auth_field.dart` (`enum AuthField { name, email, password, passwordConfirmation, code }`), `field_error.dart` (`enum FieldError { required, nameLength, emailInvalid, passwordRules, passwordMismatch, codeLength }`), `password_rule.dart` (`enum PasswordRule { length, uppercase, lowercase, digit, special }`), `user_role.dart` (`enum UserRole { user, publisher, admin, unknown }` com `static UserRole fromJson(Object? value)` tolerante: `'USER'`→`user`, `'PUBLISHER'`→`publisher`, `'ADMIN'`→`admin`, resto→`unknown`) e `reset_step.dart` (`enum ResetStep { email, code, newPassword }`)
-- [ ] T008 Criar `auth/domain/validators/credentials_validator.dart` (`class CredentialsValidator`, sem Flutter), com as constantes nomeadas `nameMinLength = 6`, `nameMaxLength = 150`, `emailMaxLength = 255`, `passwordMinLength = 8`, `passwordMaxLength = 64`, `codeMinLength = 6`, a regex de e-mail do OpenAPI `^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$` e os métodos do [data-model](data-model.md). Devolve `Map<AuthField, FieldError>` não modificável. `email` e `name` com `trim()` antes de validar; senha **sem** trim (faz T005 passar)
-- [ ] T009 [P] Criar `auth/domain/entities/user_entity.dart` (`UserEntity { name, email, phone?, avatarUrl?, role }`, `const`, sem lógica) e `auth/data/models/user_model.dart` / `auth/data/models/auth_tokens_model.dart` conforme o [data-model](data-model.md) (faz T006 passar)
-- [ ] T010 [P] Criar `auth/domain/failures/auth_failures.dart` com `InvalidFormFailure(Map<AuthField, FieldError> fieldErrors)` (mensagem `AppStrings.authErrorInvalidForm`, mapa não modificável), `InvalidCredentialsFailure`, `EmailAlreadyExistsFailure`, `AccountCreatedFailure` (`AppStrings.authInfoAccountCreated`) e `InvalidRecoveryCodeFailure`, todas `extends Failure` com a chave de i18n como `message`
-- [ ] T011 [P] i18n ([R11](research.md)). Em `click_seguro_app/lib/core/i18n/app_strings.dart`, bloco `// --- authentication ---` com as constantes abaixo, e as chaves nos dois JSONs (`assets/translations/pt-BR.json` | `en-US.json`):
+- [X] T007 [P] Criar os enums em `auth/domain/enums/`: `auth_field.dart` (`enum AuthField { name, email, password, passwordConfirmation, code }`), `field_error.dart` (`enum FieldError { required, nameLength, emailInvalid, passwordRules, passwordMismatch, codeLength }`), `password_rule.dart` (`enum PasswordRule { length, uppercase, lowercase, digit, special }`), `user_role.dart` (`enum UserRole { user, publisher, admin, unknown }` com `static UserRole fromJson(Object? value)` tolerante: `'USER'`→`user`, `'PUBLISHER'`→`publisher`, `'ADMIN'`→`admin`, resto→`unknown`) e `reset_step.dart` (`enum ResetStep { email, code, newPassword }`)
+- [X] T008 Criar `auth/domain/validators/credentials_validator.dart` (`class CredentialsValidator`, sem Flutter), com as constantes nomeadas `nameMinLength = 6`, `nameMaxLength = 150`, `emailMaxLength = 255`, `passwordMinLength = 8`, `passwordMaxLength = 64`, `codeMinLength = 6`, a regex de e-mail do OpenAPI `^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$` e os métodos do [data-model](data-model.md). Devolve `Map<AuthField, FieldError>` não modificável. `email` e `name` com `trim()` antes de validar; senha **sem** trim (faz T005 passar)
+- [X] T009 [P] Criar `auth/domain/entities/user_entity.dart` (`UserEntity { name, email, phone?, avatarUrl?, role }`, `const`, sem lógica) e `auth/data/models/user_model.dart` / `auth/data/models/auth_tokens_model.dart` conforme o [data-model](data-model.md) (faz T006 passar)
+- [X] T010 [P] Criar `auth/domain/failures/auth_failures.dart` com `InvalidFormFailure(Map<AuthField, FieldError> fieldErrors)` (mensagem `AppStrings.authErrorInvalidForm`, mapa não modificável), `InvalidCredentialsFailure`, `EmailAlreadyExistsFailure`, `AccountCreatedFailure` (`AppStrings.authInfoAccountCreated`) e `InvalidRecoveryCodeFailure`, todas `extends Failure` com a chave de i18n como `message`
+- [X] T011 [P] i18n ([R11](research.md)). Em `click_seguro_app/lib/core/i18n/app_strings.dart`, bloco `// --- authentication ---` com as constantes abaixo, e as chaves nos dois JSONs (`assets/translations/pt-BR.json` | `en-US.json`):
   - **Tela:**
     - `auth_welcome` "Bem-vindo ao" | "Welcome to"
     - `auth_brand` "SafeNews" | "SafeNews"
@@ -118,11 +118,11 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
     - `home_placeholder_body` "O Início chega em breve." | "Home is coming soon."
 
   Inserir as chaves logo depois da última `onboarding_*`, nos dois arquivos.
-- [ ] T012 [P] Criar `tauth/presentation/extensions/auth_presentation_extension_test.dart` (cada `FieldError` e cada `PasswordRule` tem uma chave `AppStrings` distinta e não vazia) e depois `auth/presentation/extensions/auth_presentation_extension.dart`, com `extension FieldErrorPresentation on FieldError { String get messageKey }` e `extension PasswordRulePresentation on PasswordRule { String get labelKey }`
-- [ ] T013 Criar `auth/domain/repositories/auth_repository.dart` (contrato com os 6 métodos do [data-model](data-model.md), `Either<Failure, …>` do fpdart, `Unit` nos sem retorno) e `auth/data/datasources/auth_remote_data_source.dart` (contrato com os 6 métodos, sem implementação ainda). Criar `tauth/fakes/fake_auth_repository.dart` (resultados configuráveis por método e contadores `loginCalls`, `registerCalls`, `guestCalls`, `requestResetCalls`, `verifyCodeCalls`, `resetCalls`, com os argumentos recebidos) e `tauth/fakes/fake_auth_remote_data_source.dart` (respostas ou `ApiException` configuráveis por método e contadores)
-- [ ] T014 [P] Criar `click_seguro_app/lib/core/routing/home_placeholder_page.dart` (`HomePlaceholderPage`, comentário `// TODO(F0.9): substituir pelo shell com as abas.`): lê `GetIt.instance<UserSessionService>()` e mostra `home_placeholder_greeting` com `userName`, ou `home_placeholder_welcome` para visitante, e `home_placeholder_body`
-- [ ] T015 Criar `auth/presentation/routes/authentication_routes.dart` com `final List<RouteBase> authenticationRoutes` contendo `/login` → `LoginPage` e `/forgot-password` → `ForgotPasswordPage(initialEmail: state.extra as String?)`. Criar `LoginPage` e `ForgotPasswordPage` como `StatefulWidget` mínimos (`Scaffold` vazio) em `auth/presentation/pages/`, para compilar. Em `click_seguro_app/lib/core/routing/app_router.dart`, trocar a rota `/login` por `...authenticationRoutes` e adicionar `GoRoute(path: '/home', builder: (_, _) => const HomePlaceholderPage())`. Apagar `auth/presentation/pages/login_placeholder_page.dart` e ajustar os barrels (`authentication.dart` exporta `authentication_module.dart`, `presentation/routes/authentication_routes.dart`, `presentation/pages/login_page.dart` e `presentation/pages/forgot_password_page.dart`)
-- [ ] T016 [P] Criar os widgets compartilhados em `auth/presentation/widgets/`: `auth_header.dart` (quadrado de 48 em `AppColors.primary`, raio 16, ícone `Icons.shield_outlined` branco; ao lado, `auth_welcome` em texto pequeno muted e `auth_brand` em título bold `AppColors.secondary`) e `or_divider.dart` (duas linhas `AppColors.border` com `auth_or` no meio). Com `tauth/presentation/widgets/auth_header_test.dart` simples (renderiza os dois textos)
+- [X] T012 [P] Criar `tauth/presentation/extensions/auth_presentation_extension_test.dart` (cada `FieldError` e cada `PasswordRule` tem uma chave `AppStrings` distinta e não vazia) e depois `auth/presentation/extensions/auth_presentation_extension.dart`, com `extension FieldErrorPresentation on FieldError { String get messageKey }` e `extension PasswordRulePresentation on PasswordRule { String get labelKey }`
+- [X] T013 Criar `auth/domain/repositories/auth_repository.dart` (contrato com os 6 métodos do [data-model](data-model.md), `Either<Failure, …>` do fpdart, `Unit` nos sem retorno) e `auth/data/datasources/auth_remote_data_source.dart` (contrato com os 6 métodos, sem implementação ainda). Criar `tauth/fakes/fake_auth_repository.dart` (resultados configuráveis por método e contadores `loginCalls`, `registerCalls`, `guestCalls`, `requestResetCalls`, `verifyCodeCalls`, `resetCalls`, com os argumentos recebidos) e `tauth/fakes/fake_auth_remote_data_source.dart` (respostas ou `ApiException` configuráveis por método e contadores)
+- [X] T014 [P] Criar `click_seguro_app/lib/core/routing/home_placeholder_page.dart` (`HomePlaceholderPage`, comentário `// TODO(F0.9): substituir pelo shell com as abas.`): lê `GetIt.instance<UserSessionService>()` e mostra `home_placeholder_greeting` com `userName`, ou `home_placeholder_welcome` para visitante, e `home_placeholder_body`
+- [X] T015 Criar `auth/presentation/routes/authentication_routes.dart` com `final List<RouteBase> authenticationRoutes` contendo `/login` → `LoginPage` e `/forgot-password` → `ForgotPasswordPage(initialEmail: state.extra as String?)`. Criar `LoginPage` e `ForgotPasswordPage` como `StatefulWidget` mínimos (`Scaffold` vazio) em `auth/presentation/pages/`, para compilar. Em `click_seguro_app/lib/core/routing/app_router.dart`, trocar a rota `/login` por `...authenticationRoutes` e adicionar `GoRoute(path: '/home', builder: (_, _) => const HomePlaceholderPage())`. Apagar `auth/presentation/pages/login_placeholder_page.dart` e ajustar os barrels (`authentication.dart` exporta `authentication_module.dart`, `presentation/routes/authentication_routes.dart`, `presentation/pages/login_page.dart` e `presentation/pages/forgot_password_page.dart`)
+- [X] T016 [P] Criar os widgets compartilhados em `auth/presentation/widgets/`: `auth_header.dart` (quadrado de 48 em `AppColors.primary`, raio 16, ícone `Icons.shield_outlined` branco; ao lado, `auth_welcome` em texto pequeno muted e `auth_brand` em título bold `AppColors.secondary`) e `or_divider.dart` (duas linhas `AppColors.border` com `auth_or` no meio). Com `tauth/presentation/widgets/auth_header_test.dart` simples (renderiza os dois textos)
 
 **Checkpoint**: `flutter analyze` limpo e `flutter test` verde. O app abre no login vazio, e a rota `/home` existe.
 
@@ -136,25 +136,25 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T017 [P] [US1] Criar `tauth/data/datasources/auth_remote_data_source_impl_test.dart` (grupo `login`), com `ApiClient` real sobre `FakeHttpClientAdapter` e `UserSessionService` com `FakeSecureStorageService` no `GetIt`:
+- [X] T017 [P] [US1] Criar `tauth/data/datasources/auth_remote_data_source_impl_test.dart` (grupo `login`), com `ApiClient` real sobre `FakeHttpClientAdapter` e `UserSessionService` com `FakeSecureStorageService` no `GetIt`:
   - `login` faz `POST /auth/app/login` com `{"email","password"}`, sem `Authorization`, e devolve `AuthTokensModel`;
   - `getMe('acesso-1')` faz `GET /users/me` com `Authorization: Bearer acesso-1` e devolve `UserModel`;
   - 401 `INVALID_CREDENTIALS` no login → `ApiException(unauthorized, errorCode: 'INVALID_CREDENTIALS')`.
-- [ ] T018 [P] [US1] Criar `tauth/data/repositories/auth_repository_impl_test.dart` (grupo `login`), com `FakeAuthRemoteDataSource` e `UserSessionService` real:
+- [X] T018 [P] [US1] Criar `tauth/data/repositories/auth_repository_impl_test.dart` (grupo `login`), com `FakeAuthRemoteDataSource` e `UserSessionService` real:
   - sucesso → `Right(UserEntity)` e `saveSession` feito (`accessToken`, `refreshToken`, `email` do `/users/me`, `userName`);
   - 401 `INVALID_CREDENTIALS` → `Left(InvalidCredentialsFailure)`, sessão continua desconectada;
   - `role` `admin`/`unknown` → `Left(InvalidCredentialsFailure)` e **nada salvo**;
   - `connection` → `ConnectionFailure`; 500 → `ServerFailure`;
   - falha no `getMe` depois do login → `toFailure()` correspondente e nada salvo.
-- [ ] T019 [P] [US1] Criar `tauth/domain/usecases/login_usecase_test.dart` (com `FakeAuthRepository`): e-mail inválido → `Left(InvalidFormFailure({email: emailInvalid}))` com `loginCalls == 0`; senha vazia → `{password: required}`; válido → repassa `email.trim()` e a senha ao repository e devolve o resultado dele
-- [ ] T020 [P] [US1] Criar `tauth/presentation/controller/authentication_controller_test.dart` (grupo `US1`), com usecases reais sobre `FakeAuthRepository`:
+- [X] T019 [P] [US1] Criar `tauth/domain/usecases/login_usecase_test.dart` (com `FakeAuthRepository`): e-mail inválido → `Left(InvalidFormFailure({email: emailInvalid}))` com `loginCalls == 0`; senha vazia → `{password: required}`; válido → repassa `email.trim()` e a senha ao repository e devolve o resultado dele
+- [X] T020 [P] [US1] Criar `tauth/presentation/controller/authentication_controller_test.dart` (grupo `US1`), com usecases reais sobre `FakeAuthRepository`:
   - `submit` no modo login alterna `isSubmitting` `[true, false]` e, com sucesso, `authenticated == true`;
   - `InvalidFormFailure` vai para `fieldErrors` (`failure` fica nulo);
   - `InvalidCredentialsFailure` vai para `failure`;
   - um segundo `submit` enquanto `isSubmitting` é ignorado (`loginCalls == 1`, FR-006);
   - `togglePasswordVisibility` alterna `isPasswordVisible`;
   - `reset()` volta ao estado inicial.
-- [ ] T021 [P] [US1] Criar `tauth/presentation/pages/login_page_test.dart` (grupo `US1`). Setup do [R12](research.md): `EasyLocalization` com as traduções reais, `SharedPreferences.setMockInitialValues({})`, `AuthenticationController` real sobre `FakeAuthRepository` via `ChangeNotifierProvider`, e `GoRouter` de teste com `/login` → `LoginPage` e `/home` → `Text('HOME')`. Casos:
+- [X] T021 [P] [US1] Criar `tauth/presentation/pages/login_page_test.dart` (grupo `US1`). Setup do [R12](research.md): `EasyLocalization` com as traduções reais, `SharedPreferences.setMockInitialValues({})`, `AuthenticationController` real sobre `FakeAuthRepository` via `ChangeNotifierProvider`, e `GoRouter` de teste com `/login` → `LoginPage` e `/home` → `Text('HOME')`. Casos:
   - mostra `AuthHeader`, campos de e-mail e senha e o botão "Entrar";
   - e-mail e senha válidos + toque em "Entrar" → mostra `HOME`;
   - repository com `InvalidCredentialsFailure` → mostra "E-mail ou senha incorretos." e o e-mail continua no campo;
@@ -163,11 +163,11 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
 
 ### Implementation for User Story 1
 
-- [ ] T022 [US1] Criar `auth/data/datasources/auth_remote_data_source_impl.dart` com `login` e `getMe` (constantes `loginPath = '/auth/app/login'`, `mePath = '/users/me'`; `requiresAuth: false` no login; `authToken:` no `getMe`; `toModel(...)`). Os demais métodos lançam `UnimplementedError` até as próximas histórias (faz T017 passar)
-- [ ] T023 [US1] Criar `auth/data/repositories/auth_repository_impl.dart` com `login` (fluxo privado `_signIn`, ver [data-model](data-model.md) e [R4](research.md)). `INVALID_CREDENTIALS` comparado com `ApiErrorCodes.invalidCredentials` **antes** do `toFailure()`. Os demais métodos devolvem `Left(ServerFailure())` até as próximas histórias (faz T018 passar)
-- [ ] T024 [US1] Criar `auth/domain/usecases/login_usecase.dart` (`LoginUseCase(AuthRepository, CredentialsValidator)`, `call({required String email, required String password})`) (faz T019 passar)
-- [ ] T025 [US1] Reescrever `auth/presentation/controller/authentication_controller.dart` (o controller vazio atual) com o estado do [data-model](data-model.md) necessário à US1: `mode` (só `login` por ora), `isSubmitting`, `fieldErrors`, `failure`, `isPasswordVisible`, `authenticated`, `submit`, `togglePasswordVisibility` e `reset`. Depende só de usecases (faz T020 passar)
-- [ ] T026 [US1] Implementar `auth/presentation/pages/login_page.dart` conforme o wireframe ([R10](research.md)):
+- [X] T022 [US1] Criar `auth/data/datasources/auth_remote_data_source_impl.dart` com `login` e `getMe` (constantes `loginPath = '/auth/app/login'`, `mePath = '/users/me'`; `requiresAuth: false` no login; `authToken:` no `getMe`; `toModel(...)`). Os demais métodos lançam `UnimplementedError` até as próximas histórias (faz T017 passar)
+- [X] T023 [US1] Criar `auth/data/repositories/auth_repository_impl.dart` com `login` (fluxo privado `_signIn`, ver [data-model](data-model.md) e [R4](research.md)). `INVALID_CREDENTIALS` comparado com `ApiErrorCodes.invalidCredentials` **antes** do `toFailure()`. Os demais métodos devolvem `Left(ServerFailure())` até as próximas histórias (faz T018 passar)
+- [X] T024 [US1] Criar `auth/domain/usecases/login_usecase.dart` (`LoginUseCase(AuthRepository, CredentialsValidator)`, `call({required String email, required String password})`) (faz T019 passar)
+- [X] T025 [US1] Reescrever `auth/presentation/controller/authentication_controller.dart` (o controller vazio atual) com o estado do [data-model](data-model.md) necessário à US1: `mode` (só `login` por ora), `isSubmitting`, `fieldErrors`, `failure`, `isPasswordVisible`, `authenticated`, `submit`, `togglePasswordVisibility` e `reset`. Depende só de usecases (faz T020 passar)
+- [X] T026 [US1] Implementar `auth/presentation/pages/login_page.dart` conforme o wireframe ([R10](research.md)):
   - `SafeArea` + `SingleChildScrollView` com padding 24;
   - `AuthHeader`;
   - `SafeTextField` de e-mail (`Icons.mail_outline`, `TextInputType.emailAddress`, `TextInputAction.next`, `AutofillHints.email`);
@@ -177,7 +177,7 @@ offline e resetam o `GetIt` no `tearDown`. As duas páginas têm widget test de 
   - `SafeButton(size: large, tone: primary, loading: isSubmitting)` "Entrar".
 
   `initState` chama `controller.reset()`. Quando `authenticated` vira `true`, `context.go('/home')` e `reset()`. `TextEditingController`s na página e descartados no `dispose` (faz T021 passar)
-- [ ] T027 [US1] Em `auth/authentication_module.dart`, registrar `AuthRemoteDataSource` (`AuthRemoteDataSourceImpl(injector<ApiClient>())`), `AuthRepository` (`AuthRepositoryImpl(..., injector<UserSessionService>())`), `CredentialsValidator`, `LoginUseCase`, e o provider `AuthenticationController(...)`. Rodar o app no aparelho (`flutter run -d RQGYB02P7HD`) e conferir que a tela abre
+- [X] T027 [US1] Em `auth/authentication_module.dart`, registrar `AuthRemoteDataSource` (`AuthRemoteDataSourceImpl(injector<ApiClient>())`), `AuthRepository` (`AuthRepositoryImpl(..., injector<UserSessionService>())`), `CredentialsValidator`, `LoginUseCase`, e o provider `AuthenticationController(...)`. Rodar o app no aparelho (`flutter run -d RQGYB02P7HD`) e conferir que a tela abre
 
 **Checkpoint**: login funcionando de ponta a ponta com o repository falso nos testes. MVP.
 
