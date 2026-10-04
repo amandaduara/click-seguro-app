@@ -100,8 +100,8 @@ do wireframe do Lovable
   inicial por prefixo (`news_title`, `activities_title`...); chaves comuns (`common_try_again`,
   `common_empty`, `common_offline_banner`, `common_account_required_*`).
 - [ ] **F0.9 Shell de navegação**
-  - `StatefulShellRoute.indexedStack` com as 4 abas (conferir rótulos e ícones com o `BottomNav`
-    do wireframe) e `AppShell` (TopBar + BottomNav).
+  - `StatefulShellRoute.indexedStack` com as 5 abas do `BottomNav` do wireframe (Reels é a aba
+    central; decidido na feature 005) e `AppShell` (TopBar + BottomNav).
   - Slot do sino na TopBar com `NotificationBellButton` placeholder exportado pelo barrel de
     `notifications` (A6 implementa).
   - `app_router.dart` compondo `...{modulo}Routes` com todas as rotas do [plan.md §2](plan.md)
@@ -112,13 +112,13 @@ do wireframe do Lovable
   "Tentar novamente"), `SafeEmptyState` e `SafeOfflineBanner`. Garantir 48 dp/16 sp nos `Safe*`
   (RNF-003). Adicionar ao style guide.
 - [ ] **F0.11 Testes base**: substituir `test/widget_test.dart` por um smoke test que sobe o app
-  com fakes e navega pelas 4 abas.
+  com fakes e navega pelas 5 abas.
 - [x] **F0.12 Contrato da API** (2026-10-03): [api-contract.md](api-contract.md) v1.0.0 reescrito
   a partir do [openapi.json](openapi.json); especificação e plano ajustados (v2.1.0). As linhas
   ficam 🧪 até o primeiro request real de cada trilha.
 
 **Checkpoint Fase 0:** o app abre no aparelho, passa pelo splash, entra como visitante, navega
-pelas 4 abas vazias, muda fonte/contraste pela infraestrutura, e `flutter analyze`/`flutter test`
+pelas 5 abas vazias, muda fonte/contraste pela infraestrutura, e `flutter analyze`/`flutter test`
 estão limpos.
 
 ---
