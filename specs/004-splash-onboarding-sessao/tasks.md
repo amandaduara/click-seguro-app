@@ -167,8 +167,8 @@ usam.
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [X] T022 Formatar só os arquivos tocados (`dart format` com os caminhos de `splash/`, `tsplash/`, `tonb/` e `app_strings.dart`), depois `flutter analyze` (sem avisos novos além dos 28 infos da linha de base) e `flutter test` (todos verdes)
-- [ ] T023 Validar no aparelho os 9 passos do [quickstart.md](quickstart.md) (servidor acordado, conta de teste). Anotar no fim desta tarefa o resultado de cada passo. O limite superior do SC-003 (≤ 4 s) vem do prazo de 3 s do `SessionValidationService`, já coberto por `click_seguro_app/test/modules/common/services/session_validation_service_test.dart` (feature 002); aqui ele só é observado no passo 5
-- [ ] T024 Em `.specify/memory/tasks.md`, marcar a A1 como `[x] **A1 Splash + onboarding** (RF-001, RF-002, RN-004) (specs/004-splash-onboarding-sessao)`
+- [X] T023 Validar no aparelho os 9 passos do [quickstart.md](quickstart.md) (servidor acordado, conta de teste). Anotar no fim desta tarefa o resultado de cada passo. O limite superior do SC-003 (≤ 4 s) vem do prazo de 3 s do `SessionValidationService`, já coberto por `click_seguro_app/test/modules/common/services/session_validation_service_test.dart` (feature 002); aqui ele só é observado no passo 5. **Resultado (2026-10-04):** os 9 passos validados no aparelho pela usuária, todos conforme o esperado
+- [X] T024 Em `.specify/memory/tasks.md`, marcar a A1 como `[x] **A1 Splash + onboarding** (RF-001, RF-002, RN-004) (specs/004-splash-onboarding-sessao)`
 
 ---
 
