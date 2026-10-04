@@ -136,7 +136,7 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
     `/login`).
   - Testes do `OnboardingController` (hoje sem teste).
   - Conferir textos e slides com o wireframe.
-- [ ] **A2 Login / cadastro / visitante / recuperar senha** (RF-003 a RF-006, RN-001)
+- [x] **A2 Login / cadastro / visitante / recuperar senha** (RF-003 a RF-006, RN-001) (specs/003-login-cadastro-visitante)
   - Depende da F0.13 (par de tokens na sessão).
   - `UserEntity` + `UserModel` (`GET /users/me`: name, email, phone, avatarUrl, role) e
     `AuthTokensModel`, com teste.

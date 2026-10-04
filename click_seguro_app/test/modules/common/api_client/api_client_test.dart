@@ -611,6 +611,37 @@ void main() {
     );
   });
 
+  group('003 authToken', () {
+    test('sem sessão, envia o Bearer informado', () async {
+      await client.get('/users/me', authToken: 'acesso-x');
+
+      expect(adapter.lastRequest!.headers['Authorization'], 'Bearer acesso-x');
+    });
+
+    test('vence o token da sessão', () async {
+      await signIn();
+
+      await client.get('/users/me', authToken: 'acesso-x');
+
+      expect(adapter.lastRequest!.headers['Authorization'], 'Bearer acesso-x');
+    });
+
+    test('401 não renova nem mexe na sessão', () async {
+      await signIn();
+      adapter.statusCode = 401;
+
+      await expectLater(
+        client.get('/users/me', authToken: 'acesso-x'),
+        apiException(ApiErrorType.unauthorized, statusCode: 401),
+      );
+      expect(
+        adapter.requests.where((r) => r.path == ApiClient.refreshPath),
+        isEmpty,
+      );
+      expect(session.sessionStatus.value, UserSessionStatus.authenticated);
+    });
+  });
+
   group('ApiResponseMapper', () {
     test('toModel converte o corpo em modelo', () async {
       adapter.body = {'id': '1'};

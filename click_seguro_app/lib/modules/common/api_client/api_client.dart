@@ -126,7 +126,9 @@ class ApiClient {
             BaseOptions(
               baseUrl: EnvironmentConfig.apiBaseUrl,
               connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
+              // O servidor (Render, plano gratuito) leva ~40 s para responder
+              // quando está parado; 10 s virava "sem conexão" falso.
+              receiveTimeout: const Duration(seconds: 60),
               headers: {'Content-Type': 'application/json'},
             ),
           ) {
@@ -141,11 +143,11 @@ class ApiClient {
   UserSessionService get _session => GetIt.instance<UserSessionService>();
 
   // Gera as opções com o token de autenticação se necessário
-  Options _makeOptions({bool requiresAuth = true}) {
+  Options _makeOptions({bool requiresAuth = true, String? authToken}) {
     final headers = <String, dynamic>{};
 
     if (requiresAuth) {
-      final token = _session.accessToken;
+      final token = authToken ?? _session.accessToken;
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
@@ -160,11 +162,16 @@ class ApiClient {
 
   /// [cancelToken] permite descartar a consulta antes da resposta; o
   /// pedido cancelado termina com [ApiErrorType.cancelled].
+  ///
+  /// [authToken] usa este Bearer no lugar do da sessão (ex.: `/users/me`
+  /// logo após o login, antes de a sessão existir). O pedido não renova nem
+  /// expira a sessão.
   Future<Response> get(
     String path, {
     Map<String, dynamic>? queryParameters,
     bool requiresAuth = true,
     CancelToken? cancelToken,
+    String? authToken,
   }) {
     return _send(
       (options) => _dio.get(
@@ -174,6 +181,7 @@ class ApiClient {
         cancelToken: cancelToken,
       ),
       requiresAuth: requiresAuth,
+      authToken: authToken,
     );
   }
 
@@ -257,9 +265,14 @@ class ApiClient {
   Future<Response> _send(
     Future<Response> Function(Options options) call, {
     required bool requiresAuth,
+    String? authToken,
   }) async {
     try {
-      return await _sendWithRenewal(call, requiresAuth: requiresAuth);
+      return await _sendWithRenewal(
+        call,
+        requiresAuth: requiresAuth,
+        authToken: authToken,
+      );
     } on ApiException {
       rethrow;
     } on DioException catch (e) {
@@ -278,12 +291,18 @@ class ApiClient {
   Future<Response> _sendWithRenewal(
     Future<Response> Function(Options options) call, {
     required bool requiresAuth,
+    String? authToken,
   }) async {
-    // Token que vai no header; null = pedido sem credencial (visitante,
-    // login...), que nunca renova nem mexe na sessão (FR-007).
-    final sentToken = requiresAuth ? _session.accessToken : null;
+    // Token da sessão que vai no header; null = pedido sem credencial da
+    // sessão (visitante, login, authToken explícito), que nunca renova nem
+    // mexe na sessão (FR-007).
+    final sentToken = requiresAuth && authToken == null
+        ? _session.accessToken
+        : null;
     try {
-      return await call(_makeOptions(requiresAuth: requiresAuth));
+      return await call(
+        _makeOptions(requiresAuth: requiresAuth, authToken: authToken),
+      );
     } on DioException catch (e) {
       if (sentToken == null) rethrow;
       _expireIfAccountGone(e);

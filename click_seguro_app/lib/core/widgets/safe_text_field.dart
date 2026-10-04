@@ -18,6 +18,12 @@ class SafeTextField extends StatefulWidget {
     this.obscureText = false,
     this.enabled = true,
     this.onChanged,
+    this.keyboardType,
+    this.textInputAction,
+    this.onSubmitted,
+    this.focusNode,
+    this.autofillHints,
+    this.semanticsLabel,
   });
 
   final String? label;
@@ -30,26 +36,41 @@ class SafeTextField extends StatefulWidget {
   final bool obscureText;
   final bool enabled;
   final ValueChanged<String>? onChanged;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
+
+  /// Se informado, substitui o foco interno (e não é descartado aqui).
+  final FocusNode? focusNode;
+  final Iterable<String>? autofillHints;
+
+  /// Rótulo para leitor de tela quando o campo não tem [label] visível.
+  final String? semanticsLabel;
 
   @override
   State<SafeTextField> createState() => _SafeTextFieldState();
 }
 
 class _SafeTextFieldState extends State<SafeTextField> {
-  final FocusNode _focusNode = FocusNode();
+  FocusNode? _ownFocusNode;
+  FocusNode get _focusNode =>
+      widget.focusNode ?? (_ownFocusNode ??= FocusNode());
   bool _focused = false;
 
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(() {
-      if (mounted) setState(() => _focused = _focusNode.hasFocus);
-    });
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (mounted) setState(() => _focused = _focusNode.hasFocus);
   }
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    _focusNode.removeListener(_onFocusChange);
+    _ownFocusNode?.dispose();
     super.dispose();
   }
 
@@ -73,7 +94,7 @@ class _SafeTextFieldState extends State<SafeTextField> {
                 widget.label!,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: hasError ? AppColors.destructive : AppColors.secondary,
-                  fontWeight: FontWeight.w600
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: AppSpacing.s1),
@@ -90,31 +111,55 @@ class _SafeTextFieldState extends State<SafeTextField> {
                 children: [
                   if (widget.leftIcon != null) ...[
                     IconTheme(
-                      data: const IconThemeData(color: AppColors.textMutedForeground, size: 18),
+                      data: const IconThemeData(
+                        color: AppColors.textMutedForeground,
+                        size: 18,
+                      ),
                       child: widget.leftIcon!,
                     ),
                     const SizedBox(width: AppSpacing.s1),
                   ],
                   Expanded(
-                    child: TextField(
-                      controller: widget.controller,
-                      focusNode: _focusNode,
-                      obscureText: widget.obscureText,
-                      onChanged: widget.onChanged,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textForeground),
-                      decoration: InputDecoration(
-                        hintText: widget.placeholder,
-                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.textMutedForeground),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    // MergeSemantics: rótulo e campo viram um só nó para o
+                    // leitor de tela (sem anunciar o campo duas vezes).
+                    child: MergeSemantics(
+                      child: Semantics(
+                        label: widget.semanticsLabel,
+                        textField: true,
+                        child: TextField(
+                          controller: widget.controller,
+                          focusNode: _focusNode,
+                          obscureText: widget.obscureText,
+                          onChanged: widget.onChanged,
+                          keyboardType: widget.keyboardType,
+                          textInputAction: widget.textInputAction,
+                          onSubmitted: widget.onSubmitted,
+                          autofillHints: widget.autofillHints,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: AppColors.textForeground),
+                          decoration: InputDecoration(
+                            hintText: widget.placeholder,
+                            hintStyle: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.textMutedForeground,
+                                ),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                   if (widget.rightIcon != null) ...[
                     const SizedBox(width: AppSpacing.s2),
                     IconTheme(
-                      data: const IconThemeData(color: AppColors.textMutedForeground, size: 18),
+                      data: const IconThemeData(
+                        color: AppColors.textMutedForeground,
+                        size: 18,
+                      ),
                       child: widget.rightIcon!,
                     ),
                   ],
@@ -126,7 +171,9 @@ class _SafeTextFieldState extends State<SafeTextField> {
               Text(
                 hasError ? widget.error! : widget.hint!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: hasError ? AppColors.destructive : AppColors.textMutedForeground,
+                  color: hasError
+                      ? AppColors.destructive
+                      : AppColors.textMutedForeground,
                 ),
               ),
             ],
