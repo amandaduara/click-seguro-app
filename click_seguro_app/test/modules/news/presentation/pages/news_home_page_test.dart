@@ -355,4 +355,52 @@ void main() {
       semantics.dispose();
     });
   });
+
+  group('busca', () {
+    Future<void> search(WidgetTester tester, String text) async {
+      await tester.enterText(find.byType(TextField), text);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('digitar e esperar mostra "Resultados"', (tester) async {
+      repository.newsResults[0] = Right(
+        NewsPageEntity(items: [newsItem('pix1')], hasMore: false, page: 1),
+      );
+      await pumpPage(tester);
+
+      await search(tester, 'pix');
+
+      expect(textInScroll('Resultados'), findsOneWidget);
+      expect(find.text('Notícia pix1'), findsOneWidget);
+    });
+
+    testWidgets('sem resultado mostra a mensagem com o texto', (tester) async {
+      repository.newsResults[0] = const Right(
+        NewsPageEntity(items: [], hasMore: false, page: 1),
+      );
+      await pumpPage(tester);
+
+      await search(tester, 'xyzxyz');
+
+      expect(
+        find.text(
+          'Nenhuma notícia encontrada para "xyzxyz". Tente outras palavras.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('o "X" volta ao feed', (tester) async {
+      repository.feedResults[0] = Right(newsFeed(highlights: [newsItem('h1')]));
+      await pumpPage(tester);
+      await search(tester, 'pix');
+
+      await tester.tap(find.byTooltip('Limpar busca'));
+      await tester.pumpAndSettle();
+
+      expect(textInScroll('Destaques'), findsOneWidget);
+      expect(textInScroll('Tudo recente'), findsOneWidget);
+    });
+  });
 }

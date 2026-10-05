@@ -160,14 +160,14 @@ com `now` injetado; espera da busca com o relógio falso do `testWidgets` (sem e
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T032 [P] [US3] Em `tnews/presentation/controller/feed_controller_test.dart`, grupo `busca` (com `testWidgets` e relógio falso): digitar "p", "pi", "pix" em menos de 500 ms → **um** `getNews` com `search: 'pix'`, só depois de `tester.pump(Duration(milliseconds: 500))`; "p" sozinho não busca; busca com categoria ativa envia os dois; respostas fora de ordem (1ª segurada por `Completer`) → vale a última; `clearSearch()` volta à lista sem busca (feed ou categoria) imediatamente; `loadMore()` em resultados pede a página seguinte com o mesmo texto; o título da seção vira "Resultados" (`isSearching == true`)
-- [ ] T033 [P] [US3] Criar `tnews/presentation/widgets/feed_search_field_test.dart`: placeholder "Buscar notícia ou tipo de golpe"; digitar chama `onChanged`; o "X" só aparece com texto, tem rótulo "Limpar busca", mede ≥ 48×48 e limpa o campo chamando `onCleared`
+- [X] T032 [P] [US3] Em `tnews/presentation/controller/feed_controller_test.dart`, grupo `busca` (com `testWidgets` e relógio falso): digitar "p", "pi", "pix" em menos de 500 ms → **um** `getNews` com `search: 'pix'`, só depois de `tester.pump(Duration(milliseconds: 500))`; "p" sozinho não busca; busca com categoria ativa envia os dois; respostas fora de ordem (1ª segurada por `Completer`) → vale a última; `clearSearch()` volta à lista sem busca (feed ou categoria) imediatamente; `loadMore()` em resultados pede a página seguinte com o mesmo texto; o título da seção vira "Resultados" (`isSearching == true`)
+- [X] T033 [P] [US3] Criar `tnews/presentation/widgets/feed_search_field_test.dart`: placeholder "Buscar notícia ou tipo de golpe"; digitar chama `onChanged`; o "X" só aparece com texto, tem rótulo "Limpar busca", mede ≥ 48×48 e limpa o campo chamando `onCleared`
 
 ### Implementação
 
-- [ ] T034 [US3] No `FeedController`: `onSearchChanged(String text)` com `Timer` de 500 ms (`static const Duration searchDebounce`), atualiza o `NewsFilter` e carrega quando `hasSearch` (ou volta à lista sem busca quando o texto fica curto); `clearSearch()`; `isSearching`; cancelar o `Timer` no `dispose()`. Faz a T032 passar
-- [ ] T035 [P] [US3] Criar `news/presentation/widgets/feed_search_field.dart` ([design system §7.4](../../.specify/memory/design-system.md)), usando o `SafeTextField` se ele aceitar o visual de busca; senão, campo próprio com raio `full`, fundo `muted` 40% e ícone `search`. Faz a T033 passar
-- [ ] T036 [US3] Na `NewsHomePage`: campo real ligado ao controller; resultados vazios → `SafeEmptyState(message: news_empty_search.tr(args: [texto]))`. Acrescentar ao `news_home_page_test.dart` (grupo `busca`): digitar e esperar 500 ms mostra "Resultados"; sem resultado mostra a mensagem com o texto; "X" volta ao feed
+- [X] T034 [US3] No `FeedController`: `onSearchChanged(String text)` com `Timer` de 500 ms (`static const Duration searchDebounce`), atualiza o `NewsFilter` e carrega quando `hasSearch` (ou volta à lista sem busca quando o texto fica curto); `clearSearch()`; `isSearching`; cancelar o `Timer` no `dispose()`. Faz a T032 passar
+- [X] T035 [P] [US3] Criar `news/presentation/widgets/feed_search_field.dart` ([design system §7.4](../../.specify/memory/design-system.md)), usando o `SafeTextField` se ele aceitar o visual de busca; senão, campo próprio com raio `full`, fundo `muted` 40% e ícone `search`. Faz a T033 passar
+- [X] T036 [US3] Na `NewsHomePage`: campo real ligado ao controller; resultados vazios → `SafeEmptyState(message: news_empty_search.tr(args: [texto]))`. Acrescentar ao `news_home_page_test.dart` (grupo `busca`): digitar e esperar 500 ms mostra "Resultados"; sem resultado mostra a mensagem com o texto; "X" volta ao feed
 
 **Checkpoint**: busca e filtros combinados.
 

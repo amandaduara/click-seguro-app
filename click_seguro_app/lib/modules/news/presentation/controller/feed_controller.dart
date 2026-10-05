@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
@@ -32,6 +34,11 @@ class FeedController extends ChangeNotifier {
   final GetNewsUseCase _getNews;
   final GetCategoriesUseCase _getCategories;
   final DateTime Function() _now;
+
+  /// Espera depois da última letra antes de buscar (FR-016).
+  static const Duration searchDebounce = Duration(milliseconds: 500);
+
+  Timer? _searchTimer;
 
   FeedStatus _status = FeedStatus.loading;
   FeedStatus get status => _status;
@@ -78,6 +85,9 @@ class FeedController extends ChangeNotifier {
   /// Notícias das últimas 24 h no feed sem filtro (FR-011).
   int get newCount => _newCount;
 
+  /// Há busca ativa: a lista mostra "Resultados".
+  bool get isSearching => _filter.hasSearch;
+
   /// A lista chegou ao fim de verdade (não é a cópia guardada).
   bool get isEnd =>
       _status == FeedStatus.loaded &&
@@ -107,6 +117,33 @@ class FeedController extends ChangeNotifier {
 
   /// Puxar para atualizar: volta à página 1.
   Future<void> refresh() => _loadFirst();
+
+  /// Texto digitado na busca: busca depois de [searchDebounce] sem novas
+  /// letras; texto curto demais volta à lista sem busca (FR-016, FR-017).
+  void onSearchChanged(String text) {
+    _searchTimer?.cancel();
+    final bool wasSearching = _filter.hasSearch;
+    _filter = _filter.copyWith(search: text);
+    if (_filter.hasSearch) {
+      _searchTimer = Timer(searchDebounce, _loadFirst);
+    } else if (wasSearching) {
+      unawaited(_loadFirst());
+    }
+  }
+
+  /// O "X" do campo: volta na hora à lista sem busca.
+  void clearSearch() {
+    _searchTimer?.cancel();
+    final bool wasSearching = _filter.hasSearch;
+    _filter = _filter.copyWith(search: '');
+    if (wasSearching) unawaited(_loadFirst());
+  }
+
+  @override
+  void dispose() {
+    _searchTimer?.cancel();
+    super.dispose();
+  }
 
   /// Próxima página da lista atual. Não faz nada sem mais páginas, durante
   /// outra carga ou com a cópia guardada.

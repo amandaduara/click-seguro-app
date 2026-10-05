@@ -10,6 +10,7 @@ import 'package:click_seguro_app/modules/news/presentation/controller/feed_contr
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/category_filter_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_footer.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/feed_search_field.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_section_title.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/reels_carousel.dart';
@@ -39,8 +40,14 @@ class NewsHomePage extends StatelessWidget {
                 subtitle: _subtitle(session, controller.newCount),
               ),
             ),
-            // Filtros fora da área que troca de estado: continuam na tela
-            // enquanto a lista da categoria carrega.
+            // Busca e filtros fora da área que troca de estado: continuam na
+            // tela enquanto a lista carrega.
+            FeedSearchField(
+              initialText: controller.filter.search,
+              onChanged: controller.onSearchChanged,
+              onCleared: controller.clearSearch,
+            ),
+            const SizedBox(height: AppSpacing.s3),
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s2),
               child: CategoryFilterBar(
@@ -93,7 +100,13 @@ class NewsHomePage extends StatelessWidget {
         );
       case FeedStatus.loaded:
         if (controller.items.isEmpty && !controller.filter.isEmpty) {
-          return SafeEmptyState(message: AppStrings.newsEmptyCategory.tr());
+          return SafeEmptyState(
+            message: controller.isSearching
+                ? AppStrings.newsEmptySearch.tr(
+                    args: [controller.filter.normalizedSearch],
+                  )
+                : AppStrings.newsEmptyCategory.tr(),
+          );
         }
         return RefreshIndicator(
           onRefresh: controller.refresh,
@@ -151,7 +164,11 @@ class NewsHomePage extends StatelessWidget {
         cards(controller.recommended),
       ],
       SliverToBoxAdapter(
-        child: FeedSectionTitle(AppStrings.newsSectionRecent.tr()),
+        child: FeedSectionTitle(
+          controller.isSearching
+              ? AppStrings.newsSectionResults.tr()
+              : AppStrings.newsSectionRecent.tr(),
+        ),
       ),
       cards(controller.items),
       SliverToBoxAdapter(

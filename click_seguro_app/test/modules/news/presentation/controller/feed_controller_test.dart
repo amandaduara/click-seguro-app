@@ -319,4 +319,104 @@ void main() {
       expect(repository.newsCalls, hasLength(1));
     });
   });
+
+  // Relógio falso do testWidgets: a espera de 500 ms sem tempo real.
+  group('busca', () {
+    testWidgets('espera parar de digitar e busca uma vez', (tester) async {
+      await controller.load();
+
+      controller.onSearchChanged('p');
+      await tester.pump(const Duration(milliseconds: 100));
+      controller.onSearchChanged('pi');
+      await tester.pump(const Duration(milliseconds: 100));
+      controller.onSearchChanged('pix');
+      await tester.pump(const Duration(milliseconds: 499));
+      expect(repository.newsCalls, isEmpty);
+
+      await tester.pump(const Duration(milliseconds: 1));
+      await tester.pump();
+
+      expect(repository.newsCalls, hasLength(1));
+      expect(repository.newsCalls.single.filter.normalizedSearch, 'pix');
+      expect(controller.isSearching, isTrue);
+    });
+
+    testWidgets('um caractere não busca', (tester) async {
+      await controller.load();
+
+      controller.onSearchChanged('p');
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(repository.newsCalls, isEmpty);
+      expect(controller.isSearching, isFalse);
+    });
+
+    testWidgets('busca dentro da categoria ativa', (tester) async {
+      await controller.load();
+      await controller.selectCategory('phishing');
+
+      controller.onSearchChanged('pix');
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+
+      final filter = repository.newsCalls.last.filter;
+      expect(filter.categorySlug, 'phishing');
+      expect(filter.normalizedSearch, 'pix');
+    });
+
+    testWidgets('respostas fora de ordem: vale a última busca', (tester) async {
+      await controller.load();
+      repository.newsGate = Completer<void>();
+      repository.newsResults
+        ..clear()
+        ..addAll([
+          Right(page(1, ['velha'])),
+          Right(page(1, ['nova'])),
+        ]);
+
+      controller.onSearchChanged('pi');
+      await tester.pump(const Duration(milliseconds: 500));
+      final gate = repository.newsGate!;
+      repository.newsGate = null;
+      controller.onSearchChanged('pix');
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+      gate.complete();
+      await tester.pump();
+
+      expect(controller.items.single.id, 'nova');
+    });
+
+    testWidgets('limpar volta à lista sem busca na hora', (tester) async {
+      await controller.load();
+      controller.onSearchChanged('pix');
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+
+      controller.clearSearch();
+      await tester.pump();
+
+      expect(controller.isSearching, isFalse);
+      expect(controller.filter.isEmpty, isTrue);
+      expect(repository.feedCalls, 2);
+    });
+
+    testWidgets('mais páginas de resultados com o mesmo texto', (tester) async {
+      repository.newsResults
+        ..clear()
+        ..addAll([
+          Right(page(1, ['p1'], hasMore: true)),
+          Right(page(2, ['p2'], hasMore: false)),
+        ]);
+      await controller.load();
+      controller.onSearchChanged('pix');
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+
+      await controller.loadMore();
+
+      expect(repository.newsCalls.last.page, 2);
+      expect(repository.newsCalls.last.filter.normalizedSearch, 'pix');
+    });
+  });
 }
