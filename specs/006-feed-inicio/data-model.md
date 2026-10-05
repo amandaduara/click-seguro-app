@@ -110,4 +110,5 @@ trocar filtro/busca ──▶ loading (descarta respostas antigas por _requestId
 notícias"), `news_offline_end` ("Conecte-se à internet para ver mais notícias."),
 `news_load_more_failed` ("Não foi possível carregar mais."), `news_empty_category` ("Nenhuma
 notícia nesta categoria ainda."), `news_empty_search` ("Nenhuma notícia encontrada para "{}".
-Tente outras palavras."), `news_card_read` ("Lida"), `news_card_saved` ("Salva").
+Tente outras palavras."), `news_card_read` ("Lida"), `news_card_saved` ("Salva"), `news_slow_server` ("Conectando ao
+servidor. Isso pode levar até um minuto.").
