@@ -237,6 +237,8 @@ avião e puxar para atualizar.
 - **FR-011**: A barra superior MUST mostrar "Olá, {nome}!" (com conta) ou "Bem-vindo!"
   (visitante), seguido da contagem "{N} notícias novas para você" quando N > 0, onde N é o número de notícias carregadas (carrossel, seções e "Tudo recente", sem
   repetir) cuja publicação original foi nas últimas 24 horas.
+  A contagem é recalculada a cada carga e a cada nova página do feed sem filtro; com categoria
+  ou busca ativa, o subtítulo mantém o último valor do feed.
 
 **Filtros de categoria (RF-009, CB-006)**
 
