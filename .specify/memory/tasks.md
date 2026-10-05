@@ -93,13 +93,13 @@ do wireframe do Lovable
   - `AccessibilityPreferencesNotifier` em `common`, atualizado pelo controller.
   - `AppTheme.highContrast` e ligação no `ClickSeguroApp` (tema + `textScaler`). Carregar no
     `_setup()`.
-- [ ] **F0.7 Esqueleto de todos os módulos**: `news`, `notifications`, `activities`, `help`,
+- [x] **F0.7 Esqueleto de todos os módulos** (specs/005-shell-navegacao-base): `news`, `notifications`, `activities`, `help`,
   `profile`, `settings`, `shell`, cada um com `{modulo}_module.dart`, barrel, `presentation/routes/`
   e página placeholder. Registrar todos no `main.dart` na ordem do [plan.md §1.4](plan.md).
-- [ ] **F0.8 Blocos de i18n**: em `AppStrings`, um bloco comentado por módulo; nos JSONs, uma chave
+- [x] **F0.8 Blocos de i18n** (specs/005-shell-navegacao-base): em `AppStrings`, um bloco comentado por módulo; nos JSONs, uma chave
   inicial por prefixo (`news_title`, `activities_title`...); chaves comuns (`common_try_again`,
   `common_empty`, `common_offline_banner`, `common_account_required_*`).
-- [ ] **F0.9 Shell de navegação**
+- [x] **F0.9 Shell de navegação** (specs/005-shell-navegacao-base)
   - `StatefulShellRoute.indexedStack` com as 5 abas do `BottomNav` do wireframe (Reels é a aba
     central; decidido na feature 005) e `AppShell` (TopBar + BottomNav).
   - Slot do sino na TopBar com `NotificationBellButton` placeholder exportado pelo barrel de
@@ -108,10 +108,10 @@ do wireframe do Lovable
     apontando para placeholders.
   - `refreshListenable` na sessão: `unauthenticated` → `/login` (CB-003).
   - `requireAccount(context)` + `AccountRequiredSheet` (RN-003/CB-011), com widget test.
-- [ ] **F0.10 Estados comuns no design system**: `SafeLoadingState`, `SafeErrorState` (mensagem +
+- [x] **F0.10 Estados comuns no design system** (specs/005-shell-navegacao-base): `SafeLoadingState`, `SafeErrorState` (mensagem +
   "Tentar novamente"), `SafeEmptyState` e `SafeOfflineBanner`. Garantir 48 dp/16 sp nos `Safe*`
   (RNF-003). Adicionar ao style guide.
-- [ ] **F0.11 Testes base**: substituir `test/widget_test.dart` por um smoke test que sobe o app
+- [x] **F0.11 Testes base** (specs/005-shell-navegacao-base): substituir `test/widget_test.dart` por um smoke test que sobe o app
   com fakes e navega pelas 5 abas.
 - [x] **F0.12 Contrato da API** (2026-10-03): [api-contract.md](api-contract.md) v1.0.0 reescrito
   a partir do [openapi.json](openapi.json); especificação e plano ajustados (v2.1.0). As linhas
