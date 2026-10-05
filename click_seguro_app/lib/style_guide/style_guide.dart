@@ -1,8 +1,28 @@
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart'
+    show SafeEmptyState;
+import 'package:click_seguro_app/core/widgets/safe_error_state.dart'
+    show SafeErrorState;
+import 'package:click_seguro_app/core/widgets/safe_loading_state.dart'
+    show SafeLoadingState;
+import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart'
+    show SafeOfflineBanner;
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-void main() {
-  runApp(const StyleGuideApp());
+// Com EasyLocalization, como no app: os estados comuns usam textos padrão
+// traduzidos ("Tentar novamente", faixa de sem internet).
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('pt', 'BR'),
+      child: const StyleGuideApp(),
+    ),
+  );
 }
 
 class StyleGuideApp extends StatelessWidget {
@@ -10,10 +30,13 @@ class StyleGuideApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SafeNews Style Guide',
-      home: StyleguideWebScreen(),
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
+      home: const StyleguideWebScreen(),
     );
   }
 }
@@ -95,6 +118,15 @@ class _StyleguideWebScreenState extends State<StyleguideWebScreen> {
       'items': [
         {'label': '📦 SafeCard', 'index': 4},
         {'label': '🏷️ SafeBadge', 'index': 5},
+      ]
+    },
+    {
+      'category': 'ESTADOS',
+      'items': [
+        {'label': '⏳ SafeLoadingState', 'index': 6},
+        {'label': '⚠️ SafeErrorState', 'index': 7},
+        {'label': '📭 SafeEmptyState', 'index': 8},
+        {'label': '📡 SafeOfflineBanner', 'index': 9},
       ]
     },
   ];
@@ -278,6 +310,14 @@ class _StyleguideWebScreenState extends State<StyleguideWebScreen> {
         return _buildCardsSection();
       case 5:
         return _buildBadgesSection();
+      case 6:
+        return _buildLoadingStateSection();
+      case 7:
+        return _buildErrorStateSection();
+      case 8:
+        return _buildEmptyStateSection();
+      case 9:
+        return _buildOfflineBannerSection();
       default:
         return const SizedBox();
     }
@@ -458,6 +498,87 @@ SafeCard(
 SafeBadge(
   label: 'Análise Concluída',
   color: Colors.green,
+)''',
+    );
+  }
+
+  // --- ESTADOS (componentes reais de lib/core/widgets) ---
+
+  Widget _buildLoadingStateSection() {
+    return _buildComponentDocumentation(
+      componentName: 'SafeLoadingState',
+      description: 'Enquanto a tela busca dados. O leitor de tela anuncia "Carregando".',
+      previewWidget: const SizedBox(
+        height: 160,
+        child: SafeLoadingState(message: 'Buscando notícias'),
+      ),
+      properties: const [
+        _Prop('message', 'String?', 'Opcional', 'Texto já traduzido abaixo do indicador (16 sp).'),
+      ],
+      codeExample: '''
+if (controller.isLoading)
+  const SafeLoadingState()''',
+    );
+  }
+
+  Widget _buildErrorStateSection() {
+    return _buildComponentDocumentation(
+      componentName: 'SafeErrorState',
+      description: 'Falha ao buscar dados: mensagem e "Tentar novamente" (área de toque de 48 dp).',
+      previewWidget: SizedBox(
+        height: 220,
+        child: SafeErrorState(
+          message: 'Sem conexão com a internet. Verifique sua rede.',
+          onRetry: () {},
+        ),
+      ),
+      properties: const [
+        _Prop('message', 'String', 'Obrigatório', 'Mensagem já traduzida, ex.: failure.message.tr().'),
+        _Prop('onRetry', 'VoidCallback', 'Obrigatório', 'Repete a busca.'),
+      ],
+      codeExample: '''
+SafeErrorState(
+  message: failure.message.tr(),
+  onRetry: controller.load,
+)''',
+    );
+  }
+
+  Widget _buildEmptyStateSection() {
+    return _buildComponentDocumentation(
+      componentName: 'SafeEmptyState',
+      description: 'Lista sem itens. Mensagem padrão "Nada por aqui ainda." e ação opcional.',
+      previewWidget: SizedBox(
+        height: 220,
+        child: SafeEmptyState(
+          message: 'Nenhum contato cadastrado',
+          actionLabel: 'Adicionar contato',
+          onAction: () {},
+        ),
+      ),
+      properties: const [
+        _Prop('icon', 'IconData', 'Opcional', 'Padrão: LucideIcons.inbox.'),
+        _Prop('message', 'String?', 'Opcional', 'Texto já traduzido; padrão common_empty.'),
+        _Prop('actionLabel', 'String?', 'Opcional', 'Rótulo do botão; aparece só com onAction.'),
+        _Prop('onAction', 'VoidCallback?', 'Opcional', 'Ação do botão.'),
+      ],
+      codeExample: '''
+const SafeEmptyState()''',
+    );
+  }
+
+  Widget _buildOfflineBannerSection() {
+    return _buildComponentDocumentation(
+      componentName: 'SafeOfflineBanner',
+      description: 'Faixa no topo do conteúdo guardado quando não há internet.',
+      previewWidget: const SafeOfflineBanner(),
+      properties: [],
+      codeExample: '''
+Column(
+  children: [
+    if (controller.isFromCache) const SafeOfflineBanner(),
+    Expanded(child: lista),
+  ],
 )''',
     );
   }
