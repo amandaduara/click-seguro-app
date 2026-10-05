@@ -7,6 +7,7 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/news_home_page.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/category_filter_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -274,6 +275,84 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.feedCalls, 2);
+    });
+  });
+
+  group('categoria', () {
+    // O nome da categoria também aparece nos cartões: toca no chip da barra.
+    Finder chip(String label) => find.descendant(
+      of: find.byType(CategoryFilterBar),
+      matching: find.text(label),
+    );
+
+    testWidgets('tocar numa categoria mostra só a lista dela', (tester) async {
+      repository.feedResults[0] = Right(
+        newsFeed(highlights: [newsItem('h1')], reels: [newsItem('reel1')]),
+      );
+      repository.newsResults[0] = Right(
+        NewsPageEntity(items: [newsItem('p1')], hasMore: false, page: 1),
+      );
+      await pumpPage(tester);
+
+      await tester.tap(chip('Phishing'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícia p1'), findsOneWidget);
+      expect(textInScroll('Novidades'), findsNothing);
+      expect(textInScroll('Destaques'), findsNothing);
+      expect(textInScroll('Tudo recente'), findsOneWidget);
+    });
+
+    testWidgets('categoria vazia mostra a mensagem', (tester) async {
+      repository.newsResults[0] = const Right(
+        NewsPageEntity(items: [], hasMore: false, page: 1),
+      );
+      await pumpPage(tester);
+
+      await tester.tap(chip('Golpes bancários'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Nenhuma notícia nesta categoria ainda.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('"Todas" volta às seções', (tester) async {
+      repository.feedResults[0] = Right(newsFeed(highlights: [newsItem('h1')]));
+      await pumpPage(tester);
+      await tester.tap(chip('Phishing'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(chip('Todas'));
+      await tester.pumpAndSettle();
+
+      expect(textInScroll('Destaques'), findsOneWidget);
+    });
+
+    testWidgets('voltar do detalhe mantém a categoria e a lista', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      repository.newsResults[0] = Right(
+        NewsPageEntity(items: [newsItem('p1')], hasMore: false, page: 1),
+      );
+      await pumpPage(tester);
+      await tester.tap(chip('Phishing'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(NewsCard));
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícia p1'), findsOneWidget);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Phishing')),
+        isSemantics(isSelected: true),
+      );
+      expect(repository.newsCalls, hasLength(1));
+      semantics.dispose();
     });
   });
 }

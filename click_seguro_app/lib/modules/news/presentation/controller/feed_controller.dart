@@ -91,8 +91,19 @@ class FeedController extends ChangeNotifier {
   /// ignoradas (research R3).
   int _requestId = 0;
 
-  /// Carga inicial (ou tentar de novo).
-  Future<void> load() => _loadFirst();
+  /// Carga inicial (ou tentar de novo), com as categorias dos filtros.
+  Future<void> load() async {
+    await Future.wait([_loadFirst(), _loadCategories()]);
+  }
+
+  /// Troca a categoria (`null` = "Todas") e recarrega a lista (FR-013).
+  Future<void> selectCategory(String? slug) async {
+    if (slug == _filter.categorySlug) return;
+    _filter = slug == null
+        ? _filter.copyWith(clearCategory: true)
+        : _filter.copyWith(categorySlug: slug);
+    await _loadFirst();
+  }
 
   /// Puxar para atualizar: volta à página 1.
   Future<void> refresh() => _loadFirst();
@@ -157,6 +168,13 @@ class FeedController extends ChangeNotifier {
         _status = FeedStatus.loaded;
       },
     );
+    notifyListeners();
+  }
+
+  /// Falha nas categorias deixa só "Todas" (FR-012).
+  Future<void> _loadCategories() async {
+    final result = await _getCategories();
+    _categories = result.getOrElse((_) => const []);
     notifyListeners();
   }
 

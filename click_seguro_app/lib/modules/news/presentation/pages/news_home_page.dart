@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
@@ -7,6 +8,7 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/category_filter_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_footer.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_section_title.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
@@ -35,6 +37,16 @@ class NewsHomePage extends StatelessWidget {
               builder: (context, _, _) => AppTopBar(
                 title: AppStrings.newsTitle.tr(),
                 subtitle: _subtitle(session, controller.newCount),
+              ),
+            ),
+            // Filtros fora da área que troca de estado: continuam na tela
+            // enquanto a lista da categoria carrega.
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s2),
+              child: CategoryFilterBar(
+                categories: controller.categories,
+                selectedSlug: controller.filter.categorySlug,
+                onSelected: controller.selectCategory,
               ),
             ),
             Expanded(child: _content(context, controller)),
@@ -80,6 +92,9 @@ class NewsHomePage extends StatelessWidget {
           onRetry: controller.load,
         );
       case FeedStatus.loaded:
+        if (controller.items.isEmpty && !controller.filter.isEmpty) {
+          return SafeEmptyState(message: AppStrings.newsEmptyCategory.tr());
+        }
         return RefreshIndicator(
           onRefresh: controller.refresh,
           child: CustomScrollView(
