@@ -19,6 +19,7 @@ import '../../modules/authentication/fakes/controller_factory.dart';
 import '../../modules/authentication/fakes/fake_auth_repository.dart';
 import '../../modules/authentication/fakes/forgot_password_controller_factory.dart';
 import '../../helpers/localized_app.dart';
+import '../../helpers/feed_provider.dart';
 import '../../helpers/splash_provider.dart';
 
 void main() {
@@ -48,6 +49,7 @@ void main() {
           create: (_) => buildForgotPasswordController(repository),
         ),
         fakeSplashProvider(session.sessionStatus.value),
+        fakeFeedProvider(),
       ],
     );
     router.go(location);

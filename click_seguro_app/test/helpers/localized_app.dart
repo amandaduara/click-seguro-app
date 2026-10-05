@@ -7,12 +7,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Monta [child] (ou [router]) com o `EasyLocalization` real e as traduções
 /// de `assets/translations`, em pt-BR. [providers] ficam acima do app, como o
-/// `MultiProvider` dos módulos no `main.dart`.
+/// `MultiProvider` dos módulos no `main.dart`. Com [settle] falso, não espera
+/// as animações terminarem (ex.: um indicador de carregando sem fim).
 Future<void> pumpLocalized(
   WidgetTester tester, {
   Widget? child,
   RouterConfig<Object>? router,
   List<SingleChildWidget> providers = const [],
+  bool settle = true,
 }) async {
   assert((child == null) != (router == null), 'Informe child ou router');
   SharedPreferences.setMockInitialValues({});
@@ -52,5 +54,9 @@ Future<void> pumpLocalized(
     );
     await Future<void>.delayed(const Duration(milliseconds: 50));
   });
-  await tester.pumpAndSettle();
+  if (settle) {
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pump();
+  }
 }

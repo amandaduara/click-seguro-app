@@ -1,19 +1,20 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/routing/app_router.dart';
-import 'package:click_seguro_app/core/widgets/coming_soon_view.dart';
 import 'package:click_seguro_app/modules/activities/activities.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/help/help.dart';
 import 'package:click_seguro_app/modules/news/news.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_bottom_nav.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_top_bar.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../fakes/fake_secure_storage_service.dart';
 import '../../../helpers/localized_app.dart';
+import '../../../helpers/feed_provider.dart';
 import '../../../helpers/splash_provider.dart';
 
 void main() {
@@ -33,7 +34,10 @@ void main() {
     await pumpLocalized(
       tester,
       router: router,
-      providers: [fakeSplashProvider(session.sessionStatus.value)],
+      providers: [
+        fakeSplashProvider(session.sessionStatus.value),
+        fakeFeedProvider(),
+      ],
     );
     router.go('/home');
     await tester.pumpAndSettle();
@@ -118,7 +122,8 @@ void main() {
   ) async {
     await openHome(tester);
 
-    expect(find.byType(ComingSoonView).hitTestable(), findsOneWidget);
+    // O Início é o feed (feature 006): a lista precisa estar visível.
+    expect(find.byType(CustomScrollView).hitTestable(), findsOneWidget);
     expect(tester.getSize(find.byType(AppBottomNav)).height, lessThan(120));
   });
 
