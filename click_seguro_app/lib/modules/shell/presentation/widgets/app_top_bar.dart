@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_colors.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/notifications/notifications.dart';
+import 'package:click_seguro_app/modules/shell/presentation/require_account.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -38,6 +39,11 @@ class _AppTopBarState extends State<AppTopBar> {
     } finally {
       if (mounted) _opening = false;
     }
+  }
+
+  /// Alertas exigem conta (RN-003): visitante vê o convite (FR-012).
+  Future<void> _openNotifications() async {
+    if (await requireAccount(context) && mounted) await _open('/notifications');
   }
 
   String _greeting() {
@@ -89,7 +95,7 @@ class _AppTopBarState extends State<AppTopBar> {
             ),
           ),
           const SizedBox(width: AppSpacing.s2),
-          NotificationBellButton(onPressed: () => _open('/notifications')),
+          NotificationBellButton(onPressed: _openNotifications),
           const SizedBox(width: AppSpacing.s2),
           _SettingsButton(onPressed: () => _open('/settings')),
         ],

@@ -117,6 +117,19 @@ void main() {
       expect(find.text('tela alertas'), findsOneWidget);
     });
 
+    testWidgets('visitante: "Notificações" mostra o convite e não abre', (
+      tester,
+    ) async {
+      await session.startGuestSession();
+      await pumpLocalized(tester, router: buildRouter());
+
+      await tester.tap(find.bySemanticsLabel('Notificações'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Entre na sua conta'), findsOneWidget);
+      expect(find.text('tela alertas'), findsNothing);
+    });
+
     testWidgets('dois toques rápidos abrem uma única tela de alertas', (
       tester,
     ) async {
