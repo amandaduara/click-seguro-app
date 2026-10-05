@@ -1,14 +1,18 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:provider/single_child_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Monta [child] (ou [router]) com o `EasyLocalization` real e as traduções
-/// de `assets/translations`, em pt-BR.
+/// de `assets/translations`, em pt-BR. [providers] ficam acima do app, como o
+/// `MultiProvider` dos módulos no `main.dart`.
 Future<void> pumpLocalized(
   WidgetTester tester, {
   Widget? child,
   RouterConfig<Object>? router,
+  List<SingleChildWidget> providers = const [],
 }) async {
   assert((child == null) != (router == null), 'Informe child ou router');
   SharedPreferences.setMockInitialValues({});
@@ -38,7 +42,12 @@ Future<void> pumpLocalized(
         path: 'assets/translations',
         fallbackLocale: const Locale('pt', 'BR'),
         startLocale: const Locale('pt', 'BR'),
-        child: Builder(builder: app),
+        child: providers.isEmpty
+            ? Builder(builder: app)
+            : MultiProvider(
+                providers: providers,
+                child: Builder(builder: app),
+              ),
       ),
     );
     await Future<void>.delayed(const Duration(milliseconds: 50));

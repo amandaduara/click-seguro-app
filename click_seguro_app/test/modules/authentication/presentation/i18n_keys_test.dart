@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// FR-018: toda chave `auth_*`/`home_placeholder_*` de `AppStrings` existe em
-/// pt-BR e en-US, com texto não vazio.
+/// FR-018: toda chave `auth_*` de `AppStrings` existe em pt-BR e en-US, com
+/// texto não vazio.
 void main() {
-  final keyPattern = RegExp(r"'((?:auth|home_placeholder)_[a-z_]+)'");
+  final keyPattern = RegExp(r"'(auth_[a-z_]+)'");
   final declared = keyPattern
       .allMatches(File('lib/core/i18n/app_strings.dart').readAsStringSync())
       .map((m) => m.group(1)!)

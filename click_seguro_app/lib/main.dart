@@ -1,51 +1,74 @@
 import 'package:click_seguro_app/core/routing/app_router.dart';
+import 'package:click_seguro_app/core/routing/navigator_keys.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
+import 'package:click_seguro_app/modules/activities/activities.dart';
 import 'package:click_seguro_app/modules/authentication/authentication.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/help/help.dart';
+import 'package:click_seguro_app/modules/news/news.dart';
+import 'package:click_seguro_app/modules/notifications/notifications.dart';
 import 'package:click_seguro_app/modules/onboarding/onboarding.dart';
+import 'package:click_seguro_app/modules/profile/profile.dart';
+import 'package:click_seguro_app/modules/settings/settings.dart';
+import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:click_seguro_app/modules/splash/splash.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 
-  final moduleManager = await _setup();
+  final (moduleManager, router) = await _setup();
 
   runApp(
     EasyLocalization(
-      supportedLocales: const [
-        Locale('pt', 'BR'),
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
       path: 'assets/translations',
       fallbackLocale: const Locale('pt', 'BR'),
-      child: ClickSeguroApp(moduleManager: moduleManager),
+      child: ClickSeguroApp(moduleManager: moduleManager, router: router),
     ),
   );
 }
 
-Future<ModuleManagerInterface> _setup() async {
+/// Todos os módulos do app, na ordem do plano do produto §1.4. Também usada
+/// pelo teste de fumaça.
+List<ModuleInterface> appModules() => [
+  CommonModule(),
+  SettingsModule(),
+  AuthenticationModule(),
+  OnboardingModule(),
+  SplashModule(),
+  NewsModule(),
+  NotificationsModule(),
+  ActivitiesModule(),
+  HelpModule(),
+  ProfileModule(),
+  ShellModule(),
+];
+
+Future<(ModuleManagerInterface, GoRouter)> _setup() async {
   final ModuleManagerInterface moduleManager = ModuleManager();
-  await moduleManager.registerModules([
-    CommonModule(),
-    AuthenticationModule(),
-    OnboardingModule(),
-    SplashModule(),
-  ]);
+  await moduleManager.registerModules(appModules());
+  final UserSessionService session = GetIt.instance<UserSessionService>();
   // Antes do runApp: a primeira tela já encontra o estado da sessão (FR-002).
-  await GetIt.instance<UserSessionService>().restoreSession();
-  return moduleManager;
+  await session.restoreSession();
+  return (moduleManager, buildAppRouter(session));
 }
 
 class ClickSeguroApp extends StatelessWidget {
-  const ClickSeguroApp({super.key, required this.moduleManager});
+  const ClickSeguroApp({
+    super.key,
+    required this.moduleManager,
+    required this.router,
+  });
 
   final ModuleManagerInterface moduleManager;
+  final GoRouter router;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +80,8 @@ class ClickSeguroApp extends StatelessWidget {
         supportedLocales: context.supportedLocales,
         locale: context.locale,
         theme: AppTheme.lightTheme,
-        routerConfig: appRouter,
+        scaffoldMessengerKey: rootScaffoldMessengerKey,
+        routerConfig: router,
       ),
     );
   }
