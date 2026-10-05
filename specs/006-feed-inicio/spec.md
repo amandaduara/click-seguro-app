@@ -321,9 +321,9 @@ avião e puxar para atualizar.
   feed sem filtro, como o serviço devolve.
 - **Sem resumo no cartão**: o serviço não envia resumo; o cartão mostra título, fonte, data e
   categorias (diferente do wireframe, que tem um resumo).
-- **Selo "Novo"**: o wireframe marca notícias não lidas com "Novo". Como só quem tem conta tem a
-  informação de leitura, o selo aparece só para quem tem conta, em notícias não lidas do cartão
-  completo (destaques).
+- **Selo "Novo" fora do escopo**: o wireframe marca notícias não lidas com "Novo", mas o serviço
+  manda "não lida" também para o visitante (conferido no servidor), o que marcaria tudo como novo
+  para ele. A contagem do subtítulo cumpre o papel de destacar o que é recente.
 - **Curtir e salvar no cartão**: os botões do wireframe ficam para A4/A5 (que trazem as ações com o
   convite para visitante). Nesta feature, o cartão só mostra os sinais de lida/salva.
 - **Tamanho das partes**: 20 notícias por parte; carrossel com até 10 Reels.

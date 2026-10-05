@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.1 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-03
+**Versão**: 1.0.2 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-05
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -33,8 +33,9 @@ real · ❌ não existe na API (ver alternativa) · ⏸️ existe na API, fora d
 - **Paginação por página**: `?page=1&limit=20` (limit ≤ 100). Resposta `{ data: [], meta }`, com
   `meta = { page, limit, total, totalPages, hasNextPage, hasPreviousPage }`. Fim da lista =
   `meta.hasNextPage == false`.
-- **Paginação por cursor** (feed e reels): `?cursor=<opaco>&limit=N`. Resposta com `nextCursor`;
-  `null` = fim. Cursor inválido → 400 `INVALID_CURSOR`.
+- **Paginação por cursor** (reels): `?cursor=<opaco>&limit=N`. Resposta com `nextCursor`;
+  `null` = fim. O feed também tem cursor, mas ele está quebrado no servidor: o app usa `page`
+  (ver "Notícias e Reels").
 - **IDs** são CUID (strings). Não fazer suposição de formato no app.
 
 ## Sessão e tokens
@@ -82,10 +83,10 @@ Validação (RN-001, igual ao backend): `name` 6–150; `email` ≤ 255 e format
 
 | Status | Método e caminho | Auth | Uso |
 |---|---|---|---|
-| 🧪 | `GET /app/news/feed?cursor&limit` → `{highlights[], recommended[], recent: {data[], nextCursor}}` | opcional | RF-009, RF-010 (feed sem filtro) |
-| 🧪 | `GET /app/news?page&limit&category=<slug>&search&startDate&endDate&sortBy&sortOrder` → `{data[], meta}` | opcional | RF-009 filtro por categoria, RF-011 busca |
-| 🧪 | `GET /categories` → `category[]` | não | chips de filtro do feed |
-| 🧪 | `GET /app/news/reels?cursor&limit` (limit ≤ 50) → `{data[], nextCursor}` | opcional | RF-013 e carrossel do feed |
+| ✅ ⚠️ | `GET /app/news/feed?page&limit` → `{highlights[], recommended[], recent: {data[], nextCursor}}` | opcional | RF-009, RF-010 (feed sem filtro). **Usar `page`**: o `cursor` é ignorado pelo servidor (ver nota) |
+| ✅ | `GET /app/news?page&limit&category=<slug>&search&startDate&endDate&sortBy&sortOrder` → `{data[], meta}` | opcional | RF-009 filtro por categoria, RF-011 busca |
+| ✅ | `GET /categories` → `category[]` | não | chips de filtro do feed |
+| ✅ | `GET /app/news/reels?cursor&limit` (limit ≤ 50) → `{data[], nextCursor}` | opcional | RF-013 e carrossel do feed |
 | 🧪 | `GET /app/news/{id}` → `newsDetail` | opcional | RF-014, RF-018 |
 | 🧪 | `POST /app/news/{id}/like` → `{liked, likesCount}` (alterna) | sim | RF-019 curtir |
 | 🧪 | `POST /app/news/{id}/save` → `{saved}` (alterna) | sim | RF-019 salvar |
@@ -93,6 +94,16 @@ Validação (RN-001, igual ao backend): `name` 6–150; `email` ≤ 255 e format
 | 🧪 | `GET /users/me/news/saved?page&limit` → `{data[], meta}` | sim | lista de salvas, cache offline (RNF-002), contagem no perfil |
 
 Erros: 404 `NEWS_NOT_FOUND` no detalhe/like/save → "Notícia não encontrada".
+
+**Conferido no servidor em 2026-10-05** (feature 006, `specs/006-feed-inicio/research.md`):
+- ⚠️ **Cursor do feed quebrado**: `GET /app/news/feed?cursor=…` ignora o cursor e devolve de novo a
+  1ª página com o mesmo `nextCursor` (também com cursor inválido; não há 400 `INVALID_CURSOR`).
+  O mesmo endpoint aceita `page`, que funciona; o app usa `page` e deduplica por `id`. Backend
+  avisado. O cursor dos **Reels** funciona.
+- No feed por página, `recent.nextCursor` só vem `null` na página vazia; o app também trata
+  "menos itens que o `limit`" como fim.
+- `interaction` vem **também sem token**, com tudo `false`.
+- Ordem do feed e da lista: `publishedAt` decrescente.
 
 `newsItem` (feed, lista): `{ id, title, source, sourceUrl, imageUrl?, originalPublishedAt,
 publishedAt?, createdAt, isHighlight, categories: [{id, name, slug}], interaction?: {isLiked,
@@ -202,6 +213,9 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
+- **1.0.2 (2026-10-05)**: notícias conferidas no servidor real (feed por página, lista com
+  filtro e busca, categorias, Reels). Cursor do feed quebrado no servidor (⚠️): o app pagina o
+  feed por `page`. `interaction` vem também sem token.
 - **1.0.1 (2026-10-03)**: autenticação confirmada no servidor real (cadastro, login, `/users/me`,
   renovação com rotação, código de recuperação inválido, senha atual errada); URL do servidor;
   formato real do 400; tempo de inicialização do Render. Envio do código e redefinição de senha
