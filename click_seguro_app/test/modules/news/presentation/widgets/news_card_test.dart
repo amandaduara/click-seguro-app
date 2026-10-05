@@ -5,6 +5,7 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.d
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_news_repository.dart';
@@ -30,6 +31,12 @@ void main() {
         ],
       ),
     ),
+  );
+
+  // Quadro neutro no lugar da imagem: o ícone de jornal.
+  Finder placeholder() => find.ancestor(
+    of: find.byIcon(LucideIcons.newspaper),
+    matching: find.byType(Container),
   );
 
   NewsCategoryEntity category(String name) =>
@@ -67,7 +74,7 @@ void main() {
   testWidgets('sem imagem mostra o quadro neutro', (tester) async {
     await pumpCard(tester, newsItem('n1'));
 
-    expect(find.byKey(NewsCard.imagePlaceholderKey), findsOneWidget);
+    expect(placeholder(), findsOneWidget);
   });
 
   testWidgets('lida e salva aparecem só quando verdadeiras', (tester) async {
@@ -89,10 +96,7 @@ void main() {
   testWidgets('completo mostra a imagem grande', (tester) async {
     await pumpCard(tester, newsItem('n1'), compact: false);
 
-    final placeholder = tester.getSize(
-      find.byKey(NewsCard.imagePlaceholderKey),
-    );
-    expect(placeholder.height, 176);
+    expect(tester.getSize(placeholder().first).height, 176);
   });
 
   testWidgets('dois toques rápidos abrem uma vez', (tester) async {

@@ -22,8 +22,6 @@ class NewsCategoryModel {
   final String slug;
   final bool isActive;
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'slug': slug};
-
   NewsCategoryEntity toEntity() =>
       NewsCategoryEntity(id: id, name: name, slug: slug);
 }

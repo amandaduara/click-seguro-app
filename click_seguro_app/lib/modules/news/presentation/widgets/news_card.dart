@@ -18,9 +18,6 @@ class NewsCard extends StatefulWidget {
     this.compact = true,
   });
 
-  /// Quadro neutro no lugar da imagem (sem imagem ou falha ao carregar).
-  static const Key imagePlaceholderKey = Key('news_card_image_placeholder');
-
   final NewsItemEntity item;
   final DateTime now;
 
@@ -192,7 +189,6 @@ class _NewsImage extends StatelessWidget {
   final double? width;
 
   Widget _placeholder() => Container(
-    key: NewsCard.imagePlaceholderKey,
     width: width,
     height: height,
     color: AppColors.input,

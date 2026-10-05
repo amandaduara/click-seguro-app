@@ -56,22 +56,6 @@ void main() {
         expect(() => NewsItemModel.fromJson(json), throwsA(anything));
       });
     }
-
-    test('toJson e fromJson voltam ao mesmo item', () {
-      final original = NewsItemModel.fromJson(
-        newsItemJson(id: 'n1', isRead: true),
-      );
-
-      final again = NewsItemModel.fromJson(original.toJson()).toEntity();
-
-      expect(again.id, 'n1');
-      expect(again.categories.single.slug, 'phishing');
-      expect(again.interaction.isRead, isTrue);
-      expect(
-        again.originalPublishedAt,
-        original.toEntity().originalPublishedAt,
-      );
-    });
   });
 
   test('NewsCategoryModel lê nome, slug e se está ativa', () {

@@ -57,20 +57,6 @@ class NewsItemModel {
   final bool isSaved;
   final bool isLiked;
 
-  /// Ida e volta com [NewsItemModel.fromJson], para a cópia guardada.
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'source': source,
-    'sourceUrl': sourceUrl,
-    'imageUrl': ?imageUrl,
-    'originalPublishedAt': originalPublishedAt.toIso8601String(),
-    'publishedAt': ?publishedAt?.toIso8601String(),
-    'isHighlight': isHighlight,
-    'categories': [for (final category in categories) category.toJson()],
-    'interaction': {'isRead': isRead, 'isSaved': isSaved, 'isLiked': isLiked},
-  };
-
   NewsItemEntity toEntity() => NewsItemEntity(
     id: id,
     title: title,

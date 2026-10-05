@@ -195,7 +195,7 @@ com `now` injetado; espera da busca com o relógio falso do `testWidgets` (sem e
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T041 Formatar só os arquivos tocados (`dart format` em `news/`, `tnews/`, `app_strings.dart`), depois `flutter analyze` (sem avisos novos além dos 28 infos) e `flutter test` (todos verdes). Revisar código morto ou só para testes antes do commit
+- [X] T041 Formatar só os arquivos tocados (`dart format` em `news/`, `tnews/`, `app_strings.dart`), depois `flutter analyze` (sem avisos novos além dos 28 infos) e `flutter test` (todos verdes). Revisar código morto ou só para testes antes do commit
 - [ ] T042 Validar no aparelho os 11 passos do [quickstart.md](quickstart.md). Anotar o resultado no fim desta tarefa. O SC-001 (até 3 s com o servidor acordado) só é conferido aqui
 - [ ] T043 Em `.specify/memory/tasks.md`, marcar a A3 como `[x] **A3 Feed (Início)** … (specs/006-feed-inicio)`
 
