@@ -93,9 +93,12 @@ lib/modules/{modulo}/
   nunca por arquivo interno. O que não está no barrel é privado do módulo.
 - Dependências permitidas na v1 (e só estas):
   - `splash` → `onboarding` (usecase `CheckOnboardingSeenUseCase`, já existe) e `common` (sessão).
-  - `shell` → `notifications` (`NotificationBellButton`).
-  - `news` → nenhuma. Atividades relacionadas usam só a rota `/activities/:moduleId` (§2).
-  - `profile` → nenhuma. As estatísticas vêm de chamadas próprias à API (`/users/me`,
+  - `shell` → `notifications` (`NotificationBellButton`, que só desenha o botão e recebe
+    `onPressed`).
+  - Todo módulo de feature → `shell` (`requireAccount`, `AppTopBar`), **exceto**
+    `notifications`, para não formar ciclo (decidido em `specs/005-shell-navegacao-base`).
+  - `news` → só `shell`. Atividades relacionadas usam só a rota `/activities/:moduleId` (§2).
+  - `profile` → só `shell`. As estatísticas vêm de chamadas próprias à API (`/users/me`,
     `/app/educational/modules`, `/users/me/news/saved`), não de outros módulos.
   - `notifications` → nenhuma. Busca as notícias novas com datasource próprio sobre `/app/news`.
   - Todo módulo → `common` e `core`.
@@ -142,7 +145,7 @@ As abas usam `StatefulShellRoute.indexedStack` (o estado de cada aba é preserva
 | `/activities` | Painel de atividades | activities | **aba 2** |
 | `/help` | Central de ajuda | help | **aba 3** |
 | `/profile` | Perfil | profile | **aba 4** |
-| `/reels?start=:newsId` | Reels | news | tela cheia, sem abas |
+| `/reels?start=:newsId` | Reels | news | **aba central** ("Notícias"), sem barra superior |
 | `/news/:id` | Detalhe | news | sobre as abas |
 | `/notifications` | Alertas | notifications | sobre as abas |
 | `/activities/:moduleId` | Perguntas → feedback → conclusão | activities | sobre as abas |
@@ -150,7 +153,9 @@ As abas usam `StatefulShellRoute.indexedStack` (o estado de cada aba é preserva
 | `/profile/edit` | Editar dados e foto | profile | sobre as abas (também aberta por Configurações → Dados pessoais) |
 | `/settings`, `/settings/account`, `/settings/security`, `/settings/accessibility` | Configurações | settings | sobre as abas |
 
-As abas e seus ícones MUST ser conferidos com o `BottomNav` do wireframe na tarefa F0.9. Os
+As abas e seus ícones MUST ser conferidos com o `BottomNav` do wireframe na tarefa F0.9. São
+cinco, como no wireframe: Início, Atividades, Notícias (Reels, botão central), Ajuda e Perfil
+(decidido em `specs/005-shell-navegacao-base`, 2026-10-04). Os
 **caminhos** acima são o contrato entre as trilhas e MUST NOT mudar sem combinar.
 
 **Decisão do splash** (A1): onboarding não visto → `/onboarding`; sessão restaurada
@@ -326,7 +331,7 @@ pastas `specs/` que existem localmente. Antes de rodar `/speckit-specify`, faça
 
 | Fase | Quem | Conteúdo | Pronto quando |
 |---|---|---|---|
-| **Fase 0 — Base comum** | as duas pessoas, juntas (ou uma, e a outra revisa) | dependências, serviços de plataforma, sessão persistente com visitante, acessibilidade global, tema alto contraste, esqueleto de todos os módulos, shell de navegação com rotas, blocos de i18n | app abre, navega entre as 4 abas vazias, `flutter test` verde |
+| **Fase 0 — Base comum** | as duas pessoas, juntas (ou uma, e a outra revisa) | dependências, serviços de plataforma, sessão persistente com visitante, acessibilidade global, tema alto contraste, esqueleto de todos os módulos, shell de navegação com rotas, blocos de i18n | app abre, navega entre as 5 abas vazias, `flutter test` verde |
 | **Trilha A** | Dev 1 | A1–A6 | ver tasks |
 | **Trilha B** | Dev 2 | B1–B4, B6–B9 | ver tasks |
 | **Fase C — Integração** | as duas | C1 revisão de persistência, C2 style guide, C3 navegação/textos/acessibilidade, auditoria de requisitos | cada RF/RN/CB tem teste |

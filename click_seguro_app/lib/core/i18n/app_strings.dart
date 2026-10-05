@@ -2,8 +2,11 @@ abstract class AppStrings {
   AppStrings._();
 
   static const String appTitle = 'app_title';
+
+  // --- splash ---
   static const String splashTagline = 'splash_tagline';
 
+  // --- onboarding ---
   static const String onboardingPage1Title = 'onboarding_page1_title';
   static const String onboardingPage1Description =
       'onboarding_page1_description';
@@ -67,9 +70,64 @@ abstract class AppStrings {
   static const String authResetSave = 'auth_reset_save';
   static const String authResetSuccess = 'auth_reset_success';
   static const String authSlowServer = 'auth_slow_server';
-  static const String homePlaceholderGreeting = 'home_placeholder_greeting';
-  static const String homePlaceholderWelcome = 'home_placeholder_welcome';
-  static const String homePlaceholderBody = 'home_placeholder_body';
+
+  // --- common ---
+  static const String commonTryAgain = 'common_try_again';
+  static const String commonLoading = 'common_loading';
+  static const String commonEmpty = 'common_empty';
+  static const String commonOfflineBanner = 'common_offline_banner';
+  static const String commonComingSoon = 'common_coming_soon';
+  static const String commonBackHome = 'common_back_home';
+  static const String commonNotFoundTitle = 'common_not_found_title';
+  static const String commonAccountRequiredTitle =
+      'common_account_required_title';
+  static const String commonAccountRequiredBody =
+      'common_account_required_body';
+  static const String commonAccountRequiredAction =
+      'common_account_required_action';
+  static const String commonAccountRequiredDismiss =
+      'common_account_required_dismiss';
+  static const String commonSessionExpiredAction =
+      'common_session_expired_action';
+
+  // --- shell ---
+  static const String shellTabHome = 'shell_tab_home';
+  static const String shellTabActivities = 'shell_tab_activities';
+  static const String shellTabNews = 'shell_tab_news';
+  static const String shellTabHelp = 'shell_tab_help';
+  static const String shellTabProfile = 'shell_tab_profile';
+  static const String shellNavLabel = 'shell_nav_label';
+  static const String shellGreeting = 'shell_greeting';
+  static const String shellWelcome = 'shell_welcome';
+  static const String shellNotifications = 'shell_notifications';
+  static const String shellSettings = 'shell_settings';
+
+  // --- news ---
+  static const String newsTitle = 'news_title';
+  static const String newsReelsTitle = 'news_reels_title';
+  static const String newsDetailTitle = 'news_detail_title';
+
+  // --- notifications ---
+  static const String notificationsTitle = 'notifications_title';
+
+  // --- activities ---
+  static const String activitiesTitle = 'activities_title';
+  static const String activitiesModuleTitle = 'activities_module_title';
+
+  // --- help ---
+  static const String helpTitle = 'help_title';
+  static const String helpContactTitle = 'help_contact_title';
+
+  // --- profile ---
+  static const String profileTitle = 'profile_title';
+  static const String profileEditTitle = 'profile_edit_title';
+
+  // --- settings ---
+  static const String settingsTitle = 'settings_title';
+  static const String settingsAccountTitle = 'settings_account_title';
+  static const String settingsSecurityTitle = 'settings_security_title';
+  static const String settingsAccessibilityTitle =
+      'settings_accessibility_title';
 
   static const String errorGeneric = 'error_generic';
   static const String errorConnection = 'error_connection';
