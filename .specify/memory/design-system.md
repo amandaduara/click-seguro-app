@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 1.0.0
+**Versão**: 1.0.1
 
 **Criado em**: 2026-10-04
 
@@ -327,9 +327,10 @@ raio `full`, texto `secondary` 14/600. **Sem barra superior**; a barra inferior 
 
 Padding 20 nas laterais, 24 em cima, 12 embaixo.
 
-- À esquerda: subtítulo 12/500 `muted-foreground` ("Olá, {nome}" conectado, "Bem-vindo"
+- À esquerda: subtítulo 14/500 `muted-foreground` (wireframe: 12) ("Olá, {nome}" conectado, "Bem-vindo"
   visitante, ou um texto da tela) e título 24/700 `secondary`.
-- À direita: dois botões redondos de 44 px, fundo `muted`, ícone 20 `secondary`: `Bell`
+- À direita: dois botões redondos de **48 px** (o wireframe usa 44; o app aumenta para o mínimo
+  de toque do RNF-003), fundo `muted`, ícone 20 `secondary`: `Bell`
   (Notificações) com contador de não lidas (círculo `primary` mínimo 20 px, texto branco 10/700,
   no canto superior direito) e `Settings` (Configurações).
 - Aparece em Início ("Notícias seguras"), Atividades ("Atividades") e Ajuda ("Central de
@@ -383,7 +384,7 @@ direita (12/600 `primary`), botão `large`, divisória "ou" (linha `border` + te
 | Carregando | Indicador circular `primary` centralizado e texto opcional 16 `muted-foreground` |
 | Erro | Mensagem 16 `foreground` centralizada e botão `compact` "Tentar novamente" |
 | Vazio | Ícone 40 `muted-foreground`, mensagem 16 ("Nada por aqui ainda.") e ação opcional; na lista do Início, caixa `muted` 40% raio 16 com "Nenhuma notícia encontrada." |
-| Sem internet | Faixa no topo do conteúdo, fundo `warning` 10%, texto 14–16 `foreground`: "Você está sem internet. Mostrando o conteúdo salvo." |
+| Sem internet | Faixa no topo do conteúdo, fundo `warning` 10%, texto 16 `foreground`: "Você está sem internet. Mostrando o conteúdo salvo." |
 | Convite para criar conta | Painel `card` vindo de baixo, raio 24 em cima: título 18/700 `secondary`, explicação 16, botão `large` "Entrar ou criar conta" e botão `ghost` "Agora não" |
 
 ---
@@ -442,6 +443,8 @@ Valores em que o app Flutter (canônico) difere do wireframe. Na versão web, us
 | Barra inferior | 5 itens, Reels no centro | 5 abas, Reels como aba central (feature 005) | Igual |
 | Cor do 3º ícone do onboarding | `#607698` | `#596475` (`muted-foreground`) | Diferença pequena, sem token novo |
 | Pulsação do escudo no splash | sim | não | Evita animação contínua para o público idoso |
+| Botões da barra superior | 44 px | 48 px | Mínimo de toque do RNF-003 |
+| Subtítulo da barra superior | 12 px | 14 px | Legibilidade para o público idoso |
 
 ---
 
@@ -458,5 +461,7 @@ Valores em que o app Flutter (canônico) difere do wireframe. Na versão web, us
 
 ## Histórico de versões
 
+- **1.0.1 (2026-10-04)**: barra superior com botões de 48 px e subtítulo de 14 px; faixa de sem
+  internet com texto de 16 px (definidos na feature 005).
 - **1.0.0 (2026-10-04)**: primeira versão, extraída do app Flutter e do wireframe para servir
   de referência à versão web do SafeNews.
