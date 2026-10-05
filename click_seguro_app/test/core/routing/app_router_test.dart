@@ -116,6 +116,58 @@ void main() {
     });
   });
 
+  group('saída', () {
+    Future<void> signIn() => session.saveSession(
+      accessToken: 'acesso-1',
+      refreshToken: 'renovacao-1',
+      email: 'maria@exemplo.com',
+      userName: 'Maria',
+    );
+
+    testWidgets('conectada sai da conta numa aba → login', (tester) async {
+      await signIn();
+      await open(tester, '/help');
+
+      await session.logout();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
+    });
+
+    testWidgets('visitante sai numa aba → login', (tester) async {
+      await open(tester, '/profile');
+
+      await session.logout();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
+    });
+
+    testWidgets('caminho público não é redirecionado depois da saída', (
+      tester,
+    ) async {
+      await open(tester, '/help');
+      await session.logout();
+      await tester.pumpAndSettle();
+
+      router.go('/forgot-password');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ForgotPasswordPage), findsOneWidget);
+    });
+
+    testWidgets('expiração não redireciona', (tester) async {
+      await signIn();
+      await open(tester, '/help');
+
+      await session.expire();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HelpPage), findsOneWidget);
+      expect(find.byType(LoginPage), findsNothing);
+    });
+  });
+
   group('página não encontrada', () {
     testWidgets('caminho desconhecido mostra a página e volta ao Início', (
       tester,
