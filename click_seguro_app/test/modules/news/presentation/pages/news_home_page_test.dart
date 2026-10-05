@@ -403,4 +403,48 @@ void main() {
       expect(textInScroll('Tudo recente'), findsOneWidget);
     });
   });
+
+  group('sem internet', () {
+    const offline = 'Você está sem internet. Mostrando o conteúdo salvo.';
+
+    testWidgets('cópia guardada: faixa no topo e aviso no fim', (tester) async {
+      repository.feedResults[0] = Right(newsFeed(isFromCache: true));
+
+      await pumpPage(tester);
+
+      expect(find.text(offline), findsOneWidget);
+      expect(
+        find.text('Conecte-se à internet para ver mais notícias.'),
+        findsOneWidget,
+      );
+      expect(find.text('Você viu todas as notícias'), findsNothing);
+    });
+
+    testWidgets('sem conexão e sem cópia: erro com "Tentar novamente"', (
+      tester,
+    ) async {
+      repository.feedResults[0] = const Left(ConnectionFailure());
+
+      await pumpPage(tester);
+
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(find.text('Tentar novamente'), findsOneWidget);
+      expect(find.text(offline), findsNothing);
+    });
+
+    testWidgets('atualizar com sucesso tira a faixa', (tester) async {
+      repository.feedResults
+        ..clear()
+        ..addAll([Right(newsFeed(isFromCache: true)), Right(newsFeed())]);
+      final controller = await pumpPage(tester);
+
+      await tester.runAsync(controller.refresh);
+      await tester.pumpAndSettle();
+
+      expect(find.text(offline), findsNothing);
+    });
+  });
 }

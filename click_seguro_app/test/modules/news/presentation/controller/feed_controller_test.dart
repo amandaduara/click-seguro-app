@@ -419,4 +419,46 @@ void main() {
       expect(repository.newsCalls.last.filter.normalizedSearch, 'pix');
     });
   });
+
+  group('sem internet', () {
+    test('cópia guardada: marca e não pagina', () async {
+      repository.feedResults[0] = Right(
+        newsFeed(recent: newsItems(20), hasMore: true, isFromCache: true),
+      );
+
+      await controller.load();
+      await controller.loadMore();
+
+      expect(controller.isFromCache, isTrue);
+      expect(controller.hasMore, isFalse);
+      expect(controller.isEnd, isFalse);
+      expect(repository.feedPageCalls, isEmpty);
+    });
+
+    test('atualizar com sucesso tira a marca', () async {
+      repository.feedResults
+        ..clear()
+        ..addAll([Right(newsFeed(isFromCache: true)), Right(newsFeed())]);
+      await controller.load();
+
+      await controller.refresh();
+
+      expect(controller.isFromCache, isFalse);
+    });
+
+    test('categoria sem internet → erro; "Todas" tenta o feed', () async {
+      repository.feedResults[0] = Right(newsFeed(isFromCache: true));
+      repository.newsResults[0] = const Left(ConnectionFailure());
+      await controller.load();
+
+      await controller.selectCategory('phishing');
+      expect(controller.status, FeedStatus.error);
+      expect(controller.failure, isA<ConnectionFailure>());
+
+      await controller.selectCategory(null);
+      expect(controller.status, FeedStatus.loaded);
+      expect(controller.isFromCache, isTrue);
+      expect(repository.feedCalls, 2);
+    });
+  });
 }

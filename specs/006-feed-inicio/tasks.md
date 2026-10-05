@@ -181,13 +181,13 @@ com `now` injetado; espera da busca com o relógio falso do `testWidgets` (sem e
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T037 [P] [US4] Em `tnews/presentation/controller/feed_controller_test.dart`, grupo `sem internet`: `getFeedFirstPage` devolvendo feed com `isFromCache: true` → `isFromCache == true` e `hasMore == false` (não pagina, mesmo que a cópia diga `hasMore`); `refresh()` com sucesso → `isFromCache == false`; categoria sem internet (`getNews` → `Left(ConnectionFailure())`) → `status == error`; `selectCategory(null)` depois → tenta o feed (e a cópia)
-- [ ] T038 [P] [US4] Em `tnews/presentation/pages/news_home_page_test.dart`, grupo `sem internet`: feed da cópia → `SafeOfflineBanner` no topo e, no fim da lista, "Conecte-se à internet para ver mais notícias."; erro de conexão sem cópia → "Sem conexão com a internet. Verifique sua rede." e "Tentar novamente"; atualizar com sucesso → a faixa some
+- [X] T037 [P] [US4] Em `tnews/presentation/controller/feed_controller_test.dart`, grupo `sem internet`: `getFeedFirstPage` devolvendo feed com `isFromCache: true` → `isFromCache == true` e `hasMore == false` (não pagina, mesmo que a cópia diga `hasMore`); `refresh()` com sucesso → `isFromCache == false`; categoria sem internet (`getNews` → `Left(ConnectionFailure())`) → `status == error`; `selectCategory(null)` depois → tenta o feed (e a cópia)
+- [X] T038 [P] [US4] Em `tnews/presentation/pages/news_home_page_test.dart`, grupo `sem internet`: feed da cópia → `SafeOfflineBanner` no topo e, no fim da lista, "Conecte-se à internet para ver mais notícias."; erro de conexão sem cópia → "Sem conexão com a internet. Verifique sua rede." e "Tentar novamente"; atualizar com sucesso → a faixa some
 
 ### Implementação
 
-- [ ] T039 [US4] No `FeedController`: `isFromCache` vindo do `NewsFeedEntity`; com ele, `hasMore = false` e `offlineEnd = true` para o rodapé. Faz a T037 passar
-- [ ] T040 [US4] Na `NewsHomePage`: `SafeOfflineBanner` como primeiro sliver quando `isFromCache`; rodapé com `news_offline_end`. Faz a T038 passar
+- [X] T039 [US4] No `FeedController`: `isFromCache` vindo do `NewsFeedEntity`; com ele, `hasMore = false` e `offlineEnd = true` para o rodapé. Faz a T037 passar
+- [X] T040 [US4] Na `NewsHomePage`: `SafeOfflineBanner` como primeiro sliver quando `isFromCache`; rodapé com `news_offline_end`. Faz a T038 passar
 
 **Checkpoint**: as quatro histórias verdes.
 

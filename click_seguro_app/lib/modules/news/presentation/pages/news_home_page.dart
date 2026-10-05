@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
@@ -140,6 +141,9 @@ class NewsHomePage extends StatelessWidget {
         );
 
     return [
+      // Feed da cópia guardada (CB-001, FR-020).
+      if (controller.isFromCache)
+        const SliverToBoxAdapter(child: SafeOfflineBanner()),
       if (controller.reels.isNotEmpty) ...[
         SliverToBoxAdapter(
           child: FeedSectionTitle(AppStrings.newsSectionNew.tr()),
