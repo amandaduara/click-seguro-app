@@ -156,7 +156,7 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
   - `LoginPage` (alternância, ícones, olho da senha, "Entrar como visitante") e
     `ForgotPasswordPage` em 3 passos (e-mail → código → nova senha), com widget test. Remover
     `LoginPlaceholderPage`.
-- [ ] **A3 Feed (Início)** (RF-009 a RF-012, RN-002, RNF-002, RNF-005, CB-001, CB-006, CB-007)
+- [x] **A3 Feed (Início)** (RF-009 a RF-012, RN-002, RNF-002, RNF-005, CB-001, CB-006, CB-007) (specs/006-feed-inicio)
   - Endpoints: `/app/news/feed` (cursor), `/app/news` (categoria/busca, por página),
     `/categories`, `/app/news/reels` (carrossel).
   - `NewsEntity` (categorias, interação opcional), `CategoryEntity`, `NewsFeedEntity`

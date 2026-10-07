@@ -5,6 +5,7 @@ import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/services/secure_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/help/help.dart';
+import 'package:click_seguro_app/modules/news/domain/repositories/news_repository.dart';
 import 'package:click_seguro_app/modules/news/news.dart';
 import 'package:click_seguro_app/modules/profile/profile.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_bottom_nav.dart';
@@ -15,6 +16,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fakes/fake_secure_storage_service.dart';
+import 'modules/news/fakes/fake_news_repository.dart';
 
 /// Teste de fumaça (F0.11): sobe o app real, com os módulos do `main.dart`,
 /// como visitante e sem plataforma, e passa pelas cinco abas.
@@ -43,6 +45,8 @@ void main() {
           UserSessionService.storageKey: '{"status":"guest"}',
         }),
       );
+      // O Início carrega o feed: sem rede no teste (constituição, Seção III).
+      GetIt.instance.registerSingleton<NewsRepository>(FakeNewsRepository());
       session = GetIt.instance<UserSessionService>();
       await session.restoreSession();
     });
@@ -71,7 +75,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(NewsHomePage), findsOneWidget);
-    expect(find.text('Bem-vindo'), findsOneWidget);
+    expect(find.text('Bem-vindo!'), findsOneWidget);
 
     Future<void> tapTab(String label) async {
       await tester.tap(

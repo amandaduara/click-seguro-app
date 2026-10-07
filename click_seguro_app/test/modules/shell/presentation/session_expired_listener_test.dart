@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../fakes/fake_secure_storage_service.dart';
 import '../../authentication/fakes/controller_factory.dart';
 import '../../authentication/fakes/fake_auth_repository.dart';
+import '../../../helpers/feed_provider.dart';
 import '../../../helpers/splash_provider.dart';
 
 /// FR-013 de specs/005-shell-navegacao-base e SC-008 da feature 001: a
@@ -59,6 +60,7 @@ void main() {
                     buildAuthenticationController(FakeAuthRepository()),
               ),
               fakeSplashProvider(session.sessionStatus.value),
+              fakeFeedProvider(),
             ],
             builder: (context, _) => MaterialApp.router(
               routerConfig: router,
