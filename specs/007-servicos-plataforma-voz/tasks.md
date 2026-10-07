@@ -40,7 +40,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Dentro de `app/`, rodar `flutter analyze` e `flutter test` e anotar a linha de base (número de testes, erros, warnings e infos) no fim desta tarefa. Se algo estiver vermelho, parar e reportar
+- [X] T001 Dentro de `app/`, rodar `flutter analyze` e `flutter test` e anotar a linha de base (número de testes, erros, warnings e infos) no fim desta tarefa. Se algo estiver vermelho, parar e reportar **Linha de base (2026-10-07):** 327 testes verdes; analyze com 28 infos, 0 erros, 0 warnings
 
 ---
 
@@ -50,7 +50,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 Em `app/android/app/src/main/AndroidManifest.xml`, dentro do `<queries>` existente: acrescentar `<intent><action android:name="android.intent.action.TTS_SERVICE"/></intent>` com o comentário `<!-- flutter_tts: encontrar o motor de voz no Android 11+ (R9 da feature 007). -->` e, junto do `VIEW https`, um `<intent>` igual com `<data android:scheme="http"/>`. **Não** acrescentar permissão de câmera (feature 001 R10)
+- [X] T002 Em `app/android/app/src/main/AndroidManifest.xml`, dentro do `<queries>` existente: acrescentar `<intent><action android:name="android.intent.action.TTS_SERVICE"/></intent>` com o comentário `<!-- flutter_tts: encontrar o motor de voz no Android 11+ (R9 da feature 007). -->` e, junto do `VIEW https`, um `<intent>` igual com `<data android:scheme="http"/>`. **Não** acrescentar permissão de câmera (feature 001 R10)
 
 **Checkpoint**: `flutter analyze` sem mudança; `flutter build apk --debug` compila.
 
@@ -64,7 +64,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T003 [P] [US1] Criar `tcmn/services/text_to_speech_service_test.dart` com um `_FakeFlutterTts extends Fake implements FlutterTts`. O dublê guarda os handlers recebidos em `setStartHandler`/`setCompletionHandler`/`setCancelHandler`/`setErrorHandler`, registra as chamadas a `stop`, `setLanguage`, `setSpeechRate` e `speak` (em ordem) e permite configurar o retorno de `isLanguageAvailable` e de `speak` ou fazê-los lançar. Testar:
+- [X] T003 [P] [US1] Criar `tcmn/services/text_to_speech_service_test.dart` com um `_FakeFlutterTts extends Fake implements FlutterTts`. O dublê guarda os handlers recebidos em `setStartHandler`/`setCompletionHandler`/`setCancelHandler`/`setErrorHandler`, registra as chamadas a `stop`, `setLanguage`, `setSpeechRate` e `speak` (em ordem) e permite configurar o retorno de `isLanguageAvailable` e de `speak` ou fazê-los lançar. Testar:
   - `SpeechLanguage.fromLocale`: `Locale('pt','BR')` → `ptBr`, `Locale('en','US')` → `enUs`, `Locale('en')` → `enUs`, `Locale('es')` → `ptBr`; `ptBr.tag == 'pt-BR'`, `enUs.tag == 'en-US'`;
   - `isAvailable(SpeechLanguage.ptBr)` chama `isLanguageAvailable('pt-BR')`. Retorno `true` → `true`. `false`, `null` ou exceção → `false`;
   - `speak('Olá', language: enUs, speed: ReadingSpeed.slow)` chama, nesta ordem, `stop`, `setLanguage('en-US')`, `setSpeechRate(0.4)` e `speak('Olá')`. Com `normal` a taxa é `0.5` e com `fast` é `0.6`;
@@ -73,7 +73,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
   - `speak` do plugin devolvendo `0` ou lançando → `false` sem esperar aviso;
   - **texto longo** ([R2](research.md#r2-voz-flutter_tts-sem-stream-de-estado)): um texto de cerca de 9000 caracteres, em frases terminadas por `.`, vira 3 chamadas ao `speak` do plugin, cada uma com até 3900 caracteres e terminando em fim de frase. A segunda parte só é pedida depois do início e do fim da primeira, e o `Future` só completa com `true` depois do fim da última. Sem nenhum `.`, o corte é no último espaço. Um `stop()` durante a primeira parte devolve `false` e não pede as seguintes;
   - `stop()` chama o `stop` do plugin e não lança quando o plugin lança
-- [ ] T004 [P] [US1] Criar `tcmn/presentation/controller/read_aloud_controller_test.dart` com o `FakeTextToSpeechService` (T005) e um contador de `notifyListeners` (`addListener`). Um teste por cenário da US1:
+- [X] T004 [P] [US1] Criar `tcmn/presentation/controller/read_aloud_controller_test.dart` com o `FakeTextToSpeechService` (T005) e um contador de `notifyListeners` (`addListener`). Um teste por cenário da US1:
   1. com `availableLanguages = {ptBr}`, `prepare(Locale('pt','BR'))` → `isAvailable == true`;
   2. com o conjunto vazio → `isAvailable == false`; e **antes** do `prepare`, `isAvailable == false`;
   3. `speak('texto')` → o fake recebe `('texto', ptBr, normal)` e `isSpeaking == true`;
@@ -89,15 +89,15 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 ### Implementação
 
-- [ ] T005 [P] [US1] Criar `fakes/fake_text_to_speech_service.dart` (`FakeTextToSpeechService implements TextToSpeechService`) conforme a tabela de fakes do [contrato](contracts/platform-services-api.md#fakes-para-as-trilhas--testfakes): `Set<SpeechLanguage> availableLanguages`, `int availabilityChecks`, `List<({String text, SpeechLanguage language, ReadingSpeed speed})> spoken`, `int stopCalls`. `speak` devolve o `Future` de um `Completer<bool>` pendente. `finishSpeaking()` completa com `true` e `failSpeaking()` com `false`. `stop()` completa o pendente com `false`. Um novo `speak` completa o anterior com `false`, para simular o motor real
-- [ ] T006 [US1] Criar `cmn/services/text_to_speech_service.dart` conforme o [contrato](contracts/platform-services-api.md#texttospeechservice--commonservicestext_to_speech_servicedart) e o [R2](research.md#r2-voz-flutter_tts-sem-stream-de-estado)/[R4](research.md#r4-velocidades)/[R5](research.md#r5-idioma-da-voz):
+- [X] T005 [P] [US1] Criar `fakes/fake_text_to_speech_service.dart` (`FakeTextToSpeechService implements TextToSpeechService`) conforme a tabela de fakes do [contrato](contracts/platform-services-api.md#fakes-para-as-trilhas--testfakes): `Set<SpeechLanguage> availableLanguages`, `int availabilityChecks`, `List<({String text, SpeechLanguage language, ReadingSpeed speed})> spoken`, `int stopCalls`. `speak` devolve o `Future` de um `Completer<bool>` pendente. `finishSpeaking()` completa com `true` e `failSpeaking()` com `false`. `stop()` completa o pendente com `false`. Um novo `speak` completa o anterior com `false`, para simular o motor real
+- [X] T006 [US1] Criar `cmn/services/text_to_speech_service.dart` conforme o [contrato](contracts/platform-services-api.md#texttospeechservice--commonservicestext_to_speech_servicedart) e o [R2](research.md#r2-voz-flutter_tts-sem-stream-de-estado)/[R4](research.md#r4-velocidades)/[R5](research.md#r5-idioma-da-voz):
   - `enum ReadingSpeed { slow, normal, fast }`;
   - `enum SpeechLanguage { ptBr('pt-BR'), enUs('en-US') }` com `final String tag` e `static SpeechLanguage fromLocale(Locale locale)`;
   - o contrato abstrato `TextToSpeechService`;
   - `FlutterTextToSpeechService([FlutterTts? tts])`. As taxas vêm de um `switch` exaustivo sobre `ReadingSpeed` (`slow` → 0.4, `normal` → 0.5, `fast` → 0.6), sem `Map` e sem `!`. O limite das partes é a constante `_maxChunkLength = 3900`, e uma função privada divide o texto conforme o R2. O construtor registra os quatro handlers uma vez e guarda `Completer<bool>? _pending` e `bool _started`. `speak` completa o `_pending` anterior com `false` e chama `stop`, `setLanguage(language.tag)` e `setSpeechRate(<taxa>)`. Depois lê as partes em sequência: para cada parte, cria um novo `_pending`, zera `_started`, chama o `speak(parte)` do plugin e espera o `_pending`. Se o retorno do plugin for `0` ou o `_pending` completar com `false`, para e devolve `false`. Um contador de leitura garante que um `speak` novo encerre o laço do anterior. Início → `_started = true`. Fim ou cancelamento só completam se `_started`. Erro completa sempre. Toda exceção vira `false`. `isAvailable` aceita só `result == true`. Nenhum método lança.
 
   Faz a T003 passar
-- [ ] T007 [US1] Criar `cmn/presentation/controller/read_aloud_controller.dart` (`ReadAloudController extends ChangeNotifier`) conforme as transições do [data-model](data-model.md#readaloudcontroller-estado) e o [R3](research.md#r3-readaloudcontroller):
+- [X] T007 [US1] Criar `cmn/presentation/controller/read_aloud_controller.dart` (`ReadAloudController extends ChangeNotifier`) conforme as transições do [data-model](data-model.md#readaloudcontroller-estado) e o [R3](research.md#r3-readaloudcontroller):
   - getters `isAvailable` (inicial `false`), `isSpeaking` e `speed` (inicial `normal`);
   - `prepare(Locale)` usa um cache `Map<SpeechLanguage, bool>`;
   - `speak(String)` ignora `text.trim().isEmpty` e `!isAvailable`, incrementa `_generation`, marca "lendo" e notifica. Quando o `Future` do serviço termina, marca "parado" só se a geração ainda for a mesma e o controller não tiver sido descartado;
@@ -106,7 +106,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
   - `dispose()` chama `_tts.stop()` (sem `await` e sem notificar) **só se** `isSpeaking`.
 
   Sem `BuildContext`. Faz a T004 passar
-- [ ] T008 [US1] Criar `tcmn/common_module_test.dart` (com `TestWidgetsFlutterBinding.ensureInitialized()`, porque o `FlutterTts()` registra um canal de plataforma, `SharedPreferences.setMockInitialValues({})`, `GetIt.instance.reset()` no `setUp`/`tearDown` e `await CommonModule().registerServices(GetIt.instance)`) testando que `GetIt.instance<TextToSpeechService>()` é `FlutterTextToSpeechService` e que dois `GetIt.instance<ReadAloudController>()` são instâncias diferentes (factory). Em `cmn/common_module.dart`, acrescentar `injector.registerLazySingleton<TextToSpeechService>(() => FlutterTextToSpeechService())` e `injector.registerFactory(() => ReadAloudController(injector<TextToSpeechService>()))`
+- [X] T008 [US1] Criar `tcmn/common_module_test.dart` (com `TestWidgetsFlutterBinding.ensureInitialized()`, porque o `FlutterTts()` registra um canal de plataforma, `SharedPreferences.setMockInitialValues({})`, `GetIt.instance.reset()` no `setUp`/`tearDown` e `await CommonModule().registerServices(GetIt.instance)`) testando que `GetIt.instance<TextToSpeechService>()` é `FlutterTextToSpeechService` e que dois `GetIt.instance<ReadAloudController>()` são instâncias diferentes (factory). Em `cmn/common_module.dart`, acrescentar `injector.registerLazySingleton<TextToSpeechService>(() => FlutterTextToSpeechService())` e `injector.registerFactory(() => ReadAloudController(injector<TextToSpeechService>()))`
 
 **Checkpoint**: testes da US1 e suíte inteira verdes. Commit da Base + US1 (T002–T008).
 
