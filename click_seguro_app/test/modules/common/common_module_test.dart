@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -21,6 +22,13 @@ void main() {
 
   test('registra a voz pelo contrato', () {
     expect(injector<TextToSpeechService>(), isA<FlutterTextToSpeechService>());
+  });
+
+  test('registra abrir endereço e ligar pelo contrato', () {
+    expect(
+      injector<ExternalLauncherService>(),
+      isA<UrlLauncherExternalLauncherService>(),
+    );
   });
 
   test('ReadAloudController é um por página (factory)', () {

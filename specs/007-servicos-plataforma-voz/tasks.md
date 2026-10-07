@@ -120,7 +120,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T009 [P] [US2] Criar `tcmn/services/external_launcher_service_test.dart`:
+- [X] T009 [P] [US2] Criar `tcmn/services/external_launcher_service_test.dart`:
   - `isOpenableWebUrl`: `true` para `https://www.gov.br/noticia` e `http://exemplo.com`; `false` para `''`, `'   '`, `www.gov.br`, `ftp://exemplo.com`, `mailto:a@b.com`, `javascript:alert(1)`, `https://` (sem host) e `'::nao é url'`;
   - `normalizePhoneNumber`: `'(11) 9 1234-5678'` → `'11912345678'`, `'+55 (11) 91234-5678'` → `'+5511912345678'`, `'190'` → `'190'`, `'1+2'` → `'12'` (o `+` só vale no início), e `''`, `'()- '` e `'+'` → `null`;
   - a implementação usa funções injetadas que registram o `Uri` e o `LaunchMode` recebidos. `openUrl('https://www.gov.br')` chama `launchUrl` com `LaunchMode.externalApplication` e devolve o retorno dele. Endereço inválido devolve `false` **sem** chamar `launchUrl`. `launchUrl` devolvendo `false` ou lançando → `false`;
@@ -129,14 +129,14 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 ### Implementação
 
-- [ ] T010 [P] [US2] Criar `fakes/fake_external_launcher_service.dart` (`FakeExternalLauncherService implements ExternalLauncherService`): `bool canCallResult = true`, `bool openResult = true`, `List<String> openedUrls`, `List<String> calledNumbers`. `openUrl` e `call` registram o argumento e devolvem `openResult`
-- [ ] T011 [US2] Criar `cmn/services/external_launcher_service.dart` conforme o [contrato](contracts/platform-services-api.md#externallauncherservice--commonservicesexternal_launcher_servicedart) e o [R6](research.md#r6-abrir-endereço-e-ligar):
+- [X] T010 [P] [US2] Criar `fakes/fake_external_launcher_service.dart` (`FakeExternalLauncherService implements ExternalLauncherService`): `bool canCallResult = true`, `bool openResult = true`, `List<String> openedUrls`, `List<String> calledNumbers`. `openUrl` e `call` registram o argumento e devolvem `openResult`
+- [X] T011 [US2] Criar `cmn/services/external_launcher_service.dart` conforme o [contrato](contracts/platform-services-api.md#externallauncherservice--commonservicesexternal_launcher_servicedart) e o [R6](research.md#r6-abrir-endereço-e-ligar):
   - funções públicas `bool isOpenableWebUrl(String url)` (aceita só os esquemas `http`/`https`, guardados em constantes) e `String? normalizePhoneNumber(String raw)`;
   - contrato `ExternalLauncherService`;
   - `UrlLauncherExternalLauncherService({Future<bool> Function(Uri, {LaunchMode mode})? launch, Future<bool> Function(Uri)? canLaunch})`, com padrão nas funções `launchUrl`/`canLaunchUrl` do `url_launcher`. O `canCall` consulta `Uri(scheme: 'tel', path: '0')`. Nenhum método lança.
 
   Faz a T009 passar
-- [ ] T012 [US2] Em `cmn/common_module.dart`, registrar `injector.registerLazySingleton<ExternalLauncherService>(() => UrlLauncherExternalLauncherService())` e acrescentar a verificação do tipo em `tcmn/common_module_test.dart`
+- [X] T012 [US2] Em `cmn/common_module.dart`, registrar `injector.registerLazySingleton<ExternalLauncherService>(() => UrlLauncherExternalLauncherService())` e acrescentar a verificação do tipo em `tcmn/common_module_test.dart`
 
 **Checkpoint**: testes da US2 e suíte verdes. Commit da US2 (T009–T012).
 
