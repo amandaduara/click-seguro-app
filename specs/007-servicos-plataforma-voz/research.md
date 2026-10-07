@@ -43,6 +43,10 @@ tratar foi rejeitado porque repetiria o `try/catch` em cada uma das cinco telas 
   completado pelos handlers `setCompletionHandler` (→ `true`) e `setCancelHandler`/`setErrorHandler`
   (→ `false`). Exceção do canal → `false`.
 - `stop()` → `stop()` do plugin, sem lançar.
+- **Eventos atrasados**: ao interromper uma leitura para começar outra, o aviso de cancelamento
+  da antiga pode chegar depois que a nova já foi pedida. Por isso, os avisos de fim e de
+  cancelamento só valem para a leitura atual depois do `setStartHandler` dela. O erro vale
+  sempre. Se o `speak` do plugin devolver `0` (falha), o resultado é `false` na hora.
 
 O contrato **não** expõe o `isSpeaking` como stream (ao contrário do plano do produto §3.3). O
 estado "lendo" vive no `ReadAloudController` ([R3](#r3-readaloudcontroller)), derivado do início
