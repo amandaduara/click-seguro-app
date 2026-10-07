@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.1.0
+**Versão**: 2.2.0
 
 **Criado em**: 2026-09-07
 
@@ -199,6 +199,13 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 - **RF-037**: As configurações MUST listar as seções Conta ("Dados pessoais"), Alertas,
   Segurança ("Alterar senha") e Acessibilidade, e a ação de sair da conta. Toda linha MUST
   levar a uma tela funcional (nenhuma linha "morta").
+- **RF-042**: O app MUST usar o idioma do aparelho (português do Brasil ou inglês dos EUA; outro
+  idioma cai em português) e as configurações MUST permitir escolher o idioma (Português/English).
+  A escolha MUST ser salva no aparelho e valer para os textos do app e para a leitura em voz alta
+  (RF-015, RF-040). O conteúdo das notícias vem da API e não é traduzido.
+  ⚠️ Ponto em aberto: com o app em inglês, a voz em inglês lê notícias escritas em português.
+  Decidir antes da A5 se a leitura da notícia usa sempre a voz em português (ver
+  `specs/007-servicos-plataforma-voz/spec.md`, Assumptions).
 
 ### 3.9 Acessibilidade (B9)
 
@@ -353,6 +360,8 @@ nova versão e registro no changelog.
 
 ## Changelog
 
+- **2.2.0 (2026-10-07)**: novo RF-042 (idioma do app nas configurações, seguindo o aparelho por
+  padrão; a leitura em voz alta usa o mesmo idioma). Decidido em `specs/007-servicos-plataforma-voz`.
 - **2.1.0 (2026-10-03)**: alinhada à API real ([openapi.json](openapi.json)). IDs mantidos,
   texto revisado: RF-012/RN-002 trocam o selo de veracidade pelas categorias; RF-020 a RF-022
   viram alertas locais de notícias novas; RF-024 a RF-028 e RN-005 seguem o modelo da API
