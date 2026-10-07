@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
+import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,6 +35,10 @@ void main() {
 
   test('registra compartilhar pelo contrato', () {
     expect(injector<ShareService>(), isA<SharePlusShareService>());
+  });
+
+  test('registra fotos pelo contrato', () {
+    expect(injector<ImageStorageService>(), isA<PlatformImageStorageService>());
   });
 
   test('ReadAloudController é um por página (factory)', () {

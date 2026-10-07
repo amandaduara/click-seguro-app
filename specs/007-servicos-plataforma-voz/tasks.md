@@ -174,7 +174,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T017 [P] [US4] Criar `tcmn/services/image_storage_service_test.dart` com:
+- [X] T017 [P] [US4] Criar `tcmn/services/image_storage_service_test.dart` com:
   - `_FakeImagePicker extends Fake implements ImagePicker`. O `pickImage` guarda `source`, `maxWidth`, `maxHeight`, `imageQuality` e `requestFullMetadata`, e devolve um `XFile` de um arquivo criado na pasta temporária, `null`, ou lança;
   - uma função de pasta que devolve a pasta temporária do teste.
 
@@ -188,8 +188,8 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 ### Implementação
 
-- [ ] T018 [P] [US4] Criar `fakes/fake_image_storage_service.dart` (`FakeImageStorageService implements ImageStorageService`): `PickImageResult nextResult = PickImageCancelled()`, `List<PhotoSource> pickedSources`, `List<String> deletedPaths`
-- [ ] T019 [US4] Criar `cmn/services/image_storage_service.dart` conforme o [contrato](contracts/platform-services-api.md#imagestorageservice--commonservicesimage_storage_servicedart), o [data-model](data-model.md#foto-guardada-arquivo) e o [R8](research.md#r8-fotos-escolher-reduzir-e-guardar):
+- [X] T018 [P] [US4] Criar `fakes/fake_image_storage_service.dart` (`FakeImageStorageService implements ImageStorageService`): `PickImageResult nextResult = PickImageCancelled()`, `List<PhotoSource> pickedSources`, `List<String> deletedPaths`
+- [X] T019 [US4] Criar `cmn/services/image_storage_service.dart` conforme o [contrato](contracts/platform-services-api.md#imagestorageservice--commonservicesimage_storage_servicedart), o [data-model](data-model.md#foto-guardada-arquivo) e o [R8](research.md#r8-fotos-escolher-reduzir-e-guardar):
   - `enum PhotoSource { gallery, camera }`;
   - `sealed class PickImageResult` com `PickedImage(this.path)`, `PickImageCancelled`, `PickImagePermissionDenied` e `PickImageFailed` (`final class`, construtores `const`);
   - o contrato `ImageStorageService`;
@@ -199,7 +199,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
   - `delete` só apaga se `File(path).absolute.path` começar com `<pasta images absoluta> + Platform.pathSeparator`. Ignora quando o caminho está fora da pasta, o arquivo não existe ou há erro.
 
   Nenhum método lança. Faz a T017 passar
-- [ ] T020 [US4] Em `cmn/common_module.dart`, registrar `injector.registerLazySingleton<ImageStorageService>(() => PlatformImageStorageService())` e acrescentar a verificação em `tcmn/common_module_test.dart`
+- [X] T020 [US4] Em `cmn/common_module.dart`, registrar `injector.registerLazySingleton<ImageStorageService>(() => PlatformImageStorageService())` e acrescentar a verificação em `tcmn/common_module_test.dart`
 
 **Checkpoint**: testes da US4 e suíte verdes. Commit da US4 (T017–T020).
 
