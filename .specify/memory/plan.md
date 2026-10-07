@@ -215,10 +215,10 @@ Cada um é um contrato abstrato + implementação + fake em `test/fakes/`:
 |---|---|---|
 | `SecureStorageService` | flutter_secure_storage | `read(key)`, `write(key, value)`, `delete(key)`. A sessão fica num único registro JSON (ver `specs/001-sessao-persistente-visitante/research.md` R2/R3) |
 | `LocalCacheService` | shared_preferences | `readJson`, `writeJson`, `remove` |
-| `TextToSpeechService` | flutter_tts | `isAvailable`, `speak(text, rate)`, `stop`, `isSpeaking` (stream) |
+| `TextToSpeechService` | flutter_tts | `isAvailable(language)`, `speak(text, language, speed)` → completa no fim da leitura (`true`/`false`), `stop`. O estado "lendo" fica no `ReadAloudController` (ver `specs/007-servicos-plataforma-voz/research.md` R2) |
 | `ExternalLauncherService` | url_launcher | `canCall`, `call(phone)`, `openUrl(url)` |
-| `ShareService` | share_plus | `shareText(text)` |
-| `ImageStorageService` | image_picker + path_provider | `pickFromGallery`, `pickFromCamera` → caminho salvo no diretório do app, `delete(path)` |
+| `ShareService` | share_plus | `shareText(text, subject?)` → `ShareOutcome` (`shared`/`cancelled`/`failed`) |
+| `ImageStorageService` | image_picker + path_provider | `pickImage(PhotoSource)` → `PickImageResult` (caminho da cópia ≤ 1024 px no diretório do app, cancelado, sem permissão ou falha), `delete(path)` |
 
 ### 3.4 Tema
 

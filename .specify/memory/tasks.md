@@ -82,10 +82,10 @@ do wireframe do Lovable
   - Na abertura, depois do `restoreSession()`: `GET /users/me` atualiza o nome; 404
     `USER_NOT_FOUND` encerra a sessão; sem rede mantém a sessão local. Com testes.
   - Fecha a pendência registrada na F0.4.
-- [ ] **F0.5 Serviços de plataforma e voz**
+- [x] **F0.5 Serviços de plataforma e voz** (specs/007-servicos-plataforma-voz)
   - `TextToSpeechService`, `ExternalLauncherService`, `ShareService` e `ImageStorageService`
     (contrato + impl + fake em `test/fakes/`).
-  - `ReadAloudController` (`isAvailable`, `isSpeaking`, `rate`, `speak`, `stop`), com teste usando
+  - `ReadAloudController` (`isAvailable`, `isSpeaking`, `speed`, `speak`, `stop`), com teste usando
     o fake de TTS (CB-008: indisponível → `isAvailable = false`).
 - [ ] **F0.6 Acessibilidade global** (RF-038 a RF-041, infraestrutura)
   - Módulo `settings`: `AccessibilityPreferences` (entity), `AccessibilityRepository` (local),
@@ -182,6 +182,8 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
   - `ReelsPage` com `PageView` vertical (swipe), botões de navegação, curtir/salvar (visitante →
     `requireAccount`) e abrir fonte (`ExternalLauncherService`), com widget test.
 - [ ] **A5 Detalhe da notícia** (RF-014 a RF-019, CB-008)
+  - ⚠️ Antes de começar: decidir o idioma da voz na leitura da notícia (ponto em aberto do RF-042;
+    app em inglês + notícia em português).
   - Endpoints: `/app/news/{id}`, `POST /app/news/{id}/read`, `/save`,
     `GET /users/me/news/saved`.
   - `NewsDetailEntity` (+ `suggestedModule` opcional) + model, com teste.
@@ -280,7 +282,7 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `ProfilePage` (cartão, selo, estatísticas, conquistas, atalhos; visitante → convite) e
     `EditProfilePage` (`/profile/edit`: nome, e-mail, telefone, foto, "Receber alertas"), com
     widget test.
-- [ ] **B8 Configurações** (RF-037, CB-013)
+- [ ] **B8 Configurações** (RF-037, RF-042, CB-013)
   - Endpoint: `PATCH /users/me/change-password`. 401 `INVALID_CREDENTIALS` → "Senha atual
     incorreta" sem sair da conta (depende da F0.13); 409 `USER_NEW_PASSWORD_EQUALS_OLD`.
   - `SettingsRepositoryImpl` com `changePassword` e `logout` (via `UserSessionService`, sem
@@ -292,6 +294,8 @@ Módulos: `activities`, `help`, `profile`, `settings`.
     - Alertas → `/notifications`;
     - Segurança → `/settings/security`;
     - Acessibilidade → `/settings/accessibility`;
+    - Idioma (Português/English) → troca o idioma do app na hora e salva a escolha (RF-042;
+      `context.setLocale` do easy_localization, que já guarda a escolha);
     - Sair (com confirmação).
   - `ChangePasswordPage`. Widget tests.
 - [ ] **B9 Acessibilidade** (RF-038 a RF-041)
