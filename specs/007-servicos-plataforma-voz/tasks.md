@@ -215,8 +215,8 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
   O controller é descartado no `dispose` da tela
 - [X] T022 Formatar só os arquivos tocados (`dart format` com os caminhos de `cmn/services/`, `cmn/presentation/`, `cmn/common_module.dart`, `app/lib/dev/`, `fakes/` e os testes novos), depois rodar `flutter analyze` (sem avisos novos em relação à T001) e `flutter test` (todos verdes). Revisar o código de produção em busca de código morto ou que só os testes usam (prática do projeto) e anotar o resultado. **Resultado (2026-10-07):** 393 testes verdes (+66 em relação à T001); analyze com os mesmos 28 infos. Revisão: nenhum código morto; os parâmetros opcionais dos construtores (`FlutterTts`, funções do `url_launcher`, `SharePlus`, `ImagePicker`, pasta do app) seguem o padrão `FlutterSecureStorageService([storage])`, com o uso real como padrão; `isOpenableWebUrl` e `normalizePhoneNumber` são usadas pelo serviço e fazem parte do contrato público
-- [ ] T023 Validar no aparelho os 19 passos do [quickstart.md](quickstart.md#2-no-aparelho-android-físico-ios-se-disponível) e anotar no fim desta tarefa o resultado de cada um
-- [ ] T024 Em `.specify/memory/tasks.md`, marcar F0.5 como `[x]` com `(specs/007-servicos-plataforma-voz)` e, na linha do `ReadAloudController`, trocar `rate` por `speed` (nome do contrato). Commit de docs marcando as tarefas
+- [X] T023 Validar no aparelho os 19 passos do [quickstart.md](quickstart.md#2-no-aparelho-android-físico-ios-se-disponível) e anotar no fim desta tarefa o resultado de cada um. **Resultado (2026-10-07):** passos validados no aparelho, conforme o esperado. Com a `develop` atual (feature 006) mesclada numa cópia de teste: 518 testes verdes e analyze com os mesmos 28 infos
+- [X] T024 Em `.specify/memory/tasks.md`, marcar F0.5 como `[x]` com `(specs/007-servicos-plataforma-voz)` e, na linha do `ReadAloudController`, trocar `rate` por `speed` (nome do contrato). Commit de docs marcando as tarefas
 
 ---
 

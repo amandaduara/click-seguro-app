@@ -82,10 +82,10 @@ do wireframe do Lovable
   - Na abertura, depois do `restoreSession()`: `GET /users/me` atualiza o nome; 404
     `USER_NOT_FOUND` encerra a sessão; sem rede mantém a sessão local. Com testes.
   - Fecha a pendência registrada na F0.4.
-- [ ] **F0.5 Serviços de plataforma e voz**
+- [x] **F0.5 Serviços de plataforma e voz** (specs/007-servicos-plataforma-voz)
   - `TextToSpeechService`, `ExternalLauncherService`, `ShareService` e `ImageStorageService`
     (contrato + impl + fake em `test/fakes/`).
-  - `ReadAloudController` (`isAvailable`, `isSpeaking`, `rate`, `speak`, `stop`), com teste usando
+  - `ReadAloudController` (`isAvailable`, `isSpeaking`, `speed`, `speak`, `stop`), com teste usando
     o fake de TTS (CB-008: indisponível → `isAvailable = false`).
 - [ ] **F0.6 Acessibilidade global** (RF-038 a RF-041, infraestrutura)
   - Módulo `settings`: `AccessibilityPreferences` (entity), `AccessibilityRepository` (local),
