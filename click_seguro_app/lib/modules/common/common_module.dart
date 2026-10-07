@@ -7,6 +7,7 @@ import 'package:click_seguro_app/modules/common/services/external_launcher_servi
 import 'package:click_seguro_app/modules/common/services/local_cache_service.dart';
 import 'package:click_seguro_app/modules/common/services/secure_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/session_validation_service.dart';
+import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:get_it/get_it.dart';
@@ -45,6 +46,7 @@ class CommonModule implements ModuleInterface {
     injector.registerLazySingleton<ExternalLauncherService>(
       () => UrlLauncherExternalLauncherService(),
     );
+    injector.registerLazySingleton<ShareService>(() => SharePlusShareService());
     // Um por página: cada uma prepara o idioma e descarta ao fechar.
     injector.registerFactory(
       () => ReadAloudController(injector<TextToSpeechService>()),

@@ -150,7 +150,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T013 [P] [US3] Criar `tcmn/services/share_service_test.dart` com `_FakeSharePlus extends Fake implements SharePlus`, que guarda o `ShareParams` recebido e devolve um `ShareResult('', status)` configurável, ou lança:
+- [X] T013 [P] [US3] Criar `tcmn/services/share_service_test.dart` com `_FakeSharePlus extends Fake implements SharePlus`, que guarda o `ShareParams` recebido e devolve um `ShareResult('', status)` configurável, ou lança:
   - `shareText('Golpe do Pix', subject: 'Click Seguro')` passa `text` e `subject`;
   - os status `success` e `unavailable` resultam em `ShareOutcome.shared`, e `dismissed` em `cancelled` ([R7](research.md#r7-compartilhar));
   - exceção → `failed`;
@@ -158,9 +158,9 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 ### Implementação
 
-- [ ] T014 [P] [US3] Criar `fakes/fake_share_service.dart` (`FakeShareService implements ShareService`): `ShareOutcome outcome = ShareOutcome.shared`, `List<({String text, String? subject})> shared`
-- [ ] T015 [US3] Criar `cmn/services/share_service.dart` conforme o [contrato](contracts/platform-services-api.md#shareservice--commonservicesshare_servicedart): `enum ShareOutcome { shared, cancelled, failed }`, o contrato `ShareService` e `SharePlusShareService([SharePlus? sharePlus])` (padrão `SharePlus.instance`) com `share(ShareParams(text:, subject:))` e o mapeamento por `switch` exaustivo em `ShareResultStatus`. Não lança. Faz a T013 passar
-- [ ] T016 [US3] Em `cmn/common_module.dart`, registrar `injector.registerLazySingleton<ShareService>(() => SharePlusShareService())` e acrescentar a verificação em `tcmn/common_module_test.dart`
+- [X] T014 [P] [US3] Criar `fakes/fake_share_service.dart` (`FakeShareService implements ShareService`): `ShareOutcome outcome = ShareOutcome.shared`, `List<({String text, String? subject})> shared`
+- [X] T015 [US3] Criar `cmn/services/share_service.dart` conforme o [contrato](contracts/platform-services-api.md#shareservice--commonservicesshare_servicedart): `enum ShareOutcome { shared, cancelled, failed }`, o contrato `ShareService` e `SharePlusShareService([SharePlus? sharePlus])` (padrão `SharePlus.instance`) com `share(ShareParams(text:, subject:))` e o mapeamento por `switch` exaustivo em `ShareResultStatus`. Não lança. Faz a T013 passar
+- [X] T016 [US3] Em `cmn/common_module.dart`, registrar `injector.registerLazySingleton<ShareService>(() => SharePlusShareService())` e acrescentar a verificação em `tcmn/common_module_test.dart`
 
 **Checkpoint**: testes da US3 e suíte verdes. Commit da US3 (T013–T016).
 
