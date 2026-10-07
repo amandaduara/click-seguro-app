@@ -71,6 +71,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
   - o `Future` de `speak` só completa depois do aviso de início seguido do aviso de fim, e devolve `true`. Início seguido de cancelamento devolve `false`. O erro devolve `false` mesmo sem início;
   - **evento atrasado** ([R2](research.md#r2-voz-flutter_tts-sem-stream-de-estado)): com a leitura A pendente, chamar `speak('B')`. O `Future` de A completa com `false`. Um cancelamento disparado **antes** do início de B não completa B. Depois do início de B, o fim completa B com `true`;
   - `speak` do plugin devolvendo `0` ou lançando → `false` sem esperar aviso;
+  - **texto longo** ([R2](research.md#r2-voz-flutter_tts-sem-stream-de-estado)): um texto de cerca de 9000 caracteres, em frases terminadas por `.`, vira 3 chamadas ao `speak` do plugin, cada uma com até 3900 caracteres e terminando em fim de frase. A segunda parte só é pedida depois do início e do fim da primeira, e o `Future` só completa com `true` depois do fim da última. Sem nenhum `.`, o corte é no último espaço. Um `stop()` durante a primeira parte devolve `false` e não pede as seguintes;
   - `stop()` chama o `stop` do plugin e não lança quando o plugin lança
 - [ ] T004 [P] [US1] Criar `tcmn/presentation/controller/read_aloud_controller_test.dart` com o `FakeTextToSpeechService` (T005) e um contador de `notifyListeners` (`addListener`). Um teste por cenário da US1:
   1. com `availableLanguages = {ptBr}`, `prepare(Locale('pt','BR'))` → `isAvailable == true`;
@@ -80,7 +81,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
   5. `fake.finishSpeaking()` → `isSpeaking == false` sozinho;
   6. `speak('A')` e depois `speak('B')` → o fake recebe as duas leituras, o fim atrasado de A **não** marca "parado" (B continua `isSpeaking == true`) e só o fim de B marca "parado";
   7. `setSpeed(ReadingSpeed.fast)` durante uma leitura não a interrompe, e a próxima `speak` usa `fast`;
-  8. `dispose()` durante a leitura chama o `stop` do serviço;
+  8. `dispose()` durante a leitura chama o `stop` do serviço. Um controller **parado** descartado não chama o `stop` (não corta a leitura de outra página, [R3](research.md#r3-readaloudcontroller));
   9. `prepare(Locale('en','US'))` depois de `ptBr` verifica `enUs` (indisponível → `isAvailable == false`), e a próxima `speak` usa `enUs`. Um segundo `prepare` com o mesmo idioma não consulta o serviço de novo (cache);
   10. `fake.failSpeaking()` → `isSpeaking == false`, sem exceção.
 
@@ -93,7 +94,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
   - `enum ReadingSpeed { slow, normal, fast }`;
   - `enum SpeechLanguage { ptBr('pt-BR'), enUs('en-US') }` com `final String tag` e `static SpeechLanguage fromLocale(Locale locale)`;
   - o contrato abstrato `TextToSpeechService`;
-  - `FlutterTextToSpeechService([FlutterTts? tts])`. As taxas ficam num `static const Map<ReadingSpeed, double> _rates = {slow: 0.4, normal: 0.5, fast: 0.6}`. O construtor registra os quatro handlers uma vez e guarda `Completer<bool>? _pending` e `bool _started`. `speak` completa o `_pending` anterior com `false` e chama `stop`, `setLanguage(language.tag)`, `setSpeechRate(_rates[speed])` e `speak(text)`. Se o retorno for `0`, devolve `false`. Início → `_started = true`. Fim ou cancelamento só completam se `_started`. Erro completa sempre. Toda exceção vira `false`. `isAvailable` aceita só `result == true`. Nenhum método lança.
+  - `FlutterTextToSpeechService([FlutterTts? tts])`. As taxas vêm de um `switch` exaustivo sobre `ReadingSpeed` (`slow` → 0.4, `normal` → 0.5, `fast` → 0.6), sem `Map` e sem `!`. O limite das partes é a constante `_maxChunkLength = 3900`, e uma função privada divide o texto conforme o R2. O construtor registra os quatro handlers uma vez e guarda `Completer<bool>? _pending` e `bool _started`. `speak` completa o `_pending` anterior com `false` e chama `stop`, `setLanguage(language.tag)` e `setSpeechRate(<taxa>)`. Depois lê as partes em sequência: para cada parte, cria um novo `_pending`, zera `_started`, chama o `speak(parte)` do plugin e espera o `_pending`. Se o retorno do plugin for `0` ou o `_pending` completar com `false`, para e devolve `false`. Um contador de leitura garante que um `speak` novo encerre o laço do anterior. Início → `_started = true`. Fim ou cancelamento só completam se `_started`. Erro completa sempre. Toda exceção vira `false`. `isAvailable` aceita só `result == true`. Nenhum método lança.
 
   Faz a T003 passar
 - [ ] T007 [US1] Criar `cmn/presentation/controller/read_aloud_controller.dart` (`ReadAloudController extends ChangeNotifier`) conforme as transições do [data-model](data-model.md#readaloudcontroller-estado) e o [R3](research.md#r3-readaloudcontroller):
@@ -102,10 +103,10 @@ fazem `GetIt.instance.reset()` no `tearDown`.
   - `speak(String)` ignora `text.trim().isEmpty` e `!isAvailable`, incrementa `_generation`, marca "lendo" e notifica. Quando o `Future` do serviço termina, marca "parado" só se a geração ainda for a mesma e o controller não tiver sido descartado;
   - `stop()` marca "parado", notifica e chama o serviço;
   - `setSpeed` muda a velocidade e notifica;
-  - `dispose()` chama `_tts.stop()` sem `await` e sem notificar.
+  - `dispose()` chama `_tts.stop()` (sem `await` e sem notificar) **só se** `isSpeaking`.
 
   Sem `BuildContext`. Faz a T004 passar
-- [ ] T008 [US1] Criar `tcmn/common_module_test.dart` (com `SharedPreferences.setMockInitialValues({})`, `GetIt.instance.reset()` no `setUp`/`tearDown` e `await CommonModule().registerServices(GetIt.instance)`) testando que `GetIt.instance<TextToSpeechService>()` é `FlutterTextToSpeechService` e que dois `GetIt.instance<ReadAloudController>()` são instâncias diferentes (factory). Em `cmn/common_module.dart`, acrescentar `injector.registerLazySingleton<TextToSpeechService>(() => FlutterTextToSpeechService())` e `injector.registerFactory(() => ReadAloudController(injector<TextToSpeechService>()))`
+- [ ] T008 [US1] Criar `tcmn/common_module_test.dart` (com `TestWidgetsFlutterBinding.ensureInitialized()`, porque o `FlutterTts()` registra um canal de plataforma, `SharedPreferences.setMockInitialValues({})`, `GetIt.instance.reset()` no `setUp`/`tearDown` e `await CommonModule().registerServices(GetIt.instance)`) testando que `GetIt.instance<TextToSpeechService>()` é `FlutterTextToSpeechService` e que dois `GetIt.instance<ReadAloudController>()` são instâncias diferentes (factory). Em `cmn/common_module.dart`, acrescentar `injector.registerLazySingleton<TextToSpeechService>(() => FlutterTextToSpeechService())` e `injector.registerFactory(() => ReadAloudController(injector<TextToSpeechService>()))`
 
 **Checkpoint**: testes da US1 e suíte inteira verdes. Commit da Base + US1 (T002–T008).
 
@@ -194,7 +195,8 @@ fazem `GetIt.instance.reset()` no `tearDown`.
   - o contrato `ImageStorageService`;
   - `PlatformImageStorageService({ImagePicker? picker, Future<Directory> Function()? appDirectory})`, com padrão `ImagePicker()` e `getApplicationDocumentsDirectory`. Constantes nomeadas: `_maxSide = 1024.0`, `_quality = 85`, `_folder = 'images'`, `_prefix = 'img_'`, `_defaultExtension = '.jpg'` e `_deniedCodes = {'photo_access_denied', 'camera_access_denied'}`;
   - cria a pasta se não existir. O nome é `img_<DateTime.now().microsecondsSinceEpoch><ext>`, com sufixo `_1`, `_2`… se já existir. Copia com `XFile.saveTo`;
-  - `delete` compara o caminho normalizado (`File(path).absolute.path`, `p.isWithin` não está disponível sem o pacote `path`, então use `startsWith` da pasta + separador) e ignora quando o caminho está fora da pasta, o arquivo não existe ou há erro.
+  - os caminhos são montados com `Platform.pathSeparator` (`dart:io`), sem o pacote `path`, que não é dependência direta;
+  - `delete` só apaga se `File(path).absolute.path` começar com `<pasta images absoluta> + Platform.pathSeparator`. Ignora quando o caminho está fora da pasta, o arquivo não existe ou há erro.
 
   Nenhum método lança. Faz a T017 passar
 - [ ] T020 [US4] Em `cmn/common_module.dart`, registrar `injector.registerLazySingleton<ImageStorageService>(() => PlatformImageStorageService())` e acrescentar a verificação em `tcmn/common_module_test.dart`
@@ -205,8 +207,8 @@ fazem `GetIt.instance.reset()` no `tearDown`.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T021 Criar `app/lib/dev/platform_services_playground.dart`, a tela de validação no aparelho ([quickstart §2](quickstart.md#2-no-aparelho-android-físico-ios-se-disponível)). Ela tem `main` próprio, como `app/lib/style_guide/style_guide.dart`, **não** é importada pelo app e não usa `GetIt` (instancia as implementações direto). Comentário no topo: "Só para desenvolvimento: `flutter run -t lib/dev/platform_services_playground.dart`". Os textos são fixos, por ser ferramenta de desenvolvimento e não parte do produto (registrado no plano). Seções:
-  - **Voz**: "Voz disponível: sim/não" a partir de `ReadAloudController.prepare(Localizations.localeOf(context))`, um `SegmentedButton` lenta/normal/rápida, os textos A e B (B longo) com "Ouvir" e "Parar", e o estado "lendo/parado";
+- [ ] T021 Criar `app/lib/dev/platform_services_playground.dart`, a tela de validação no aparelho ([quickstart §2](quickstart.md#2-no-aparelho-android-físico-ios-se-disponível)). Ela tem `main` próprio, como `app/lib/style_guide/style_guide.dart`, **não** é importada pelo app. Antes do `runApp`, registra o `CommonModule` com `ModuleManager().registerModules([CommonModule()])` e obtém serviços e `ReadAloudController` pelo `GetIt.instance` (Princípio IV; valida também o registro real). Comentário no topo: "Só para desenvolvimento: `flutter run -t lib/dev/platform_services_playground.dart`". Os textos são fixos, por ser ferramenta de desenvolvimento e não parte do produto (registrado no plano). Seções:
+  - **Voz**: "Voz disponível: sim/não" a partir de `ReadAloudController.prepare(Localizations.localeOf(context))`, um `SegmentedButton` lenta/normal/rápida, os textos A (curto) e B (mais de 4000 caracteres, para testar a leitura em partes) com "Ouvir" e "Parar", e o estado "lendo/parado";
   - **Links**: campo de endereço com "Abrir fonte" e o resultado; campo de telefone com "Pode ligar?" e "Ligar";
   - **Compartilhar**: botão e o `ShareOutcome`;
   - **Fotos**: "Galeria", "Câmera", o resultado (caminho, tamanho em px com `decodeImageFromList`, ou o tipo do resultado), a miniatura e "Apagar".
@@ -214,7 +216,7 @@ fazem `GetIt.instance.reset()` no `tearDown`.
   O controller é descartado no `dispose` da tela
 - [ ] T022 Formatar só os arquivos tocados (`dart format` com os caminhos de `cmn/services/`, `cmn/presentation/`, `cmn/common_module.dart`, `app/lib/dev/`, `fakes/` e os testes novos), depois rodar `flutter analyze` (sem avisos novos em relação à T001) e `flutter test` (todos verdes). Revisar o código de produção em busca de código morto ou que só os testes usam (prática do projeto) e anotar o resultado
 - [ ] T023 Validar no aparelho os 19 passos do [quickstart.md](quickstart.md#2-no-aparelho-android-físico-ios-se-disponível) e anotar no fim desta tarefa o resultado de cada um
-- [ ] T024 Em `.specify/memory/tasks.md`, marcar F0.5 como `[x]` com `(specs/007-servicos-plataforma-voz)`. Commit de docs marcando as tarefas
+- [ ] T024 Em `.specify/memory/tasks.md`, marcar F0.5 como `[x]` com `(specs/007-servicos-plataforma-voz)` e, na linha do `ReadAloudController`, trocar `rate` por `speed` (nome do contrato). Commit de docs marcando as tarefas
 
 ---
 

@@ -36,7 +36,7 @@ flutter run -t lib/dev/platform_services_playground.dart
 | # | Passos | Esperado |
 |---|--------|----------|
 | 1 | Abrir com o celular em português | "Voz disponível: sim" |
-| 2 | "Ouvir" um parágrafo longo | Leitura em pt-BR começa em até 1 s; estado "lendo" |
+| 2 | "Ouvir" o texto B (mais de 4000 caracteres) | Leitura em pt-BR começa em até 1 s; estado "lendo"; segue até o fim, sem pausa estranha entre as partes |
 | 3 | "Parar" no meio | Para em até 1 s; estado "parado" |
 | 4 | Trocar para "lenta" e "rápida" e ouvir de novo | Diferença perceptível; "normal" igual à voz padrão |
 | 5 | "Ouvir" o texto A e, durante a leitura, o texto B | A para, B começa; nunca os dois |

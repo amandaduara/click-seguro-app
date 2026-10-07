@@ -20,7 +20,8 @@ Entregar em `lib/modules/common/` os recursos do aparelho que as trilhas vão us
   `TextToSpeechService` (`flutter_tts`) com `isAvailable(idioma)`, `speak(texto, idioma,
   velocidade)` que completa no fim da leitura, e `stop`. O `ReadAloudController` (factory, um
   por página) guarda `isAvailable`/`isSpeaking`/`speed`, prepara o idioma a partir do `Locale` do
-  app, interrompe a leitura anterior e para no `dispose`. Velocidades `slow/normal/fast` =
+  app, interrompe a leitura anterior e, no `dispose`, para só a leitura dele. Texto longo é lido
+  em partes de até 3900 caracteres (limite do Android). Velocidades `slow/normal/fast` =
   0.4/0.5/0.6.
 - **Abrir e ligar** ([R6](research.md#r6-abrir-endereço-e-ligar)): `ExternalLauncherService`
   (`url_launcher`) com `openUrl` (só http/https, navegador externo), `canCall` e `call` (dígitos e
@@ -79,7 +80,13 @@ para validar no aparelho.
 | Regras globais | Sem segredo; sem `dynamic` público (o retorno `dynamic` do `flutter_tts` é convertido na implementação); sem `!` especulativo; UI das trilhas usa GetIt só para obter o controller/serviço. | ✅ |
 
 **Pós-design (Phase 1)**: reavaliado após o data-model e o contrato. Continua sem violação. A
-tela de desenvolvimento (`lib/dev/`) não é importada pelo app, como o style guide.
+tela de desenvolvimento (`lib/dev/`) não é importada pelo app, como o style guide. Ela obtém
+serviços e controller pelo `GetIt`, registrando o `CommonModule` (Princípio IV), e tem textos
+fixos, como o style guide. O Princípio IV proíbe textos fixos só nos que o usuário vê, e essa
+tela não vai para o usuário.
+
+**Pós-análise (`/speckit-analyze`, 2026-10-07)**: a T021 passou a usar o `GetIt` (antes
+instanciava as implementações direto, o que contrariava o Princípio IV).
 
 ## Project Structure
 

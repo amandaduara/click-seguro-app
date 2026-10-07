@@ -49,6 +49,7 @@ Campos internos: idioma preparado (`SpeechLanguage?`), cache de disponibilidade 
   lendo  ── stop() ──▶ parado                                     (na hora, sem esperar o motor)
   lendo  ── fim do Future de speak (true/false) da geração atual ──▶ parado
   lendo  ── dispose() ──▶ stop no serviço (sem notificar)
+  parado ── dispose() ──▶ nada (não corta a leitura de outra página)
   parado ── speak("" / "  ") ou !isAvailable ──▶ parado           (nada é chamado)
 ```
 

@@ -21,8 +21,9 @@ abstract class TextToSpeechService {
   /// Há voz para [language] no aparelho. Sem motor, sem voz ou erro → false.
   Future<bool> isAvailable(SpeechLanguage language);
 
-  /// Para a leitura anterior e lê [text]. Completa quando a leitura termina:
-  /// true = até o fim; false = interrompida por [stop] ou falha.
+  /// Para a leitura anterior e lê [text] (texto longo em partes de até 3900
+  /// caracteres, em sequência). Completa quando a leitura termina:
+  /// true = até o fim; false = interrompida por [stop], por novo speak ou falha.
   Future<bool> speak(String text, {required SpeechLanguage language, required ReadingSpeed speed});
 
   Future<void> stop();
@@ -44,7 +45,7 @@ class ReadAloudController extends ChangeNotifier {
   Future<void> speak(String text);     // ignora vazio e indisponível; interrompe a anterior
   Future<void> stop();
   void setSpeed(ReadingSpeed speed);   // vale para a próxima leitura
-  @override void dispose();            // para a leitura
+  @override void dispose();            // para a leitura só se este controller estiver lendo
 }
 // Registro: injector.registerFactory(() => ReadAloudController(injector<TextToSpeechService>()));
 ```

@@ -47,6 +47,13 @@ tratar foi rejeitado porque repetiria o `try/catch` em cada uma das cinco telas 
   da antiga pode chegar depois que a nova já foi pedida. Por isso, os avisos de fim e de
   cancelamento só valem para a leitura atual depois do `setStartHandler` dela. O erro vale
   sempre. Se o `speak` do plugin devolver `0` (falha), o resultado é `false` na hora.
+- **Texto longo**: o Android recusa textos acima de `TextToSpeech.getMaxSpeechInputLength()`
+  (4000 caracteres). O `speak` devolve `0` e a leitura nem começa. Uma notícia inteira pode
+  passar disso. Por isso, a implementação divide o texto em partes de até 3900 caracteres,
+  cortando no último fim de frase (`.`, `!`, `?`, quebra de linha) ou, sem isso, no último
+  espaço da parte, e lê as partes em sequência. O `Future` de `speak` só completa com `true`
+  depois da última parte. Um `stop`, um novo `speak` ou uma falha em qualquer parte interrompe o
+  resto e devolve `false`. O mesmo limite vale no iOS, onde não atrapalha.
 
 O contrato **não** expõe o `isSpeaking` como stream (ao contrário do plano do produto §3.3). O
 estado "lendo" vive no `ReadAloudController` ([R3](#r3-readaloudcontroller)), derivado do início
@@ -78,6 +85,9 @@ cada página cria o seu com `ChangeNotifierProvider` e o `dispose` para a leitur
   de uma leitura antiga, para que ela não marque "parado" por cima da leitura nova (FR-005).
 - `setSpeed(ReadingSpeed)` vale para a próxima leitura (cenário 7). Não interrompe a atual.
 - `stop()` marca "parado" na hora e chama o serviço.
+- `dispose()` só chama `stop` no serviço se **este** controller estiver lendo. O motor é um só:
+  na troca de lição (B2) ou de notícia, a página nova pode começar a ler (leitura automática,
+  RF-040) antes de a antiga ser descartada, e um `stop` incondicional cortaria a leitura nova.
 
 **Rationale**: o plano do produto §5 põe o controller em `common` para A5 e B2 não dependerem uma
 da outra. Um usecase que só repassasse a chamada seria abstração vazia (Princípio II, como o
@@ -90,7 +100,8 @@ produto §5 proíbe `BuildContext` em controller. Quem chama `prepare(context.lo
 ## R4. Velocidades
 
 **Decision**: enum `ReadingSpeed { slow, normal, fast }`, padrão `normal`. A conversão para o
-valor do plugin fica só na implementação: `slow` = 0.4, `normal` = 0.5, `fast` = 0.6.
+valor do plugin fica só na implementação, num `switch` exaustivo sobre o enum (sem `Map` e sem
+`!`): `slow` = 0.4, `normal` = 0.5, `fast` = 0.6.
 
 **Rationale**: no `flutter_tts`, 0.5 é a velocidade padrão nas duas plataformas (o Android
 multiplica por 2.0 e 1.0 é o normal do `TextToSpeech`; no iOS 0.5 é o
@@ -174,7 +185,9 @@ pasta do app (padrão `getApplicationDocumentsDirectory`).
   `img_<microssegundos>.<extensão>` (`.jpg` quando não houver extensão). Se o nome já existir,
   acrescenta um sufixo. Devolve `PickedImage(path)`.
 - Qualquer outra exceção (incluindo falha ao copiar) → `PickImageFailed`.
-- `delete(path)`: apaga só arquivos dentro de `images/` do app. Ausente, fora da pasta ou erro →
+- `delete(path)`: apaga só arquivos dentro de `images/` do app. A comparação usa o caminho
+  absoluto da pasta mais `Platform.pathSeparator`, que é `/` no Android e no iOS e `\` nos testes
+  no Windows. O caminho do `PickedImage` é montado com o mesmo separador. Ausente, fora da pasta ou erro →
   ignora (FR-016). Assim um caminho vindo de dado corrompido nunca apaga outro arquivo.
 
 **Rationale**: a pasta de documentos não é limpa pelo sistema, ao contrário do cache onde o

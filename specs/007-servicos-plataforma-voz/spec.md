@@ -12,7 +12,7 @@
 RF-013 (Reels: abrir fonte), RF-015 (ouvir), RF-016 (compartilhar), RF-017 (abrir fonte), RF-032
 (ligar), RF-033/RF-034 (foto do contato), RF-036 (foto do perfil), RF-040 (leitura automática) e RF-042
 (idioma) da
-[especificação do produto](../../.specify/memory/specification.md) v2.1.0 · CB-008, CB-009,
+[especificação do produto](../../.specify/memory/specification.md) v2.2.0 · CB-008, CB-009,
 CB-010, RN-007, RNF-002, RNF-004 · [plano do produto](../../.specify/memory/plan.md) §3.3 e §5 ·
 permissões de plataforma da [feature 001](../001-sessao-persistente-visitante/research.md) (R10).
 
@@ -81,8 +81,8 @@ disponível, o recurso se declara indisponível.
 
 Na notícia (A4, A5), a pessoa toca em "Ver na fonte" e a página original abre no navegador do
 aparelho. Na central de ajuda (B6), ela toca em "Ligar" e o discador abre com o número. Num
-tablet ou celular sem chip, a tela sabe que não dá para ligar e mostra o número em destaque para
-copiar.
+aparelho sem discador (um tablet, por exemplo), a tela sabe que não dá para ligar e mostra o número
+em destaque para copiar.
 
 **Why this priority**: abrir a fonte é o que dá credibilidade à notícia (RF-017) e ligar é a
 ação principal da central de ajuda em caso de golpe (RF-032).
@@ -102,8 +102,10 @@ ligar num aparelho sem telefonia devolve "não dá para ligar".
    tela pede para abrir, **Then** a tela recebe "não abriu", sem fechar o app.
 4. **Given** o aparelho tem telefonia, **When** a tela pergunta se dá para ligar, **Then** a
    resposta é "sim".
-5. **Given** um tablet ou celular sem chip, **When** a tela pergunta se dá para ligar, **Then** a
-   resposta é "não", e a tela mostra o número em destaque com opção de copiar (CB-009).
+5. **Given** um aparelho sem discador (um tablet, por exemplo), **When** a tela pergunta se dá
+   para ligar, **Then** a resposta é "não", e a tela mostra o número em destaque com opção de
+   copiar (CB-009). Um celular sem chip tem discador e responde "sim": números de emergência
+   (190, 188) ligam mesmo sem chip.
 6. **Given** o aparelho tem telefonia, **When** a pessoa toca em "Ligar", **Then** o discador abre
    com o número já preenchido (a pessoa ainda confirma a ligação no discador) e a tela recebe
    "abriu".
@@ -211,7 +213,8 @@ devolve o caminho da cópia guardada; desistir devolve "nenhuma foto"; acesso ne
   do app, e informar se abriu.
 - **FR-009**: Endereços vazios, malformados ou de outros tipos MUST NOT ser abertos; o resultado
   MUST ser "não abriu".
-- **FR-010**: O app MUST informar se o aparelho consegue fazer ligações.
+- **FR-010**: O app MUST informar se o aparelho consegue fazer ligações, ou seja, se tem
+  discador.
 - **FR-011**: Ligar MUST abrir o discador com o número já preenchido (só dígitos e "+" inicial),
   sem completar a ligação sozinho, e informar se abriu.
 
@@ -245,7 +248,8 @@ devolve o caminho da cópia guardada; desistir devolve "nenhuma foto"; acesso ne
 - **Estado da leitura**: disponível ou não; lendo ou parado; velocidade atual.
 - **Resultado de abrir/ligar**: abriu ou não abriu.
 - **Resultado de compartilhar**: compartilhado, cancelado ou falhou.
-- **Resultado de escolher foto**: endereço da cópia guardada, nenhuma foto ou sem permissão.
+- **Resultado de escolher foto**: endereço da cópia guardada, nenhuma foto, sem permissão ou
+  falhou.
 - **Origem da foto**: galeria ou câmera.
 
 ## Success Criteria *(mandatory)*
