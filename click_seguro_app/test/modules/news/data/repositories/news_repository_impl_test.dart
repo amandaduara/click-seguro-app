@@ -3,6 +3,7 @@ import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_local_data_source.dart';
 import 'package:click_seguro_app/modules/news/data/repositories/news_repository_impl.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
+import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../fakes/fake_news_data_sources.dart';
@@ -162,6 +163,90 @@ void main() {
       final result = await repository.getCategories();
 
       expect(result.isLeft(), isTrue);
+    });
+  });
+
+  group('Reels (specs/008)', () {
+    test('getReels devolve a parte com o cursor', () async {
+      remote.reelsPages[null] = reelsJson(
+        items: [reelItemJson(id: 'r1')],
+        nextCursor: 'c2',
+      );
+
+      final page = (await repository.getReels()).getOrElse(
+        (_) => throw StateError('esperava Right'),
+      );
+
+      expect(page.items.single.id, 'r1');
+      expect(page.nextCursor, 'c2');
+      expect(remote.reelsCursors, [null]);
+    });
+
+    test('getReels repassa o cursor', () async {
+      remote.reelsPages['c2'] = reelsJson(items: [reelItemJson(id: 'r9')]);
+
+      final page = (await repository.getReels(
+        cursor: 'c2',
+      )).getOrElse((_) => throw StateError('esperava Right'));
+
+      expect(page.items.single.id, 'r9');
+      expect(remote.reelsCursors, ['c2']);
+    });
+
+    test('getReels sem conexão vira ConnectionFailure', () async {
+      remote.reelsError = apiError(ApiErrorType.connection);
+
+      final result = await repository.getReels();
+
+      expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+    });
+
+    test('toggleLike e toggleSave devolvem o estado do servidor', () async {
+      remote.likeResult = likeJson(liked: true, likesCount: 8);
+      remote.saveResult = false;
+
+      final like = (await repository.toggleLike(
+        'n1',
+      )).getOrElse((_) => throw StateError('esperava Right'));
+      final saved = (await repository.toggleSave(
+        'n1',
+      )).getOrElse((_) => throw StateError('esperava Right'));
+
+      expect(like.liked, isTrue);
+      expect(like.likesCount, 8);
+      expect(saved, isFalse);
+      expect(remote.likeCalls, ['n1']);
+      expect(remote.saveCalls, ['n1']);
+    });
+
+    test('404 ou NEWS_NOT_FOUND vira NewsNotFoundFailure', () async {
+      remote.likeError = ApiException(
+        type: ApiErrorType.client,
+        message: 'x',
+        statusCode: 404,
+      );
+      remote.saveError = ApiException(
+        type: ApiErrorType.client,
+        message: 'x',
+        errorCode: 'NEWS_NOT_FOUND',
+      );
+
+      final like = await repository.toggleLike('n1');
+      final save = await repository.toggleSave('n1');
+
+      expect(like.getLeft().toNullable(), isA<NewsNotFoundFailure>());
+      expect(save.getLeft().toNullable(), isA<NewsNotFoundFailure>());
+    });
+
+    test('401 e 500 seguem o mapeamento padrão', () async {
+      remote.likeError = apiError(ApiErrorType.unauthorized);
+      remote.saveError = apiError(ApiErrorType.server);
+
+      final like = await repository.toggleLike('n1');
+      final save = await repository.toggleSave('n1');
+
+      expect(like.getLeft().toNullable(), isA<UnauthorizedFailure>());
+      expect(save.getLeft().toNullable(), isA<ServerFailure>());
     });
   });
 }

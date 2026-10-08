@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/failure.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/repositories/news_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -31,6 +34,38 @@ NewsItemEntity newsItem(
 
 List<NewsItemEntity> newsItems(int count, {int start = 1}) => [
   for (var i = start; i < start + count; i++) newsItem('n$i'),
+];
+
+/// Reel de teste (`sourceUrl` padrão `https://fonte.test/<id>`).
+ReelEntity reel(
+  String id, {
+  int likesCount = 3,
+  bool isSaved = false,
+  bool isLiked = false,
+  String? sourceUrl,
+  String content = 'Texto do reel',
+  String? imageUrl,
+}) {
+  final base = newsItem(id, imageUrl: imageUrl);
+  return ReelEntity(
+    news: NewsItemEntity(
+      id: base.id,
+      title: base.title,
+      source: base.source,
+      sourceUrl: sourceUrl ?? base.sourceUrl,
+      imageUrl: base.imageUrl,
+      originalPublishedAt: base.originalPublishedAt,
+      categories: base.categories,
+    ),
+    content: content,
+    likesCount: likesCount,
+    isSaved: isSaved,
+    isLiked: isLiked,
+  );
+}
+
+List<ReelEntity> reels(int count, {int start = 1}) => [
+  for (var i = start; i < start + count; i++) reel('r$i'),
 ];
 
 NewsFeedEntity newsFeed({
@@ -68,6 +103,24 @@ class FakeNewsRepository implements NewsRepository {
       slug: 'golpes-bancarios',
     ),
   ]);
+
+  /// Partes dos Reels por cursor (`null` = primeira). Sem entrada → parte
+  /// vazia, fim.
+  final Map<String?, Either<Failure, ReelsPageEntity>> reelsResults = {};
+
+  /// Respostas usadas antes do [reelsResults], uma por pedido.
+  final List<Either<Failure, ReelsPageEntity>> reelsQueue = [];
+
+  /// Filas de respostas; vazias → sucesso padrão.
+  final List<Either<Failure, LikeResultEntity>> likeResults = [];
+  final List<Either<Failure, bool>> saveResults = [];
+
+  Completer<void>? reelsGate;
+  Completer<void>? likeGate;
+  Completer<void>? saveGate;
+  final List<String?> reelsCalls = [];
+  final List<String> likeCalls = [];
+  final List<String> saveCalls = [];
 
   Completer<void>? feedGate;
   Completer<void>? newsGate;
@@ -110,5 +163,38 @@ class FakeNewsRepository implements NewsRepository {
   Future<Either<Failure, List<NewsCategoryEntity>>> getCategories() async {
     categoriesCalls++;
     return categoriesResult;
+  }
+
+  @override
+  Future<Either<Failure, ReelsPageEntity>> getReels({String? cursor}) async {
+    reelsCalls.add(cursor);
+    final result = reelsQueue.isNotEmpty
+        ? reelsQueue.removeAt(0)
+        : reelsResults[cursor] ??
+              const Right(ReelsPageEntity(items: [], nextCursor: null));
+    await reelsGate?.future;
+    return result;
+  }
+
+  @override
+  Future<Either<Failure, LikeResultEntity>> toggleLike(String newsId) async {
+    likeCalls.add(newsId);
+    final result = likeResults.isEmpty
+        ? const Right<Failure, LikeResultEntity>(
+            LikeResultEntity(liked: true, likesCount: 4),
+          )
+        : _next(likeResults);
+    await likeGate?.future;
+    return result;
+  }
+
+  @override
+  Future<Either<Failure, bool>> toggleSave(String newsId) async {
+    saveCalls.add(newsId);
+    final result = saveResults.isEmpty
+        ? const Right<Failure, bool>(true)
+        : _next(saveResults);
+    await saveGate?.future;
+    return result;
   }
 }
