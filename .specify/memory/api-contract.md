@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.2 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-05
+**Versão**: 1.0.3 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-08
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -102,6 +102,14 @@ Erros: 404 `NEWS_NOT_FOUND` no detalhe/like/save → "Notícia não encontrada".
   avisado. O cursor dos **Reels** funciona.
 - No feed por página, `recent.nextCursor` só vem `null` na página vazia; o app também trata
   "menos itens que o `limit`" como fim.
+
+**Conferido no servidor em 2026-10-08** (feature 008, `specs/008-reels-curtir-salvar/research.md`):
+- Reels por cursor: `limit=10` → 10 itens + `nextCursor`; com o cursor → o restante e
+  `nextCursor: null`. O item não traz `interaction.isLiked`, só `isSaved`.
+- Cursor inválido nos Reels devolve **200 com a 1ª parte** (não o 400 `INVALID_CURSOR` do
+  openapi); a deduplicação por `id` cobre.
+- `POST /app/news/{id}/like` sem token → 401 `TOKEN_NOT_PROVIDED` (o app não chama como
+  visitante). As respostas de like/save com conta ficam 🧪 até o teste no aparelho.
 - `interaction` vem **também sem token**, com tudo `false`.
 - Ordem do feed e da lista: `publishedAt` decrescente.
 
@@ -213,6 +221,8 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
+- **1.0.3 (2026-10-08)**: Reels conferidos no servidor real (cursor funciona; cursor inválido
+  volta à 1ª parte; sem `isLiked`); like sem token → 401 `TOKEN_NOT_PROVIDED`.
 - **1.0.2 (2026-10-05)**: notícias conferidas no servidor real (feed por página, lista com
   filtro e busca, categorias, Reels). Cursor do feed quebrado no servidor (⚠️): o app pagina o
   feed por `page`. `interaction` vem também sem token.
