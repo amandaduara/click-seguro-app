@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -8,6 +10,7 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.d
 import 'package:click_seguro_app/modules/news/domain/entities/saved_news_result.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/saved_news_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/saved_news_page.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,11 +86,21 @@ void main() {
   );
 
   /// Com [settle] falso, não espera o carregando (que anima sem fim).
-  Future<void> pumpPage(WidgetTester tester, {bool settle = true}) async {
-    tester.view.physicalSize = const Size(800, 1600);
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    bool settle = true,
+    Size size = const Size(800, 1600),
+    ThemeData? theme,
+  }) async {
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await pumpLocalized(tester, router: buildRouter(), settle: settle);
+    await pumpLocalized(
+      tester,
+      router: buildRouter(),
+      settle: settle,
+      theme: theme,
+    );
     if (!settle) await tester.pump();
   }
 
@@ -257,6 +270,87 @@ void main() {
 
       expect(find.text('Notícia n1'), findsOneWidget);
       expect(repository.savedCalls, [1]);
+    });
+  });
+
+  group('acessibilidade (FR-022, SC-008)', () {
+    void useScale2x(WidgetTester tester) {
+      tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    }
+
+    testWidgets('com conta: cartões com 48 dp ou mais e leitura na ordem', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await signIn();
+      repository.savedResults.add(pageOf(3));
+      await pumpPage(tester);
+
+      final cards = find.byType(NewsCard);
+      expect(cards, findsNWidgets(3));
+      for (var i = 0; i < 3; i++) {
+        expect(tester.getSize(cards.at(i)).height, greaterThanOrEqualTo(48));
+      }
+      final tops = [
+        for (final n in ['n1', 'n2', 'n3'])
+          tester.getTopLeft(find.bySemanticsLabel(RegExp('^Notícia $n, '))).dy,
+      ];
+      expect(tops, orderedEquals([...tops]..sort()));
+      expect(tops.toSet(), hasLength(3));
+      handle.dispose();
+    });
+
+    testWidgets('fonte 2×: lista e convite sem sobreposição', (tester) async {
+      useScale2x(tester);
+      await signIn();
+      repository.savedResults.add(pageOf(3, isFromCache: true));
+      await pumpPage(tester, size: const Size(360, 800));
+
+      final context = tester.element(find.byType(SavedNewsPage));
+      expect(MediaQuery.textScalerOf(context).scale(10), 20);
+      expect(tester.takeException(), isNull);
+      final first = tester.getRect(find.byType(NewsCard).first);
+      expect(first.left, greaterThanOrEqualTo(0));
+      expect(first.right, lessThanOrEqualTo(360));
+    });
+
+    testWidgets('fonte 2×: convite do visitante, botão grande inteiro', (
+      tester,
+    ) async {
+      useScale2x(tester);
+      await pumpPage(tester, size: const Size(360, 800));
+
+      expect(tester.takeException(), isNull);
+      final rect = tester.getRect(find.byKey(SavedNewsPage.loginKey));
+      expect(rect.height, greaterThanOrEqualTo(48));
+      expect(rect.left, greaterThanOrEqualTo(0));
+      expect(rect.right, lessThanOrEqualTo(360));
+    });
+
+    testWidgets('fonte 2×: lista vazia sem estouro', (tester) async {
+      useScale2x(tester);
+      await signIn();
+      repository.savedResults.add(pageOf(0));
+      await pumpPage(tester, size: const Size(360, 800));
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text('Você ainda não salvou nenhuma notícia.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('alto contraste: paleta da feature 009 na lista e no '
+        'convite', (tester) async {
+      await signIn();
+      repository.savedResults.add(pageOf(2));
+      await pumpPage(tester, theme: AppTheme.highContrastTheme);
+
+      final context = tester.element(find.byType(SavedNewsPage));
+      expect(context.colors, AppPalette.highContrast);
+      expect(find.byType(NewsCard), findsNWidgets(2));
+      expect(tester.takeException(), isNull);
     });
   });
 }

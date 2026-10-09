@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
@@ -10,6 +12,7 @@ import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/news_detail_page.dart';
@@ -124,12 +127,14 @@ void main() {
     WidgetTester tester, {
     bool settle = true,
     Locale locale = const Locale('pt', 'BR'),
+    Size size = const Size(800, 1600),
+    ThemeData? theme,
   }) async {
-    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     router = buildRouter();
-    await pumpLocalized(tester, router: router, locale: locale);
+    await pumpLocalized(tester, router: router, locale: locale, theme: theme);
     unawaited(router.push<void>('/news/n1'));
     if (settle) {
       await tester.pumpAndSettle();
@@ -868,6 +873,197 @@ void main() {
       final size = tester.getSize(card());
       expect(size.height, greaterThanOrEqualTo(48));
       handle.dispose();
+    });
+  });
+
+  group('acessibilidade (FR-022, SC-008)', () {
+    const module = SuggestedModuleEntity(
+      id: 'm1',
+      title: 'Golpes no WhatsApp',
+      description: 'Aprenda a reconhecer golpes.',
+      lessonsCount: 3,
+    );
+    const longTitle =
+        'Golpistas usam falsas centrais de atendimento para roubar dados '
+        'de aposentados em todo o país';
+    final longContent = List.filled(
+      6,
+      'Texto completo da notícia, com várias frases para quebrar de linha.',
+    ).join(' ');
+
+    void fullDetail() => repository.detailResults.add(
+      Right(
+        NewsDetailResult(
+          detail: newsDetail(
+            'n1',
+            content: longContent,
+            suggestedModule: module,
+          ),
+          isFromCache: false,
+        ),
+      ),
+    );
+
+    NewsDetailEntity withTitle(NewsDetailEntity detail, String title) {
+      final news = detail.news;
+      return NewsDetailEntity(
+        news: NewsItemEntity(
+          id: news.id,
+          title: title,
+          source: news.source,
+          sourceUrl: news.sourceUrl,
+          originalPublishedAt: news.originalPublishedAt,
+          categories: news.categories,
+          interaction: news.interaction,
+        ),
+        content: detail.content,
+        likesCount: detail.likesCount,
+        readsCount: detail.readsCount,
+        suggestedModule: detail.suggestedModule,
+      );
+    }
+
+    Future<void> signIn() => session.saveSession(
+      accessToken: 'tk',
+      refreshToken: 'rf',
+      email: 'ana@test.com',
+      userName: 'Ana',
+    );
+
+    final interactive = <Finder>[
+      find.byKey(ReadAloudBar.listenKey),
+      for (final speed in ReadingSpeed.values)
+        find.byKey(ReadAloudBar.speedKey(speed)),
+      find.byKey(NewsDetailActions.saveKey),
+      find.byKey(NewsDetailActions.shareKey),
+      find.byKey(NewsDetailActions.sourceKey),
+      find.byKey(RelatedActivityCard.cardKey),
+    ];
+
+    /// Todo controle com pelo menos 48×48 dp, visível na tela.
+    void expectTouchTargets(WidgetTester tester) {
+      for (final finder in interactive) {
+        expect(finder, findsOneWidget);
+        final size = tester.getSize(finder);
+        expect(size.width, greaterThanOrEqualTo(48), reason: '$finder');
+        expect(size.height, greaterThanOrEqualTo(48), reason: '$finder');
+      }
+    }
+
+    /// Topo, na tela, do nó de acessibilidade com o rótulo.
+    double semanticsTop(WidgetTester tester, Pattern label) =>
+        tester.getTopLeft(find.bySemanticsLabel(label)).dy;
+
+    testWidgets('padrão: todos os controles com 48×48 dp ou mais', (
+      tester,
+    ) async {
+      await signIn();
+      fullDetail();
+      await pumpPage(tester);
+
+      expectTouchTargets(tester);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('fonte 2×: sem sobreposição, botões empilhados e texto '
+        'quebrando de linha', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await signIn();
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: withTitle(
+              newsDetail('n1', content: longContent, suggestedModule: module),
+              longTitle,
+            ),
+            isFromCache: false,
+          ),
+        ),
+      );
+      await pumpPage(tester, size: const Size(360, 800));
+
+      final context = tester.element(find.byType(NewsDetailPage));
+      expect(MediaQuery.textScalerOf(context).scale(10), 20);
+      expect(tester.takeException(), isNull);
+      expectTouchTargets(tester);
+      // O título quebra em várias linhas.
+      expect(tester.getSize(find.text(longTitle)).height, greaterThan(100));
+      // Ouvir e as ações: uma abaixo da outra, em largura total, sem tocar.
+      final keys = [
+        ReadAloudBar.listenKey,
+        NewsDetailActions.saveKey,
+        NewsDetailActions.shareKey,
+        NewsDetailActions.sourceKey,
+      ];
+      for (var i = 0; i < keys.length; i++) {
+        final rect = tester.getRect(find.byKey(keys[i]));
+        expect(rect.left, greaterThanOrEqualTo(0), reason: '${keys[i]}');
+        expect(rect.right, lessThanOrEqualTo(360), reason: '${keys[i]}');
+        if (i == 0) continue;
+        final previous = tester.getRect(find.byKey(keys[i - 1]));
+        expect(
+          rect.top,
+          greaterThanOrEqualTo(previous.bottom),
+          reason: '${keys[i]}',
+        );
+      }
+      // As velocidades passam para a linha de baixo, sem estourar a largura.
+      for (final speed in ReadingSpeed.values) {
+        final rect = tester.getRect(find.byKey(ReadAloudBar.speedKey(speed)));
+        expect(rect.right, lessThanOrEqualTo(360), reason: '$speed');
+      }
+      // Rolando até o fim, o bloco de atividade também cabe.
+      await tester.scrollUntilVisible(
+        find.byKey(RelatedActivityCard.cardKey),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(tester.takeException(), isNull);
+      final card = tester.getRect(find.byKey(RelatedActivityCard.cardKey));
+      expect(card.right, lessThanOrEqualTo(360));
+    });
+
+    testWidgets('ordem de leitura: título, fonte e data, ações, texto e '
+        'atividade', (tester) async {
+      final handle = tester.ensureSemantics();
+      await signIn();
+      fullDetail();
+      await pumpPage(tester, size: const Size(800, 3200));
+
+      final order = [
+        semanticsTop(tester, RegExp('^Notícia n1, Folha de Teste, ')),
+        semanticsTop(tester, 'Ouvir'),
+        semanticsTop(tester, 'Velocidade: normal'),
+        semanticsTop(tester, 'Salvar'),
+        semanticsTop(tester, 'Compartilhar'),
+        semanticsTop(tester, 'Abrir fonte'),
+        semanticsTop(tester, RegExp('^Texto completo da notícia')),
+        semanticsTop(tester, RegExp('^Pratique o que aprendeu')),
+      ];
+      expect(order, orderedEquals([...order]..sort()));
+      expect(order.toSet(), hasLength(order.length));
+      handle.dispose();
+    });
+
+    testWidgets('alto contraste: paleta da feature 009, texto legível e '
+        '48 dp', (tester) async {
+      await signIn();
+      fullDetail();
+      await pumpPage(tester, theme: AppTheme.highContrastTheme);
+
+      final context = tester.element(find.byType(NewsDetailPage));
+      expect(context.colors, AppPalette.highContrast);
+      expect(
+        tester.widget<Text>(find.text('Notícia n1')).style?.color,
+        AppPalette.highContrast.secondary,
+      );
+      expect(
+        tester.widget<Text>(find.text(longContent)).style?.color,
+        AppPalette.highContrast.textForeground,
+      );
+      expectTouchTargets(tester);
+      expect(tester.takeException(), isNull);
     });
   });
 }

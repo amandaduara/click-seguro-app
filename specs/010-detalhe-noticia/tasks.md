@@ -196,9 +196,9 @@ chaves de i18n `news_reels_saved*`, `news_reels_open_source*`, `news_error_not_f
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T046 [P] Em `tnews/presentation/pages/news_detail_page_test.dart` (grupo acessibilidade, FR-022, SC-008), ajustar o que falhar em `news_detail_page.dart`/widgets: todos os botões ≥ 48×48 dp; fonte do sistema 2× sem sobreposição e com botões quebrando de linha; ordem do `Semantics` título, fonte, data, ações, texto, bloco de atividade; tema de alto contraste da feature 009. Repetir o essencial em `saved_news_page_test.dart`
+- [X] T046 [P] Em `tnews/presentation/pages/news_detail_page_test.dart` (grupo acessibilidade, FR-022, SC-008), ajustar o que falhar em `news_detail_page.dart`/widgets: todos os botões ≥ 48×48 dp; fonte do sistema 2× sem sobreposição e com botões quebrando de linha; ordem do `Semantics` título, fonte, data, ações, texto, bloco de atividade; tema de alto contraste da feature 009. Repetir o essencial em `saved_news_page_test.dart`
 - [ ] T047 [P] Em `.specify/memory/api-contract.md`, acrescentar à linha de `GET /users/me/news/saved` a ordem observada no passo 9 do quickstart (a pendência do [R0](research.md)) e atualizar a versão/data se mudar algo
-- [ ] T048 Formatar só os arquivos tocados (`dart format` em `news/`, `tnews/`, `app/lib/dev/accessibility_playground.dart`, `app_strings.dart`), depois `flutter analyze` (sem avisos novos) e `flutter test` (todos verdes). Revisar código morto e confirmar que `news/` não importa `activities`
+- [X] T048 Formatar só os arquivos tocados (`dart format` em `news/`, `tnews/`, `app/lib/dev/accessibility_playground.dart`, `app_strings.dart`), depois `flutter analyze` (sem avisos novos) e `flutter test` (todos verdes). Revisar código morto e confirmar que `news/` não importa `activities`
 - [ ] T049 Validar no aparelho os passos 1–16 do [quickstart.md](quickstart.md) (SC-001, SC-003 e a ordem da lista de salvas só são conferidos aqui; usar conta de teste e desativá-la no fim). Guardar prints e relatório em `specs/010-detalhe-noticia/evidencias/` e anotar o resultado nesta tarefa
 - [ ] T050 Em `.specify/memory/tasks.md`, marcar a A5 como `[x] **A5 Detalhe da notícia** … (specs/010-detalhe-noticia)`. Conferir que a rota `/news/saved` já consta no §2 de `.specify/memory/plan.md` (consta)
 
