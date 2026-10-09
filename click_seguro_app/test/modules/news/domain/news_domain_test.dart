@@ -5,6 +5,11 @@ import 'package:click_seguro_app/modules/news/domain/usecases/get_categories_use
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_page_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_reels_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -112,6 +117,64 @@ void main() {
       final result = await GetCategoriesUseCase(repository)();
 
       expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+    });
+  });
+
+  group('Reels (specs/008)', () {
+    late FakeNewsRepository repository;
+
+    setUp(() => repository = FakeNewsRepository());
+
+    test('ReelEntity.copyWith troca só o pedido', () {
+      final original = reel('r1', likesCount: 3, isSaved: true);
+
+      final liked = original.copyWith(isLiked: true, likesCount: 4);
+
+      expect(liked.id, 'r1');
+      expect(liked.isLiked, isTrue);
+      expect(liked.likesCount, 4);
+      expect(liked.isSaved, isTrue);
+      expect(liked.content, original.content);
+      expect(original.isLiked, isFalse);
+    });
+
+    test('appendUniqueReels não repete id', () {
+      final (merged, added) = [
+        reel('r1'),
+        reel('r2'),
+      ].appendUniqueReels([reel('r2'), reel('r3')]);
+
+      expect(merged.map((r) => r.id), ['r1', 'r2', 'r3']);
+      expect(added, 1);
+    });
+
+    test('GetReelsUseCase repassa o cursor', () async {
+      repository.reelsResults['c2'] = Right(
+        ReelsPageEntity(items: [reel('r5')], nextCursor: null),
+      );
+
+      final result = await GetReelsUseCase(repository)(cursor: 'c2');
+
+      expect(
+        result.getOrElse((_) => throw StateError('')).items.single.id,
+        'r5',
+      );
+      expect(repository.reelsCalls, ['c2']);
+    });
+
+    test('ToggleLikeUseCase e ToggleSaveUseCase repassam o id', () async {
+      repository.likeResults.add(
+        const Right(LikeResultEntity(liked: true, likesCount: 1)),
+      );
+      repository.saveResults.add(const Left(ConnectionFailure()));
+
+      final like = await ToggleLikeUseCase(repository)('n1');
+      final save = await ToggleSaveUseCase(repository)('n2');
+
+      expect(like.getOrElse((_) => throw StateError('')).liked, isTrue);
+      expect(save.getLeft().toNullable(), isA<ConnectionFailure>());
+      expect(repository.likeCalls, ['n1']);
+      expect(repository.saveCalls, ['n2']);
     });
   });
 }

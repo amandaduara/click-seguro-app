@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.2 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-05
+**Versão**: 1.0.4 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-08
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -88,8 +88,8 @@ Validação (RN-001, igual ao backend): `name` 6–150; `email` ≤ 255 e format
 | ✅ | `GET /categories` → `category[]` | não | chips de filtro do feed |
 | ✅ | `GET /app/news/reels?cursor&limit` (limit ≤ 50) → `{data[], nextCursor}` | opcional | RF-013 e carrossel do feed |
 | 🧪 | `GET /app/news/{id}` → `newsDetail` | opcional | RF-014, RF-018 |
-| 🧪 | `POST /app/news/{id}/like` → `{liked, likesCount}` (alterna) | sim | RF-019 curtir |
-| 🧪 | `POST /app/news/{id}/save` → `{saved}` (alterna) | sim | RF-019 salvar |
+| ✅ | `POST /app/news/{id}/like` → `{liked, likesCount}` (alterna) | sim | RF-019 curtir |
+| ✅ | `POST /app/news/{id}/save` → `{saved}` (alterna) | sim | RF-019 salvar |
 | 🧪 | `POST /app/news/{id}/read` → 204 (idempotente) | sim | registra leitura ao abrir o detalhe (cadastrado) |
 | 🧪 | `GET /users/me/news/saved?page&limit` → `{data[], meta}` | sim | lista de salvas, cache offline (RNF-002), contagem no perfil |
 
@@ -102,6 +102,14 @@ Erros: 404 `NEWS_NOT_FOUND` no detalhe/like/save → "Notícia não encontrada".
   avisado. O cursor dos **Reels** funciona.
 - No feed por página, `recent.nextCursor` só vem `null` na página vazia; o app também trata
   "menos itens que o `limit`" como fim.
+
+**Conferido no servidor em 2026-10-08** (feature 008, `specs/008-reels-curtir-salvar/research.md`):
+- Reels por cursor: `limit=10` → 10 itens + `nextCursor`; com o cursor → o restante e
+  `nextCursor: null`. O item não traz `interaction.isLiked`, só `isSaved`.
+- Cursor inválido nos Reels devolve **200 com a 1ª parte** (não o 400 `INVALID_CURSOR` do
+  openapi); a deduplicação por `id` cobre.
+- `POST /app/news/{id}/like` sem token → 401 `TOKEN_NOT_PROVIDED` (o app não chama como
+  visitante). As respostas de like/save com conta ficam 🧪 até o teste no aparelho.
 - `interaction` vem **também sem token**, com tudo `false`.
 - Ordem do feed e da lista: `publishedAt` decrescente.
 
@@ -213,6 +221,11 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
+- **1.0.4 (2026-10-08)**: like e save conferidos no servidor real pelo app (specs/008, T039):
+  alternam e devolvem `{liked, likesCount}` e `{saved}`; `isSaved` e `likesCount` voltam no
+  reel ao reabrir, `isLiked` não.
+- **1.0.3 (2026-10-08)**: Reels conferidos no servidor real (cursor funciona; cursor inválido
+  volta à 1ª parte; sem `isLiked`); like sem token → 401 `TOKEN_NOT_PROVIDED`.
 - **1.0.2 (2026-10-05)**: notícias conferidas no servidor real (feed por página, lista com
   filtro e busca, categorias, Reels). Cursor do feed quebrado no servidor (⚠️): o app pagina o
   feed por `page`. `interaction` vem também sem token.
