@@ -87,7 +87,7 @@ do wireframe do Lovable
     (contrato + impl + fake em `test/fakes/`).
   - `ReadAloudController` (`isAvailable`, `isSpeaking`, `speed`, `speak`, `stop`), com teste usando
     o fake de TTS (CB-008: indisponível → `isAvailable = false`).
-- [ ] **F0.6 Acessibilidade global** (RF-038 a RF-041, infraestrutura)
+- [x] **F0.6 Acessibilidade global** (RF-038 a RF-041, infraestrutura) (specs/009-acessibilidade-global)
   - Módulo `settings`: `AccessibilityPreferences` (entity), `AccessibilityRepository` (local),
     usecases get/save, `AccessibilityController`, com testes.
   - `AccessibilityPreferencesNotifier` em `common`, atualizado pelo controller.
