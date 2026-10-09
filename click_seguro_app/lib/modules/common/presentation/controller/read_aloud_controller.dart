@@ -24,6 +24,7 @@ class ReadAloudController extends ChangeNotifier {
   final Map<SpeechLanguage, bool> _availability = {};
   SpeechLanguage? _language;
   bool _isSpeaking = false;
+
   /// Escolhida na própria página; vale só para ela.
   ReadingSpeed? _pageSpeed;
   bool _disposed = false;

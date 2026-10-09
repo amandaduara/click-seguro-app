@@ -20,10 +20,7 @@ void main() {
     );
     repository.stored = stored;
 
-    expect(
-      await GetAccessibilityPreferencesUseCase(repository).call(),
-      stored,
-    );
+    expect(await GetAccessibilityPreferencesUseCase(repository).call(), stored);
   });
 
   test('Save repassa ao repository e devolve o resultado', () async {

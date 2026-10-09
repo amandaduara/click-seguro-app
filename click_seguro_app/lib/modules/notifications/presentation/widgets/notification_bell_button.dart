@@ -29,7 +29,11 @@ class NotificationBellButton extends StatelessWidget {
           child: SizedBox(
             width: 48,
             height: 48,
-            child: Icon(LucideIcons.bell, size: 20, color: context.colors.secondary),
+            child: Icon(
+              LucideIcons.bell,
+              size: 20,
+              color: context.colors.secondary,
+            ),
           ),
         ),
       ),

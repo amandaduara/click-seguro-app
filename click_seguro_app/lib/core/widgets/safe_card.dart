@@ -46,7 +46,9 @@ class _SafeCardState extends State<SafeCard> {
     final card = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
-      padding: widget.padded ? const EdgeInsets.all(AppSpacing.s5) : EdgeInsets.zero,
+      padding: widget.padded
+          ? const EdgeInsets.all(AppSpacing.s5)
+          : EdgeInsets.zero,
       decoration: BoxDecoration(
         color: context.colors.card,
         border: Border.all(color: context.colors.border),

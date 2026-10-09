@@ -57,7 +57,9 @@ class _SplashPageState extends State<SplashPage> {
             Text(
               AppStrings.splashTagline.tr(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: context.colors.textPrimaryForeground.withValues(alpha: 0.8),
+                color: context.colors.textPrimaryForeground.withValues(
+                  alpha: 0.8,
+                ),
               ),
             ),
           ],

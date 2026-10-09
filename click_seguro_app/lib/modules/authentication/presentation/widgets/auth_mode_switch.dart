@@ -29,7 +29,7 @@ class AuthModeSwitch extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: context.colors.input,
-        borderRadius: BorderRadius.all(Radius.circular(999)),
+        borderRadius: const BorderRadius.all(Radius.circular(999)),
       ),
       child: Stack(
         children: [
@@ -46,7 +46,7 @@ class AuthModeSwitch extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: context.colors.background,
-                    borderRadius: BorderRadius.all(Radius.circular(999)),
+                    borderRadius: const BorderRadius.all(Radius.circular(999)),
                     boxShadow: context.colors.shadowSm,
                   ),
                 ),
@@ -92,7 +92,9 @@ class _Segment extends StatelessWidget {
     final style = Theme.of(context).textTheme.labelLarge?.copyWith(
       fontSize: 16,
       fontWeight: FontWeight.w600,
-      color: selected ? context.colors.secondary : context.colors.textMutedForeground,
+      color: selected
+          ? context.colors.secondary
+          : context.colors.textMutedForeground,
     );
     return Expanded(
       child: Semantics(

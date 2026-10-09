@@ -84,8 +84,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final List<BoxShadow> shadowMd;
   final List<BoxShadow> shadowPrimary;
 
-  LinearGradient get gradient =>
-      LinearGradient(colors: [primary, primaryGlow]);
+  LinearGradient get gradient => LinearGradient(colors: [primary, primaryGlow]);
 
   @override
   AppPalette copyWith({

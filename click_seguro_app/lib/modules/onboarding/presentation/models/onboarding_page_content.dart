@@ -13,6 +13,7 @@ class OnboardingPageContent {
   });
 
   final IconData icon;
+
   /// Cor do círculo do ícone, lida da paleta do tema em uso (light ou alto
   /// contraste).
   final Color Function(AppPalette colors) iconBackgroundColor;

@@ -2,7 +2,14 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
-enum SafeBadgeTone { primary, secondary, success, warning, destructive, neutral }
+enum SafeBadgeTone {
+  primary,
+  secondary,
+  success,
+  warning,
+  destructive,
+  neutral,
+}
 
 /// SafeBadge — rótulo compacto cujo fundo é exatamente 10% de opacidade
 /// da cor do texto selecionada (ex.: bg-success/10 text-success).
@@ -41,14 +48,19 @@ class SafeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: tone == SafeBadgeTone.neutral ? context.colors.textMutedForeground : color.withOpacity(0.1),
+        color: tone == SafeBadgeTone.neutral
+            ? context.colors.textMutedForeground
+            : color.withOpacity(0.1),
         borderRadius: AppSpacing.radiusFull,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            IconTheme(data: IconThemeData(color: color, size: 12), child: icon!),
+            IconTheme(
+              data: IconThemeData(color: color, size: 12),
+              child: icon!,
+            ),
             const SizedBox(width: 4),
           ],
           DefaultTextStyle(

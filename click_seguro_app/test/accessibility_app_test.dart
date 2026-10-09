@@ -88,9 +88,7 @@ void main() {
   });
 
   testWidgets('escala total limitada a 2× (FR-004)', (tester) async {
-    notifier.value = notifier.value.copyWith(
-      fontScale: FontScaleLevel.largest,
-    );
+    notifier.value = notifier.value.copyWith(fontScale: FontScaleLevel.largest);
     await pumpApp(tester, systemScale: 2.0);
 
     expect(textScale(), 2.0);

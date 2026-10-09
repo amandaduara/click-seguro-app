@@ -231,9 +231,9 @@ class _LoginPageState extends State<LoginPage> {
                     liveRegion: true,
                     child: Text(
                       AppStrings.authResetSuccess.tr(),
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge?.copyWith(color: context.colors.success),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: context.colors.success,
+                      ),
                     ),
                   ),
                 ],
@@ -279,7 +279,9 @@ class _LoginPageState extends State<LoginPage> {
         child: Text(
           failure.message.tr(),
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: isInfo ? context.colors.secondary : context.colors.destructive,
+            color: isInfo
+                ? context.colors.secondary
+                : context.colors.destructive,
           ),
         ),
       ),

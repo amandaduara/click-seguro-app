@@ -154,7 +154,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   ) => [
     Text(
       AppStrings.authResetEmailDescription.tr(),
-      style: textTheme.bodyLarge?.copyWith(color: context.colors.textForeground),
+      style: textTheme.bodyLarge?.copyWith(
+        color: context.colors.textForeground,
+      ),
     ),
     const SizedBox(height: AppSpacing.s5),
     SafeTextField(
@@ -183,7 +185,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   ) => [
     Text(
       AppStrings.authResetCodeSent.tr(),
-      style: textTheme.bodyLarge?.copyWith(color: context.colors.textForeground),
+      style: textTheme.bodyLarge?.copyWith(
+        color: context.colors.textForeground,
+      ),
     ),
     const SizedBox(height: AppSpacing.s5),
     SafeTextField(

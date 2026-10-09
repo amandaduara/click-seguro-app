@@ -93,7 +93,9 @@ class _SafeTextFieldState extends State<SafeTextField> {
               Text(
                 widget.label!,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: hasError ? context.colors.destructive : context.colors.secondary,
+                  color: hasError
+                      ? context.colors.destructive
+                      : context.colors.secondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),

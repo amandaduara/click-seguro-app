@@ -37,7 +37,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.highContrastTheme,
-        home: Scaffold(body: SafeButton(label: 'Botão', onPressed: () {})),
+        home: Scaffold(
+          body: SafeButton(label: 'Botão', onPressed: () {}),
+        ),
       ),
     );
 
