@@ -181,7 +181,7 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
   - `ReelsController` com teste.
   - `ReelsPage` com `PageView` vertical (swipe), botões de navegação, curtir/salvar (visitante →
     `requireAccount`) e abrir fonte (`ExternalLauncherService`), com widget test.
-- [ ] **A5 Detalhe da notícia** (RF-014 a RF-019, CB-008)
+- [x] **A5 Detalhe da notícia** (RF-014 a RF-019, CB-008) (specs/010-detalhe-noticia)
   - ⚠️ Antes de começar: decidir o idioma da voz na leitura da notícia (ponto em aberto do RF-042;
     app em inglês + notícia em português).
   - Endpoints: `/app/news/{id}`, `POST /app/news/{id}/read`, `/save`,

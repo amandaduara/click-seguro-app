@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.5 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-09
+**Versão**: 1.0.6 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-09
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -91,7 +91,7 @@ Validação (RN-001, igual ao backend): `name` 6–150; `email` ≤ 255 e format
 | ✅ | `POST /app/news/{id}/like` → `{liked, likesCount}` (alterna) | sim | RF-019 curtir |
 | ✅ | `POST /app/news/{id}/save` → `{saved}` (alterna) | sim | RF-019 salvar |
 | ✅ | `POST /app/news/{id}/read` → 204 (idempotente) | sim | registra leitura ao abrir o detalhe (cadastrado) |
-| ✅ | `GET /users/me/news/saved?page&limit` → `{data[], meta}` | sim | lista de salvas, cache offline (RNF-002), contagem no perfil |
+| ✅ | `GET /users/me/news/saved?page&limit` → `{data[], meta}`; **ordem: da salva mais recente para a mais antiga** (data de salvamento, não `publishedAt`) | sim | lista de salvas, cache offline (RNF-002), contagem no perfil |
 
 Erros: 404 `NEWS_NOT_FOUND` no detalhe/like/save → "Notícia não encontrada".
 
@@ -236,6 +236,9 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
+- **1.0.6 (2026-10-09)**: ordem de `GET /users/me/news/saved` conferida no aparelho (specs/010, T049),
+  com 3 notícias salvas em sequência: vem da **salva mais recente para a mais antiga**, e não por
+  `publishedAt`. Conta desativada → 403 `USER_INACTIVE` (e login 401 `INVALID_CREDENTIALS`).
 - **1.0.5 (2026-10-09)**: detalhe, registro de leitura e lista de salvas conferidos no servidor
   real (specs/010, R0): `suggestedModule` vem também sem token; `savedItem` sem `content`,
   `createdAt` e `isHighlight`; `read` idempotente com 204.

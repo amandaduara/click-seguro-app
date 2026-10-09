@@ -29,8 +29,8 @@
 - **Rationale**: o contrato tinha as três linhas como 🧪; agora estão ✅. A única diferença do
   openapi é o `suggestedModule` sem token, que muda a spec: o visitante também vê o bloco de
   atividade relacionada (ele pode fazer atividades como visitante, RN-006).
-- **Não conferido**: a ordem da lista de salvas com mais de uma notícia (a conta de teste tinha
-  só uma). Fica para o teste no aparelho; o app usa a ordem do serviço.
+- **Conferido no aparelho (T049)**: a lista de salvas vem da salva mais recente para a mais antiga
+  (não por `publishedAt`), com 3 notícias. O app usa a ordem do serviço (contrato 1.0.6).
 - **Alternatives considered**: usar a conta pessoal do usuário — descartado para não mexer em
   dados reais; a conta de teste foi pedida pelo usuário.
 
