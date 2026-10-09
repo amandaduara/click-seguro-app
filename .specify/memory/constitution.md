@@ -1,7 +1,14 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 1.0.0 (Spec Kit genérico/specify-cli) → 1.0.0 (Click Seguro) → 1.0.1 → 1.1.0
+Version change: 1.0.0 (Spec Kit genérico/specify-cli) → 1.0.0 (Click Seguro) → 1.0.1 → 1.1.0 → 1.2.0
+Bump rationale (1.2.0): MINOR — o Princípio I passa a dizer explicitamente que um
+  controller MAY usar os serviços de plataforma do `common` (voz, abrir endereço,
+  compartilhar, fotos), que não acessam dados nem têm regra de negócio. Regulariza o
+  `ReadAloudController` (specs/007) e evita usecases que só repassariam a chamada.
+  Nada do que já era proibido passa a ser permitido: dados continuam só por usecase.
+  Origem: /speckit-analyze de uma versão da A5 que não foi mesclada (a A5 entrou
+  pela specs/010-detalhe-noticia), achado D2, 2026-10-07.
 Bump rationale (1.1.0): MINOR — padroniza a camada de dados a partir do guia
   `click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md` sem redefinir princípios:
   (1) camada de UI renomeada de `ui/` para `presentation/` em todos os módulos
@@ -79,9 +86,14 @@ um isolado sob `lib/modules/<nome_do_modulo>/`, e em camadas que não se mistura
   acesso a dados (ex.: `splash`). É proibido usar outro nome para a camada de UI
   (ex.: `ui/`).
 - **Direção das chamadas:** `Controller → UseCase → Repository (contrato) →
-  DataSource → ApiClient`. Um controller MUST falar apenas com usecases, e MUST NOT
-  instanciar ou acessar `Dio`, `ApiClient`, datasource ou repository. Toda
-  dependência MUST ser injetada via construtor e resolvida pelo `GetIt`.
+  DataSource → ApiClient`. Para dados e regras de negócio, um controller MUST falar
+  apenas com usecases, e MUST NOT instanciar ou acessar `Dio`, `ApiClient`, datasource
+  ou repository. Exceção única: um controller MAY receber os **serviços de plataforma**
+  de `common/services/` (ex.: `TextToSpeechService`, `ExternalLauncherService`,
+  `ShareService`, `ImageStorageService`), que só falam com o aparelho, não guardam
+  dados do domínio e não têm regra de negócio; criar um usecase só para repassar a
+  chamada a eles é proibido (Princípio II). Toda dependência MUST ser injetada via
+  construtor e resolvida pelo `GetIt`.
 - **Guia de referência:** o passo a passo de integração de um endpoint
   (`click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md`) é a aplicação concreta
   destes princípios e MUST ser seguido em toda nova integração com a API.
@@ -320,4 +332,4 @@ manter histórico do que já foi endereçado e evitar que reapareçam como prece
   considerada concluída. Complexidade adicionada ou qualquer desvio MUST ser
   justificado explicitamente na tarefa ou no plano.
 
-**Versão**: 1.1.0 | **Ratificada em**: 2026-09-07 | **Última alteração**: 2026-09-26
+**Versão**: 1.2.0 | **Ratificada em**: 2026-09-07 | **Última alteração**: 2026-10-07
