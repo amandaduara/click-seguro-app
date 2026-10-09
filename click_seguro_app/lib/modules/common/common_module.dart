@@ -55,7 +55,10 @@ class CommonModule implements ModuleInterface {
     );
     // Um por página: cada uma prepara o idioma e descarta ao fechar.
     injector.registerFactory(
-      () => ReadAloudController(injector<TextToSpeechService>()),
+      () => ReadAloudController(
+        injector<TextToSpeechService>(),
+        preferences: injector<AccessibilityPreferencesNotifier>(),
+      ),
     );
   }
 }

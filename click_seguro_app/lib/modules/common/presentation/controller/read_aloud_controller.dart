@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show Locale;
 
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:flutter/foundation.dart';
 
@@ -10,14 +11,21 @@ import 'package:flutter/foundation.dart';
 /// Um por página (factory no `CommonModule`); a página chama
 /// [prepare] com o idioma do app e descarta o controller ao fechar.
 class ReadAloudController extends ChangeNotifier {
-  ReadAloudController(this._tts);
+  ReadAloudController(
+    this._tts, {
+    AccessibilityPreferencesNotifier? preferences,
+  }) : _preferences = preferences;
 
   final TextToSpeechService _tts;
+
+  /// Velocidade guardada na acessibilidade (FR-012 da feature 009).
+  final AccessibilityPreferencesNotifier? _preferences;
 
   final Map<SpeechLanguage, bool> _availability = {};
   SpeechLanguage? _language;
   bool _isSpeaking = false;
-  ReadingSpeed _speed = ReadingSpeed.normal;
+  /// Escolhida na própria página; vale só para ela.
+  ReadingSpeed? _pageSpeed;
   bool _disposed = false;
 
   /// Identifica a leitura atual: o fim de uma leitura substituída é ignorado.
@@ -30,8 +38,10 @@ class ReadAloudController extends ChangeNotifier {
   /// Uma leitura iniciada por este controller está em andamento.
   bool get isSpeaking => _isSpeaking;
 
-  /// Velocidade da próxima leitura.
-  ReadingSpeed get speed => _speed;
+  /// Velocidade da próxima leitura: a da página, se escolhida; senão a das
+  /// preferências de acessibilidade.
+  ReadingSpeed get speed =>
+      _pageSpeed ?? _preferences?.value.readingSpeed ?? ReadingSpeed.normal;
 
   /// Usa o idioma do app ([locale]) para a disponibilidade e as próximas
   /// leituras. Cada idioma é consultado uma vez.
@@ -54,7 +64,7 @@ class ReadAloudController extends ChangeNotifier {
 
     final int generation = ++_generation;
     _setSpeaking(true);
-    await _tts.speak(text, language: language, speed: _speed);
+    await _tts.speak(text, language: language, speed: speed);
     if (generation == _generation) _setSpeaking(false);
   }
 
@@ -65,7 +75,7 @@ class ReadAloudController extends ChangeNotifier {
   }
 
   void setSpeed(ReadingSpeed speed) {
-    _speed = speed;
+    _pageSpeed = speed;
     notifyListeners();
   }
 

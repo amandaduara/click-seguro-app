@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:ui' show Locale;
 
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -191,5 +193,46 @@ void main() {
     await controller.speak('texto');
 
     expect(tts.spoken, isEmpty);
+  });
+
+  group('velocidade guardada na acessibilidade (FR-012)', () {
+    late AccessibilityPreferencesNotifier preferences;
+    late ReadAloudController withPreferences;
+
+    setUp(() async {
+      preferences = AccessibilityPreferencesNotifier();
+      preferences.value = preferences.value.copyWith(
+        readingSpeed: ReadingSpeed.slow,
+      );
+      withPreferences = ReadAloudController(tts, preferences: preferences);
+      await withPreferences.prepare(portuguese);
+    });
+
+    tearDown(() => withPreferences.dispose());
+
+    test('começa na velocidade guardada', () async {
+      expect(withPreferences.speed, ReadingSpeed.slow);
+
+      unawaited(withPreferences.speak('texto'));
+
+      expect(tts.spoken.single.speed, ReadingSpeed.slow);
+    });
+
+    test('mudar a preferência vale na próxima leitura', () async {
+      preferences.value = preferences.value.copyWith(
+        readingSpeed: ReadingSpeed.fast,
+      );
+
+      unawaited(withPreferences.speak('texto'));
+
+      expect(tts.spoken.single.speed, ReadingSpeed.fast);
+    });
+
+    test('setSpeed da página vale só para ela, sem mudar a preferência', () {
+      withPreferences.setSpeed(ReadingSpeed.normal);
+
+      expect(withPreferences.speed, ReadingSpeed.normal);
+      expect(preferences.value.readingSpeed, ReadingSpeed.slow);
+    });
   });
 }
