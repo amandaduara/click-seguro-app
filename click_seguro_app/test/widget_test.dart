@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/routing/app_router.dart';
 import 'package:click_seguro_app/main.dart';
 import 'package:click_seguro_app/modules/activities/activities.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/services/secure_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -62,6 +63,7 @@ void main() {
         child: ClickSeguroApp(
           moduleManager: moduleManager,
           router: buildAppRouter(session),
+          accessibility: GetIt.instance<AccessibilityPreferencesNotifier>(),
         ),
       ),
     );

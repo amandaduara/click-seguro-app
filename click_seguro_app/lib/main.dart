@@ -3,6 +3,8 @@ import 'package:click_seguro_app/core/routing/navigator_keys.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/modules/activities/activities.dart';
 import 'package:click_seguro_app/modules/authentication/authentication.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/help/help.dart';
@@ -30,7 +32,11 @@ Future<void> main() async {
       supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
       path: 'assets/translations',
       fallbackLocale: const Locale('pt', 'BR'),
-      child: ClickSeguroApp(moduleManager: moduleManager, router: router),
+      child: ClickSeguroApp(
+        moduleManager: moduleManager,
+        router: router,
+        accessibility: GetIt.instance<AccessibilityPreferencesNotifier>(),
+      ),
     ),
   );
 }
@@ -69,24 +75,49 @@ class ClickSeguroApp extends StatelessWidget {
     super.key,
     required this.moduleManager,
     required this.router,
+    required this.accessibility,
   });
 
   final ModuleManagerInterface moduleManager;
   final GoRouter router;
 
+  /// Preferências de acessibilidade em vigor: tema e tamanho da letra de
+  /// todas as telas (RF-038, RF-039).
+  final AccessibilityPreferencesNotifier accessibility;
+
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: moduleManager.providers,
-      child: MaterialApp.router(
+    final Widget app = ValueListenableBuilder<AccessibilityPreferences>(
+      valueListenable: accessibility,
+      builder: (context, preferences, _) => MaterialApp.router(
         debugShowCheckedModeBanner: false,
         localizationsDelegates: context.localizationDelegates,
         supportedLocales: context.supportedLocales,
         locale: context.locale,
-        theme: AppTheme.lightTheme,
+        theme: preferences.highContrast
+            ? AppTheme.highContrastTheme
+            : AppTheme.lightTheme,
         scaffoldMessengerKey: rootScaffoldMessengerKey,
         routerConfig: router,
+        builder: (context, child) {
+          // Escala do sistema medida no texto base (16 sp), o que vale também
+          // para a escala não linear do Android 14 (research R3).
+          final MediaQueryData media = MediaQuery.of(context);
+          final double systemScale = media.textScaler.scale(16) / 16;
+          return MediaQuery(
+            data: media.copyWith(
+              textScaler: TextScaler.linear(
+                preferences.fontScale.totalScale(systemScale),
+              ),
+            ),
+            child: child!,
+          );
+        },
       ),
     );
+    final providers = moduleManager.providers;
+    return providers.isEmpty
+        ? app
+        : MultiProvider(providers: providers, child: app);
   }
 }
