@@ -1,8 +1,10 @@
 import 'package:click_seguro_app/core/errors/failure.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
 import 'package:fpdart/fpdart.dart';
 
 abstract class NewsRepository {
@@ -18,4 +20,13 @@ abstract class NewsRepository {
 
   /// Só as categorias ativas.
   Future<Either<Failure, List<NewsCategoryEntity>>> getCategories();
+
+  /// Uma parte dos Reels; sem [cursor], a primeira.
+  Future<Either<Failure, ReelsPageEntity>> getReels({String? cursor});
+
+  /// Alterna a curtida; devolve o estado do servidor. Exige conta.
+  Future<Either<Failure, LikeResultEntity>> toggleLike(String newsId);
+
+  /// Alterna salvar; devolve se ficou salva. Exige conta.
+  Future<Either<Failure, bool>> toggleSave(String newsId);
 }

@@ -1,8 +1,10 @@
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_remote_data_source.dart';
+import 'package:click_seguro_app/modules/news/data/models/like_result_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_category_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_feed_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_list_model.dart';
+import 'package:click_seguro_app/modules/news/data/models/reels_page_model.dart';
 import 'package:dio/dio.dart';
 
 class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
@@ -15,6 +17,9 @@ class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
 
   /// Reels do carrossel "Novidades".
   static const int reelsPreviewLimit = 10;
+
+  /// Reels por parte na tela de Reels (specs/008).
+  static const int reelsPageSize = 10;
 
   final ApiClient _apiClient;
 
@@ -71,5 +76,26 @@ class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
         .toModelList(NewsCategoryModel.fromJson)
         .where((category) => category.isActive)
         .toList();
+  }
+
+  @override
+  Future<ReelsPageModel> getReelsPage({String? cursor}) async {
+    final response = await _apiClient.get(
+      reelsPath,
+      queryParameters: {'limit': reelsPageSize, 'cursor': ?cursor},
+    );
+    return response.toModel(ReelsPageModel.fromJson);
+  }
+
+  @override
+  Future<LikeResultModel> toggleLike(String id) async {
+    final response = await _apiClient.post('$newsPath/$id/like');
+    return response.toModel(LikeResultModel.fromJson);
+  }
+
+  @override
+  Future<bool> toggleSave(String id) async {
+    final response = await _apiClient.post('$newsPath/$id/save');
+    return response.toModel((json) => json['saved'] as bool);
   }
 }

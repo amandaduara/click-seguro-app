@@ -4,10 +4,13 @@ import 'package:click_seguro_app/modules/common/api_client/api_failure_mapper.da
 import 'package:click_seguro_app/modules/news/data/datasources/news_local_data_source.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_remote_data_source.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_feed_model.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:click_seguro_app/modules/news/domain/repositories/news_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -23,6 +26,8 @@ class NewsRepositoryImpl implements NewsRepository {
   };
 
   static const Map<String, dynamic> _noReels = {'data': <Object>[]};
+
+  static const String _newsNotFoundCode = 'NEWS_NOT_FOUND';
 
   final NewsRemoteDataSource _remote;
   final NewsLocalDataSource _local;
@@ -69,6 +74,24 @@ class NewsRepositoryImpl implements NewsRepository {
         return [for (final category in categories) category.toEntity()];
       });
 
+  @override
+  Future<Either<Failure, ReelsPageEntity>> getReels({String? cursor}) =>
+      _guard(() async {
+        final page = await _remote.getReelsPage(cursor: cursor);
+        return page.toEntity();
+      });
+
+  @override
+  Future<Either<Failure, LikeResultEntity>> toggleLike(String newsId) =>
+      _guardNews(() async {
+        final result = await _remote.toggleLike(newsId);
+        return result.toEntity();
+      });
+
+  @override
+  Future<Either<Failure, bool>> toggleSave(String newsId) =>
+      _guardNews(() => _remote.toggleSave(newsId));
+
   /// Falha só nos Reels não derruba o feed: o carrossel fica oculto.
   Future<Map<String, dynamic>> _reelsOrEmpty() async {
     try {
@@ -99,6 +122,18 @@ class NewsRepositoryImpl implements NewsRepository {
     try {
       return Right(await action());
     } on ApiException catch (e) {
+      return Left(e.toFailure());
+    }
+  }
+
+  /// Como [_guard], mas notícia removida vira [NewsNotFoundFailure].
+  Future<Either<Failure, T>> _guardNews<T>(Future<T> Function() action) async {
+    try {
+      return Right(await action());
+    } on ApiException catch (e) {
+      if (e.statusCode == 404 || e.errorCode == _newsNotFoundCode) {
+        return const Left(NewsNotFoundFailure());
+      }
       return Left(e.toFailure());
     }
   }

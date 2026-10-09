@@ -1,8 +1,10 @@
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_local_data_source.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_remote_data_source.dart';
+import 'package:click_seguro_app/modules/news/data/models/like_result_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_category_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_list_model.dart';
+import 'package:click_seguro_app/modules/news/data/models/reels_page_model.dart';
 
 import 'news_fixtures.dart';
 
@@ -19,6 +21,16 @@ class FakeNewsRemoteDataSource implements NewsRemoteDataSource {
   ApiException? categoriesError;
 
   final List<int> feedPages = [];
+
+  /// Partes da tela de Reels por cursor (`null` = primeira).
+  final Map<String?, Map<String, dynamic>> reelsPages = {};
+  Map<String, dynamic> likeResult = likeJson();
+  bool saveResult = true;
+  ApiException? likeError;
+  ApiException? saveError;
+  final List<String?> reelsCursors = [];
+  final List<String> likeCalls = [];
+  final List<String> saveCalls = [];
   final List<({int page, String? category, String? search})> listCalls = [];
 
   @override
@@ -52,6 +64,27 @@ class FakeNewsRemoteDataSource implements NewsRemoteDataSource {
         .map(NewsCategoryModel.fromJson)
         .where((c) => c.isActive)
         .toList();
+  }
+
+  @override
+  Future<ReelsPageModel> getReelsPage({String? cursor}) async {
+    reelsCursors.add(cursor);
+    if (reelsError case final error?) throw error;
+    return ReelsPageModel.fromJson(reelsPages[cursor] ?? reelsJson());
+  }
+
+  @override
+  Future<LikeResultModel> toggleLike(String id) async {
+    likeCalls.add(id);
+    if (likeError case final error?) throw error;
+    return LikeResultModel.fromJson(likeResult);
+  }
+
+  @override
+  Future<bool> toggleSave(String id) async {
+    saveCalls.add(id);
+    if (saveError case final error?) throw error;
+    return saveResult;
   }
 }
 

@@ -37,11 +37,29 @@ Map<String, dynamic> newsItemJson({
   'interaction': {'isLiked': false, 'isSaved': isSaved, 'isRead': isRead},
 };
 
-Map<String, dynamic> reelItemJson({required String id, String? imageUrl}) => {
+/// Reel no formato real (research R0 de specs/008-reels-curtir-salvar):
+/// `interaction` só com `isSaved`, sem `isLiked`.
+Map<String, dynamic> reelItemJson({
+  required String id,
+  String? imageUrl,
+  int likesCount = 3,
+  bool isSaved = false,
+  String? content,
+}) => {
   ...newsItemJson(id: id, imageUrl: imageUrl ?? 'https://img.test/r.jpg'),
-  'content': 'Texto completo da notícia $id.',
-  'likesCount': 3,
+  'content': content ?? 'Texto completo da notícia $id.',
+  'likesCount': likesCount,
+  'interaction': {'isSaved': isSaved},
 };
+
+/// Resposta de `POST /app/news/{id}/like`.
+Map<String, dynamic> likeJson({bool liked = true, int likesCount = 4}) => {
+  'liked': liked,
+  'likesCount': likesCount,
+};
+
+/// Resposta de `POST /app/news/{id}/save`.
+Map<String, dynamic> saveJson({bool saved = true}) => {'saved': saved};
 
 Map<String, dynamic> feedJson({
   List<Map<String, dynamic>> highlights = const [],
