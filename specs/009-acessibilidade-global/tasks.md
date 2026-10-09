@@ -62,7 +62,8 @@ implementação. Offline, com `FakeLocalCacheService` (`app/test/fakes/`) e fake
 - [X] T019 Marcar a F0.6 em `.specify/memory/tasks.md` e atualizar o design system (`AppPalette`)
 
 - [X] T020 Ajustes do teste no emulador: `AccountRequiredSheet` rolável (`isScrollControlled`), `AppPalette.inputBorder` no `SafeTextField`; teste do FR-010 (sair da conta mantém as preferências) em `tset/settings_module_test.dart`
-- [ ] T021 Depois do merge da PR #12 (Reels): rebasear e migrar `reel_view.dart`/`reel_actions.dart` para `context.colors`
+- [X] T021 Depois do merge da PR #12 (Reels): rebasear e migrar `reel_view.dart`/`reel_actions.dart` para `context.colors`
+  - Feita na branch `010-detalhe-noticia`, que junta a 008 e a 009 (também `reels_page.dart`)
 
 ## Dependencies
 

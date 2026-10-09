@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
@@ -246,14 +246,14 @@ class _ReelsPageState extends State<ReelsPage> {
   Widget? _footer(ReelsController controller) {
     final textTheme = Theme.of(context).textTheme;
     final TextStyle? style = textTheme.bodySmall?.copyWith(
-      color: AppColors.textPrimaryForeground.withValues(alpha: 0.8),
+      color: context.colors.textPrimaryForeground.withValues(alpha: 0.8),
     );
     if (controller.isLoadingMore) {
-      return const SizedBox.square(
+      return SizedBox.square(
         dimension: 24,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          color: AppColors.textPrimaryForeground,
+          color: context.colors.textPrimaryForeground,
         ),
       );
     }
@@ -266,7 +266,7 @@ class _ReelsPageState extends State<ReelsPage> {
           TextButton(
             onPressed: controller.loadMore,
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.textPrimaryForeground,
+              foregroundColor: context.colors.textPrimaryForeground,
               minimumSize: const Size(48, 48),
             ),
             child: Text(AppStrings.commonTryAgain.tr()),
@@ -295,8 +295,8 @@ class _Dark extends StatelessWidget {
         child: Theme(
           data: theme.copyWith(
             textTheme: theme.textTheme.apply(
-              bodyColor: AppColors.textPrimaryForeground,
-              displayColor: AppColors.textPrimaryForeground,
+              bodyColor: context.colors.textPrimaryForeground,
+              displayColor: context.colors.textPrimaryForeground,
             ),
           ),
           child: child,
