@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -22,10 +22,10 @@ class NotFoundPage extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   LucideIcons.searchX,
                   size: 40,
-                  color: AppColors.textMutedForeground,
+                  color: context.colors.textMutedForeground,
                 ),
                 const SizedBox(height: AppSpacing.s4),
                 Semantics(
@@ -34,7 +34,7 @@ class NotFoundPage extends StatelessWidget {
                     AppStrings.commonNotFoundTitle.tr(),
                     textAlign: TextAlign.center,
                     style: textTheme.titleMedium?.copyWith(
-                      color: AppColors.secondary,
+                      color: context.colors.secondary,
                     ),
                   ),
                 ),

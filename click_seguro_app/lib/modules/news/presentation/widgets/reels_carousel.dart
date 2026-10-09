@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -60,9 +60,9 @@ class _ReelCard extends StatelessWidget {
           width: width,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: AppColors.secondary,
+            color: context.colors.secondary,
             borderRadius: AppSpacing.radius3xl,
-            boxShadow: AppColors.shadowMd,
+            boxShadow: context.colors.shadowMd,
           ),
           child: Stack(
             fit: StackFit.expand,
@@ -94,17 +94,17 @@ class _ReelCard extends StatelessWidget {
                     horizontal: 10,
                     vertical: 4,
                   ),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
+                  decoration: BoxDecoration(
+                    color: context.colors.primary,
                     borderRadius: AppSpacing.radiusFull,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         LucideIcons.sparkles,
                         size: 10,
-                        color: AppColors.textPrimaryForeground,
+                        color: context.colors.textPrimaryForeground,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -112,7 +112,7 @@ class _ReelCard extends StatelessWidget {
                         style: textTheme.bodySmall?.copyWith(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimaryForeground,
+                          color: context.colors.textPrimaryForeground,
                         ),
                       ),
                     ],
@@ -132,7 +132,7 @@ class _ReelCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimaryForeground,
+                        color: context.colors.textPrimaryForeground,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.s1),
@@ -141,7 +141,7 @@ class _ReelCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.textPrimaryForeground.withValues(
+                        color: context.colors.textPrimaryForeground.withValues(
                           alpha: 0.75,
                         ),
                       ),

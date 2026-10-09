@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -18,12 +18,12 @@ class AuthHeader extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: context.colors.primary,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.shield_outlined,
-              color: AppColors.textPrimaryForeground,
+              color: context.colors.textPrimaryForeground,
             ),
           ),
           const SizedBox(width: AppSpacing.s3),
@@ -34,13 +34,13 @@ class AuthHeader extends StatelessWidget {
                 Text(
                   AppStrings.authWelcome.tr(),
                   style: textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textMutedForeground,
+                    color: context.colors.textMutedForeground,
                   ),
                 ),
                 Text(
                   AppStrings.authBrand.tr(),
                   style: textTheme.headlineSmall?.copyWith(
-                    color: AppColors.secondary,
+                    color: context.colors.secondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

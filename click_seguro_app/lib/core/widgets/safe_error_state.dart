@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -26,10 +26,10 @@ class SafeErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               LucideIcons.circleAlert,
               size: 40,
-              color: AppColors.destructive,
+              color: context.colors.destructive,
             ),
             const SizedBox(height: AppSpacing.s3),
             Text(
@@ -37,7 +37,7 @@ class SafeErrorState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontSize: 16,
-                color: AppColors.textForeground,
+                color: context.colors.textForeground,
               ),
             ),
             const SizedBox(height: AppSpacing.s5),

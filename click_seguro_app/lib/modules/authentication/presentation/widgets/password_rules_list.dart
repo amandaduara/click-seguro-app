@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
@@ -27,8 +27,8 @@ class PasswordRulesList extends StatelessWidget {
                         : Icons.radio_button_unchecked,
                     size: 20,
                     color: rule.met
-                        ? AppColors.success
-                        : AppColors.textMutedForeground,
+                        ? context.colors.success
+                        : context.colors.textMutedForeground,
                   ),
                   const SizedBox(width: AppSpacing.s2),
                   Expanded(
@@ -36,8 +36,8 @@ class PasswordRulesList extends StatelessWidget {
                       rule.label,
                       style: textStyle?.copyWith(
                         color: rule.met
-                            ? AppColors.textForeground
-                            : AppColors.textMutedForeground,
+                            ? context.colors.textForeground
+                            : context.colors.textMutedForeground,
                       ),
                     ),
                   ),

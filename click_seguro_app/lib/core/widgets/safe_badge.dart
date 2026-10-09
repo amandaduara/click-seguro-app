@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
@@ -18,30 +18,30 @@ class SafeBadge extends StatelessWidget {
   final SafeBadgeTone tone;
   final Widget? icon;
 
-  Color get _color {
+  Color _color(AppPalette colors) {
     switch (tone) {
       case SafeBadgeTone.primary:
-        return AppColors.primary;
+        return colors.primary;
       case SafeBadgeTone.secondary:
-        return AppColors.secondary;
+        return colors.secondary;
       case SafeBadgeTone.success:
-        return AppColors.success;
+        return colors.success;
       case SafeBadgeTone.warning:
-        return AppColors.warning;
+        return colors.warning;
       case SafeBadgeTone.destructive:
-        return AppColors.destructive;
+        return colors.destructive;
       case SafeBadgeTone.neutral:
-        return AppColors.textMutedForeground;
+        return colors.textMutedForeground;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _color;
+    final color = _color(context.colors);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: tone == SafeBadgeTone.neutral ? AppColors.textMutedForeground : color.withOpacity(0.1),
+        color: tone == SafeBadgeTone.neutral ? context.colors.textMutedForeground : color.withOpacity(0.1),
         borderRadius: AppSpacing.radiusFull,
       ),
       child: Row(

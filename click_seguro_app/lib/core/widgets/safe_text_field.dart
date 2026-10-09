@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
@@ -78,8 +78,8 @@ class _SafeTextFieldState extends State<SafeTextField> {
   Widget build(BuildContext context) {
     final hasError = widget.error != null && widget.error!.isNotEmpty;
     final borderColor = hasError
-        ? AppColors.destructive
-        : (_focused ? AppColors.primary : AppColors.input);
+        ? context.colors.destructive
+        : (_focused ? context.colors.primary : context.colors.input);
     final borderWidth = hasError || _focused ? 2.0 : 2.0;
 
     return Opacity(
@@ -93,7 +93,7 @@ class _SafeTextFieldState extends State<SafeTextField> {
               Text(
                 widget.label!,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: hasError ? AppColors.destructive : AppColors.secondary,
+                  color: hasError ? context.colors.destructive : context.colors.secondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -103,7 +103,7 @@ class _SafeTextFieldState extends State<SafeTextField> {
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: context.colors.background,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: borderColor, width: borderWidth),
               ),
@@ -111,8 +111,8 @@ class _SafeTextFieldState extends State<SafeTextField> {
                 children: [
                   if (widget.leftIcon != null) ...[
                     IconTheme(
-                      data: const IconThemeData(
-                        color: AppColors.textMutedForeground,
+                      data: IconThemeData(
+                        color: context.colors.textMutedForeground,
                         size: 18,
                       ),
                       child: widget.leftIcon!,
@@ -136,12 +136,12 @@ class _SafeTextFieldState extends State<SafeTextField> {
                           onSubmitted: widget.onSubmitted,
                           autofillHints: widget.autofillHints,
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: AppColors.textForeground),
+                              ?.copyWith(color: context.colors.textForeground),
                           decoration: InputDecoration(
                             hintText: widget.placeholder,
                             hintStyle: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: AppColors.textMutedForeground,
+                                  color: context.colors.textMutedForeground,
                                 ),
                             border: InputBorder.none,
                             isDense: true,
@@ -156,8 +156,8 @@ class _SafeTextFieldState extends State<SafeTextField> {
                   if (widget.rightIcon != null) ...[
                     const SizedBox(width: AppSpacing.s2),
                     IconTheme(
-                      data: const IconThemeData(
-                        color: AppColors.textMutedForeground,
+                      data: IconThemeData(
+                        color: context.colors.textMutedForeground,
                         size: 18,
                       ),
                       child: widget.rightIcon!,
@@ -172,8 +172,8 @@ class _SafeTextFieldState extends State<SafeTextField> {
                 hasError ? widget.error! : widget.hint!,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: hasError
-                      ? AppColors.destructive
-                      : AppColors.textMutedForeground,
+                      ? context.colors.destructive
+                      : context.colors.textMutedForeground,
                 ),
               ),
             ],

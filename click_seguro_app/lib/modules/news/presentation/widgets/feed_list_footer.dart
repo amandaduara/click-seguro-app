@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -77,12 +77,12 @@ class _FeedListFooterState extends State<FeedListFooter> {
         ],
       );
     } else if (widget.isLoading || widget.hasMore) {
-      child = const SizedBox(
+      child = SizedBox(
         width: 24,
         height: 24,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          color: AppColors.primary,
+          color: context.colors.primary,
         ),
       );
     } else if (widget.offlineEnd) {
@@ -103,7 +103,7 @@ class _FeedListFooterState extends State<FeedListFooter> {
     textAlign: TextAlign.center,
     style: textTheme.bodyLarge?.copyWith(
       fontSize: 16,
-      color: AppColors.textMutedForeground,
+      color: context.colors.textMutedForeground,
     ),
   );
 }

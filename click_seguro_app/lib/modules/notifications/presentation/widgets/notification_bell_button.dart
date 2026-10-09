@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -21,15 +21,15 @@ class NotificationBellButton extends StatelessWidget {
       label: AppStrings.shellNotifications.tr(),
       excludeSemantics: true,
       child: Material(
-        color: AppColors.input,
+        color: context.colors.input,
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onPressed,
-          child: const SizedBox(
+          child: SizedBox(
             width: 48,
             height: 48,
-            child: Icon(LucideIcons.bell, size: 20, color: AppColors.secondary),
+            child: Icon(LucideIcons.bell, size: 20, color: context.colors.secondary),
           ),
         ),
       ),
