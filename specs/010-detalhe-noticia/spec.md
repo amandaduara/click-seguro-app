@@ -360,9 +360,9 @@ notícia sem sugestão (ex.: só "Segurança Bancária") e ver que o bloco não 
   B7, a tela só abre pela entrada de desenvolvimento.
 - **Ordem da lista de salvas**: a que o serviço devolver (esperada da salva mais recente para a
   mais antiga); o app não reordena. 20 notícias por página.
-- **Cópia offline**: a lista guarda só a primeira página; o texto completo é guardado ao abrir o
-  detalhe de uma notícia salva (ou ao salvá-la no detalhe) e apagado ao remover dos salvos. A
-  cópia é por conta e é apagada ao sair.
+- **Cópia offline**: a lista guarda só a primeira página; o texto completo das 30 últimas
+  notícias abertas fica guardado (cobre toda notícia salva aberta neste aparelho; ver
+  [research.md](research.md) R2). A cópia é por conta e é apagada ao sair.
 - **Módulo sugerido para visitante**: o openapi diz que vem "se autenticado", mas o servidor
   envia também sem token (conferido em 2026-10-09, [research.md](research.md) R0). O visitante
   vê o bloco e pode fazer a atividade como visitante (RN-006).
