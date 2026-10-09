@@ -5,16 +5,8 @@ import 'package:easy_localization/easy_localization.dart';
 
 /// Textos da tela de Reels (data-model de specs/008-reels-curtir-salvar).
 extension ReelPresentation on ReelEntity {
-  /// "999", "1 mil", "1,2 mil" (en-US: "1.2K"); a casa decimal é cortada.
-  String get formattedLikes {
-    if (likesCount < 1000) return '$likesCount';
-    final int whole = likesCount ~/ 1000;
-    final int tenth = likesCount % 1000 ~/ 100;
-    final String value = tenth == 0
-        ? '$whole'
-        : '$whole${AppStrings.newsDecimalSeparator.tr()}$tenth';
-    return AppStrings.newsReelsThousand.tr(args: [value]);
-  }
+  /// "999", "1 mil", "1,2 mil" (en-US: "1.2K"); ver [formatLikesCount].
+  String get formattedLikes => formatLikesCount(likesCount);
 
   /// O que o leitor de tela lê sobre o Reel: título, fonte, data e
   /// categorias, como no cartão do feed.

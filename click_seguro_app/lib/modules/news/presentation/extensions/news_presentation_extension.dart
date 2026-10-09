@@ -65,3 +65,15 @@ extension NewsItemsPresentation on Iterable<NewsItemEntity> {
     ).length;
   }
 }
+
+/// "999", "1 mil", "1,2 mil" (en-US: "1.2K"); a casa decimal é cortada.
+/// Compartilhada pelos Reels e pelo detalhe.
+String formatLikesCount(int count) {
+  if (count < 1000) return '$count';
+  final int whole = count ~/ 1000;
+  final int tenth = count % 1000 ~/ 100;
+  final String value = tenth == 0
+      ? '$whole'
+      : '$whole${AppStrings.newsDecimalSeparator.tr()}$tenth';
+  return AppStrings.newsReelsThousand.tr(args: [value]);
+}

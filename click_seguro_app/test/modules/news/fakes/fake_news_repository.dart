@@ -77,6 +77,8 @@ NewsDetailEntity newsDetail(
   bool isSaved = false,
   SuggestedModuleEntity? suggestedModule,
   String sourceUrl = 'https://fonte.test/n',
+  int likesCount = 2,
+  String? imageUrl,
 }) {
   final base = newsItem(id, interaction: NewsInteraction(isSaved: isSaved));
   return NewsDetailEntity(
@@ -85,12 +87,13 @@ NewsDetailEntity newsDetail(
       title: base.title,
       source: base.source,
       sourceUrl: sourceUrl,
+      imageUrl: imageUrl,
       originalPublishedAt: base.originalPublishedAt,
       categories: base.categories,
       interaction: base.interaction,
     ),
     content: content,
-    likesCount: 2,
+    likesCount: likesCount,
     readsCount: 1,
     suggestedModule: suggestedModule,
   );

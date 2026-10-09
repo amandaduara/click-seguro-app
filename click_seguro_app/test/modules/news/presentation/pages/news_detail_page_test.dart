@@ -1,0 +1,413 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
+import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
+import 'package:click_seguro_app/modules/news/presentation/pages/news_detail_page.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../fakes/fake_secure_storage_service.dart';
+import '../../../../fakes/fake_text_to_speech_service.dart';
+import '../../../../helpers/localized_app.dart';
+import '../../fakes/fake_news_repository.dart';
+import '../../fakes/news_detail_controller_factory.dart';
+
+void main() {
+  late UserSessionService session;
+  late FakeNewsRepository repository;
+  late FakeTextToSpeechService tts;
+  late AccessibilityPreferencesNotifier preferences;
+  late GoRouter router;
+
+  setUp(() async {
+    session = UserSessionService(FakeSecureStorageService());
+    tts = FakeTextToSpeechService();
+    preferences = AccessibilityPreferencesNotifier();
+    GetIt.instance
+      ..registerSingleton<UserSessionService>(session)
+      ..registerSingleton<AccessibilityPreferencesNotifier>(preferences)
+      ..registerFactory<ReadAloudController>(
+        () => ReadAloudController(tts, preferences: preferences),
+      );
+    await session.startGuestSession();
+    repository = FakeNewsRepository();
+  });
+
+  tearDown(() async => GetIt.instance.reset());
+
+  GoRouter buildRouter() => GoRouter(
+    initialLocation: '/start',
+    routes: [
+      GoRoute(
+        path: '/start',
+        builder: (_, _) => const Scaffold(body: Text('tela anterior')),
+      ),
+      GoRoute(
+        path: '/news/:id',
+        builder: (_, state) {
+          final id = state.pathParameters['id']!;
+          return ChangeNotifierProvider(
+            create: (_) => buildNewsDetailController(
+              repository,
+              session.sessionStatus,
+              newsId: id,
+            )..load(),
+            child: NewsDetailPage(newsId: id),
+          );
+        },
+      ),
+    ],
+  );
+
+  /// Monta o app na tela anterior e abre `/news/n1` por cima, como as listas
+  /// fazem. Com [settle] falso, não espera o carregando (que anima sem fim).
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    bool settle = true,
+    Locale locale = const Locale('pt', 'BR'),
+  }) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    router = buildRouter();
+    await pumpLocalized(tester, router: router, locale: locale);
+    unawaited(router.push<void>('/news/n1'));
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+  }
+
+  NewsDetailController controllerOf(WidgetTester tester) =>
+      tester.element(find.byType(NewsDetailPage)).read<NewsDetailController>();
+
+  group('leitura', () {
+    testWidgets('carregando com barra superior e voltar', (tester) async {
+      repository.detailGate = Completer<void>();
+
+      await pumpPage(tester, settle: false);
+
+      expect(find.byType(AppBar), findsOneWidget);
+      expect(find.byType(BackButton), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      repository.detailGate!.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('"Conectando ao servidor…" depois de alguns segundos', (
+      tester,
+    ) async {
+      repository.detailGate = Completer<void>();
+      await pumpPage(tester, settle: false);
+      const slow = 'Conectando ao servidor. Isso pode levar até um minuto.';
+
+      expect(find.text(slow), findsNothing);
+      await tester.pump(SlowRequestNotice.delay);
+
+      expect(find.text(slow), findsOneWidget);
+      repository.detailGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.text(slow), findsNothing);
+    });
+
+    testWidgets('erro com "Tentar novamente" recarrega', (tester) async {
+      repository.detailResults.add(const Left(ConnectionFailure()));
+      await pumpPage(tester);
+
+      expect(find.text('Tentar novamente'), findsOneWidget);
+
+      repository.detailResults
+        ..clear()
+        ..add(
+          Right(NewsDetailResult(detail: newsDetail('n1'), isFromCache: false)),
+        );
+      await tester.tap(find.text('Tentar novamente'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícia n1'), findsOneWidget);
+      expect(find.text('Tentar novamente'), findsNothing);
+    });
+
+    testWidgets('não encontrada: mensagem e voltar, sem "Tentar novamente"', (
+      tester,
+    ) async {
+      repository.detailResults.add(const Left(NewsNotFoundFailure()));
+      await pumpPage(tester);
+
+      expect(find.text('Notícia não encontrada'), findsOneWidget);
+      expect(find.text('Tentar novamente'), findsNothing);
+      expect(find.byType(BackButton), findsOneWidget);
+    });
+
+    testWidgets('detalhe completo: imagem, categorias, título, fonte, data, '
+        'curtidas e texto', (tester) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail(
+              'n1',
+              content: 'Texto completo da notícia',
+              imageUrl: 'https://img.test/n.jpg',
+            ),
+            isFromCache: false,
+          ),
+        ),
+      );
+
+      await pumpPage(tester);
+
+      expect(find.byType(Image), findsOneWidget);
+      expect(find.text('Phishing'), findsOneWidget);
+      expect(find.text('Notícia n1'), findsOneWidget);
+      expect(find.text('Folha de Teste · 20 de set.'), findsOneWidget);
+      expect(find.text('2 curtidas'), findsOneWidget);
+      expect(find.text('Texto completo da notícia'), findsOneWidget);
+      expect(find.byType(SafeOfflineBanner), findsNothing);
+    });
+
+    testWidgets('texto longo rola', (tester) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail('n1', content: 'Parágrafo. ' * 600),
+            isFromCache: false,
+          ),
+        ),
+      );
+      await pumpPage(tester);
+
+      final ScrollableState scroll = tester.state(find.byType(Scrollable));
+      expect(scroll.position.maxScrollExtent, greaterThan(0));
+    });
+
+    testWidgets('sem imagem não quebra e não sobra espaço', (tester) async {
+      await pumpPage(tester);
+
+      expect(find.byType(Image), findsNothing);
+      expect(find.text('Notícia n1'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('texto vazio mostra o aviso', (tester) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail('n1', content: ' '),
+            isFromCache: false,
+          ),
+        ),
+      );
+
+      await pumpPage(tester);
+
+      expect(
+        find.text('O texto completo desta notícia não está disponível.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('cópia do aparelho mostra o aviso de offline', (tester) async {
+      repository.detailResults.add(
+        Right(NewsDetailResult(detail: newsDetail('n1'), isFromCache: true)),
+      );
+
+      await pumpPage(tester);
+
+      expect(find.byType(SafeOfflineBanner), findsOneWidget);
+      expect(find.text('Notícia n1'), findsOneWidget);
+    });
+
+    testWidgets('voltar mantém a tela anterior', (tester) async {
+      await pumpPage(tester);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela anterior'), findsOneWidget);
+      expect(find.text('Notícia n1'), findsNothing);
+    });
+  });
+
+  group('ouvir', () {
+    const spokenN1 = 'Notícia n1.\n\nTexto';
+
+    testWidgets('com voz: "Ouvir" e velocidades, na velocidade guardada', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(
+        readingSpeed: ReadingSpeed.fast,
+      );
+
+      await pumpPage(tester);
+
+      expect(find.text('Ouvir'), findsOneWidget);
+      expect(find.text('Velocidade: rápida'), findsOneWidget);
+      expect(find.text('lenta'), findsOneWidget);
+      expect(find.text('normal'), findsOneWidget);
+      expect(find.text('rápida'), findsOneWidget);
+      expect(tts.spoken, isEmpty);
+    });
+
+    testWidgets('"Ouvir" lê título e texto e vira "Parar"', (tester) async {
+      await pumpPage(tester);
+
+      await tester.tap(find.text('Ouvir'));
+      await tester.pump();
+
+      expect(tts.spoken.single, (
+        text: spokenN1,
+        language: SpeechLanguage.ptBr,
+        speed: ReadingSpeed.normal,
+      ));
+      expect(find.text('Parar'), findsOneWidget);
+      expect(find.text('Ouvir'), findsNothing);
+    });
+
+    testWidgets('"Parar" para a voz e volta a "Ouvir"', (tester) async {
+      await pumpPage(tester);
+      await tester.tap(find.text('Ouvir'));
+      await tester.pump();
+
+      await tester.tap(find.text('Parar'));
+      await tester.pump();
+
+      expect(tts.stopCalls, 1);
+      expect(find.text('Ouvir'), findsOneWidget);
+    });
+
+    testWidgets('trocar a velocidade vale para a próxima leitura e não muda '
+        'a preferência', (tester) async {
+      await pumpPage(tester);
+
+      await tester.tap(find.text('rápida'));
+      await tester.pump();
+      expect(find.text('Velocidade: rápida'), findsOneWidget);
+      await tester.tap(find.text('Ouvir'));
+      await tester.pump();
+
+      expect(tts.spoken.single.speed, ReadingSpeed.fast);
+      expect(preferences.value.readingSpeed, ReadingSpeed.normal);
+    });
+
+    testWidgets('texto vazio: lê só o título', (tester) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail('n1', content: ''),
+            isFromCache: false,
+          ),
+        ),
+      );
+      await pumpPage(tester);
+
+      await tester.tap(find.text('Ouvir'));
+      await tester.pump();
+
+      expect(tts.spoken.single.text, 'Notícia n1');
+    });
+
+    testWidgets('leitura automática começa sozinha, uma vez só', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+
+      await pumpPage(tester);
+
+      expect(tts.spoken.single.text, spokenN1);
+      expect(find.text('Parar'), findsOneWidget);
+
+      tts.finishSpeaking();
+      await tester.pump();
+      await controllerOf(tester).retry();
+      await tester.pumpAndSettle();
+
+      expect(tts.spoken, hasLength(1));
+    });
+
+    testWidgets('"Parar" logo depois da leitura automática não recomeça', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await pumpPage(tester);
+
+      await tester.tap(find.text('Parar'));
+      await tester.pump();
+      await controllerOf(tester).retry();
+      await tester.pumpAndSettle();
+
+      expect(tts.spoken, hasLength(1));
+      expect(find.text('Ouvir'), findsOneWidget);
+    });
+
+    testWidgets('sem voz: sem "Ouvir", sem velocidade, sem leitura '
+        'automática e sem erro', (tester) async {
+      tts.availableLanguages = {};
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+
+      await pumpPage(tester);
+
+      expect(find.text('Ouvir'), findsNothing);
+      expect(find.byType(ReadAloudBar), findsOneWidget);
+      expect(find.textContaining('Velocidade'), findsNothing);
+      expect(tts.spoken, isEmpty);
+      expect(find.text('Notícia n1'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('app em inglês: voz em inglês', (tester) async {
+      await pumpPage(tester, locale: const Locale('en', 'US'));
+
+      await tester.tap(find.text('Listen'));
+      await tester.pump();
+
+      expect(tts.spoken.single.language, SpeechLanguage.enUs);
+      expect(tts.spoken.single.text, spokenN1);
+    });
+
+    testWidgets('sair da tela para a voz', (tester) async {
+      await pumpPage(tester);
+      await tester.tap(find.text('Ouvir'));
+      await tester.pump();
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('rótulos de acessibilidade e botões de 48 dp', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpPage(tester);
+
+      expect(find.bySemanticsLabel('Ouvir'), findsOneWidget);
+      expect(find.bySemanticsLabel('Velocidade: normal'), findsOneWidget);
+      final listen = tester.getSize(find.byKey(ReadAloudBar.listenKey));
+      expect(listen.height, greaterThanOrEqualTo(48));
+      for (final speed in ReadingSpeed.values) {
+        final size = tester.getSize(find.byKey(ReadAloudBar.speedKey(speed)));
+        expect(size.width, greaterThanOrEqualTo(48), reason: '$speed');
+        expect(size.height, greaterThanOrEqualTo(48), reason: '$speed');
+      }
+
+      await tester.tap(find.text('Ouvir'));
+      await tester.pump();
+      expect(find.bySemanticsLabel('Parar'), findsOneWidget);
+      handle.dispose();
+    });
+  });
+}
