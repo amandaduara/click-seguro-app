@@ -125,3 +125,51 @@ const List<Map<String, dynamic>> categoriesJson = [
 List<Map<String, dynamic>> newsItemsJson(int count, {int start = 1}) => [
   for (var i = start; i < start + count; i++) newsItemJson(id: 'n$i'),
 ];
+
+/// Módulo sugerido no formato real (research R0 de specs/010-detalhe-noticia).
+Map<String, dynamic> suggestedModuleJson({
+  String id = 'm1',
+  int lessonsCount = 3,
+  String? iconUrl,
+}) => {
+  'id': id,
+  'title': 'Golpes no WhatsApp',
+  'description': 'Aprenda a reconhecer golpes.',
+  'iconUrl': ?iconUrl,
+  'lessonsCount': lessonsCount,
+};
+
+/// `GET /app/news/{id}` (research R0 de specs/010-detalhe-noticia).
+Map<String, dynamic> newsDetailJson({
+  required String id,
+  String content = 'Texto completo',
+  int likesCount = 2,
+  int readsCount = 1,
+  bool isSaved = false,
+  String? imageUrl,
+  Map<String, dynamic>? suggestedModule,
+}) => {
+  ...newsItemJson(id: id, imageUrl: imageUrl, isSaved: isSaved),
+  'content': content,
+  'likesCount': likesCount,
+  'readsCount': readsCount,
+  'suggestedModule': suggestedModule,
+};
+
+/// `GET /users/me/news/saved`: itens sem `content`, `createdAt` nem
+/// `isHighlight` (research R0 de specs/010-detalhe-noticia).
+Map<String, dynamic> savedListJson({
+  required List<Map<String, dynamic>> items,
+  int page = 1,
+  bool hasNextPage = false,
+}) => newsListJson(
+  items: [
+    for (final item in items)
+      {...item}
+        ..remove('content')
+        ..remove('createdAt')
+        ..remove('isHighlight'),
+  ],
+  page: page,
+  hasNextPage: hasNextPage,
+);

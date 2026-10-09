@@ -160,6 +160,22 @@ abstract class AppStrings {
   static const String newsReelsThousand = 'news_reels_thousand';
   static const String newsDecimalSeparator = 'news_decimal_separator';
   static const String newsErrorNotFound = 'news_error_not_found';
+  static const String newsDetailListen = 'news_detail_listen';
+  static const String newsDetailStop = 'news_detail_stop';
+  static const String newsDetailSpeed = 'news_detail_speed';
+  static const String newsDetailSpeedSlow = 'news_detail_speed_slow';
+  static const String newsDetailSpeedNormal = 'news_detail_speed_normal';
+  static const String newsDetailSpeedFast = 'news_detail_speed_fast';
+  static const String newsDetailLikes = 'news_detail_likes';
+  static const String newsDetailShare = 'news_detail_share';
+  static const String newsDetailRelatedTitle = 'news_detail_related_title';
+  static const String newsDetailRelatedQuestions =
+      'news_detail_related_questions';
+  static const String newsDetailNoContent = 'news_detail_no_content';
+  static const String newsSavedTitle = 'news_saved_title';
+  static const String newsSavedEmpty = 'news_saved_empty';
+  static const String newsSavedEmptyHint = 'news_saved_empty_hint';
+  static const String newsSavedGuestBody = 'news_saved_guest_body';
 
   // --- notifications ---
   static const String notificationsTitle = 'notifications_title';

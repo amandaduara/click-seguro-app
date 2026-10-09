@@ -13,8 +13,11 @@ import 'package:click_seguro_app/modules/news/domain/repositories/news_repositor
 import 'package:click_seguro_app/modules/news/domain/usecases/get_categories_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_page_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_reels_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_saved_news_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
@@ -31,7 +34,10 @@ class NewsModule implements ModuleInterface {
         () => NewsRemoteDataSourceImpl(injector<ApiClient>()),
       )
       ..registerLazySingleton<NewsLocalDataSource>(
-        () => NewsLocalDataSourceImpl(injector<LocalCacheService>()),
+        () => NewsLocalDataSourceImpl(
+          injector<LocalCacheService>(),
+          owner: () => injector<UserSessionService>().email ?? 'guest',
+        ),
       )
       ..registerLazySingleton<NewsRepository>(
         () => NewsRepositoryImpl(
@@ -53,6 +59,15 @@ class NewsModule implements ModuleInterface {
       )
       ..registerLazySingleton(
         () => ToggleSaveUseCase(injector<NewsRepository>()),
+      )
+      ..registerLazySingleton(
+        () => GetNewsDetailUseCase(injector<NewsRepository>()),
+      )
+      ..registerLazySingleton(
+        () => MarkNewsAsReadUseCase(injector<NewsRepository>()),
+      )
+      ..registerLazySingleton(
+        () => GetSavedNewsUseCase(injector<NewsRepository>()),
       );
   }
 

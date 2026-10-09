@@ -14,12 +14,16 @@ class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
   static const String reelsPath = '/app/news/reels';
   static const String newsPath = '/app/news';
   static const String categoriesPath = '/categories';
+  static const String savedPath = '/users/me/news/saved';
 
   /// Reels do carrossel "Novidades".
   static const int reelsPreviewLimit = 10;
 
   /// Reels por parte na tela de Reels (specs/008).
   static const int reelsPageSize = 10;
+
+  /// Notícias por página na lista de salvas (specs/010).
+  static const int savedPageSize = 20;
 
   final ApiClient _apiClient;
 
@@ -97,5 +101,25 @@ class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
   Future<bool> toggleSave(String id) async {
     final response = await _apiClient.post('$newsPath/$id/save');
     return response.toModel((json) => json['saved'] as bool);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getNewsDetail(String id) async {
+    final response = await _apiClient.get('$newsPath/$id');
+    return response.toModel((json) => json);
+  }
+
+  @override
+  Future<void> markAsRead(String id) async {
+    await _apiClient.post('$newsPath/$id/read');
+  }
+
+  @override
+  Future<Map<String, dynamic>> getSavedNews({required int page}) async {
+    final response = await _apiClient.get(
+      savedPath,
+      queryParameters: {'page': page, 'limit': savedPageSize},
+    );
+    return response.toModel((json) => json);
   }
 }

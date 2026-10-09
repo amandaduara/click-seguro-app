@@ -20,6 +20,18 @@ class FakeNewsRemoteDataSource implements NewsRemoteDataSource {
   ApiException? listError;
   ApiException? categoriesError;
 
+  /// Detalhe devolvido por [getNewsDetail]; sem ele, um padrão para o id.
+  Map<String, dynamic>? detail;
+  ApiException? detailError;
+  ApiException? markAsReadError;
+  ApiException? savedError;
+
+  /// Páginas das salvas (sem entrada → página vazia, fim).
+  final Map<int, Map<String, dynamic>> savedPages = {};
+  final List<String> detailCalls = [];
+  final List<String> readCalls = [];
+  final List<int> savedCalls = [];
+
   final List<int> feedPages = [];
 
   /// Partes da tela de Reels por cursor (`null` = primeira).
@@ -86,12 +98,39 @@ class FakeNewsRemoteDataSource implements NewsRemoteDataSource {
     if (saveError case final error?) throw error;
     return saveResult;
   }
+
+  @override
+  Future<Map<String, dynamic>> getNewsDetail(String id) async {
+    detailCalls.add(id);
+    if (detailError case final error?) throw error;
+    return detail ?? newsDetailJson(id: id);
+  }
+
+  @override
+  Future<void> markAsRead(String id) async {
+    readCalls.add(id);
+    if (markAsReadError case final error?) throw error;
+  }
+
+  @override
+  Future<Map<String, dynamic>> getSavedNews({required int page}) async {
+    savedCalls.add(page);
+    if (savedError case final error?) throw error;
+    return savedPages[page] ?? savedListJson(items: const [], page: page);
+  }
 }
 
 /// Cópia guardada em memória.
 class FakeNewsLocalDataSource implements NewsLocalDataSource {
   CachedFeed? cached;
   int writes = 0;
+
+  /// Cópias de conta (specs/010): detalhes por id e 1ª página das salvas.
+  final Map<String, Map<String, dynamic>> details = {};
+  Map<String, dynamic>? savedPage;
+  int detailWrites = 0;
+  int savedWrites = 0;
+  int clearCalls = 0;
 
   @override
   Future<CachedFeed?> readFeed() async => cached;
@@ -107,6 +146,31 @@ class FakeNewsLocalDataSource implements NewsLocalDataSource {
       reelsJson: reelsJson,
       savedAt: DateTime.utc(2026, 10, 5, 12),
     );
+  }
+
+  @override
+  Future<Map<String, dynamic>?> readDetail(String id) async => details[id];
+
+  @override
+  Future<void> writeDetail(Map<String, dynamic> json) async {
+    detailWrites++;
+    details[json['id'] as String] = json;
+  }
+
+  @override
+  Future<Map<String, dynamic>?> readSavedPage() async => savedPage;
+
+  @override
+  Future<void> writeSavedPage(Map<String, dynamic> json) async {
+    savedWrites++;
+    savedPage = json;
+  }
+
+  @override
+  Future<void> clearAccountCopies() async {
+    clearCalls++;
+    details.clear();
+    savedPage = null;
   }
 }
 
