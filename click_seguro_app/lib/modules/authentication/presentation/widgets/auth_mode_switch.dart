@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 /// Seletor em pílula "Entrar" / "Criar conta" (wireframe, LoginScreen).
@@ -27,9 +27,9 @@ class AuthModeSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: const BoxDecoration(
-        color: AppColors.input,
-        borderRadius: BorderRadius.all(Radius.circular(999)),
+      decoration: BoxDecoration(
+        color: context.colors.input,
+        borderRadius: const BorderRadius.all(Radius.circular(999)),
       ),
       child: Stack(
         children: [
@@ -40,14 +40,14 @@ class AuthModeSwitch extends StatelessWidget {
               alignment: isRegister
                   ? Alignment.centerRight
                   : Alignment.centerLeft,
-              child: const FractionallySizedBox(
+              child: FractionallySizedBox(
                 widthFactor: 0.5,
                 heightFactor: 1,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.all(Radius.circular(999)),
-                    boxShadow: AppColors.shadowSm,
+                    color: context.colors.background,
+                    borderRadius: const BorderRadius.all(Radius.circular(999)),
+                    boxShadow: context.colors.shadowSm,
                   ),
                 ),
               ),
@@ -92,7 +92,9 @@ class _Segment extends StatelessWidget {
     final style = Theme.of(context).textTheme.labelLarge?.copyWith(
       fontSize: 16,
       fontWeight: FontWeight.w600,
-      color: selected ? AppColors.secondary : AppColors.textMutedForeground,
+      color: selected
+          ? context.colors.secondary
+          : context.colors.textMutedForeground,
     );
     return Expanded(
       child: Semantics(

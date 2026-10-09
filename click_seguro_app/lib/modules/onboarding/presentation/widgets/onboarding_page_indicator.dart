@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +24,7 @@ class OnboardingPageIndicator extends StatelessWidget {
           width: isActive ? 24 : 8,
           height: 8,
           decoration: BoxDecoration(
-            color: isActive ? AppColors.primary : AppColors.border,
+            color: isActive ? context.colors.primary : context.colors.border,
             borderRadius: AppSpacing.radiusFull,
           ),
         );

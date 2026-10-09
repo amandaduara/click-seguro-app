@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
@@ -50,16 +50,16 @@ class _NewsCardState extends State<NewsCard> {
       label: item.semanticLabel(widget.now),
       excludeSemantics: true,
       child: Material(
-        color: AppColors.card,
+        color: context.colors.card,
         borderRadius: AppSpacing.radius3xl,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: _open,
           child: Ink(
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: context.colors.border),
               borderRadius: AppSpacing.radius3xl,
-              boxShadow: AppColors.shadowSm,
+              boxShadow: context.colors.shadowSm,
             ),
             child: widget.compact ? _compact(item) : _full(item),
           ),
@@ -115,7 +115,7 @@ class _NewsCardState extends State<NewsCard> {
           style: textTheme.bodyLarge?.copyWith(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.secondary,
+            color: context.colors.secondary,
           ),
         ),
         const SizedBox(height: AppSpacing.s2),
@@ -125,27 +125,27 @@ class _NewsCardState extends State<NewsCard> {
               child: Text(
                 '${item.source} · ${item.relativeDate(widget.now)}',
                 style: textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMutedForeground,
+                  color: context.colors.textMutedForeground,
                 ),
               ),
             ),
             if (item.interaction.isRead)
               Tooltip(
                 message: AppStrings.newsCardRead.tr(),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.circleCheck,
                   size: 16,
-                  color: AppColors.success,
+                  color: context.colors.success,
                 ),
               ),
             if (item.interaction.isSaved) ...[
               const SizedBox(width: AppSpacing.s1),
               Tooltip(
                 message: AppStrings.newsCardSaved.tr(),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.bookmarkCheck,
                   size: 16,
-                  color: AppColors.secondary,
+                  color: context.colors.secondary,
                 ),
               ),
             ],
@@ -166,14 +166,14 @@ class _CategoryChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: context.colors.primary.withValues(alpha: 0.1),
         borderRadius: AppSpacing.radiusFull,
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           fontWeight: FontWeight.w600,
-          color: AppColors.primary,
+          color: context.colors.primary,
         ),
       ),
     );
@@ -188,29 +188,29 @@ class _NewsImage extends StatelessWidget {
   final double height;
   final double? width;
 
-  Widget _placeholder() => Container(
+  Widget _placeholder(BuildContext context) => Container(
     width: width,
     height: height,
-    color: AppColors.input,
+    color: context.colors.input,
     alignment: Alignment.center,
-    child: const Icon(
+    child: Icon(
       LucideIcons.newspaper,
-      color: AppColors.textMutedForeground,
+      color: context.colors.textMutedForeground,
     ),
   );
 
   @override
   Widget build(BuildContext context) {
     final String? source = url;
-    if (source == null) return _placeholder();
+    if (source == null) return _placeholder(context);
     return Image.network(
       source,
       width: width,
       height: height,
       fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => _placeholder(),
+      errorBuilder: (context, _, _) => _placeholder(context),
       loadingBuilder: (_, child, progress) =>
-          progress == null ? child : _placeholder(),
+          progress == null ? child : _placeholder(context),
     );
   }
 }

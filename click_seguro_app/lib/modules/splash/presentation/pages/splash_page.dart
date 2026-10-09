@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/splash/presentation/controller/splash_controller.dart';
 import 'package:click_seguro_app/modules/splash/presentation/controller/splash_destination.dart';
@@ -36,28 +36,30 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: context.colors.primary,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               LucideIcons.shield,
-              color: AppColors.textPrimaryForeground,
+              color: context.colors.textPrimaryForeground,
               size: 64,
             ),
             const SizedBox(height: 16),
             Text(
               AppStrings.appTitle.tr(),
               style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                color: AppColors.textPrimaryForeground,
+                color: context.colors.textPrimaryForeground,
               ),
             ),
             const SizedBox(height: AppSpacing.s2),
             Text(
               AppStrings.splashTagline.tr(),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textPrimaryForeground.withValues(alpha: 0.8),
+                color: context.colors.textPrimaryForeground.withValues(
+                  alpha: 0.8,
+                ),
               ),
             ),
           ],

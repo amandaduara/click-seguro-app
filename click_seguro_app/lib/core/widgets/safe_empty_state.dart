@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -32,14 +32,14 @@ class SafeEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 40, color: AppColors.textMutedForeground),
+            Icon(icon, size: 40, color: context.colors.textMutedForeground),
             const SizedBox(height: AppSpacing.s3),
             Text(
               message ?? AppStrings.commonEmpty.tr(),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontSize: 16,
-                color: AppColors.textMutedForeground,
+                color: context.colors.textMutedForeground,
               ),
             ),
             if (label != null && action != null) ...[

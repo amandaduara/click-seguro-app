@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
@@ -135,7 +135,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     child: Text(
                       controller.failure!.message.tr(),
                       style: textTheme.bodyLarge?.copyWith(
-                        color: AppColors.destructive,
+                        color: context.colors.destructive,
                       ),
                     ),
                   ),
@@ -154,7 +154,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   ) => [
     Text(
       AppStrings.authResetEmailDescription.tr(),
-      style: textTheme.bodyLarge?.copyWith(color: AppColors.textForeground),
+      style: textTheme.bodyLarge?.copyWith(
+        color: context.colors.textForeground,
+      ),
     ),
     const SizedBox(height: AppSpacing.s5),
     SafeTextField(
@@ -183,7 +185,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   ) => [
     Text(
       AppStrings.authResetCodeSent.tr(),
-      style: textTheme.bodyLarge?.copyWith(color: AppColors.textForeground),
+      style: textTheme.bodyLarge?.copyWith(
+        color: context.colors.textForeground,
+      ),
     ),
     const SizedBox(height: AppSpacing.s5),
     SafeTextField(

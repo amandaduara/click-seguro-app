@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
@@ -67,27 +67,27 @@ class _SafeButtonState extends State<SafeButton> {
       case SafeButtonTone.gradient:
         return (
           bg: null,
-          fg: AppColors.textPrimaryForeground,
-          gradient: AppColors.gradient,
+          fg: context.colors.textPrimaryForeground,
+          gradient: context.colors.gradient,
         );
       case SafeButtonTone.secondary:
         // Texto claro sobre o azul-escuro, como no wireframe
         // (text-secondary-foreground); o escuro sumia no fundo.
         return (
-          bg: AppColors.secondary,
-          fg: AppColors.textPrimaryForeground,
+          bg: context.colors.secondary,
+          fg: context.colors.textPrimaryForeground,
           gradient: null,
         );
       case SafeButtonTone.ghost:
         return (
           bg: Colors.transparent,
-          fg: AppColors.secondary,
+          fg: context.colors.secondary,
           gradient: null,
         );
       case SafeButtonTone.primary:
         return (
-          bg: AppColors.primary,
-          fg: AppColors.textPrimaryForeground,
+          bg: context.colors.primary,
+          fg: context.colors.textPrimaryForeground,
           gradient: null,
         );
     }
@@ -163,9 +163,9 @@ class _SafeButtonState extends State<SafeButton> {
               color: style.bg,
               gradient: style.gradient,
               borderRadius: AppSpacing.radiusFull,
-              boxShadow: widget.shadow ? AppColors.shadowPrimary : null,
+              boxShadow: widget.shadow ? context.colors.shadowPrimary : null,
               border: widget.tone == SafeButtonTone.ghost
-                  ? Border.all(color: AppColors.border, width: 1)
+                  ? Border.all(color: context.colors.border, width: 1)
                   : null,
             ),
             child: content,

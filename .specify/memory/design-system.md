@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 1.0.1
+**Versão**: 1.1.0
 
 **Criado em**: 2026-10-04
 
@@ -45,7 +45,9 @@ Quando o wireframe e o app divergem, **vale o app** (ver [§10](#10-divergência
 ### 2.1 Tokens
 
 Nomes no padrão do shadcn/Tailwind (use-os como variáveis CSS: `--primary`, `--muted-foreground`
-etc.). A coluna "Flutter" é a constante em `AppColors`.
+etc.). A coluna "Flutter" é a constante em `AppColors`. Nos widgets, leia a cor do tema em uso
+com `context.colors.<token>` (`AppPalette`, §2.4), nunca `AppColors` direto: assim o alto
+contraste chega à tela.
 
 | Token | Hex | Flutter | Uso |
 |---|---|---|---|
@@ -96,8 +98,26 @@ sobre o vídeo.
 
 - **Tema escuro**: não faz parte do produto. O bloco `.dark` do `styles.css` é o padrão do
   shadcn, sem as cores da marca: **não use**.
-- **Alto contraste**: previsto (RF-038 a RF-041, tarefa F0.6 / B9), ainda não desenhado. Quando
-  existir, será documentado aqui com contraste WCAG AAA.
+- **Alto contraste** (RF-039, feature 009): `AppPalette.highContrast` /
+  `AppTheme.highContrastTheme`. Mesmos tokens, com contraste WCAG AAA medido sobre branco:
+
+  | Token | Alto contraste | Razão |
+  |---|---|---|
+  | `foreground` | `#000000` | 21:1 |
+  | `muted-foreground` | `#333333` | 12,6:1 |
+  | `primary`, `primary-glow`, `destructive` | `#9E0019` | 8,5:1 (e branco sobre ele) |
+  | `secondary` | `#0B1A3A` | 17,2:1 |
+  | `background`, `card` | `#FFFFFF` | — |
+  | `input` (preenchimento) | `#F2F2F2` | texto preto 18,8:1 |
+  | `input-border` (contorno do campo) | `#000000` | 21:1 (no tema normal = `input`) |
+  | `border` | `#000000` | 21:1 |
+  | `success` | `#005A3C` | 8,3:1 |
+  | `warning` | `#6E4200` | 8,6:1 |
+
+  O gradiente vira cor sólida e as sombras somem (a borda preta separa os cartões). Na web,
+  o mesmo conjunto como uma classe `.high-contrast` com as variáveis acima.
+- **Tamanho da letra** (RF-038): 100/115/130/150% multiplicados pela escala do sistema, com teto
+  de 200%. Componentes que podem passar da altura da tela (folhas, diálogos) MUST rolar.
 
 ---
 
@@ -461,6 +481,8 @@ Valores em que o app Flutter (canônico) difere do wireframe. Na versão web, us
 
 ## Histórico de versões
 
+- **1.1.0 (2026-10-08)**: alto contraste (`AppPalette`), token `input-border`, regra de leitura
+  das cores por `context.colors` e de rolagem com letra grande (feature 009).
 - **1.0.1 (2026-10-04)**: barra superior com botões de 48 px e subtítulo de 14 px; faixa de sem
   internet com texto de 16 px (definidos na feature 005).
 - **1.0.0 (2026-10-04)**: primeira versão, extraída do app Flutter e do wireframe para servir

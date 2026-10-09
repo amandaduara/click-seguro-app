@@ -6,12 +6,20 @@ class FakeLocalCacheService implements LocalCacheService {
 
   int writeCalls = 0;
 
+  /// Simula o armazenamento do aparelho indisponível.
+  bool throwOnRead = false;
+  bool throwOnWrite = false;
+
   @override
-  Future<Map<String, dynamic>?> readJson(String key) async => values[key];
+  Future<Map<String, dynamic>?> readJson(String key) async {
+    if (throwOnRead) throw StateError('armazenamento indisponível');
+    return values[key];
+  }
 
   @override
   Future<void> writeJson(String key, Map<String, dynamic> value) async {
     writeCalls++;
+    if (throwOnWrite) throw StateError('armazenamento indisponível');
     values[key] = value;
   }
 

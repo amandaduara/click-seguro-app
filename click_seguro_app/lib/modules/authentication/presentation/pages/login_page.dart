@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
@@ -219,7 +219,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: TextButton(
                       onPressed: _openForgotPassword,
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primary,
+                        foregroundColor: context.colors.primary,
                         minimumSize: const Size(48, 48),
                       ),
                       child: Text(AppStrings.authForgotPassword.tr()),
@@ -231,9 +231,9 @@ class _LoginPageState extends State<LoginPage> {
                     liveRegion: true,
                     child: Text(
                       AppStrings.authResetSuccess.tr(),
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyLarge?.copyWith(color: AppColors.success),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: context.colors.success,
+                      ),
                     ),
                   ),
                 ],
@@ -279,7 +279,9 @@ class _LoginPageState extends State<LoginPage> {
         child: Text(
           failure.message.tr(),
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: isInfo ? AppColors.secondary : AppColors.destructive,
+            color: isInfo
+                ? context.colors.secondary
+                : context.colors.destructive,
           ),
         ),
       ),

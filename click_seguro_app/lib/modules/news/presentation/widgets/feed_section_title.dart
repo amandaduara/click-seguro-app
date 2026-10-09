@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
@@ -24,7 +24,7 @@ class FeedSectionTitle extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.secondary,
+            color: context.colors.secondary,
           ),
         ),
       ),

@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
@@ -30,14 +30,14 @@ class _SafeCardState extends State<SafeCard> {
   bool _pressed = false;
 
   List<BoxShadow>? get _shadow {
-    if (widget.interactive) return AppColors.shadowMd;
+    if (widget.interactive) return context.colors.shadowMd;
     switch (widget.elevation) {
       case SafeCardElevation.flat:
         return null;
       case SafeCardElevation.sm:
-        return AppColors.shadowSm;
+        return context.colors.shadowSm;
       case SafeCardElevation.md:
-        return AppColors.shadowMd;
+        return context.colors.shadowMd;
     }
   }
 
@@ -46,10 +46,12 @@ class _SafeCardState extends State<SafeCard> {
     final card = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
-      padding: widget.padded ? const EdgeInsets.all(AppSpacing.s5) : EdgeInsets.zero,
+      padding: widget.padded
+          ? const EdgeInsets.all(AppSpacing.s5)
+          : EdgeInsets.zero,
       decoration: BoxDecoration(
-        color: AppColors.card,
-        border: Border.all(color: AppColors.border),
+        color: context.colors.card,
+        border: Border.all(color: context.colors.border),
         borderRadius: AppSpacing.radius3xl,
         boxShadow: _shadow,
       ),

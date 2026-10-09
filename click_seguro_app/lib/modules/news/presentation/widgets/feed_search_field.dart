@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -59,15 +59,15 @@ class _FeedSearchFieldState extends State<FeedSearchField> {
           hintText: AppStrings.newsSearchHint.tr(),
           hintStyle: textTheme.bodyLarge?.copyWith(
             fontSize: 16,
-            color: AppColors.textMutedForeground,
+            color: context.colors.textMutedForeground,
           ),
           filled: true,
-          fillColor: AppColors.input.withValues(alpha: 0.4),
+          fillColor: context.colors.input.withValues(alpha: 0.4),
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             LucideIcons.search,
             size: 20,
-            color: AppColors.textMutedForeground,
+            color: context.colors.textMutedForeground,
           ),
           suffixIcon: _text.text.isEmpty
               ? null
@@ -80,17 +80,17 @@ class _FeedSearchFieldState extends State<FeedSearchField> {
                   icon: const Icon(LucideIcons.x, size: 18),
                   onPressed: _clear,
                 ),
-          border: const OutlineInputBorder(
+          border: OutlineInputBorder(
             borderRadius: AppSpacing.radiusFull,
-            borderSide: BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: context.colors.border),
           ),
-          enabledBorder: const OutlineInputBorder(
+          enabledBorder: OutlineInputBorder(
             borderRadius: AppSpacing.radiusFull,
-            borderSide: BorderSide(color: AppColors.border),
+            borderSide: BorderSide(color: context.colors.border),
           ),
-          focusedBorder: const OutlineInputBorder(
+          focusedBorder: OutlineInputBorder(
             borderRadius: AppSpacing.radiusFull,
-            borderSide: BorderSide(color: AppColors.primary),
+            borderSide: BorderSide(color: context.colors.primary),
           ),
         ),
       ),

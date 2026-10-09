@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
@@ -65,7 +65,7 @@ class _SlowRequestNoticeState extends State<SlowRequestNotice> {
           widget.message,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.textMutedForeground,
+            color: context.colors.textMutedForeground,
           ),
         ),
       ),

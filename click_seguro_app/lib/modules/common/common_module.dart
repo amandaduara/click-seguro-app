@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
@@ -41,6 +42,7 @@ class CommonModule implements ModuleInterface {
         injector<UserSessionService>(),
       ),
     );
+    injector.registerLazySingleton(AccessibilityPreferencesNotifier.new);
     injector.registerLazySingleton<TextToSpeechService>(
       () => FlutterTextToSpeechService(),
     );
@@ -53,7 +55,10 @@ class CommonModule implements ModuleInterface {
     );
     // Um por página: cada uma prepara o idioma e descarta ao fechar.
     injector.registerFactory(
-      () => ReadAloudController(injector<TextToSpeechService>()),
+      () => ReadAloudController(
+        injector<TextToSpeechService>(),
+        preferences: injector<AccessibilityPreferencesNotifier>(),
+      ),
     );
   }
 }

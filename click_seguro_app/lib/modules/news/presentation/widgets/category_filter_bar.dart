@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -66,7 +66,7 @@ class _FilterChip extends StatelessWidget {
       label: label,
       excludeSemantics: true,
       child: Material(
-        color: selected ? AppColors.secondary : AppColors.input,
+        color: selected ? context.colors.secondary : context.colors.input,
         shape: const StadiumBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -82,8 +82,8 @@ class _FilterChip extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: selected
-                        ? AppColors.textPrimaryForeground
-                        : AppColors.textMutedForeground,
+                        ? context.colors.textPrimaryForeground
+                        : context.colors.textMutedForeground,
                   ),
                 ),
               ),

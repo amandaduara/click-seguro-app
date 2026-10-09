@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/models/onboarding_page_content.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -20,12 +20,12 @@ class OnboardingSlide extends StatelessWidget {
             width: 96,
             height: 96,
             decoration: BoxDecoration(
-              color: content.iconBackgroundColor,
+              color: content.iconBackgroundColor(context.colors),
               borderRadius: AppSpacing.radius3xl,
             ),
             child: Icon(
               content.icon,
-              color: AppColors.textPrimaryForeground,
+              color: context.colors.textPrimaryForeground,
               size: 40,
             ),
           ),
@@ -40,7 +40,7 @@ class OnboardingSlide extends StatelessWidget {
             content.descriptionKey.tr(),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.textMutedForeground,
+              color: context.colors.textMutedForeground,
             ),
           ),
         ],

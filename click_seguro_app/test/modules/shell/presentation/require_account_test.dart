@@ -62,6 +62,29 @@ void main() {
     expect(find.text('Entre na sua conta'), findsNothing);
   });
 
+  testWidgets('letra no teto de 2× num celular comum: convite sem estourar '
+      'e com os dois botões alcançáveis (SC-004 da feature 009)', (
+    tester,
+  ) async {
+    // Pixel 4 (393 × 830 dp), escala total máxima da feature 009.
+    tester.view.physicalSize = const Size(1080, 2280);
+    tester.view.devicePixelRatio = 2.75;
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await session.startGuestSession();
+    await pumpLocalized(tester, router: buildRouter());
+
+    await tapAction(tester);
+    await tester.ensureVisible(find.text('Agora não'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Agora não'));
+    await tester.pumpAndSettle();
+
+    expect(results, [false]);
+    expect(find.text('Entre na sua conta'), findsNothing);
+  });
+
   testWidgets('visitante: mostra o convite completo', (tester) async {
     await session.startGuestSession();
     await pumpLocalized(tester, router: buildRouter());

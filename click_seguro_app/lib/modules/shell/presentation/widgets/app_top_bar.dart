@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/notifications/notifications.dart';
@@ -76,7 +76,7 @@ class _AppTopBarState extends State<AppTopBar> {
                     style: textTheme.bodyMedium?.copyWith(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textMutedForeground,
+                      color: context.colors.textMutedForeground,
                     ),
                   ),
                 ),
@@ -87,7 +87,7 @@ class _AppTopBarState extends State<AppTopBar> {
                     style: textTheme.titleLarge?.copyWith(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.secondary,
+                      color: context.colors.secondary,
                     ),
                   ),
                 ),
@@ -116,18 +116,18 @@ class _SettingsButton extends StatelessWidget {
       label: AppStrings.shellSettings.tr(),
       excludeSemantics: true,
       child: Material(
-        color: AppColors.input,
+        color: context.colors.input,
         shape: const CircleBorder(),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onPressed,
-          child: const SizedBox(
+          child: SizedBox(
             width: 48,
             height: 48,
             child: Icon(
               LucideIcons.settings,
               size: 20,
-              color: AppColors.secondary,
+              color: context.colors.secondary,
             ),
           ),
         ),

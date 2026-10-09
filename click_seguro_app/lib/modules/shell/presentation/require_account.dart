@@ -1,4 +1,4 @@
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
 import 'package:flutter/material.dart';
@@ -19,8 +19,10 @@ Future<bool> requireAccount(BuildContext context) async {
 
   final route = ModalBottomSheetRoute<bool>(
     builder: (_) => const AccountRequiredSheet(),
-    isScrollControlled: false,
-    backgroundColor: AppColors.card,
+    // Com a letra grande (feature 009), o convite pode passar de metade da
+    // tela; ele rola em vez de cortar os botões.
+    isScrollControlled: true,
+    backgroundColor: context.colors.card,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),

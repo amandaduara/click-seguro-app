@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -41,8 +41,8 @@ class AppBottomNav extends StatelessWidget {
       label: AppStrings.shellNavLabel.tr(),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: AppColors.background.withValues(alpha: 0.95),
-          border: const Border(top: BorderSide(color: AppColors.border)),
+          color: context.colors.background.withValues(alpha: 0.95),
+          border: Border(top: BorderSide(color: context.colors.border)),
         ),
         child: SafeArea(
           top: false,
@@ -93,8 +93,8 @@ class _TabItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color color = selected
-        ? AppColors.primary
-        : AppColors.textMutedForeground;
+        ? context.colors.primary
+        : context.colors.textMutedForeground;
     final String label = tab.labelKey.tr();
     return Semantics(
       button: true,
@@ -165,12 +165,12 @@ class _CenterItem extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.primary,
+                color: context.colors.primary,
                 shape: BoxShape.circle,
-                boxShadow: AppColors.shadowPrimary,
+                boxShadow: context.colors.shadowPrimary,
                 border: selected
                     ? Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.3),
+                        color: context.colors.primary.withValues(alpha: 0.3),
                         width: 4,
                         strokeAlign: BorderSide.strokeAlignOutside,
                       )
@@ -179,7 +179,7 @@ class _CenterItem extends StatelessWidget {
               child: Icon(
                 tab.icon,
                 size: 28,
-                color: AppColors.textPrimaryForeground,
+                color: context.colors.textPrimaryForeground,
               ),
             ),
           ),
