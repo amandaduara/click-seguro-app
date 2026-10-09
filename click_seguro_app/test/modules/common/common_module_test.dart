@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
@@ -45,6 +46,13 @@ void main() {
     expect(
       injector<ReadAloudController>(),
       isNot(same(injector<ReadAloudController>())),
+    );
+  });
+
+  test('preferências de acessibilidade em vigor: uma só para o app', () {
+    expect(
+      injector<AccessibilityPreferencesNotifier>(),
+      same(injector<AccessibilityPreferencesNotifier>()),
     );
   });
 }
