@@ -23,7 +23,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 
-  final (moduleManager, router) = await _setup();
+  final (moduleManager, router) = await setupApp();
 
   runApp(
     EasyLocalization(
@@ -51,9 +51,13 @@ List<ModuleInterface> appModules() => [
   ShellModule(),
 ];
 
-Future<(ModuleManagerInterface, GoRouter)> _setup() async {
+/// Registra os módulos e prepara o estado que a primeira tela precisa. Também
+/// usada pela entrada de desenvolvimento `lib/dev/accessibility_playground.dart`.
+Future<(ModuleManagerInterface, GoRouter)> setupApp() async {
   final ModuleManagerInterface moduleManager = ModuleManager();
   await moduleManager.registerModules(appModules());
+  // O splash já sai com a letra e o contraste escolhidos (RF-041).
+  await GetIt.instance<AccessibilityController>().load();
   final UserSessionService session = GetIt.instance<UserSessionService>();
   // Antes do runApp: a primeira tela já encontra o estado da sessão (FR-002).
   await session.restoreSession();
