@@ -1,5 +1,7 @@
+import 'package:click_seguro_app/modules/news/data/models/like_result_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_category_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_list_model.dart';
+import 'package:click_seguro_app/modules/news/data/models/reels_page_model.dart';
 
 /// Pedidos de notícias ao servidor. Erros sobem como `ApiException`.
 abstract class NewsRemoteDataSource {
@@ -18,4 +20,13 @@ abstract class NewsRemoteDataSource {
 
   /// Só as categorias ativas.
   Future<List<NewsCategoryModel>> getCategories();
+
+  /// Uma parte da tela de Reels; sem [cursor], a primeira.
+  Future<ReelsPageModel> getReelsPage({String? cursor});
+
+  /// `POST /app/news/{id}/like` (alterna).
+  Future<LikeResultModel> toggleLike(String id);
+
+  /// `POST /app/news/{id}/save` (alterna); devolve se ficou salva.
+  Future<bool> toggleSave(String id);
 }

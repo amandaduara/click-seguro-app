@@ -50,6 +50,79 @@ void main() {
     expect(json['data'], hasLength(1));
   });
 
+  group('Reels (specs/008)', () {
+    test('getReelsPage sem cursor pede 10', () async {
+      adapter.body = reelsJson(
+        items: [reelItemJson(id: 'r1')],
+        nextCursor: 'abc',
+      );
+
+      final page = await dataSource.getReelsPage();
+
+      final request = adapter.lastRequest!;
+      expect(request.path, NewsRemoteDataSourceImpl.reelsPath);
+      expect(request.queryParameters, {'limit': 10});
+      expect(page.items.single.news.id, 'r1');
+      expect(page.nextCursor, 'abc');
+    });
+
+    test('getReelsPage com cursor', () async {
+      adapter.body = reelsJson();
+
+      await dataSource.getReelsPage(cursor: 'abc');
+
+      expect(adapter.lastRequest!.queryParameters, {
+        'limit': 10,
+        'cursor': 'abc',
+      });
+    });
+
+    test('toggleLike faz POST com o Bearer', () async {
+      await session.saveSession(
+        accessToken: 'tk',
+        refreshToken: 'rf',
+        email: 'a@b.c',
+        userName: 'Ana',
+      );
+      adapter.body = likeJson(liked: true, likesCount: 9);
+
+      final result = await dataSource.toggleLike('n1');
+
+      final request = adapter.lastRequest!;
+      expect(request.method, 'POST');
+      expect(request.path, '/app/news/n1/like');
+      expect(request.headers['Authorization'], 'Bearer tk');
+      expect(result.liked, isTrue);
+      expect(result.likesCount, 9);
+    });
+
+    test('toggleSave faz POST e devolve o saved', () async {
+      adapter.body = saveJson(saved: false);
+
+      final saved = await dataSource.toggleSave('n1');
+
+      final request = adapter.lastRequest!;
+      expect(request.method, 'POST');
+      expect(request.path, '/app/news/n1/save');
+      expect(saved, isFalse);
+    });
+
+    test('toggleSave sem saved vira invalidResponse', () async {
+      adapter.body = {'ok': true};
+
+      await expectLater(
+        dataSource.toggleSave('n1'),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.type,
+            'type',
+            ApiErrorType.invalidResponse,
+          ),
+        ),
+      );
+    });
+  });
+
   group('getNews', () {
     test('com categoria e busca, ordenado do mais novo', () async {
       adapter.body = newsListJson(items: newsItemsJson(1));
