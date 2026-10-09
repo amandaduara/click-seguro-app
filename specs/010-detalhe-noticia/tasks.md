@@ -164,13 +164,13 @@ chaves de i18n `news_reels_saved*`, `news_reels_open_source*`, `news_error_not_f
 
 ### Tests for User Story 4
 
-- [ ] T040 [P] [US4] Em `tnews/presentation/extensions/news_detail_presentation_extension_test.dart`, acrescentar `shareText`: título, fonte e endereço da fonte em linhas; sem endereço válido → só título e fonte
-- [ ] T041 [P] [US4] Em `tnews/presentation/pages/news_detail_page_test.dart` (grupo compartilhar e fonte), com `FakeShareService`/`FakeExternalLauncherService`: "Compartilhar" → `shareText` com `shareText` e `subject` (título); `ShareOutcome.cancelled` volta ao detalhe sem aviso; `failed` também não mostra aviso (a spec não define um); "Abrir fonte" → `openedUrls == ['https://fonte.test/n']` também para visitante; `openResult = false` → `SnackBar` "Não foi possível abrir a fonte" e continua no detalhe; sem `sourceUrl` válido → "Abrir fonte" ausente; texto vazio mantém "Abrir fonte"; toque duplo em cada um → uma ação só; rótulos e ≥ 48×48 dp
+- [X] T040 [P] [US4] Em `tnews/presentation/extensions/news_detail_presentation_extension_test.dart`, acrescentar `shareText`: título, fonte e endereço da fonte em linhas; sem endereço válido → só título e fonte
+- [X] T041 [P] [US4] Em `tnews/presentation/pages/news_detail_page_test.dart` (grupo compartilhar e fonte), com `FakeShareService`/`FakeExternalLauncherService`: "Compartilhar" → `shareText` com `shareText` e `subject` (título); `ShareOutcome.cancelled` volta ao detalhe sem aviso; `failed` também não mostra aviso (a spec não define um); "Abrir fonte" → `openedUrls == ['https://fonte.test/n']` também para visitante; `openResult = false` → `SnackBar` "Não foi possível abrir a fonte" e continua no detalhe; sem `sourceUrl` válido → "Abrir fonte" ausente; texto vazio mantém "Abrir fonte"; toque duplo em cada um → uma ação só; rótulos e ≥ 48×48 dp
 
 ### Implementation for User Story 4
 
-- [ ] T042 [US4] Em `news/presentation/extensions/news_detail_presentation_extension.dart`, acrescentar `shareText` (FR-019). T040 verde
-- [ ] T043 [US4] Em `news/presentation/widgets/news_detail_actions.dart`, acrescentar "Compartilhar" (`share`) e "Abrir fonte" (`externalLink`, só com `hasSource`), com `Wrap` para quebrar linha com fonte 2×; em `news/presentation/pages/news_detail_page.dart`, chamar `GetIt.instance<ShareService>().shareText(text, subject: title)` e `GetIt.instance<ExternalLauncherService>().openUrl(...)` (aviso `news_reels_open_source_failed` em `false`; é decisão da página, como no `reels_page.dart`), protegidos contra toque duplo. T041 verde
+- [X] T042 [US4] Em `news/presentation/extensions/news_detail_presentation_extension.dart`, acrescentar `shareText` (FR-019). T040 verde
+- [X] T043 [US4] Em `news/presentation/widgets/news_detail_actions.dart`, acrescentar "Compartilhar" (`share`) e "Abrir fonte" (`externalLink`, só com `hasSource`), com `Wrap` para quebrar linha com fonte 2×; em `news/presentation/pages/news_detail_page.dart`, chamar `GetIt.instance<ShareService>().shareText(text, subject: title)` e `GetIt.instance<ExternalLauncherService>().openUrl(...)` (aviso `news_reels_open_source_failed` em `false`; é decisão da página, como no `reels_page.dart`), protegidos contra toque duplo. T041 verde
 
 **Checkpoint**: US1–US4 funcionando.
 
@@ -184,11 +184,11 @@ chaves de i18n `news_reels_saved*`, `news_reels_open_source*`, `news_error_not_f
 
 ### Tests for User Story 5
 
-- [ ] T044 [P] [US5] Criar `tnews/presentation/widgets/related_activity_card_test.dart` e acrescentar em `tnews/presentation/pages/news_detail_page_test.dart` (grupo atividade): com `suggestedModule`, o bloco aparece **depois do texto** com título, descrição e "{} perguntas" (`lessonsCount`) para visitante e para conta; tocar → `/activities/m1` aberto por cima das abas e, ao voltar, o detalhe igual; toque duplo → uma navegação; sem `suggestedModule` → sem bloco e sem espaço vazio; `description` vazia não deixa buraco; rótulo e ≥ 48 dp
+- [X] T044 [P] [US5] Criar `tnews/presentation/widgets/related_activity_card_test.dart` e acrescentar em `tnews/presentation/pages/news_detail_page_test.dart` (grupo atividade): com `suggestedModule`, o bloco aparece **depois do texto** com título, descrição e "{} perguntas" (`lessonsCount`) para visitante e para conta; tocar → `/activities/m1` aberto por cima das abas e, ao voltar, o detalhe igual; toque duplo → uma navegação; sem `suggestedModule` → sem bloco e sem espaço vazio; `description` vazia não deixa buraco; rótulo e ≥ 48 dp
 
 ### Implementation for User Story 5
 
-- [ ] T045 [US5] Criar `news/presentation/widgets/related_activity_card.dart` (`SafeCard` com título, descrição, "{} perguntas" e ícone; `onTap` com guarda de toque duplo) e, em `news/presentation/pages/news_detail_page.dart`, mostrá-lo após o texto quando `detail.suggestedModule != null`, com `context.push('/activities/${module.id}')` (por caminho, **sem** importar `activities`, constituição I). T044 verde
+- [X] T045 [US5] Criar `news/presentation/widgets/related_activity_card.dart` (`SafeCard` com título, descrição, "{} perguntas" e ícone; `onTap` com guarda de toque duplo) e, em `news/presentation/pages/news_detail_page.dart`, mostrá-lo após o texto quando `detail.suggestedModule != null`, com `context.push('/activities/${module.id}')` (por caminho, **sem** importar `activities`, constituição I). T044 verde
 
 **Checkpoint**: todas as histórias funcionando.
 

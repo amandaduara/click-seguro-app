@@ -10,6 +10,8 @@ import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
+import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
@@ -18,15 +20,18 @@ import 'package:click_seguro_app/modules/news/presentation/extensions/news_detai
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_actions.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_header.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/related_activity_card.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Detalhe da notícia (RF-014, RF-015, RF-019, specs/010-detalhe-noticia):
-/// notícia completa, "Ouvir" e "Salvar". O [NewsDetailController] vem da rota (um por
+/// notícia completa, "Ouvir", "Salvar", "Compartilhar", "Abrir fonte" e a
+/// atividade relacionada. O [NewsDetailController] vem da rota (um por
 /// abertura).
 class NewsDetailPage extends StatefulWidget {
   const NewsDetailPage({super.key, required this.newsId});
@@ -42,6 +47,8 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
   late final ReadAloudController _readAloud;
   StreamSubscription<NewsDetailMessage>? _messages;
   Locale? _locale;
+  bool _isSharing = false;
+  bool _isOpeningSource = false;
 
   @override
   void initState() {
@@ -102,9 +109,41 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
       NewsDetailMessageType.notFound => null,
     };
     if (text == null) return;
+    _snack(text);
+  }
+
+  void _snack(String text) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  /// Menu do aparelho; cancelar ou falhar não mostra aviso (FR-019). Sem
+  /// conta também vale (RN-003).
+  Future<void> _share(NewsDetailEntity detail) async {
+    if (_isSharing) return;
+    _isSharing = true;
+    try {
+      await GetIt.instance<ShareService>().shareText(
+        detail.shareText,
+        subject: detail.news.title,
+      );
+    } finally {
+      _isSharing = false;
+    }
+  }
+
+  /// Navegador externo; se o aparelho não abrir, avisa (FR-020).
+  Future<void> _openSource(NewsDetailEntity detail) async {
+    if (_isOpeningSource) return;
+    _isOpeningSource = true;
+    try {
+      final bool opened = await GetIt.instance<ExternalLauncherService>()
+          .openUrl(detail.news.sourceUrl);
+      if (!opened && mounted) _snack(AppStrings.newsReelsOpenSourceFailed.tr());
+    } finally {
+      _isOpeningSource = false;
+    }
   }
 
   /// Visitante vê o convite e nenhum pedido sai (RN-003).
@@ -191,6 +230,10 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
                         status == UserSessionStatus.authenticated &&
                         detail.isSaved,
                     onSave: () => unawaited(_save()),
+                    onShare: () => unawaited(_share(detail)),
+                    onOpenSource: detail.hasSource
+                        ? () => unawaited(_openSource(detail))
+                        : null,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.s5),
@@ -211,6 +254,14 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
                       color: context.colors.textMutedForeground,
                     ),
                   ),
+                if (detail.suggestedModule case final module?) ...[
+                  const SizedBox(height: AppSpacing.s5),
+                  RelatedActivityCard(
+                    module: module,
+                    // Por caminho, sem importar `activities` (constituição I).
+                    onTap: () => context.push<void>('/activities/${module.id}'),
+                  ),
+                ],
               ],
             ),
           ),

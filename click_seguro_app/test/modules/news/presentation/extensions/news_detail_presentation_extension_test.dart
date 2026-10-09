@@ -56,6 +56,26 @@ void main() {
     });
   });
 
+  group('shareText', () {
+    test('título, fonte e endereço da fonte em linhas', () {
+      expect(
+        newsDetail('n1').shareText,
+        'Notícia n1\nFolha de Teste\nhttps://fonte.test/n',
+      );
+    });
+
+    test('sem endereço válido, só título e fonte', () {
+      expect(
+        newsDetail('n1', sourceUrl: '').shareText,
+        'Notícia n1\nFolha de Teste',
+      );
+      expect(
+        newsDetail('n1', sourceUrl: 'www.fonte.test').shareText,
+        'Notícia n1\nFolha de Teste',
+      );
+    });
+  });
+
   testWidgets('rótulos de velocidade', (tester) async {
     await localized(tester);
 

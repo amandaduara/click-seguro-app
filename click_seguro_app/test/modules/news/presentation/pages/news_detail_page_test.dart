@@ -5,6 +5,8 @@ import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
+import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
@@ -13,6 +15,7 @@ import 'package:click_seguro_app/modules/news/presentation/controller/news_detai
 import 'package:click_seguro_app/modules/news/presentation/pages/news_detail_page.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_actions.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/related_activity_card.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,14 +25,41 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../fakes/fake_external_launcher_service.dart';
 import '../../../../fakes/fake_secure_storage_service.dart';
+import '../../../../fakes/fake_share_service.dart';
 import '../../../../fakes/fake_text_to_speech_service.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_news_repository.dart';
 import '../../fakes/news_detail_controller_factory.dart';
 
+/// Segura o resultado até [gate] terminar, para tocar duas vezes seguidas.
+class _GatedShareService extends FakeShareService {
+  Completer<void>? gate;
+
+  @override
+  Future<ShareOutcome> shareText(String text, {String? subject}) async {
+    final outcome = await super.shareText(text, subject: subject);
+    await gate?.future;
+    return outcome;
+  }
+}
+
+class _GatedLauncherService extends FakeExternalLauncherService {
+  Completer<void>? gate;
+
+  @override
+  Future<bool> openUrl(String url) async {
+    final result = await super.openUrl(url);
+    await gate?.future;
+    return result;
+  }
+}
+
 void main() {
   late UserSessionService session;
+  late _GatedShareService share;
+  late _GatedLauncherService launcher;
   late FakeNewsRepository repository;
   late FakeTextToSpeechService tts;
   late AccessibilityPreferencesNotifier preferences;
@@ -39,8 +69,12 @@ void main() {
     session = UserSessionService(FakeSecureStorageService());
     tts = FakeTextToSpeechService();
     preferences = AccessibilityPreferencesNotifier();
+    share = _GatedShareService();
+    launcher = _GatedLauncherService();
     GetIt.instance
       ..registerSingleton<UserSessionService>(session)
+      ..registerSingleton<ShareService>(share)
+      ..registerSingleton<ExternalLauncherService>(launcher)
       ..registerSingleton<AccessibilityPreferencesNotifier>(preferences)
       ..registerFactory<ReadAloudController>(
         () => ReadAloudController(tts, preferences: preferences),
@@ -61,6 +95,11 @@ void main() {
       GoRoute(
         path: '/login',
         builder: (_, _) => const Scaffold(body: Text('login')),
+      ),
+      GoRoute(
+        path: '/activities/:moduleId',
+        builder: (_, state) =>
+            Scaffold(body: Text('módulo ${state.pathParameters['moduleId']}')),
       ),
       GoRoute(
         path: '/news/:id',
@@ -563,6 +602,271 @@ void main() {
 
       await tapSave(tester);
       expect(find.bySemanticsLabel('Salvo'), findsOneWidget);
+      handle.dispose();
+    });
+  });
+
+  group('compartilhar e fonte', () {
+    Finder shareButton() => find.byKey(NewsDetailActions.shareKey);
+    Finder sourceButton() => find.byKey(NewsDetailActions.sourceKey);
+
+    testWidgets('"Compartilhar" abre o menu com texto e título', (
+      tester,
+    ) async {
+      await pumpPage(tester);
+
+      await tester.tap(shareButton());
+      await tester.pumpAndSettle();
+
+      expect(share.shared, [
+        (
+          text: 'Notícia n1\nFolha de Teste\nhttps://fonte.test/n',
+          subject: 'Notícia n1',
+        ),
+      ]);
+    });
+
+    for (final outcome in [ShareOutcome.cancelled, ShareOutcome.failed]) {
+      testWidgets('$outcome: volta ao detalhe sem aviso', (tester) async {
+        share.outcome = outcome;
+        await pumpPage(tester);
+
+        await tester.tap(shareButton());
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SnackBar), findsNothing);
+        expect(find.text('Notícia n1'), findsOneWidget);
+      });
+    }
+
+    testWidgets('"Abrir fonte" abre o endereço, também para visitante', (
+      tester,
+    ) async {
+      await pumpPage(tester);
+
+      await tester.tap(sourceButton());
+      await tester.pumpAndSettle();
+
+      expect(launcher.openedUrls, ['https://fonte.test/n']);
+      expect(find.byType(AccountRequiredSheet), findsNothing);
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('não abriu: aviso e continua no detalhe', (tester) async {
+      launcher.openResult = false;
+      await pumpPage(tester);
+
+      await tester.tap(sourceButton());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Não foi possível abrir a fonte'), findsOneWidget);
+      expect(find.text('Notícia n1'), findsOneWidget);
+    });
+
+    testWidgets('sem endereço válido: sem "Abrir fonte", com "Compartilhar"', (
+      tester,
+    ) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail('n1', sourceUrl: ''),
+            isFromCache: false,
+          ),
+        ),
+      );
+
+      await pumpPage(tester);
+
+      expect(find.text('Abrir fonte'), findsNothing);
+      expect(sourceButton(), findsNothing);
+      expect(find.text('Compartilhar'), findsOneWidget);
+    });
+
+    testWidgets('texto vazio mantém "Abrir fonte"', (tester) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail('n1', content: ' '),
+            isFromCache: false,
+          ),
+        ),
+      );
+
+      await pumpPage(tester);
+
+      expect(find.text('Abrir fonte'), findsOneWidget);
+    });
+
+    testWidgets('toque duplo em "Compartilhar": um menu só', (tester) async {
+      share.gate = Completer<void>();
+      await pumpPage(tester);
+
+      await tester.tap(shareButton());
+      await tester.tap(shareButton());
+      await tester.pump();
+
+      expect(share.shared, hasLength(1));
+      share.gate!.complete();
+      await tester.pumpAndSettle();
+
+      await tester.tap(shareButton());
+      await tester.pumpAndSettle();
+      expect(share.shared, hasLength(2));
+    });
+
+    testWidgets('toque duplo em "Abrir fonte": uma abertura só', (
+      tester,
+    ) async {
+      launcher.gate = Completer<void>();
+      await pumpPage(tester);
+
+      await tester.tap(sourceButton());
+      await tester.tap(sourceButton());
+      await tester.pump();
+
+      expect(launcher.openedUrls, hasLength(1));
+      launcher.gate!.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('rótulos e botões de 48 dp', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpPage(tester);
+
+      expect(find.bySemanticsLabel('Compartilhar'), findsOneWidget);
+      expect(find.bySemanticsLabel('Abrir fonte'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.share2), findsOneWidget);
+      expect(find.byIcon(LucideIcons.externalLink), findsOneWidget);
+      for (final key in [
+        NewsDetailActions.shareKey,
+        NewsDetailActions.sourceKey,
+      ]) {
+        final size = tester.getSize(find.byKey(key));
+        expect(size.width, greaterThanOrEqualTo(48));
+        expect(size.height, greaterThanOrEqualTo(48));
+      }
+      handle.dispose();
+    });
+  });
+
+  group('atividade relacionada', () {
+    const module = SuggestedModuleEntity(
+      id: 'm1',
+      title: 'Golpes no WhatsApp',
+      description: 'Aprenda a reconhecer golpes.',
+      lessonsCount: 3,
+    );
+
+    void detailWith({SuggestedModuleEntity? suggested = module}) =>
+        repository.detailResults.add(
+          Right(
+            NewsDetailResult(
+              detail: newsDetail('n1', suggestedModule: suggested),
+              isFromCache: false,
+            ),
+          ),
+        );
+
+    Finder card() => find.byKey(RelatedActivityCard.cardKey);
+
+    testWidgets('visitante vê o bloco depois do texto', (tester) async {
+      detailWith();
+
+      await pumpPage(tester);
+
+      expect(find.text('Pratique o que aprendeu'), findsOneWidget);
+      expect(find.text('Golpes no WhatsApp'), findsOneWidget);
+      expect(find.text('Aprenda a reconhecer golpes.'), findsOneWidget);
+      expect(find.text('3 perguntas'), findsOneWidget);
+      expect(
+        tester.getTopLeft(card()).dy,
+        greaterThan(tester.getBottomLeft(find.text('Texto')).dy),
+      );
+    });
+
+    testWidgets('com conta também vê o bloco', (tester) async {
+      await session.saveSession(
+        accessToken: 'tk',
+        refreshToken: 'rf',
+        email: 'ana@test.com',
+        userName: 'Ana',
+      );
+      detailWith();
+
+      await pumpPage(tester);
+
+      expect(card(), findsOneWidget);
+    });
+
+    testWidgets('tocar abre /activities/m1 e ao voltar o detalhe segue igual', (
+      tester,
+    ) async {
+      detailWith();
+      await pumpPage(tester);
+
+      await tester.tap(card());
+      await tester.pumpAndSettle();
+
+      expect(find.text('módulo m1'), findsOneWidget);
+
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícia n1'), findsOneWidget);
+      expect(card(), findsOneWidget);
+      expect(repository.detailCalls, ['n1']);
+    });
+
+    testWidgets('toque duplo: uma navegação só', (tester) async {
+      detailWith();
+      await pumpPage(tester);
+
+      await tester.tap(card());
+      await tester.tap(card());
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícia n1'), findsOneWidget);
+      expect(find.text('módulo m1'), findsNothing);
+    });
+
+    testWidgets('sem módulo sugerido: sem bloco', (tester) async {
+      detailWith(suggested: null);
+
+      await pumpPage(tester);
+
+      expect(card(), findsNothing);
+      expect(find.text('Pratique o que aprendeu'), findsNothing);
+    });
+
+    testWidgets('descrição vazia não deixa buraco', (tester) async {
+      detailWith(
+        suggested: const SuggestedModuleEntity(
+          id: 'm1',
+          title: 'Golpes no WhatsApp',
+          description: '',
+          lessonsCount: 3,
+        ),
+      );
+
+      await pumpPage(tester);
+
+      expect(card(), findsOneWidget);
+      expect(find.byKey(RelatedActivityCard.descriptionKey), findsNothing);
+    });
+
+    testWidgets('rótulo e área de 48 dp', (tester) async {
+      final handle = tester.ensureSemantics();
+      detailWith();
+      await pumpPage(tester);
+
+      expect(
+        find.bySemanticsLabel(RegExp('Pratique o que aprendeu, Golpes')),
+        findsOneWidget,
+      );
+      final size = tester.getSize(card());
+      expect(size.height, greaterThanOrEqualTo(48));
       handle.dispose();
     });
   });

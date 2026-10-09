@@ -19,6 +19,14 @@ extension NewsDetailPresentation on NewsDetailEntity {
   /// O que a voz lê: título e texto; sem texto, só o título.
   String get spokenText =>
       hasContent ? '${news.title}.\n\n${content.trim()}' : news.title;
+
+  /// O que o menu de compartilhar leva: título, fonte e endereço da fonte,
+  /// em linhas; sem endereço válido, só título e fonte (FR-019).
+  String get shareText => [
+    news.title,
+    news.source,
+    if (hasSource) news.sourceUrl.trim(),
+  ].where((line) => line.trim().isNotEmpty).join('\n');
 }
 
 /// "lenta", "normal" ou "rápida".
