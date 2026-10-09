@@ -25,6 +25,8 @@ visitante da [feature 005](../005-shell-navegacao-base/spec.md) · cartões e da
 
 - Q: Com o app em inglês, em que idioma a voz lê a notícia (que vem em português)? → A: No
   idioma do app, como o RF-042 já diz. Fecha o ponto em aberto do RF-042.
+- Q: O módulo sugerido vem para o visitante? → A: Sim. Conferido no servidor (o openapi dizia
+  "se autenticado"); o visitante também vê o bloco de atividade relacionada.
 - Q: Como a A5 entrega a lista de notícias salvas? → A: Tela "Notícias salvas" numa rota nova
   `/news/saved`, do módulo news, com cópia offline. O atalho no Perfil fica para a B7 (trilha B);
   até lá, só a entrada de desenvolvimento abre a tela.
@@ -187,9 +189,9 @@ Tocar no bloco abre esse módulo na trilha de atividades.
 **Why this priority**: RF-018 liga a notícia ao aprendizado, mas depende do serviço sugerir um
 módulo e da tela de atividades (B2) para ter valor completo.
 
-**Independent Test**: com conta, abrir uma notícia com módulo sugerido, ver o bloco e tocar para
-abrir `/activities/<id do módulo>`; abrir uma notícia sem sugestão e ver que o bloco não
-aparece.
+**Independent Test**: como visitante, abrir uma notícia com módulo sugerido (ex.: categoria
+"Golpes no WhatsApp"), ver o bloco e tocar para abrir `/activities/<id do módulo>`; abrir uma
+notícia sem sugestão (ex.: só "Segurança Bancária") e ver que o bloco não aparece.
 
 **Acceptance Scenarios**:
 
@@ -229,7 +231,7 @@ aparece.
   guardada não muda.
 - **Mesma notícia em duas páginas da lista de salvas**: aparece uma vez só (CB-007).
 - **Visitante que entra pelo convite e volta ao detalhe**: o detalhe é recarregado para trazer o
-  estado de salvo e o módulo sugerido daquela conta.
+  estado de salvo daquela conta.
 - **Fonte do sistema grande (até 2×)**: título, botões e bloco de atividade não se sobrepõem; os
   botões de ação quebram para outra linha em vez de cortar o texto.
 - **Leitor de tela (TalkBack)**: a ordem de leitura é título, fonte, data, ações, texto e bloco
@@ -250,8 +252,8 @@ aparece.
 - **FR-002**: O detalhe MUST mostrar os estados carregando (com "Conectando ao servidor…" após
   alguns segundos), erro com "Tentar novamente" e "Notícia não encontrada" sem "Tentar
   novamente".
-- **FR-003**: O visitante MUST ver o detalhe sem credencial; quem tem conta MUST receber o estado
-  de salvo e, quando houver, o módulo sugerido.
+- **FR-003**: O visitante MUST ver o detalhe sem credencial, inclusive o módulo sugerido; quem
+  tem conta MUST receber também o estado de salvo.
 - **FR-004**: Com conta, abrir o detalhe MUST registrar a leitura no serviço uma vez por
   abertura, sem bloquear nem atrasar a tela; a falha do registro MUST NOT aparecer para a
   pessoa. O visitante MUST NOT registrar leitura.
@@ -305,8 +307,8 @@ aparece.
 **Atividade relacionada (RF-018)**
 
 - **FR-021**: Com módulo sugerido, o detalhe MUST mostrar, depois do texto, um bloco com título,
-  descrição e número de perguntas do módulo; tocar MUST abrir `/activities/<id do módulo>`. Sem
-  sugestão, o bloco MUST NOT aparecer.
+  descrição e número de perguntas do módulo, para visitante e para quem tem conta; tocar MUST
+  abrir `/activities/<id do módulo>`. Sem sugestão, o bloco MUST NOT aparecer.
 
 **Acessibilidade e textos (RNF-003, RNF-004)**
 
@@ -324,7 +326,8 @@ aparece.
 - **Página de notícias salvas**: lista de notícias (formato do feed), página atual e se há
   próxima.
 - **Cópia offline**: a primeira página da lista de salvas e o texto completo das notícias salvas
-  abertas, guardados no aparelho da conta atual.
+  abertas, guardados no aparelho da conta atual. A lista do serviço não traz o texto completo,
+  por isso ele vem do detalhe.
 
 ## Success Criteria *(mandatory)*
 
@@ -360,16 +363,18 @@ aparece.
 - **Cópia offline**: a lista guarda só a primeira página; o texto completo é guardado ao abrir o
   detalhe de uma notícia salva (ou ao salvá-la no detalhe) e apagado ao remover dos salvos. A
   cópia é por conta e é apagada ao sair.
-- **Módulo sugerido para visitante**: a API diz que vem "se autenticado"; para o visitante, o
-  bloco não aparece se o serviço não enviar. Conferir no servidor se vem também sem token.
+- **Módulo sugerido para visitante**: o openapi diz que vem "se autenticado", mas o servidor
+  envia também sem token (conferido em 2026-10-09, [research.md](research.md) R0). O visitante
+  vê o bloco e pode fazer a atividade como visitante (RN-006).
 - **Registro de leitura**: um pedido por abertura do detalhe com conta; o serviço é idempotente,
   então reabrir a mesma notícia não conta duas vezes.
 - **Estado entre telas**: salvar no detalhe não precisa atualizar o feed nem os Reels já
   carregados; a lista de salvas recarrega ao voltar do detalhe.
 - **Compartilhamento**: texto simples (título, fonte e endereço), sem imagem.
-- **Contrato da API**: `GET /app/news/{id}`, `POST /read` e `GET /users/me/news/saved` estão 🧪 no
-  contrato; os formatos serão conferidos no servidor real antes da camada de dados, e o contrato
-  atualizado para ✅.
+- **Contrato da API**: `GET /app/news/{id}`, `POST /read` e `GET /users/me/news/saved` foram
+  conferidos no servidor real em 2026-10-09 ([research.md](research.md) R0) e estão ✅ no
+  contrato. O item da lista de salvas não traz o texto completo. Falta conferir a ordem da lista
+  com mais de uma notícia (teste no aparelho).
 - **Dependências**: features 002 (cliente de API, renovação de sessão), 005 (rota `/news/:id`,
   rota `/activities/:moduleId`, convite para visitante, estados comuns), 006 (cartão de notícia,
   formato de data, categorias, aviso de offline), 007 (voz, compartilhar, abrir endereço), 008

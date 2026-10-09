@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.4 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-08
+**Versão**: 1.0.5 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-09
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -87,11 +87,11 @@ Validação (RN-001, igual ao backend): `name` 6–150; `email` ≤ 255 e format
 | ✅ | `GET /app/news?page&limit&category=<slug>&search&startDate&endDate&sortBy&sortOrder` → `{data[], meta}` | opcional | RF-009 filtro por categoria, RF-011 busca |
 | ✅ | `GET /categories` → `category[]` | não | chips de filtro do feed |
 | ✅ | `GET /app/news/reels?cursor&limit` (limit ≤ 50) → `{data[], nextCursor}` | opcional | RF-013 e carrossel do feed |
-| 🧪 | `GET /app/news/{id}` → `newsDetail` | opcional | RF-014, RF-018 |
+| ✅ | `GET /app/news/{id}` → `newsDetail` | opcional | RF-014, RF-018 |
 | ✅ | `POST /app/news/{id}/like` → `{liked, likesCount}` (alterna) | sim | RF-019 curtir |
 | ✅ | `POST /app/news/{id}/save` → `{saved}` (alterna) | sim | RF-019 salvar |
-| 🧪 | `POST /app/news/{id}/read` → 204 (idempotente) | sim | registra leitura ao abrir o detalhe (cadastrado) |
-| 🧪 | `GET /users/me/news/saved?page&limit` → `{data[], meta}` | sim | lista de salvas, cache offline (RNF-002), contagem no perfil |
+| ✅ | `POST /app/news/{id}/read` → 204 (idempotente) | sim | registra leitura ao abrir o detalhe (cadastrado) |
+| ✅ | `GET /users/me/news/saved?page&limit` → `{data[], meta}` | sim | lista de salvas, cache offline (RNF-002), contagem no perfil |
 
 Erros: 404 `NEWS_NOT_FOUND` no detalhe/like/save → "Notícia não encontrada".
 
@@ -113,6 +113,18 @@ Erros: 404 `NEWS_NOT_FOUND` no detalhe/like/save → "Notícia não encontrada".
 - `interaction` vem **também sem token**, com tudo `false`.
 - Ordem do feed e da lista: `publishedAt` decrescente.
 
+**Conferido no servidor em 2026-10-09** (feature 010, `specs/010-detalhe-noticia/research.md`,
+com uma conta de teste desativada no fim):
+- `GET /app/news/{id}` sem token → 200, `interaction` tudo `false` e **`suggestedModule` presente**
+  quando alguma categoria tem módulo (`null` quando não tem). Id inexistente → 404
+  `NEWS_NOT_FOUND`.
+- `POST /app/news/{id}/read` → 204 sem corpo, repetido → 204; sem token → 401
+  `TOKEN_NOT_PROVIDED`.
+- `POST /app/news/{id}/save` → `{saved: true}` e, de novo, `{saved: false}` (como na 1.0.4).
+- `GET /users/me/news/saved` → `{data[], meta: {page, limit, total, totalPages, hasNextPage,
+  hasPreviousPage}}`; sem token → 401. O item **não traz `content`, `createdAt` nem
+  `isHighlight`** (ver `savedItem`).
+
 `newsItem` (feed, lista): `{ id, title, source, sourceUrl, imageUrl?, originalPublishedAt,
 publishedAt?, createdAt, isHighlight, categories: [{id, name, slug}], interaction?: {isLiked,
 isSaved, isRead} }`. **Não há `summary`**: o card mostra título, fonte, data e categorias.
@@ -121,10 +133,13 @@ isSaved, isRead} }`. **Não há `summary`**: o card mostra título, fonte, data 
 Reels é um trecho de `content` cortado no app. O reel **não traz `isLiked`**: o ícone começa
 desmarcado e passa a refletir o `liked` devolvido pelo toggle.
 
+`savedItem` (`/users/me/news/saved`): `{ id, title, source, sourceUrl, imageUrl?, publishedAt?,
+originalPublishedAt, categories, interaction }`, sem `content`, `createdAt` e `isHighlight`.
+
 `newsDetail`: `newsItem` + `{ content, likesCount, readsCount, suggestedModule?: {id, title,
-description, iconUrl?, lessonsCount} }`. A API diz que `suggestedModule` vem "se autenticado".
-Para o visitante, o bloco de atividade relacionada (RF-018) fica oculto. ⚠️ Confirmar no
-servidor se ele vem também sem token.
+description, iconUrl?, lessonsCount} | null }`. O openapi diz que `suggestedModule` vem "se
+autenticado", mas o servidor envia também sem token (conferido em 2026-10-09): o visitante vê o
+bloco de atividade relacionada (RF-018).
 
 - **Selo de veracidade: ❌ não existe na API.** Decisão (2026-10-03): o app exibe as
   **categorias** da notícia no lugar do selo (RF-012 revisado).
@@ -221,6 +236,9 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
+- **1.0.5 (2026-10-09)**: detalhe, registro de leitura e lista de salvas conferidos no servidor
+  real (specs/010, R0): `suggestedModule` vem também sem token; `savedItem` sem `content`,
+  `createdAt` e `isHighlight`; `read` idempotente com 204.
 - **1.0.4 (2026-10-08)**: like e save conferidos no servidor real pelo app (specs/008, T039):
   alternam e devolvem `{liked, likesCount}` e `{saved}`; `isSaved` e `likesCount` voltam no
   reel ao reabrir, `isLiked` não.

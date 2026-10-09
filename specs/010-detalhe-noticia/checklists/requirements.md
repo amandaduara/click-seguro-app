@@ -36,5 +36,6 @@
   implementação.
 - As duas decisões em aberto (idioma da voz e entrega da lista de salvas) foram respondidas
   pelo usuário em 2026-10-09 e estão em Clarifications.
-- Itens a conferir no servidor antes da camada de dados: formato do detalhe, do registro de
-  leitura e da lista de salvas (🧪 no contrato) e se o módulo sugerido vem sem token.
+- Formatos conferidos no servidor em 2026-10-09 ([research.md](../research.md) R0); o módulo
+  sugerido vem também sem token, e a spec foi ajustada (FR-003, FR-021). Falta só a ordem da
+  lista de salvas com mais de uma notícia, no teste do aparelho.
