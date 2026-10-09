@@ -173,7 +173,7 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
     com teste.
   - Widgets `NewsCardWidget`, `CategoryFilterBar`, `HighlightsSection`, `ReelsCarousel` e
     `FeedPage` (saudação, loading, erro, vazio, banner offline), com widget test.
-- [ ] **A4 Reels** (RF-013, RF-019 curtir)
+- [x] **A4 Reels** (RF-013, RF-019 curtir) (specs/008-reels-curtir-salvar)
   - Endpoints: `/app/news/reels` (cursor), `POST /app/news/{id}/like` e `/save` (alternam).
   - `ReelEntity` (com `content`, `likesCount`, `isSaved`) + model, com teste. O reel não traz
     `isLiked`: o estado vem do retorno do toggle.
