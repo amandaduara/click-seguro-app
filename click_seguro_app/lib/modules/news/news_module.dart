@@ -13,12 +13,16 @@ import 'package:click_seguro_app/modules/news/domain/repositories/news_repositor
 import 'package:click_seguro_app/modules/news/domain/usecases/get_categories_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_page_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_reels_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_saved_news_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/reels_controller.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -31,7 +35,10 @@ class NewsModule implements ModuleInterface {
         () => NewsRemoteDataSourceImpl(injector<ApiClient>()),
       )
       ..registerLazySingleton<NewsLocalDataSource>(
-        () => NewsLocalDataSourceImpl(injector<LocalCacheService>()),
+        () => NewsLocalDataSourceImpl(
+          injector<LocalCacheService>(),
+          owner: () => injector<UserSessionService>().email ?? 'guest',
+        ),
       )
       ..registerLazySingleton<NewsRepository>(
         () => NewsRepositoryImpl(
@@ -53,6 +60,15 @@ class NewsModule implements ModuleInterface {
       )
       ..registerLazySingleton(
         () => ToggleSaveUseCase(injector<NewsRepository>()),
+      )
+      ..registerLazySingleton(
+        () => GetNewsDetailUseCase(injector<NewsRepository>()),
+      )
+      ..registerLazySingleton(
+        () => MarkNewsAsReadUseCase(injector<NewsRepository>()),
+      )
+      ..registerLazySingleton(
+        () => GetSavedNewsUseCase(injector<NewsRepository>()),
       );
   }
 
@@ -60,6 +76,15 @@ class NewsModule implements ModuleInterface {
   /// detalhe (FR-025).
   @override
   List<SingleChildWidget> providers(GetIt injector) => [
+    // Ouve a sessão desde a abertura (R3 de specs/010-detalhe-noticia).
+    Provider<_AccountCopiesCleaner>(
+      lazy: false,
+      create: (_) => _AccountCopiesCleaner(
+        injector<UserSessionService>().sessionStatus,
+        injector<NewsLocalDataSource>(),
+      ),
+      dispose: (_, cleaner) => cleaner.dispose(),
+    ),
     ChangeNotifierProvider(
       create: (_) => FeedController(
         getFeed: injector<GetFeedUseCase>(),
@@ -79,4 +104,23 @@ class NewsModule implements ModuleInterface {
       ),
     ),
   ];
+}
+
+/// Apaga as cópias da conta (detalhes e salvas) quando a sessão acaba, por
+/// sair ou por expirar (FR-018); a do feed fica.
+class _AccountCopiesCleaner {
+  _AccountCopiesCleaner(this._sessionStatus, this._local) {
+    _sessionStatus.addListener(_onSessionChanged);
+  }
+
+  final ValueListenable<UserSessionStatus> _sessionStatus;
+  final NewsLocalDataSource _local;
+
+  void _onSessionChanged() {
+    if (_sessionStatus.value == UserSessionStatus.unauthenticated) {
+      unawaited(_local.clearAccountCopies());
+    }
+  }
+
+  void dispose() => _sessionStatus.removeListener(_onSessionChanged);
 }

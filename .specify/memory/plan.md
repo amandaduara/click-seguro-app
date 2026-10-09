@@ -146,6 +146,7 @@ As abas usam `StatefulShellRoute.indexedStack` (o estado de cada aba é preserva
 | `/help` | Central de ajuda | help | **aba 3** |
 | `/profile` | Perfil | profile | **aba 4** |
 | `/reels?start=:newsId` | Reels | news | **aba central** ("Notícias"), sem barra superior |
+| `/news/saved` | Notícias salvas (A5; atalho no Perfil na B7). Declarada antes de `/news/:id` | news | sobre as abas |
 | `/news/:id` | Detalhe | news | sobre as abas |
 | `/notifications` | Alertas | notifications | sobre as abas |
 | `/activities/:moduleId` | Perguntas → feedback → conclusão | activities | sobre as abas |

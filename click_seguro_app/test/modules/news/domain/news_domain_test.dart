@@ -4,7 +4,10 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.d
 import 'package:click_seguro_app/modules/news/domain/usecases/get_categories_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_page_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_saved_news_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_reels_usecase.dart';
@@ -175,6 +178,68 @@ void main() {
       expect(save.getLeft().toNullable(), isA<ConnectionFailure>());
       expect(repository.likeCalls, ['n1']);
       expect(repository.saveCalls, ['n2']);
+    });
+  });
+
+  group('detalhe e salvas (specs/010)', () {
+    late FakeNewsRepository repository;
+
+    setUp(() => repository = FakeNewsRepository());
+
+    test('GetNewsDetailUseCase repassa o id', () async {
+      final result = await GetNewsDetailUseCase(repository)('n7');
+
+      expect(result.getRight().toNullable()!.detail.id, 'n7');
+      expect(repository.detailCalls, ['n7']);
+    });
+
+    test('MarkNewsAsReadUseCase repassa o id e a falha', () async {
+      repository.readResults.add(const Left(ConnectionFailure()));
+
+      final result = await MarkNewsAsReadUseCase(repository)('n7');
+
+      expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+      expect(repository.readCalls, ['n7']);
+    });
+
+    test('GetSavedNewsUseCase repassa a página', () async {
+      final result = await GetSavedNewsUseCase(repository)(3);
+
+      expect(result.isRight(), isTrue);
+      expect(repository.savedCalls, [3]);
+    });
+
+    test('hasSource: só endereço http(s)', () {
+      expect(newsDetail('n1').hasSource, isTrue);
+      expect(
+        newsDetail('n1', sourceUrl: 'http://fonte.test').hasSource,
+        isTrue,
+      );
+      expect(newsDetail('n1', sourceUrl: '').hasSource, isFalse);
+      expect(
+        newsDetail('n1', sourceUrl: 'ftp://fonte.test/x').hasSource,
+        isFalse,
+      );
+      expect(newsDetail('n1', sourceUrl: 'fonte.test/x').hasSource, isFalse);
+    });
+
+    test('isSaved acompanha interaction.isSaved', () {
+      expect(newsDetail('n1', isSaved: true).isSaved, isTrue);
+      expect(newsDetail('n1').isSaved, isFalse);
+    });
+
+    test('copyWith(isSaved:) troca só interaction.isSaved', () {
+      final original = newsDetail('n1', content: 'Corpo');
+
+      final saved = original.copyWith(isSaved: true);
+
+      expect(saved.isSaved, isTrue);
+      expect(saved.news.interaction.isRead, original.news.interaction.isRead);
+      expect(saved.news.title, original.news.title);
+      expect(saved.content, 'Corpo');
+      expect(saved.likesCount, original.likesCount);
+      expect(original.isSaved, isFalse);
+      expect(original.copyWith().isSaved, isFalse);
     });
   });
 }

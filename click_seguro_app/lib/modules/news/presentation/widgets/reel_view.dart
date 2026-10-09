@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
@@ -36,7 +36,7 @@ class ReelView extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final String? image = reel.news.imageUrl;
     final List<String> categories = reel.news.categoryLabels();
-    const Color onDark = AppColors.textPrimaryForeground;
+    final Color onDark = context.colors.textPrimaryForeground;
     final Widget? footer = this.footer;
 
     return ColoredBox(
@@ -139,7 +139,7 @@ class ReelView extends StatelessWidget {
                             onPressed: onReadFull,
                             style: FilledButton.styleFrom(
                               backgroundColor: onDark,
-                              foregroundColor: AppColors.secondary,
+                              foregroundColor: context.colors.secondary,
                               minimumSize: const Size(48, 48),
                               shape: const StadiumBorder(),
                               textStyle: textTheme.bodyMedium?.copyWith(
@@ -173,9 +173,9 @@ class _NoImage extends StatelessWidget {
   const _NoImage();
 
   @override
-  Widget build(BuildContext context) => const ColoredBox(
-    color: AppColors.secondary,
-    child: Center(
+  Widget build(BuildContext context) => ColoredBox(
+    color: context.colors.secondary,
+    child: const Center(
       child: Icon(LucideIcons.newspaper, size: 64, color: Color(0x4DFFFFFF)),
     ),
   );
@@ -197,7 +197,7 @@ class _CategoryChip extends StatelessWidget {
       label,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
         fontWeight: FontWeight.w600,
-        color: AppColors.textPrimaryForeground,
+        color: context.colors.textPrimaryForeground,
       ),
     ),
   );

@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_remote_data_source_impl.dart';
+import 'package:click_seguro_app/modules/news/data/models/news_list_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -118,6 +119,80 @@ void main() {
             'type',
             ApiErrorType.invalidResponse,
           ),
+        ),
+      );
+    });
+  });
+
+  group('detalhe, leitura e salvas (specs/010)', () {
+    test('getNewsDetail faz GET e devolve o JSON cru', () async {
+      adapter.body = newsDetailJson(
+        id: 'n1',
+        suggestedModule: suggestedModuleJson(),
+      );
+
+      final json = await dataSource.getNewsDetail('n1');
+
+      final request = adapter.lastRequest!;
+      expect(request.method, 'GET');
+      expect(request.path, '/app/news/n1');
+      expect(json['id'], 'n1');
+      expect(json['content'], 'Texto completo');
+      expect(json['suggestedModule'], isA<Map<String, dynamic>>());
+    });
+
+    test(
+      'markAsRead faz POST com o Bearer; 204 sem corpo não dá erro',
+      () async {
+        await session.saveSession(
+          accessToken: 'tk',
+          refreshToken: 'rf',
+          email: 'a@b.c',
+          userName: 'Ana',
+        );
+        adapter
+          ..statusCode = 204
+          ..body = null;
+
+        await dataSource.markAsRead('n1');
+
+        final request = adapter.lastRequest!;
+        expect(request.method, 'POST');
+        expect(request.path, '/app/news/n1/read');
+        expect(request.headers['Authorization'], 'Bearer tk');
+      },
+    );
+
+    test('getSavedNews pede a página com 20 por página', () async {
+      adapter.body = savedListJson(
+        items: [newsItemJson(id: 'n1', isSaved: true)],
+        page: 2,
+        hasNextPage: true,
+      );
+
+      final json = await dataSource.getSavedNews(page: 2);
+
+      final request = adapter.lastRequest!;
+      expect(request.path, NewsRemoteDataSourceImpl.savedPath);
+      expect(request.path, '/users/me/news/saved');
+      expect(request.queryParameters, {'page': 2, 'limit': 20});
+      expect(NewsRemoteDataSourceImpl.savedPageSize, 20);
+      expect(NewsListModel.fromJson(json).items.single.id, 'n1');
+    });
+
+    test('404 NEWS_NOT_FOUND vira ApiException com statusCode 404', () async {
+      adapter
+        ..statusCode = 404
+        ..body = {
+          'statusCode': 404,
+          'code': 'NEWS_NOT_FOUND',
+          'message': 'Notícia não encontrada',
+        };
+
+      await expectLater(
+        dataSource.getNewsDetail('x'),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 404),
         ),
       );
     });

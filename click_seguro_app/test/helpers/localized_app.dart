@@ -8,13 +8,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Monta [child] (ou [router]) com o `EasyLocalization` real e as traduções
 /// de `assets/translations`, em pt-BR. [providers] ficam acima do app, como o
 /// `MultiProvider` dos módulos no `main.dart`. Com [settle] falso, não espera
-/// as animações terminarem (ex.: um indicador de carregando sem fim).
+/// as animações terminarem (ex.: um indicador de carregando sem fim). O
+/// idioma inicial é [locale] (padrão pt-BR). [theme] troca o tema do app (ex.:
+/// o de alto contraste).
 Future<void> pumpLocalized(
   WidgetTester tester, {
   Widget? child,
   RouterConfig<Object>? router,
   List<SingleChildWidget> providers = const [],
   bool settle = true,
+  Locale locale = const Locale('pt', 'BR'),
+  ThemeData? theme,
 }) async {
   assert((child == null) != (router == null), 'Informe child ou router');
   SharedPreferences.setMockInitialValues({});
@@ -24,12 +28,14 @@ Future<void> pumpLocalized(
   Widget app(BuildContext context) => router != null
       ? MaterialApp.router(
           routerConfig: router,
+          theme: theme,
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
           locale: context.locale,
         )
       : MaterialApp(
           home: child,
+          theme: theme,
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
           locale: context.locale,
@@ -43,7 +49,7 @@ Future<void> pumpLocalized(
         supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
         path: 'assets/translations',
         fallbackLocale: const Locale('pt', 'BR'),
-        startLocale: const Locale('pt', 'BR'),
+        startLocale: locale,
         child: providers.isEmpty
             ? Builder(builder: app)
             : MultiProvider(

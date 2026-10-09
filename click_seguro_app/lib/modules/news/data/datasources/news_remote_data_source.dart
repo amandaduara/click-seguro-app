@@ -29,4 +29,13 @@ abstract class NewsRemoteDataSource {
 
   /// `POST /app/news/{id}/save` (alterna); devolve se ficou salva.
   Future<bool> toggleSave(String id);
+
+  /// Resposta crua de `GET /app/news/{id}` (guardada como cópia).
+  Future<Map<String, dynamic>> getNewsDetail(String id);
+
+  /// `POST /app/news/{id}/read` (204, idempotente).
+  Future<void> markAsRead(String id);
+
+  /// Resposta crua de `GET /users/me/news/saved` (a página 1 vira cópia).
+  Future<Map<String, dynamic>> getSavedNews({required int page});
 }

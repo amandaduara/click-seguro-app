@@ -173,7 +173,7 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
     com teste.
   - Widgets `NewsCardWidget`, `CategoryFilterBar`, `HighlightsSection`, `ReelsCarousel` e
     `FeedPage` (saudação, loading, erro, vazio, banner offline), com widget test.
-- [ ] **A4 Reels** (RF-013, RF-019 curtir)
+- [x] **A4 Reels** (RF-013, RF-019 curtir) (specs/008-reels-curtir-salvar)
   - Endpoints: `/app/news/reels` (cursor), `POST /app/news/{id}/like` e `/save` (alternam).
   - `ReelEntity` (com `content`, `likesCount`, `isSaved`) + model, com teste. O reel não traz
     `isLiked`: o estado vem do retorno do toggle.
@@ -181,7 +181,7 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
   - `ReelsController` com teste.
   - `ReelsPage` com `PageView` vertical (swipe), botões de navegação, curtir/salvar (visitante →
     `requireAccount`) e abrir fonte (`ExternalLauncherService`), com widget test.
-- [ ] **A5 Detalhe da notícia** (RF-014 a RF-019, CB-008)
+- [x] **A5 Detalhe da notícia** (RF-014 a RF-019, CB-008) (specs/010-detalhe-noticia)
   - ⚠️ Antes de começar: decidir o idioma da voz na leitura da notícia (ponto em aberto do RF-042;
     app em inglês + notícia em português).
   - Endpoints: `/app/news/{id}`, `POST /app/news/{id}/read`, `/save`,

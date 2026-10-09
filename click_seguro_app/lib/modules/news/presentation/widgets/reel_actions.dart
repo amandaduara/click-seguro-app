@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -76,14 +76,14 @@ class ReelActions extends StatelessWidget {
           label: likeLabel,
           onTap: onLike,
           selected: isLiked,
-          selectedColor: AppColors.primary,
+          selectedColor: context.colors.primary,
         ),
         ExcludeSemantics(
           child: Text(
             likesText,
             style: textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimaryForeground,
+              color: context.colors.textPrimaryForeground,
             ),
           ),
         ),
@@ -95,7 +95,7 @@ class ReelActions extends StatelessWidget {
           label: saveLabel,
           onTap: onSave,
           selected: isSaved,
-          selectedColor: AppColors.textPrimaryForeground,
+          selectedColor: context.colors.textPrimaryForeground,
         ),
         if (openSource != null)
           _RoundButton(
@@ -119,7 +119,7 @@ class _RoundButton extends StatelessWidget {
     required this.onTap,
     this.selectedIcon,
     this.selected = false,
-    this.selectedColor = AppColors.textPrimaryForeground,
+    this.selectedColor,
   });
 
   static const double _visualSize = 40;
@@ -132,14 +132,15 @@ class _RoundButton extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
   final bool selected;
-  final Color selectedColor;
+
+  /// `null` usa a cor do ícone sem seleção.
+  final Color? selectedColor;
 
   @override
   Widget build(BuildContext context) {
     final bool enabled = onTap != null;
-    final Color color = selected
-        ? selectedColor
-        : AppColors.textPrimaryForeground;
+    final Color onDark = context.colors.textPrimaryForeground;
+    final Color color = selected ? selectedColor ?? onDark : onDark;
     return Semantics(
       button: true,
       enabled: enabled,

@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/saved_news_result.dart';
 import 'package:click_seguro_app/modules/news/domain/repositories/news_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -68,6 +70,35 @@ List<ReelEntity> reels(int count, {int start = 1}) => [
   for (var i = start; i < start + count; i++) reel('r$i'),
 ];
 
+/// Detalhe de teste (`sourceUrl` padrão `https://fonte.test/n`).
+NewsDetailEntity newsDetail(
+  String id, {
+  String content = 'Texto',
+  bool isSaved = false,
+  SuggestedModuleEntity? suggestedModule,
+  String sourceUrl = 'https://fonte.test/n',
+  int likesCount = 2,
+  String? imageUrl,
+}) {
+  final base = newsItem(id, interaction: NewsInteraction(isSaved: isSaved));
+  return NewsDetailEntity(
+    news: NewsItemEntity(
+      id: base.id,
+      title: base.title,
+      source: base.source,
+      sourceUrl: sourceUrl,
+      imageUrl: imageUrl,
+      originalPublishedAt: base.originalPublishedAt,
+      categories: base.categories,
+      interaction: base.interaction,
+    ),
+    content: content,
+    likesCount: likesCount,
+    readsCount: 1,
+    suggestedModule: suggestedModule,
+  );
+}
+
 NewsFeedEntity newsFeed({
   List<NewsItemEntity> highlights = const [],
   List<NewsItemEntity> recommended = const [],
@@ -114,6 +145,19 @@ class FakeNewsRepository implements NewsRepository {
   /// Filas de respostas; vazias → sucesso padrão.
   final List<Either<Failure, LikeResultEntity>> likeResults = [];
   final List<Either<Failure, bool>> saveResults = [];
+
+  /// Filas de respostas do detalhe, da leitura e das salvas (specs/010);
+  /// vazias → sucesso padrão.
+  final List<Either<Failure, NewsDetailResult>> detailResults = [];
+  final List<Either<Failure, Unit>> readResults = [];
+  final List<Either<Failure, SavedNewsResult>> savedResults = [];
+
+  Completer<void>? detailGate;
+  Completer<void>? savedGate;
+  Completer<void>? readGate;
+  final List<String> detailCalls = [];
+  final List<String> readCalls = [];
+  final List<int> savedCalls = [];
 
   Completer<void>? reelsGate;
   Completer<void>? likeGate;
@@ -195,6 +239,43 @@ class FakeNewsRepository implements NewsRepository {
         ? const Right<Failure, bool>(true)
         : _next(saveResults);
     await saveGate?.future;
+    return result;
+  }
+
+  @override
+  Future<Either<Failure, NewsDetailResult>> getNewsDetail(String id) async {
+    detailCalls.add(id);
+    final result = detailResults.isEmpty
+        ? Right<Failure, NewsDetailResult>(
+            NewsDetailResult(detail: newsDetail(id), isFromCache: false),
+          )
+        : _next(detailResults);
+    await detailGate?.future;
+    return result;
+  }
+
+  @override
+  Future<Either<Failure, Unit>> markAsRead(String id) async {
+    readCalls.add(id);
+    final result = readResults.isEmpty
+        ? const Right<Failure, Unit>(unit)
+        : _next(readResults);
+    await readGate?.future;
+    return result;
+  }
+
+  @override
+  Future<Either<Failure, SavedNewsResult>> getSavedNews(int page) async {
+    savedCalls.add(page);
+    final result = savedResults.isEmpty
+        ? Right<Failure, SavedNewsResult>(
+            SavedNewsResult(
+              page: NewsPageEntity(items: const [], hasMore: false, page: page),
+              isFromCache: false,
+            ),
+          )
+        : _next(savedResults);
+    await savedGate?.future;
     return result;
   }
 }

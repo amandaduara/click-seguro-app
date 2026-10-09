@@ -203,9 +203,8 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   idioma cai em português) e as configurações MUST permitir escolher o idioma (Português/English).
   A escolha MUST ser salva no aparelho e valer para os textos do app e para a leitura em voz alta
   (RF-015, RF-040). O conteúdo das notícias vem da API e não é traduzido.
-  ⚠️ Ponto em aberto: com o app em inglês, a voz em inglês lê notícias escritas em português.
-  Decidir antes da A5 se a leitura da notícia usa sempre a voz em português (ver
-  `specs/007-servicos-plataforma-voz/spec.md`, Assumptions).
+  Decidido em 2026-10-09 (A5, `specs/010-detalhe-noticia`): a leitura da notícia também segue o
+  idioma do app; com o app em inglês, a voz em inglês lê notícias escritas em português.
 
 ### 3.9 Acessibilidade (B9)
 

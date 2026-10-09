@@ -249,4 +249,201 @@ void main() {
       expect(save.getLeft().toNullable(), isA<ServerFailure>());
     });
   });
+
+  group('getNewsDetail (specs/010)', () {
+    test('ok: resultado do servidor e grava a cópia', () async {
+      remote.detail = newsDetailJson(
+        id: 'n1',
+        content: 'Texto do servidor',
+        suggestedModule: suggestedModuleJson(),
+      );
+
+      final result = (await repository.getNewsDetail(
+        'n1',
+      )).getOrElse((_) => throw StateError('esperava Right'));
+
+      expect(result.isFromCache, isFalse);
+      expect(result.detail.content, 'Texto do servidor');
+      expect(result.detail.suggestedModule!.id, 'm1');
+      expect(remote.detailCalls, ['n1']);
+      expect(local.detailWrites, 1);
+      expect(local.details['n1'], remote.detail);
+    });
+
+    test(
+      'grava a cópia também com isSaved == false e para visitante',
+      () async {
+        remote.detail = newsDetailJson(id: 'n1', isSaved: false);
+
+        await repository.getNewsDetail('n1');
+
+        expect(local.details.keys, ['n1']);
+      },
+    );
+
+    for (final type in [ApiErrorType.connection, ApiErrorType.timeout]) {
+      test('${type.name} com cópia: devolve a cópia', () async {
+        remote.detailError = apiError(type);
+        local.details['n1'] = newsDetailJson(id: 'n1', content: 'Guardado');
+
+        final result = (await repository.getNewsDetail(
+          'n1',
+        )).getOrElse((_) => throw StateError('esperava Right'));
+
+        expect(result.isFromCache, isTrue);
+        expect(result.detail.content, 'Guardado');
+        expect(local.detailWrites, 0);
+      });
+    }
+
+    test('sem conexão e sem cópia: ConnectionFailure', () async {
+      remote.detailError = apiError(ApiErrorType.connection);
+
+      final result = await repository.getNewsDetail('n1');
+
+      expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+    });
+
+    test('erro server (500) não usa a cópia', () async {
+      remote.detailError = apiError(ApiErrorType.server);
+      local.details['n1'] = newsDetailJson(id: 'n1');
+
+      final result = await repository.getNewsDetail('n1');
+
+      expect(result.getLeft().toNullable(), isA<ServerFailure>());
+    });
+
+    test(
+      '404 NEWS_NOT_FOUND: NewsNotFoundFailure sem tocar na cópia',
+      () async {
+        remote.detailError = ApiException(
+          type: ApiErrorType.client,
+          message: 'x',
+          statusCode: 404,
+          errorCode: 'NEWS_NOT_FOUND',
+        );
+        local.details['n1'] = newsDetailJson(id: 'n1');
+
+        final result = await repository.getNewsDetail('n1');
+
+        expect(result.getLeft().toNullable(), isA<NewsNotFoundFailure>());
+        expect(local.details['n1'], isNotNull);
+        expect(local.detailWrites, 0);
+      },
+    );
+
+    test(
+      'resposta malformada: falha genérica, sem lançar nem gravar',
+      () async {
+        remote.detail = newsDetailJson(id: 'n1')..remove('title');
+
+        final result = await repository.getNewsDetail('n1');
+
+        expect(result.getLeft().toNullable(), isA<ServerFailure>());
+        expect(local.detailWrites, 0);
+      },
+    );
+  });
+
+  group('markAsRead (specs/010)', () {
+    test('sucesso: Right(unit)', () async {
+      final result = await repository.markAsRead('n1');
+
+      expect(result.isRight(), isTrue);
+      expect(remote.readCalls, ['n1']);
+    });
+
+    test('falha: Left', () async {
+      remote.markAsReadError = apiError(ApiErrorType.connection);
+
+      final result = await repository.markAsRead('n1');
+
+      expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+    });
+  });
+
+  group('getSavedNews (specs/010)', () {
+    test('página 1: resultado do servidor e grava a cópia', () async {
+      remote.savedPages[1] = savedListJson(
+        items: [newsItemJson(id: 's1', isSaved: true)],
+        hasNextPage: true,
+      );
+
+      final result = (await repository.getSavedNews(
+        1,
+      )).getOrElse((_) => throw StateError('esperava Right'));
+
+      expect(result.isFromCache, isFalse);
+      expect(result.page.items.single.id, 's1');
+      expect(result.page.hasMore, isTrue);
+      expect(result.page.page, 1);
+      expect(remote.savedCalls, [1]);
+      expect(local.savedWrites, 1);
+      expect(local.savedPage, remote.savedPages[1]);
+    });
+
+    test('só a página 1 grava a cópia', () async {
+      remote.savedPages[2] = savedListJson(
+        items: [newsItemJson(id: 's21', isSaved: true)],
+        page: 2,
+      );
+
+      final result = (await repository.getSavedNews(
+        2,
+      )).getOrElse((_) => throw StateError('esperava Right'));
+
+      expect(result.page.page, 2);
+      expect(local.savedWrites, 0);
+    });
+
+    for (final type in [ApiErrorType.connection, ApiErrorType.timeout]) {
+      test('${type.name} na página 1 com cópia: isFromCache', () async {
+        remote.savedError = apiError(type);
+        local.savedPage = savedListJson(
+          items: [newsItemJson(id: 'guardada', isSaved: true)],
+        );
+
+        final result = (await repository.getSavedNews(
+          1,
+        )).getOrElse((_) => throw StateError('esperava Right'));
+
+        expect(result.isFromCache, isTrue);
+        expect(result.page.items.single.id, 'guardada');
+      });
+    }
+
+    test('página 1 sem conexão e sem cópia: Left', () async {
+      remote.savedError = apiError(ApiErrorType.connection);
+
+      final result = await repository.getSavedNews(1);
+
+      expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+    });
+
+    test('página 2 sem internet: Left, sem cópia', () async {
+      remote.savedError = apiError(ApiErrorType.connection);
+      local.savedPage = savedListJson(items: newsItemsJson(1));
+
+      final result = await repository.getSavedNews(2);
+
+      expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+    });
+
+    test('erro server não usa a cópia', () async {
+      remote.savedError = apiError(ApiErrorType.server);
+      local.savedPage = savedListJson(items: newsItemsJson(1));
+
+      final result = await repository.getSavedNews(1);
+
+      expect(result.getLeft().toNullable(), isA<ServerFailure>());
+    });
+
+    test('401 vira UnauthorizedFailure', () async {
+      remote.savedError = apiError(ApiErrorType.unauthorized);
+
+      final result = await repository.getSavedNews(1);
+
+      expect(result.getLeft().toNullable(), isA<UnauthorizedFailure>());
+    });
+  });
 }

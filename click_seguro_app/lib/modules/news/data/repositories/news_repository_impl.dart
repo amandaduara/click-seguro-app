@@ -3,13 +3,17 @@ import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_failure_mapper.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_local_data_source.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_remote_data_source.dart';
+import 'package:click_seguro_app/modules/news/data/models/news_detail_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_feed_model.dart';
+import 'package:click_seguro_app/modules/news/data/models/news_list_model.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/saved_news_result.dart';
 import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:click_seguro_app/modules/news/domain/repositories/news_repository.dart';
 import 'package:fpdart/fpdart.dart';
@@ -23,6 +27,13 @@ class NewsRepositoryImpl implements NewsRepository {
     ApiErrorType.connection,
     ApiErrorType.timeout,
     ApiErrorType.server,
+  };
+
+  /// Falhas em que a cópia do detalhe e das salvas é usada (specs/010). Sem
+  /// `server`: erro do servidor não é falta de internet.
+  static const Set<ApiErrorType> _noConnectionErrors = {
+    ApiErrorType.connection,
+    ApiErrorType.timeout,
   };
 
   static const Map<String, dynamic> _noReels = {'data': <Object>[]};
@@ -91,6 +102,78 @@ class NewsRepositoryImpl implements NewsRepository {
   @override
   Future<Either<Failure, bool>> toggleSave(String newsId) =>
       _guardNews(() => _remote.toggleSave(newsId));
+
+  @override
+  Future<Either<Failure, NewsDetailResult>> getNewsDetail(String id) =>
+      _guardNews(() async {
+        try {
+          final json = await _remote.getNewsDetail(id);
+          final detail = _parseDetail(json);
+          await _local.writeDetail(json);
+          return NewsDetailResult(detail: detail, isFromCache: false);
+        } on ApiException catch (e) {
+          final cached = _noConnectionErrors.contains(e.type)
+              ? await _local.readDetail(id)
+              : null;
+          if (cached == null) rethrow;
+          return NewsDetailResult(
+            detail: _parseDetail(cached),
+            isFromCache: true,
+          );
+        }
+      });
+
+  @override
+  Future<Either<Failure, Unit>> markAsRead(String id) => _guard(() async {
+    await _remote.markAsRead(id);
+    return unit;
+  });
+
+  @override
+  Future<Either<Failure, SavedNewsResult>> getSavedNews(int page) =>
+      _guard(() async {
+        try {
+          final json = await _remote.getSavedNews(page: page);
+          final result = SavedNewsResult(
+            page: _parseSavedPage(json),
+            isFromCache: false,
+          );
+          if (page == 1) await _local.writeSavedPage(json);
+          return result;
+        } on ApiException catch (e) {
+          final cached = page == 1 && _noConnectionErrors.contains(e.type)
+              ? await _local.readSavedPage()
+              : null;
+          if (cached == null) rethrow;
+          return SavedNewsResult(
+            page: _parseSavedPage(cached),
+            isFromCache: true,
+          );
+        }
+      });
+
+  /// Resposta fora do formato vira [ApiErrorType.invalidResponse], como nos
+  /// pedidos que o `ApiClient` já converte.
+  NewsDetailEntity _parseDetail(Map<String, dynamic> json) =>
+      _parseOrInvalid(() => NewsDetailModel.fromJson(json).toEntity());
+
+  NewsPageEntity _parseSavedPage(Map<String, dynamic> json) =>
+      _parseOrInvalid(() => NewsListModel.fromJson(json).toEntity());
+
+  T _parseOrInvalid<T>(T Function() parser) {
+    try {
+      return parser();
+    } on TypeError catch (e) {
+      throw _invalidResponse(e);
+    } on FormatException catch (e) {
+      throw _invalidResponse(e);
+    }
+  }
+
+  ApiException _invalidResponse(Object error) => ApiException(
+    type: ApiErrorType.invalidResponse,
+    message: 'Resposta em formato inesperado: $error',
+  );
 
   /// Falha só nos Reels não derruba o feed: o carrossel fica oculto.
   Future<Map<String, dynamic>> _reelsOrEmpty() async {
