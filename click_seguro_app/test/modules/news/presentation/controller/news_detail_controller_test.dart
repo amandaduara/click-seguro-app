@@ -257,4 +257,138 @@ void main() {
       },
     );
   });
+
+  group('salvar', () {
+    late List<NewsDetailMessage> messages;
+
+    Future<void> loadWith({bool isSaved = false}) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail('n1', isSaved: isSaved),
+            isFromCache: false,
+          ),
+        ),
+      );
+      await controller.load();
+      messages = [];
+      controller.messages.listen(messages.add);
+    }
+
+    test('na hora inverte e marca isSaving; depois mostra o do servidor e '
+        'avisa "salva"', () async {
+      await loadWith();
+      repository.saveGate = Completer<void>();
+
+      final pending = controller.toggleSave();
+
+      expect(controller.detail?.isSaved, isTrue);
+      expect(controller.isSaving, isTrue);
+      repository.saveGate!.complete();
+      await pending;
+      await pumpEventQueue();
+
+      expect(controller.detail?.isSaved, isTrue);
+      expect(controller.isSaving, isFalse);
+      expect(messages.single.type, NewsDetailMessageType.saved);
+      expect(repository.saveCalls, ['n1']);
+    });
+
+    test('remover: o servidor devolve false e avisa "removida"', () async {
+      await loadWith(isSaved: true);
+      repository.saveResults.add(const Right(false));
+
+      await controller.toggleSave();
+      await pumpEventQueue();
+
+      expect(controller.detail?.isSaved, isFalse);
+      expect(messages.single.type, NewsDetailMessageType.removed);
+    });
+
+    test('o estado final é exatamente o devolvido pelo servidor', () async {
+      await loadWith();
+      repository.saveResults.add(const Right(false));
+
+      await controller.toggleSave();
+      await pumpEventQueue();
+
+      expect(controller.detail?.isSaved, isFalse);
+      expect(messages.single.type, NewsDetailMessageType.removed);
+    });
+
+    test('segundo toque durante o pedido é ignorado', () async {
+      await loadWith();
+      repository.saveGate = Completer<void>();
+
+      final first = controller.toggleSave();
+      await controller.toggleSave();
+      repository.saveGate!.complete();
+      await first;
+
+      expect(repository.saveCalls, ['n1']);
+    });
+
+    test('falha volta ao estado anterior e avisa com a falha', () async {
+      await loadWith();
+      repository.saveResults.add(const Left(ConnectionFailure()));
+
+      await controller.toggleSave();
+      await pumpEventQueue();
+
+      expect(controller.detail?.isSaved, isFalse);
+      expect(controller.isSaving, isFalse);
+      expect(messages.single.type, NewsDetailMessageType.saveFailed);
+      expect(messages.single.failureKey, const ConnectionFailure().message);
+    });
+
+    test('404 volta o marcador e vira notFound', () async {
+      await loadWith(isSaved: true);
+      repository.saveResults.add(const Left(NewsNotFoundFailure()));
+
+      await controller.toggleSave();
+      await pumpEventQueue();
+
+      expect(controller.status, NewsDetailStatus.notFound);
+      expect(controller.detail?.isSaved, isTrue);
+      expect(controller.isSaving, isFalse);
+      expect(messages.single.type, NewsDetailMessageType.notFound);
+    });
+
+    test('depois de uma falha dá para tentar de novo', () async {
+      await loadWith();
+      repository.saveResults
+        ..add(const Left(ConnectionFailure()))
+        ..add(const Right(true));
+
+      await controller.toggleSave();
+      await controller.toggleSave();
+
+      expect(controller.detail?.isSaved, isTrue);
+      expect(repository.saveCalls, ['n1', 'n1']);
+    });
+
+    test('sem detalhe carregado o toque é ignorado', () async {
+      await controller.toggleSave();
+      expect(repository.saveCalls, isEmpty);
+
+      repository.detailResults.add(const Left(ConnectionFailure()));
+      await controller.load();
+      await controller.toggleSave();
+
+      expect(controller.status, NewsDetailStatus.error);
+      expect(repository.saveCalls, isEmpty);
+    });
+
+    test('dispose durante o pedido não dispara erro', () async {
+      final other = buildNewsDetailController(repository, session);
+      await other.load();
+      repository.saveGate = Completer<void>();
+
+      final pending = other.toggleSave();
+      other.dispose();
+      repository.saveGate!.complete();
+
+      await expectLater(pending, completes);
+    });
+  });
 }

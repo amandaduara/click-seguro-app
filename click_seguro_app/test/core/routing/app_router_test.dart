@@ -77,6 +77,7 @@ void main() {
       '/help/contact/c1': HelpContactPage,
       '/profile/edit': ProfileEditPage,
       '/news/n1': NewsDetailPage,
+      '/news/saved': SavedNewsPage,
       '/notifications': NotificationsPage,
       '/settings': SettingsPage,
       '/settings/account': SettingsSectionPage,

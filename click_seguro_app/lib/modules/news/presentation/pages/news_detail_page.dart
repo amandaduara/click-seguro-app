@@ -10,20 +10,23 @@ import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_status.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_detail_presentation_extension.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_actions.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_header.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
+import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
-/// Detalhe da notícia (RF-014, RF-015, specs/010-detalhe-noticia): notícia
-/// completa e "Ouvir". O [NewsDetailController] vem da rota (um por
+/// Detalhe da notícia (RF-014, RF-015, RF-019, specs/010-detalhe-noticia):
+/// notícia completa, "Ouvir" e "Salvar". O [NewsDetailController] vem da rota (um por
 /// abertura).
 class NewsDetailPage extends StatefulWidget {
   const NewsDetailPage({super.key, required this.newsId});
@@ -37,6 +40,7 @@ class NewsDetailPage extends StatefulWidget {
 class _NewsDetailPageState extends State<NewsDetailPage> {
   late final NewsDetailController _controller;
   late final ReadAloudController _readAloud;
+  StreamSubscription<NewsDetailMessage>? _messages;
   Locale? _locale;
 
   @override
@@ -46,6 +50,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     _readAloud = GetIt.instance<ReadAloudController>();
     _controller.addListener(_maybeAutoRead);
     _readAloud.addListener(_maybeAutoRead);
+    _messages = _controller.messages.listen(_showMessage);
   }
 
   /// O idioma da voz é o do app: prepara de novo se ele mudar.
@@ -62,6 +67,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
   void dispose() {
     _controller.removeListener(_maybeAutoRead);
     _readAloud.removeListener(_maybeAutoRead);
+    unawaited(_messages?.cancel());
     _readAloud.dispose();
     super.dispose();
   }
@@ -82,6 +88,28 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     }
     _controller.markAutoReadDone();
     unawaited(_readAloud.speak(detail.spokenText));
+  }
+
+  /// "Notícia salva", "Removida dos salvos" ou o erro. "Não encontrada" já
+  /// aparece na própria tela.
+  void _showMessage(NewsDetailMessage message) {
+    if (!mounted) return;
+    final String? text = switch (message.type) {
+      NewsDetailMessageType.saved => AppStrings.newsReelsSavedToast.tr(),
+      NewsDetailMessageType.removed => AppStrings.newsReelsRemovedToast.tr(),
+      NewsDetailMessageType.saveFailed =>
+        (message.failureKey ?? AppStrings.errorGeneric).tr(),
+      NewsDetailMessageType.notFound => null,
+    };
+    if (text == null) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  /// Visitante vê o convite e nenhum pedido sai (RN-003).
+  Future<void> _save() async {
+    if (await requireAccount(context)) unawaited(_controller.toggleSave());
   }
 
   void _toggleListen(NewsDetailEntity detail) {
@@ -152,6 +180,17 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
                     speed: _readAloud.speed,
                     onToggle: () => _toggleListen(detail),
                     onSpeedChanged: _readAloud.setSpeed,
+                  ),
+                ),
+                ValueListenableBuilder<UserSessionStatus>(
+                  valueListenable:
+                      GetIt.instance<UserSessionService>().sessionStatus,
+                  // O visitante vê sempre o marcador vazio (FR-012).
+                  builder: (context, status, _) => NewsDetailActions(
+                    isSaved:
+                        status == UserSessionStatus.authenticated &&
+                        detail.isSaved,
+                    onSave: () => unawaited(_save()),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.s5),

@@ -11,12 +11,15 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity
 import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/news_detail_page.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_actions.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
+import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
@@ -54,6 +57,10 @@ void main() {
       GoRoute(
         path: '/start',
         builder: (_, _) => const Scaffold(body: Text('tela anterior')),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (_, _) => const Scaffold(body: Text('login')),
       ),
       GoRoute(
         path: '/news/:id',
@@ -407,6 +414,155 @@ void main() {
       await tester.tap(find.text('Ouvir'));
       await tester.pump();
       expect(find.bySemanticsLabel('Parar'), findsOneWidget);
+      handle.dispose();
+    });
+  });
+
+  group('salvar', () {
+    Future<void> signIn() => session.saveSession(
+      accessToken: 'tk',
+      refreshToken: 'rf',
+      email: 'ana@test.com',
+      userName: 'Ana',
+    );
+
+    void detailSaved({required bool isSaved}) => repository.detailResults.add(
+      Right(
+        NewsDetailResult(
+          detail: newsDetail('n1', isSaved: isSaved),
+          isFromCache: false,
+        ),
+      ),
+    );
+
+    Future<void> tapSave(WidgetTester tester) async {
+      await tester.tap(find.byKey(NewsDetailActions.saveKey));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('visitante: convite, sem pedido e marcador vazio mesmo com '
+        'isSaved no JSON', (tester) async {
+      detailSaved(isSaved: true);
+      await pumpPage(tester);
+      expect(find.text('Salvar'), findsOneWidget);
+      expect(find.text('Salvo'), findsNothing);
+      expect(find.byIcon(LucideIcons.bookmark), findsOneWidget);
+
+      await tapSave(tester);
+
+      expect(find.byType(AccountRequiredSheet), findsOneWidget);
+      expect(repository.saveCalls, isEmpty);
+      expect(find.text('Salvo'), findsNothing);
+    });
+
+    testWidgets('com conta: o marcador reflete o isSaved do serviço', (
+      tester,
+    ) async {
+      await signIn();
+      detailSaved(isSaved: true);
+
+      await pumpPage(tester);
+
+      expect(find.text('Salvo'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.bookmarkCheck), findsOneWidget);
+    });
+
+    testWidgets('com conta: alterna na hora e avisa "salva" e "removida"', (
+      tester,
+    ) async {
+      await signIn();
+      detailSaved(isSaved: false);
+      repository.saveResults.addAll([const Right(true), const Right(false)]);
+      await pumpPage(tester);
+      repository.saveGate = Completer<void>();
+
+      await tester.tap(find.byKey(NewsDetailActions.saveKey));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Salvo'), findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+
+      repository.saveGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícia salva'), findsOneWidget);
+      expect(find.text('Salvo'), findsOneWidget);
+
+      repository.saveGate = null;
+      await tapSave(tester);
+
+      expect(find.text('Removida dos salvos'), findsOneWidget);
+      expect(find.text('Salvar'), findsOneWidget);
+      expect(repository.saveCalls, ['n1', 'n1']);
+    });
+
+    testWidgets('falha: o marcador volta e o aviso mostra o erro', (
+      tester,
+    ) async {
+      await signIn();
+      repository.saveResults.add(const Left(ConnectionFailure()));
+      await pumpPage(tester);
+
+      await tapSave(tester);
+
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(find.text('Salvar'), findsOneWidget);
+      expect(find.text('Salvo'), findsNothing);
+    });
+
+    testWidgets('404 ao salvar mostra "Notícia não encontrada"', (
+      tester,
+    ) async {
+      await signIn();
+      repository.saveResults.add(const Left(NewsNotFoundFailure()));
+      await pumpPage(tester);
+
+      await tapSave(tester);
+
+      expect(find.text('Notícia não encontrada'), findsOneWidget);
+      expect(find.byKey(NewsDetailActions.saveKey), findsNothing);
+    });
+
+    testWidgets('visitante que entra na conta com a tela aberta: detalhe '
+        'recarregado com o estado de salvo', (tester) async {
+      repository.detailResults
+        ..add(
+          Right(NewsDetailResult(detail: newsDetail('n1'), isFromCache: false)),
+        )
+        ..add(
+          Right(
+            NewsDetailResult(
+              detail: newsDetail('n1', isSaved: true),
+              isFromCache: false,
+            ),
+          ),
+        );
+      await pumpPage(tester);
+      expect(find.text('Salvar'), findsOneWidget);
+
+      await signIn();
+      await tester.pumpAndSettle();
+
+      expect(repository.detailCalls, ['n1', 'n1']);
+      expect(find.text('Salvo'), findsOneWidget);
+    });
+
+    testWidgets('rótulos "Salvar"/"Salvo" e área de 48 dp', (tester) async {
+      final handle = tester.ensureSemantics();
+      await signIn();
+      await pumpPage(tester);
+
+      expect(find.bySemanticsLabel('Salvar'), findsOneWidget);
+      final size = tester.getSize(find.byKey(NewsDetailActions.saveKey));
+      expect(size.width, greaterThanOrEqualTo(48));
+      expect(size.height, greaterThanOrEqualTo(48));
+
+      await tapSave(tester);
+      expect(find.bySemanticsLabel('Salvo'), findsOneWidget);
       handle.dispose();
     });
   });

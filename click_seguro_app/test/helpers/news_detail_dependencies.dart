@@ -1,14 +1,17 @@
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_saved_news_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
 import 'package:get_it/get_it.dart';
 
 import '../fakes/fake_text_to_speech_service.dart';
 import '../modules/news/fakes/fake_news_repository.dart';
 
-/// O que a rota `/news/:id` busca no `GetIt` (usecases e voz), com fakes. Para
-/// testes que abrem o detalhe pelo roteador do app.
+/// O que as rotas `/news/:id` e `/news/saved` buscam no `GetIt` (usecases e
+/// voz), com fakes. Para testes que abrem o detalhe ou as salvas pelo
+/// roteador do app.
 void registerNewsDetailDependencies(GetIt injector) {
   final repository = FakeNewsRepository();
   final preferences = AccessibilityPreferencesNotifier();
@@ -16,6 +19,8 @@ void registerNewsDetailDependencies(GetIt injector) {
   injector
     ..registerSingleton(GetNewsDetailUseCase(repository))
     ..registerSingleton(MarkNewsAsReadUseCase(repository))
+    ..registerSingleton(ToggleSaveUseCase(repository))
+    ..registerSingleton(GetSavedNewsUseCase(repository))
     ..registerSingleton(preferences)
     ..registerFactory(() => ReadAloudController(tts, preferences: preferences));
 }

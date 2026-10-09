@@ -2,8 +2,11 @@
 //
 // O app real (mesmo setupApp() do main.dart) com um botão de acessibilidade
 // por cima, para validar no aparelho a feature 009 enquanto a tela da B9 não
-// existe. Não é importada pelo app; os textos são fixos por não ser parte do
-// produto, como no style guide.
+// existe. Também tem o atalho "Notícias salvas" (feature 010) até o Perfil da
+// B7 ganhar a entrada. Não é importada pelo app; os textos são fixos por não
+// ser parte do produto, como no style guide.
+import 'dart:async';
+
 import 'package:click_seguro_app/main.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
@@ -12,6 +15,7 @@ import 'package:click_seguro_app/modules/settings/settings.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +37,7 @@ Future<void> main() async {
               router: router,
               accessibility: GetIt.instance<AccessibilityPreferencesNotifier>(),
             ),
-            const _AccessibilityPanel(),
+            _AccessibilityPanel(router: router),
           ],
         ),
       ),
@@ -44,7 +48,10 @@ Future<void> main() async {
 /// Botão pequeno na borda esquerda; aberto, troca as quatro preferências pelo
 /// `AccessibilityController`, como a tela da B9 fará.
 class _AccessibilityPanel extends StatefulWidget {
-  const _AccessibilityPanel();
+  const _AccessibilityPanel({required this.router});
+
+  /// O painel fica acima do `ClickSeguroApp`, sem contexto do `go_router`.
+  final GoRouter router;
 
   @override
   State<_AccessibilityPanel> createState() => _AccessibilityPanelState();
@@ -68,7 +75,7 @@ class _AccessibilityPanelState extends State<_AccessibilityPanel> {
         // Stack próprio: o Localizations fica entre o Positioned e o Stack do
         // main. Sem filhos não posicionados, o toque fora passa para o app.
         builder: (context, _) =>
-            Stack(children: [_open ? _panel() : _toggle()]),
+            Stack(children: [_open ? _panel() : _toggle(), _savedNews()]),
       ),
     );
   }
@@ -86,6 +93,26 @@ class _AccessibilityPanelState extends State<_AccessibilityPanel> {
           child: const Padding(
             padding: EdgeInsets.symmetric(horizontal: 4, vertical: 14),
             child: Icon(Icons.accessibility_new, color: Colors.white, size: 18),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  /// Entrada fixa para "Notícias salvas" (R8 de specs/010-detalhe-noticia).
+  Widget _savedNews() => Positioned(
+    right: 0,
+    top: 48,
+    child: Material(
+      color: Colors.black54,
+      borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+      child: InkWell(
+        onTap: () => unawaited(widget.router.push<void>('/news/saved')),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Text(
+            'Notícias salvas',
+            style: TextStyle(color: Colors.white, fontSize: 12),
           ),
         ),
       ),
