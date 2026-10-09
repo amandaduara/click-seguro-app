@@ -105,25 +105,23 @@ void main() {
       expect(find.text('tela configurações'), findsOneWidget);
     });
 
-    testWidgets('conectada, "Notificações" abre /notifications', (
-      tester,
-    ) async {
+    testWidgets('conectada, "Alertas" abre /notifications', (tester) async {
       await signIn();
       await pumpLocalized(tester, router: buildRouter());
 
-      await tester.tap(find.bySemanticsLabel('Notificações'));
+      await tester.tap(find.bySemanticsLabel('Alertas'));
       await tester.pumpAndSettle();
 
       expect(find.text('tela alertas'), findsOneWidget);
     });
 
-    testWidgets('visitante: "Notificações" mostra o convite e não abre', (
+    testWidgets('visitante: "Alertas" mostra o convite e não abre', (
       tester,
     ) async {
       await session.startGuestSession();
       await pumpLocalized(tester, router: buildRouter());
 
-      await tester.tap(find.bySemanticsLabel('Notificações'));
+      await tester.tap(find.bySemanticsLabel('Alertas'));
       await tester.pumpAndSettle();
 
       expect(find.text('Entre na sua conta'), findsOneWidget);
@@ -137,11 +135,8 @@ void main() {
       final router = buildRouter();
       await pumpLocalized(tester, router: router);
 
-      await tester.tap(find.bySemanticsLabel('Notificações'));
-      await tester.tap(
-        find.bySemanticsLabel('Notificações'),
-        warnIfMissed: false,
-      );
+      await tester.tap(find.bySemanticsLabel('Alertas'));
+      await tester.tap(find.bySemanticsLabel('Alertas'), warnIfMissed: false);
       await tester.pumpAndSettle();
       router.pop();
       await tester.pumpAndSettle();
@@ -153,7 +148,7 @@ void main() {
       await session.startGuestSession();
       await pumpLocalized(tester, router: buildRouter());
 
-      for (final label in ['Notificações', 'Configurações']) {
+      for (final label in ['Alertas', 'Configurações']) {
         final size = tester.getSize(find.bySemanticsLabel(label));
         expect(size.width, greaterThanOrEqualTo(48), reason: label);
         expect(size.height, greaterThanOrEqualTo(48), reason: label);

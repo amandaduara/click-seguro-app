@@ -179,6 +179,26 @@ abstract class AppStrings {
 
   // --- notifications ---
   static const String notificationsTitle = 'notifications_title';
+  static const String notificationsGroupToday = 'notifications_group_today';
+  static const String notificationsGroupYesterday =
+      'notifications_group_yesterday';
+  static const String notificationsGroupEarlier = 'notifications_group_earlier';
+  static const String notificationsBadgeNew = 'notifications_badge_new';
+  static const String notificationsSummaryNone = 'notifications_summary_none';
+  static const String notificationsSummaryOne = 'notifications_summary_one';
+  static const String notificationsSummaryMany = 'notifications_summary_many';
+  static const String notificationsMarkAll = 'notifications_mark_all';
+  static const String notificationsEmpty = 'notifications_empty';
+  static const String notificationsEmptyHint = 'notifications_empty_hint';
+  static const String notificationsGuestBody = 'notifications_guest_body';
+  static const String notificationsDisabledNotice =
+      'notifications_disabled_notice';
+  static const String notificationsDisabledAction =
+      'notifications_disabled_action';
+  static const String notificationsBellLabel = 'notifications_bell_label';
+  static const String notificationsBellLabelOne =
+      'notifications_bell_label_one';
+  static const String notificationsSemanticNew = 'notifications_semantic_new';
 
   // --- activities ---
   static const String activitiesTitle = 'activities_title';

@@ -46,6 +46,22 @@ void main() {
     'news_reels_title',
     'news_detail_title',
     'notifications_title',
+    'notifications_group_today',
+    'notifications_group_yesterday',
+    'notifications_group_earlier',
+    'notifications_badge_new',
+    'notifications_summary_none',
+    'notifications_summary_one',
+    'notifications_summary_many',
+    'notifications_mark_all',
+    'notifications_empty',
+    'notifications_empty_hint',
+    'notifications_guest_body',
+    'notifications_disabled_notice',
+    'notifications_disabled_action',
+    'notifications_bell_label',
+    'notifications_bell_label_one',
+    'notifications_semantic_new',
     'activities_title',
     'activities_module_title',
     'help_title',
@@ -71,6 +87,9 @@ void main() {
         expect((json[key] as String).trim(), isNotEmpty, reason: key);
       }
       expect(json['shell_greeting'], contains('{}'));
+      expect(json['notifications_summary_many'], contains('{}'));
+      expect(json['notifications_bell_label'], contains('{}'));
+      expect(json['notifications_semantic_new'], contains('{}'));
     });
   }
 
@@ -102,6 +121,12 @@ void main() {
       containsPair('common_account_required_action', 'Entrar ou criar conta'),
     );
     expect(json, containsPair('common_account_required_dismiss', 'Agora não'));
+  });
+
+  test('sino e tela chamam tudo de "Alertas" (R11 de specs/011)', () {
+    expect(load('pt-BR'), containsPair('shell_notifications', 'Alertas'));
+    expect(load('pt-BR'), containsPair('notifications_title', 'Alertas'));
+    expect(load('en-US'), containsPair('shell_notifications', 'Alerts'));
   });
 
   test('sem chaves da /home provisória (FR-021)', () {

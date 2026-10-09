@@ -3,22 +3,22 @@
 A API **não tem** endpoints de notificação (decisão de 2026-10-03, [contrato da
 API](../../../.specify/memory/api-contract.md) "Alertas — A6"). O módulo `notifications` usa dois
 endpoints existentes, com datasource próprio, mais um registro local. Formato dos endpoints
-conforme o `openapi.json` do projeto (`.specify/memory/openapi.json`); o que ele não diz está em
-[research.md](../research.md) R0 e é conferido na primeira tarefa. Caminhos relativos a
+conforme o `openapi.json` do projeto (`.specify/memory/openapi.json`); o que ele não diz foi
+conferido no servidor de desenvolvimento em 2026-10-09 e está em [research.md](../research.md) R0 (✅). Caminhos relativos a
 `API_URL` (`.../api/v1`). Toda chamada passa pelo `ApiClient`.
 
 ## `GET /app/news` — notícias publicadas desde a última verificação
 
 - **Quem chama**: só com conta (o app não chama como visitante, FR-007). Com token a resposta traz
   `interaction`; o alerta não usa.
-- **Query** (🧪 até T002 confirmar o campo de data e o formato):
+- **Query** (✅ conferida no servidor de desenvolvimento, T002):
 
 | Parâmetro | Valor | Observação |
 |---|---|---|
-| `startDate` | `since` em ISO-8601 UTC (`2026-10-09T15:00:00.000Z`) | `since = max(lastCheckAt, agora − 30 dias)`. **Se T002 mostrar que filtra por `originalPublishedAt`, não enviar** e filtrar só no aparelho |
+| `startDate` | `since` em ISO-8601 UTC (`2026-10-09T15:00:00.000Z`) | `since = max(lastCheckAt, agora − 30 dias)`. ✅ Filtra por **`publishedAt`** (não pela original), "maior ou igual", precisão de ms; formato inválido → 400 `VALIDATION_ERROR` |
 | `sortBy` | `publishedAt` | |
 | `sortOrder` | `desc` | |
-| `limit` | `50` | igual ao teto de alertas (R6); o contrato anterior dizia 20 |
+| `limit` | `50` | igual ao teto de alertas (R6); o contrato anterior dizia 20; máximo aceito 100 (101 → 400) |
 | `page` | `1` | sem paginar |
 
 - **200** `PaginatedNewsAppResponseDto`:
@@ -35,22 +35,23 @@ conforme o `openapi.json` do projeto (`.specify/memory/openapi.json`); o que ele
 }
 ```
 
-- Só `id`, `title`, `source` e `publishedAt` (ou `originalPublishedAt`) interessam. Item sem
+- ✅ `publishedAt` veio em todas as 12 notícias do servidor; o fallback `originalPublishedAt`
+  fica como rede de segurança. Só `id`, `title`, `source` e `publishedAt` (ou `originalPublishedAt`) interessam. Item sem
   algum deles é **ignorado** (R9). `data` ausente ou que não é lista → `ServerFailure`.
 - **Conexão/timeout** → `ConnectionFailure` (a conferência falha em silêncio, FR-005). **401** →
   tratado pelo `ApiClient` (renova uma vez; recusada → `expire()`).
 - O app **sempre** filtra de novo (`publishedAt > lastCheckAt`) e remove repetidos por `newsId`
-  (R0), então a semântica exata do `startDate` (≥ ou >) não muda o resultado.
+  (R0). ✅ O servidor usa ≥: a notícia com `publishedAt == lastCheckAt` volta na resposta e o app a descarta.
 
 ## `GET /users/me` — "Receber alertas"
 
 - **Quem chama**: só com conta, uma vez por conferência (depois da primeira), antes das notícias.
-- **200**: `{ name, email, phone?, avatarUrl?, role, receiveNotifications }`. O app lê só
+- **200** (✅ conferido): `{ name, email, phone, avatarUrl, role, receiveNotifications }`. O app lê só
   `receiveNotifications`; ausente → `true`.
 - `false` → nenhum alerta novo, mas `lastCheckAt` avança (FR-006). Falha → a conferência falha
   inteira (sem gravar).
 - **Não** altera a chave: `PATCH /users/me {receiveNotifications}` é da B7
-  (`SetReceiveAlertsUseCase`).
+  (`SetReceiveAlertsUseCase`). ✅ Conferido: o `PATCH` responde 204 e o `GET` seguinte mostra o novo valor.
 
 ## Registro local
 

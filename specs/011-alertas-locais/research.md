@@ -27,6 +27,37 @@
   5. `GET /users/me` devolve `receiveNotifications` (o contrato diz que sim, `GetProfileResponseDto`)
      e `PATCH /users/me {receiveNotifications:false}` o desliga (usado só para preparar a
      conta de teste do passo "desligado").
+- **Resultado da conferência (T002, 2026-10-09, servidor de desenvolvimento
+  `https://clickseguro-api.onrender.com/api/v1`)**, com a conta de teste
+  `teste-a6-20261009190945@example.com` (criada por `POST /auth/app/register` + login, **desativada
+  no fim** com `DELETE /users/me/deactivate` → 204; depois disso `/users/me` → 403 `USER_INACTIVE`).
+  Tudo **como o plano previa**, nenhuma mudança de implementação:
+  1. **Formato de `startDate`**: ISO-8601 com `Z` (`2026-10-08T02:15:30.000Z`), sem milissegundos
+     (`…30Z`) e com offset (`+00:00`, `-03:00`) são aceitos e respeitam o instante; data só com dia
+     (`2026-10-08`) é aceita (vale 00:00 UTC). Texto inválido ou vazio → 400 `VALIDATION_ERROR`
+     (`errors[0].field = "startDate"`). O app envia `since.toUtc().toIso8601String()`.
+  2. **Qual data filtra: `publishedAt`** (não a original). Prova: as 12 notícias do servidor têm
+     `publishedAt` entre 2026-10-08T02:14:32Z e 02:16:03Z e `originalPublishedAt` entre 09-27 e 10-08T00:14Z;
+     `startDate=2026-10-08T02:15:30.000Z` devolveu 4 (as 4 com `publishedAt` posterior; pela data
+     original seriam 0) e `startDate=2026-10-05T00:00:00.000Z` devolveu 12 (pela original seriam 4).
+     `AlertsRemoteDataSource` **envia** `startDate`.
+  3. **`publishedAt` vem sempre**: nas 12 notícias (lista de 100, com e sem token) nenhuma veio sem
+     `publishedAt`. O fallback para `originalPublishedAt` continua só como rede de segurança.
+  4. **Comparação "maior ou igual"**: `startDate=2026-10-08T02:16:03.253Z` (igual à `publishedAt` de uma
+     notícia) devolveu essa notícia; `…03.254Z` devolveu 0. Precisão de milissegundos. Por isso a
+     notícia com `publishedAt == lastCheckAt` volta na resposta e o caso de uso a descarta
+     (`publishedAt <= lastCheckAt`, passo 5 do data-model).
+  5. **`GET /users/me`** traz `receiveNotifications` (`true` na conta nova);
+     `PATCH /users/me {"receiveNotifications": false}` → 204 e o `GET` seguinte mostra `false`;
+     `true` volta o valor.
+  Extras: `limit=101` → 400 (máximo 100, `limit=50` vale); sem token `/app/news` também responde 200
+  (`interaction` tudo `false`); `meta` = `{page, limit, total, totalPages, hasNextPage, hasPreviousPage}`.
+  Ordem com `sortBy=publishedAt&sortOrder=desc`: da mais nova para a mais antiga.
+  Itens reais para os fixtures (T003): `cmuywjppz0001fo1slem3p1zr` (`publishedAt`
+  `2026-10-08T02:16:03.253Z`, original `2026-09-27T00:13:16.345Z`, "Banco não pede senha, token ou
+  código por telefone", fonte "Banco Central do Brasil") e `cmuywmr7p000nfo1sucepkjy5` (`publishedAt`
+  `2026-10-08T02:15:44.732Z`, original `2026-10-08T00:14:29.869Z`, "Golpe do PIX \"em dobro\": promessa de
+  devolver o dobro do valor é sempre falsa", fonte "Banco Central do Brasil").
 - **Rationale**: o filtro do servidor só reduz tráfego; a regra de "nova" é do app. Assim nenhum
   comportamento do usuário depende do que o servidor entende por `startDate`.
 - **Alternatives considered**: confiar só no `startDate` (um campo de data errado esconderia
@@ -203,7 +234,9 @@
 - **Alternatives considered**: contador discreto de 10 sp do design system — ilegível para o
   público; `SnackBar` para "sem internet" — some antes de ser lido.
 
-## Pendente de confirmação do usuário
+## Decisões do usuário
 
-- **FR-006 / R3**: religar "Receber alertas" gera ou não alertas do período desligado. O plano
-  segue "não gera".
+- **FR-006 / R3**: confirmado — religar "Receber alertas" **não** gera alertas do período
+  desligado (a última verificação avança com a chave desligada).
+- **R1**: confirmado — `receiveNotifications` é lido por `GET /users/me` no datasource de
+  `notifications`.
