@@ -26,6 +26,7 @@ void main() {
       expect(palette.border, AppColors.border);
       expect(palette.destructive, AppColors.destructive);
       expect(palette.input, AppColors.input);
+      expect(palette.inputBorder, AppColors.input);
       expect(palette.success, AppColors.success);
       expect(palette.warning, AppColors.warning);
       expect(palette.textForeground, AppColors.textForeground);
@@ -81,8 +82,9 @@ void main() {
       }
     });
 
-    test('bordas ≥ 3:1 sobre o fundo', () {
+    test('bordas e contorno dos campos ≥ 3:1 sobre o fundo', () {
       expect(contrast(palette.border, palette.background), greaterThan(3));
+      expect(contrast(palette.inputBorder, palette.background), greaterThan(3));
     });
 
     test('sem sombras: a borda separa os cartões', () {

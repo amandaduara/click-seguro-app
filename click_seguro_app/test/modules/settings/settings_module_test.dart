@@ -1,17 +1,24 @@
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
+import 'package:click_seguro_app/modules/common/services/secure_storage_service.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/settings/settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../fakes/fake_secure_storage_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final GetIt injector = GetIt.instance;
 
-  tearDown(() => injector.reset());
+  tearDown(() async {
+    await injector.reset();
+    injector.allowReassignment = false;
+  });
 
   Future<void> register(Map<String, Object> stored) async {
     await injector.reset();
@@ -40,6 +47,33 @@ void main() {
 
     final preferences = injector<AccessibilityPreferencesNotifier>().value;
     expect(preferences.fontScale, FontScaleLevel.largest);
+    expect(preferences.highContrast, isTrue);
+  });
+
+  test('preferências são do aparelho: sair da conta e entrar como visitante '
+      'não mudam nada (FR-010)', () async {
+    await register({});
+    injector.allowReassignment = true;
+    injector.registerSingleton<SecureStorageService>(
+      FakeSecureStorageService(),
+    );
+    final controller = injector<AccessibilityController>();
+    final session = injector<UserSessionService>();
+    await controller.setFontScale(FontScaleLevel.larger);
+    await controller.setHighContrast(true);
+
+    await session.saveSession(
+      accessToken: 'acesso',
+      refreshToken: 'renovacao',
+      email: 'maria@exemplo.com',
+      userName: 'Maria',
+    );
+    await session.logout();
+    await session.startGuestSession();
+    await controller.load();
+
+    final preferences = injector<AccessibilityPreferencesNotifier>().value;
+    expect(preferences.fontScale, FontScaleLevel.larger);
     expect(preferences.highContrast, isTrue);
   });
 }

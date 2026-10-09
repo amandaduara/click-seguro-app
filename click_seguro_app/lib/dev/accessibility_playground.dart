@@ -65,7 +65,10 @@ class _AccessibilityPanelState extends State<_AccessibilityPanel> {
       ],
       child: ListenableBuilder(
         listenable: _controller,
-        builder: (context, _) => _open ? _panel() : _toggle(),
+        // Stack próprio: o Localizations fica entre o Positioned e o Stack do
+        // main. Sem filhos não posicionados, o toque fora passa para o app.
+        builder: (context, _) =>
+            Stack(children: [_open ? _panel() : _toggle()]),
       ),
     );
   }

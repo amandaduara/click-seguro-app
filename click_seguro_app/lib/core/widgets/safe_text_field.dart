@@ -79,7 +79,7 @@ class _SafeTextFieldState extends State<SafeTextField> {
     final hasError = widget.error != null && widget.error!.isNotEmpty;
     final borderColor = hasError
         ? context.colors.destructive
-        : (_focused ? context.colors.primary : context.colors.input);
+        : (_focused ? context.colors.primary : context.colors.inputBorder);
     final borderWidth = hasError || _focused ? 2.0 : 2.0;
 
     return Opacity(

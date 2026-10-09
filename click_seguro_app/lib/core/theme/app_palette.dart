@@ -17,6 +17,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.border,
     required this.destructive,
     required this.input,
+    required this.inputBorder,
     required this.success,
     required this.warning,
     required this.textForeground,
@@ -36,6 +37,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     border: AppColors.border,
     destructive: AppColors.destructive,
     input: AppColors.input,
+    inputBorder: AppColors.input,
     success: AppColors.success,
     warning: AppColors.warning,
     textForeground: AppColors.textForeground,
@@ -57,6 +59,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     border: Color(0xFF000000),
     destructive: Color(0xFF9E0019),
     input: Color(0xFFF2F2F2),
+    inputBorder: Color(0xFF000000),
     success: Color(0xFF005A3C),
     warning: Color(0xFF6E4200),
     textForeground: Color(0xFF000000),
@@ -75,6 +78,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color border;
   final Color destructive;
   final Color input;
+
+  /// Contorno dos campos de texto sem foco: no alto contraste precisa de
+  /// 3:1, e o [input] é cor de preenchimento.
+  final Color inputBorder;
   final Color success;
   final Color warning;
   final Color textForeground;
@@ -96,6 +103,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? border,
     Color? destructive,
     Color? input,
+    Color? inputBorder,
     Color? success,
     Color? warning,
     Color? textForeground,
@@ -113,6 +121,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     border: border ?? this.border,
     destructive: destructive ?? this.destructive,
     input: input ?? this.input,
+    inputBorder: inputBorder ?? this.inputBorder,
     success: success ?? this.success,
     warning: warning ?? this.warning,
     textForeground: textForeground ?? this.textForeground,
@@ -138,6 +147,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       border: c(border, other.border),
       destructive: c(destructive, other.destructive),
       input: c(input, other.input),
+      inputBorder: c(inputBorder, other.inputBorder),
       success: c(success, other.success),
       warning: c(warning, other.warning),
       textForeground: c(textForeground, other.textForeground),
@@ -163,6 +173,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       other.border == border &&
       other.destructive == destructive &&
       other.input == input &&
+      other.inputBorder == inputBorder &&
       other.success == success &&
       other.warning == warning &&
       other.textForeground == textForeground &&
@@ -182,6 +193,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     border,
     destructive,
     input,
+    inputBorder,
     success,
     warning,
     textForeground,

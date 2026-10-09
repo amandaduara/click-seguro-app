@@ -19,7 +19,9 @@ Future<bool> requireAccount(BuildContext context) async {
 
   final route = ModalBottomSheetRoute<bool>(
     builder: (_) => const AccountRequiredSheet(),
-    isScrollControlled: false,
+    // Com a letra grande (feature 009), o convite pode passar de metade da
+    // tela; ele rola em vez de cortar os botões.
+    isScrollControlled: true,
     backgroundColor: context.colors.card,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
