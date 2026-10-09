@@ -153,7 +153,8 @@ implementação. Offline, com fakes à mão: `FakeHttpClientAdapter`
 - [X] T036 [P] Em `reels_controller_test.dart` (grupo sessão): depois de carregar, `sessionStatus` muda → próximo `open()` recarrega do início; sem mudança, `open()` não pede de novo. Implementar em `reels_controller.dart` (listener removido no `dispose`)
 - [X] T037 [P] Em `.specify/memory/api-contract.md`, linha `GET /app/news/reels` com a observação "cursor inválido devolve 200 com a 1ª parte (specs/008, R0)"; like/save continuam 🧪 até o passo 4 do quickstart
 - [X] T038 Formatar só os arquivos tocados (`dart format` em `news/`, `tnews/`, `app_strings.dart`), depois `flutter analyze` (sem avisos novos) e `flutter test` (todos verdes). Revisar código morto
-- [ ] T039 Validar no aparelho os passos do [quickstart.md](quickstart.md) (SC-001, SC-003 e o contrato de like/save só são conferidos aqui); trocar 🧪 por ✅ no contrato se confirmados. Anotar o resultado nesta tarefa
+- [X] T039 Validar no aparelho os passos do [quickstart.md](quickstart.md) (SC-001, SC-003 e o contrato de like/save só são conferidos aqui); trocar 🧪 por ✅ no contrato se confirmados. Anotar o resultado nesta tarefa
+  - **Resultado (2026-10-08, emulador Pixel 4, servidor de desenvolvimento)**: tudo conforme. Visitante: Reels com dados reais, arrastar entre eles, convite ao curtir/salvar sem mudar nada, "Abrir fonte" no navegador e volta no mesmo Reel. Carrossel do Início abre no Reel tocado. Conta nova: curtir/descurtir (0 → 1 → 0) e salvar/remover com "Notícia salva"/"Removida dos salvos", confirmados pelo servidor. Ao reabrir o app, `isSaved` e `likesCount` voltam do servidor e o coração começa vazio (sem `isLiked`, como previsto). O aviso só aparece quando o servidor responde (alguns segundos no Render). Contrato 1.0.4: like/save ✅. Prints em [evidencias/](evidencias/)
 - [ ] T040 Em `.specify/memory/tasks.md`, marcar a A4 como `[x] **A4 Reels** … (specs/008-reels-curtir-salvar)`
 
 ---
