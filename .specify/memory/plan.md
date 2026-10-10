@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.1.0
+**Versão**: 2.1.1
 
 **Criado em**: 2026-09-07
 
@@ -243,7 +243,7 @@ Todas seguem o guia: `RemoteDataSource` (ApiClient) e/ou `LocalDataSource` → `
 | Feed/Busca (A3) | remote + local (cache) | `NewsRepository` | `GetNewsFeed` (cursor), `GetNewsByCategory`, `GetCategories`, `SearchNews` | escolha de endpoint com/sem filtro |
 | Reels (A4) | remote | `NewsRepository` | `GetReels` (cursor), `ToggleLike` | — |
 | Detalhe (A5) | remote + local (salvas) | `NewsRepository` | `GetNewsDetail`, `MarkAsRead`, `ToggleSave`, `GetSavedNews` | — |
-| Alertas (A6) | remote (`/app/news?startDate`) + local | `NotificationsRepository` | `CheckNewAlerts`, `GetAlerts`, `GetUnreadCount`, `MarkAsRead`, `MarkAllAsRead` | sem duplicar alerta, agrupamento por data (RF-020) |
+| Alertas (A6) | remote (`/app/news?startDate`) + local | `NotificationsRepository` | `CheckNewAlerts`, `GetAlerts`, `MarkAsRead`, `MarkAllAsRead`, `ClearAlerts` | sem duplicar alerta, agrupamento por data (RF-020); o contador de não lidos é derivado da lista, sem usecase próprio |
 | Atividades (B1–B4) | remote + memória (visitante) | `ActivitiesRepository` | `GetModules`, `GetModuleDetail`, `AnswerLesson` | RN-005, RN-006 |
 | Ajuda (B6) | asset + local | `HelpRepository` | `GetOfficialContacts`, `GetPersonalContacts`, `SavePersonalContact`, `DeletePersonalContact` | RN-007 |
 | Perfil (B7) | remote | `ProfileRepository` | `GetProfile` (junta perfil + atividades + salvas), `UpdateProfile`, `UpdateAvatar`, `RemoveAvatar`, `SetReceiveAlerts` | nível e conquistas (RN-008) |
@@ -268,10 +268,14 @@ Pontos específicos:
 - **Progresso do visitante (RN-006):** `ActivitiesRepositoryImpl` recebe o `UserSessionService`.
   Para `guest`, chama a API **sem token** (a correção funciona, mas não é salva) e junta o
   resultado com o `GuestProgressStore`.
-- **Alertas locais (A6):** `CheckNewAlertsUseCase` roda ao abrir o app e ao voltar ao feed.
+- **Alertas locais (A6):** `CheckNewAlertsUseCase` roda ao abrir o app, ao voltar ao app
+  (`AppLifecycleState.resumed`) e ao abrir a tela de Alertas, no máximo uma vez a cada 5 minutos
+  (a tela confere de novo na hora). Antes, lê `receiveNotifications` de `GET /users/me` pelo
+  datasource do próprio módulo (desligado → nenhum alerta novo, mas a última verificação avança).
   Busca `/app/news?startDate=<última verificação>`, cria um alerta por notícia ainda sem alerta
   (chave = `newsId`), guarda até 50 alertas dos últimos 30 dias e atualiza a última verificação.
-  Na primeira execução só marca o horário, sem gerar alertas antigos.
+  Na primeira execução só marca o horário, sem gerar alertas antigos. O contador do sino é
+  derivado da lista (sem `GetUnreadCount`); `ClearAlerts` apaga o registro ao sair da conta.
 - **Perfil (B7):** o `ProfileRemoteDataSource` chama as três fontes em paralelo. Faixas de nível
   e regras de conquista ficam numa extension/usecase testável, definidas na feature da B7.
 - **Multipart:** upload de avatar exige `ApiClient.postMultipart` (campo `avatar`), na F0.2.
@@ -351,7 +355,7 @@ Critério de pronto de toda tarefa: teste antes (TDD), `flutter analyze` sem err
 | RF-009 a RF-012, RNF-002, RNF-005, CB-001, CB-006, CB-007 | news | A3 |
 | RF-013, RF-019 (curtir) | news | A4 |
 | RF-014 a RF-018, RF-019 (salvar), CB-008 | news | A5 |
-| RF-020 a RF-022 | notifications, shell | A6 |
+| RF-020 a RF-022, RNF-003 (contador do sino) | notifications, shell | A6 (specs/011-alertas-locais) |
 | RF-023, CB-012 (módulo vazio) | activities | B1 |
 | RF-024, RF-040 | activities | B2 |
 | RF-025 a RF-028, RN-005, CB-012 | activities | B3 |
@@ -372,4 +376,4 @@ Este plano é o insumo de [tasks.md](tasks.md). Desvio encontrado durante a impl
 (método a mais num contrato, rota nova, dependência nova) MUST atualizar este plano, e o
 [api-contract.md](api-contract.md) quando for de API, antes de a tarefa ser marcada como concluída.
 
-**Versão**: 2.1.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-03
+**Versão**: 2.1.1 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-09

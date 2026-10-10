@@ -21,6 +21,7 @@ import '../../modules/authentication/fakes/forgot_password_controller_factory.da
 import '../../helpers/localized_app.dart';
 import '../../helpers/news_detail_dependencies.dart';
 import '../../helpers/feed_provider.dart';
+import '../../helpers/notifications_provider.dart';
 import '../../helpers/reels_provider.dart';
 import '../../helpers/splash_provider.dart';
 
@@ -54,6 +55,7 @@ void main() {
         fakeSplashProvider(session.sessionStatus.value),
         fakeFeedProvider(),
         fakeReelsProvider(),
+        fakeNotificationsProvider(),
       ],
     );
     router.go(location);
