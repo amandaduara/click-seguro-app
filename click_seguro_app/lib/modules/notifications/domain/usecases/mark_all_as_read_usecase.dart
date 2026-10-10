@@ -8,19 +8,24 @@ class MarkAllAsReadUseCase {
 
   final NotificationsRepository _repository;
 
-  /// Sem não lidos, não grava (marcar de novo não muda nada).
-  Future<Either<Failure, AlertsSnapshot>> call() async {
+  /// Lê o registro de novo antes de marcar. Com [newsIds], marca só esses (o
+  /// que a pessoa viu na tela: um alerta que chegou por conferência depois
+  /// continua novo, R5). Sem não lidos a marcar, não grava.
+  Future<Either<Failure, AlertsSnapshot>> call({Set<String>? newsIds}) async {
     return switch (await _repository.getSnapshot()) {
       Left(:final value) => Left(value),
-      Right(:final value) => await _markAll(value),
+      Right(:final value) => await _markAll(value, newsIds),
     };
   }
 
   Future<Either<Failure, AlertsSnapshot>> _markAll(
     AlertsSnapshot snapshot,
+    Set<String>? newsIds,
   ) async {
-    if (snapshot.unreadCount == 0) return Right(snapshot);
-    final marked = snapshot.markAllRead();
+    final marked = newsIds == null
+        ? snapshot.markAllRead()
+        : newsIds.fold(snapshot, (current, id) => current.markRead(id));
+    if (marked.unreadCount == snapshot.unreadCount) return Right(snapshot);
     final saved = await _repository.saveSnapshot(marked);
     return saved.map((_) => marked);
   }

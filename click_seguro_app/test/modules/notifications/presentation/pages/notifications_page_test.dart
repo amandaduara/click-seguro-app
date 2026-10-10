@@ -1,12 +1,15 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/notifications/domain/entities/alert_entity.dart';
+import 'package:click_seguro_app/modules/notifications/domain/entities/alerts_snapshot.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/pages/notifications_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../../../helpers/localized_app.dart';
@@ -34,6 +37,14 @@ void main() {
         GoRoute(
           path: '/notifications',
           builder: (_, _) => const NotificationsPage(),
+        ),
+        GoRoute(path: '/login', builder: (_, _) => const Text('tela login')),
+        GoRoute(
+          path: '/profile/edit',
+          builder: (_, _) => Scaffold(
+            appBar: AppBar(),
+            body: const Text('tela editar perfil'),
+          ),
         ),
         GoRoute(
           path: '/news/:id',
@@ -284,6 +295,180 @@ void main() {
       expect(find.byType(PopupMenuButton<Object?>), findsNothing);
       expect(find.byType(PopupMenuButton<String>), findsNothing);
       expect(find.byIcon(Icons.more_vert), findsNothing);
+    });
+  });
+
+  group('marcar todos', () {
+    final Finder markAll = find.text('Marcar todos como lidos');
+
+    testWidgets('com não lidos: botão fixo no alto, com texto e ≥ 48 dp', (
+      tester,
+    ) async {
+      repository.stored = snapshot(
+        alerts: [alertAt('a', noon(0)), alertAt('b', noon(1))],
+      );
+
+      await pumpPage(tester);
+
+      expect(markAll, findsOneWidget);
+      expect(textInScroll('Marcar todos como lidos'), findsNothing);
+      final Finder button = find.ancestor(
+        of: markAll,
+        matching: find.byType(SafeButton),
+      );
+      expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
+      expect(
+        tester.getTopLeft(markAll).dy,
+        lessThan(tester.getTopLeft(find.text('Hoje')).dy),
+      );
+    });
+
+    testWidgets('tocar zera tudo, sem confirmação', (tester) async {
+      repository.stored = snapshot(
+        alerts: [alertAt('a', noon(0)), alertAt('b', noon(1))],
+      );
+      await pumpPage(tester);
+      expect(find.text('Novo'), findsNWidgets(2));
+
+      await tester.tap(markAll);
+      await tester.pump();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(find.text('Novo'), findsNothing);
+      expect(find.text('Você não tem alertas novos'), findsOneWidget);
+      expect(markAll, findsNothing);
+      await tester.pumpAndSettle();
+      expect(repository.stored.unreadCount, 0);
+    });
+
+    testWidgets('sem não lidos: botão ausente', (tester) async {
+      repository.stored = snapshot(
+        alerts: [alertAt('a', noon(0), isRead: true)],
+      );
+
+      await pumpPage(tester);
+
+      expect(markAll, findsNothing);
+    });
+
+    testWidgets('lista vazia: botão ausente', (tester) async {
+      await pumpPage(tester);
+
+      expect(markAll, findsNothing);
+    });
+  });
+
+  group('visitante e desligado', () {
+    const String disabledText = 'Os alertas novos estão desligados.';
+    final Finder disabledAction = find.text('Ligar em Editar perfil');
+
+    testWidgets('visitante: convite dentro da tela e nenhum pedido', (
+      tester,
+    ) async {
+      await session.startGuestSession();
+      repository.stored = snapshot(alerts: [alertAt('a', noon(0))]);
+
+      await pumpPage(tester);
+
+      expect(
+        find.text('Entre na sua conta para receber alertas de notícias novas.'),
+        findsOneWidget,
+      );
+      expect(find.byIcon(LucideIcons.bell), findsOneWidget);
+      final Finder login = find.text('Entrar ou criar conta');
+      expect(login, findsOneWidget);
+      expect(
+        tester
+            .getSize(
+              find.ancestor(of: login, matching: find.byType(SafeButton)),
+            )
+            .height,
+        greaterThanOrEqualTo(48),
+      );
+      expect(find.text('Golpe do Pix a'), findsNothing);
+      expect(find.text('Você não tem alertas.'), findsNothing);
+      expect(repository.getSnapshotCalls, 0);
+      expect(repository.receiveCalls, 0);
+      expect(repository.fetchCalls, isEmpty);
+    });
+
+    testWidgets('visitante: o botão vai para o login', (tester) async {
+      await session.startGuestSession();
+      await pumpPage(tester);
+
+      await tester.tap(find.text('Entrar ou criar conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela login'), findsOneWidget);
+    });
+
+    testWidgets(
+      'sessão passa a autenticada com a tela aberta: mostra a lista',
+      (tester) async {
+        await session.startGuestSession();
+        repository.stored = snapshot(alerts: [alertAt('a', noon(0))]);
+        await pumpPage(tester);
+        expect(find.text('Golpe do Pix a'), findsNothing);
+
+        await session.saveSession(
+          accessToken: 'tk',
+          refreshToken: 'rf',
+          email: 'ana@test.com',
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Entrar ou criar conta'), findsNothing);
+        expect(find.text('Golpe do Pix a'), findsOneWidget);
+      },
+    );
+
+    testWidgets('desligado: aviso fixo, botão para o perfil e lista visível', (
+      tester,
+    ) async {
+      repository.stored = snapshot(alerts: [alertAt('a', noon(0))]);
+      repository.receiveAlerts = false;
+
+      await pumpPage(tester);
+
+      expect(find.text(disabledText), findsOneWidget);
+      expect(textInScroll(disabledText), findsNothing);
+      expect(disabledAction, findsOneWidget);
+      expect(
+        tester
+            .getSize(
+              find.ancestor(
+                of: disabledAction,
+                matching: find.byType(SafeButton),
+              ),
+            )
+            .height,
+        greaterThanOrEqualTo(48),
+      );
+      expect(find.text('Golpe do Pix a'), findsOneWidget);
+
+      await tester.tap(disabledAction);
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela editar perfil'), findsOneWidget);
+    });
+
+    testWidgets('ligado ou desconhecido: sem aviso', (tester) async {
+      repository.stored = snapshot(alerts: [alertAt('a', noon(0))]);
+      await pumpPage(tester);
+      expect(find.text(disabledText), findsNothing);
+      expect(disabledAction, findsNothing);
+    });
+
+    testWidgets('desconhecido (falha ao ler a chave): sem aviso', (
+      tester,
+    ) async {
+      repository.stored = snapshot(alerts: [alertAt('a', noon(0))]);
+      repository.receiveAlertsError = const ServerFailure();
+
+      await pumpPage(tester);
+
+      expect(find.text(disabledText), findsNothing);
     });
   });
 }

@@ -13,8 +13,11 @@ import 'package:click_seguro_app/modules/notifications/domain/usecases/get_alert
 import 'package:click_seguro_app/modules/notifications/domain/usecases/mark_all_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/notifications/domain/usecases/mark_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/notifications/notifications.dart';
+import 'package:click_seguro_app/modules/notifications/presentation/controller/alerts_lifecycle_trigger.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:provider/provider.dart';
 
 import '../../fakes/fake_local_cache_service.dart';
 import '../../fakes/fake_secure_storage_service.dart';
@@ -66,5 +69,87 @@ void main() {
       cache.values[AlertsLocalDataSourceImpl.cacheKey]!['owner'],
       'ana@test.com',
     );
+  });
+
+  group('registro apagado ao mudar a sessão', () {
+    Future<void> pumpModule(WidgetTester tester) async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: NotificationsModule().providers(injector),
+          child: const SizedBox.shrink(),
+        ),
+      );
+      await tester.pump();
+    }
+
+    Future<void> signIn() => session.saveSession(
+      accessToken: 'tk',
+      refreshToken: 'rf',
+      email: 'ana@test.com',
+    );
+
+    Future<void> storeRecord() => injector<AlertsLocalDataSource>().write(
+      AlertsSnapshotModel(alerts: [AlertModel.fromEntity(alert())]),
+    );
+
+    bool hasRecord() =>
+        cache.values.containsKey(AlertsLocalDataSourceImpl.cacheKey);
+
+    testWidgets('sair da conta apaga o registro', (tester) async {
+      await signIn();
+      await storeRecord();
+      await pumpModule(tester);
+      expect(hasRecord(), isTrue);
+
+      await session.logout();
+      await tester.pump();
+
+      expect(hasRecord(), isFalse);
+    });
+
+    testWidgets('sessão expirada (unauthenticated) apaga o registro', (
+      tester,
+    ) async {
+      await signIn();
+      await storeRecord();
+      await pumpModule(tester);
+
+      await session.expire();
+      await tester.pump();
+
+      expect(hasRecord(), isFalse);
+    });
+
+    testWidgets('autenticado e visitante não apagam', (tester) async {
+      await signIn();
+      await storeRecord();
+      await pumpModule(tester);
+      expect(hasRecord(), isTrue);
+
+      await session.startGuestSession();
+      await tester.pump();
+
+      expect(hasRecord(), isTrue);
+    });
+
+    testWidgets('registra o controller e o gatilho como providers', (
+      tester,
+    ) async {
+      late BuildContext inner;
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: NotificationsModule().providers(injector),
+          child: Builder(
+            builder: (context) {
+              inner = context;
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+
+      expect(inner.read<NotificationsController>(), isNotNull);
+      expect(inner.read<AlertsLifecycleTrigger>(), isNotNull);
+    });
   });
 }

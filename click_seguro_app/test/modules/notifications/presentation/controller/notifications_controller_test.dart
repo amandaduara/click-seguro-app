@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/notifications/domain/entities/alert_entity.dart';
+import 'package:click_seguro_app/modules/notifications/domain/entities/alerts_snapshot.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/alerts_status.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/notifications_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -352,5 +353,169 @@ void main() {
       expect(other.unreadCount, 0);
       expect(other.alerts.single.isRead, isTrue);
     });
+  });
+
+  group('marcar todos', () {
+    test('zera o contador na hora, antes de a gravação terminar', () async {
+      stored([alert(newsId: 'a'), alert(newsId: 'b')]);
+      await controller.load();
+      repository.saves.clear();
+
+      final marking = controller.markAllAsRead();
+
+      expect(controller.unreadCount, 0);
+      expect(controller.alerts.every((a) => a.isRead), isTrue);
+      expect(repository.saves, isEmpty);
+
+      await marking;
+      expect(repository.saves, hasLength(1));
+      expect(repository.stored.unreadCount, 0);
+    });
+
+    test('é idempotente: a segunda chamada não grava de novo', () async {
+      stored([alert(newsId: 'a'), alert(newsId: 'b')]);
+      await controller.load();
+      repository.saves.clear();
+
+      await controller.markAllAsRead();
+      await controller.markAllAsRead();
+
+      expect(repository.saves, hasLength(1));
+    });
+
+    test('sem não lidos: não grava', () async {
+      stored([alert(newsId: 'a', isRead: true)]);
+      await controller.load();
+      repository.saves.clear();
+
+      await controller.markAllAsRead();
+
+      expect(repository.saves, isEmpty);
+    });
+
+    test(
+      'alerta que chega por conferência no meio não se perde (R5)',
+      () async {
+        stored([alert(newsId: 'a'), alert(newsId: 'b')]);
+        repository.fetchGate = Completer<void>();
+        repository.newAlerts = [
+          alert(
+            newsId: 'c',
+            publishedAt: testNow.subtract(const Duration(minutes: 5)),
+          ),
+        ];
+        await controller.load();
+
+        final checking = controller.checkNew();
+        await Future<void>.delayed(Duration.zero);
+        final marking = controller.markAllAsRead();
+        expect(controller.unreadCount, 0);
+
+        repository.fetchGate!.complete();
+        await checking;
+        await marking;
+
+        expect(controller.alerts.map((a) => a.newsId), contains('c'));
+        expect(controller.unreadCount, 1);
+        expect(
+          controller.alerts.firstWhere((a) => a.newsId == 'c').isRead,
+          isFalse,
+        );
+        expect(repository.stored.unreadCount, 1);
+        expect(
+          repository.stored.alerts.where((a) => a.isRead).map((a) => a.newsId),
+          unorderedEquals(['a', 'b']),
+        );
+      },
+    );
+
+    test('falha ao gravar mantém o estado em memória', () async {
+      stored([alert(newsId: 'a')]);
+      await controller.load();
+      repository.saveError = const CacheFailure();
+
+      await controller.markAllAsRead();
+
+      expect(controller.unreadCount, 0);
+    });
+
+    test(
+      'persiste: outro controller sobre o mesmo registro vê tudo lido',
+      () async {
+        stored([alert(newsId: 'a'), alert(newsId: 'b')]);
+        await controller.load();
+        await controller.markAllAsRead();
+
+        final other = buildNotificationsController(repository, session);
+        addTearDown(other.dispose);
+        await other.load();
+
+        expect(other.unreadCount, 0);
+      },
+    );
+
+    test('visitante: nada acontece', () async {
+      await session.startGuestSession();
+
+      await controller.markAllAsRead();
+
+      expect(repository.saves, isEmpty);
+    });
+  });
+
+  group('chave "Receber alertas" e troca de conta', () {
+    test(
+      'desligada: receiveAlerts falso, nenhum alerta novo e o horário avança',
+      () async {
+        stored([alert(newsId: 'a')]);
+        repository.receiveAlerts = false;
+        repository.newAlerts = [alert(newsId: 'x')];
+        await controller.load();
+
+        await controller.checkNew(force: true);
+
+        expect(controller.receiveAlerts, isFalse);
+        expect(controller.alerts.map((a) => a.newsId), ['a']);
+        expect(repository.fetchCalls, isEmpty);
+        expect(repository.stored.lastCheckAt, testNow);
+      },
+    );
+
+    test('ligada: receiveAlerts verdadeiro', () async {
+      stored([]);
+      await controller.load();
+      expect(controller.receiveAlerts, isNull);
+
+      await controller.checkNew(force: true);
+
+      expect(controller.receiveAlerts, isTrue);
+    });
+
+    test(
+      'outra conta no mesmo aparelho: sem alertas e 1ª conferência só marca o horário',
+      () async {
+        stored([alert(newsId: 'a')]);
+        await controller.load();
+
+        await session.logout();
+        await Future<void>.delayed(Duration.zero);
+        await session.saveSession(
+          accessToken: 'tk2',
+          refreshToken: 'rf2',
+          email: 'bia@test.com',
+        );
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        repository.saves.clear();
+        repository.newAlerts = [alert(newsId: 'x')];
+
+        expect(controller.alerts, isEmpty);
+        await controller.checkNew(force: true);
+
+        expect(controller.alerts, isEmpty);
+        expect(repository.fetchCalls, isEmpty);
+        expect(repository.saves.single.lastCheckAt, testNow);
+      },
+    );
   });
 }

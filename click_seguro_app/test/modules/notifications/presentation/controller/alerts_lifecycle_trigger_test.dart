@@ -2,6 +2,7 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/notifications/domain/usecases/check_new_alerts_usecase.dart';
 import 'package:click_seguro_app/modules/notifications/domain/usecases/clear_alerts_usecase.dart';
 import 'package:click_seguro_app/modules/notifications/domain/usecases/get_alerts_usecase.dart';
+import 'package:click_seguro_app/modules/notifications/domain/usecases/mark_all_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/notifications/domain/usecases/mark_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/alerts_lifecycle_trigger.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/notifications_controller.dart';
@@ -18,6 +19,7 @@ class _SpyController extends NotificationsController {
         checkNewAlerts: CheckNewAlertsUseCase(repository),
         getAlerts: GetAlertsUseCase(repository),
         markAsRead: MarkAsReadUseCase(repository),
+        markAllAsRead: MarkAllAsReadUseCase(repository),
         clearAlerts: ClearAlertsUseCase(repository),
         sessionStatus: s.sessionStatus,
       );

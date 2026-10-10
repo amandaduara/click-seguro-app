@@ -208,6 +208,20 @@ void main() {
       expect(repository.saves, isEmpty);
     });
 
+    test('MarkAllAsReadUseCase com ids: marca só esses', () async {
+      repository.stored = snapshot(
+        alerts: [
+          alert(newsId: 'a'),
+          alert(newsId: 'c'),
+        ],
+      );
+
+      final result = await MarkAllAsReadUseCase(repository)(newsIds: {'a'});
+
+      expect(result.toNullable()!.unreadCount, 1);
+      expect(repository.stored.alerts.map((a) => a.isRead), [true, false]);
+    });
+
     test('ClearAlertsUseCase repassa ao repository', () async {
       final result = await ClearAlertsUseCase(repository)();
 

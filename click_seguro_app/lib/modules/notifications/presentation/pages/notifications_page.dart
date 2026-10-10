@@ -4,7 +4,9 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/notifications/domain/entities/alert_entity.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/alerts_status.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/notifications_controller.dart';
@@ -14,6 +16,7 @@ import 'package:click_seguro_app/modules/notifications/presentation/widgets/aler
 import 'package:click_seguro_app/modules/notifications/presentation/widgets/alerts_summary_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -58,33 +61,94 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final NotificationsController controller = context
-        .watch<NotificationsController>();
     return Scaffold(
       appBar: AppBar(title: Text(AppStrings.notificationsTitle.tr())),
       body: SafeArea(
-        child: controller.status == AlertsStatus.loading
-            ? const SizedBox.shrink()
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (controller.alerts.isNotEmpty)
-                    AlertsSummaryBar(unreadCount: controller.unreadCount),
-                  AlertsNotices(
-                    showOffline:
-                        controller.lastCheckFailure is ConnectionFailure,
-                  ),
-                  Expanded(
-                    child: controller.alerts.isEmpty
-                        ? const _EmptyAlerts()
-                        : _AlertsList(
-                            alerts: controller.alerts,
-                            now: controller.now,
-                            onOpen: _openAlert,
-                          ),
-                  ),
-                ],
+        child: ValueListenableBuilder<UserSessionStatus>(
+          valueListenable: GetIt.instance<UserSessionService>().sessionStatus,
+          builder: (context, status, _) =>
+              status == UserSessionStatus.authenticated
+              ? _buildAlerts(context.watch<NotificationsController>())
+              : const _GuestInvite(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlerts(NotificationsController controller) {
+    if (controller.status == AlertsStatus.loading) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (controller.alerts.isNotEmpty)
+          AlertsSummaryBar(
+            unreadCount: controller.unreadCount,
+            onMarkAll: () => unawaited(controller.markAllAsRead()),
+          ),
+        AlertsNotices(
+          showOffline: controller.lastCheckFailure is ConnectionFailure,
+          showDisabled: controller.receiveAlerts == false,
+        ),
+        Expanded(
+          child: controller.alerts.isEmpty
+              ? const _EmptyAlerts()
+              : _AlertsList(
+                  alerts: controller.alerts,
+                  now: controller.now,
+                  onOpen: _openAlert,
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Convite dentro da tela: texto curto e um botão grande para o login, sem
+/// pedido ao serviço (mesmo padrão das notícias salvas).
+class _GuestInvite extends StatelessWidget {
+  const _GuestInvite();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.s6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(
+              LucideIcons.bell,
+              size: 40,
+              color: context.colors.textMutedForeground,
+            ),
+            const SizedBox(height: AppSpacing.s3),
+            Semantics(
+              header: true,
+              child: Text(
+                AppStrings.commonAccountRequiredTitle.tr(),
+                textAlign: TextAlign.center,
+                style: textTheme.titleMedium?.copyWith(
+                  color: context.colors.secondary,
+                ),
               ),
+            ),
+            const SizedBox(height: AppSpacing.s2),
+            Text(
+              AppStrings.notificationsGuestBody.tr(),
+              textAlign: TextAlign.center,
+              style: textTheme.bodyLarge?.copyWith(fontSize: 16),
+            ),
+            const SizedBox(height: AppSpacing.s6),
+            SafeButton(
+              label: AppStrings.commonAccountRequiredAction.tr(),
+              onPressed: () => context.go('/login'),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -68,6 +68,7 @@ class NotificationsModule implements ModuleInterface {
         checkNewAlerts: injector<CheckNewAlertsUseCase>(),
         getAlerts: injector<GetAlertsUseCase>(),
         markAsRead: injector<MarkAsReadUseCase>(),
+        markAllAsRead: injector<MarkAllAsReadUseCase>(),
         clearAlerts: injector<ClearAlertsUseCase>(),
         sessionStatus: injector<UserSessionService>().sessionStatus,
       )..load(),

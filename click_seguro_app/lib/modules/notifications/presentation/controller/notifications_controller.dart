@@ -7,6 +7,7 @@ import 'package:click_seguro_app/modules/notifications/domain/entities/alerts_sn
 import 'package:click_seguro_app/modules/notifications/domain/usecases/check_new_alerts_usecase.dart';
 import 'package:click_seguro_app/modules/notifications/domain/usecases/clear_alerts_usecase.dart';
 import 'package:click_seguro_app/modules/notifications/domain/usecases/get_alerts_usecase.dart';
+import 'package:click_seguro_app/modules/notifications/domain/usecases/mark_all_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/notifications/domain/usecases/mark_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/alerts_status.dart';
 import 'package:flutter/foundation.dart';
@@ -24,12 +25,14 @@ class NotificationsController extends ChangeNotifier {
     required CheckNewAlertsUseCase checkNewAlerts,
     required GetAlertsUseCase getAlerts,
     required MarkAsReadUseCase markAsRead,
+    required MarkAllAsReadUseCase markAllAsRead,
     required ClearAlertsUseCase clearAlerts,
     required ValueListenable<UserSessionStatus> sessionStatus,
     DateTime Function()? now,
   }) : _checkNewAlerts = checkNewAlerts,
        _getAlerts = getAlerts,
        _markAsRead = markAsRead,
+       _markAllAsRead = markAllAsRead,
        _clearAlerts = clearAlerts,
        _sessionStatus = sessionStatus,
        _now = now ?? DateTime.now {
@@ -42,6 +45,7 @@ class NotificationsController extends ChangeNotifier {
   final CheckNewAlertsUseCase _checkNewAlerts;
   final GetAlertsUseCase _getAlerts;
   final MarkAsReadUseCase _markAsRead;
+  final MarkAllAsReadUseCase _markAllAsRead;
   final ClearAlertsUseCase _clearAlerts;
   final ValueListenable<UserSessionStatus> _sessionStatus;
   final DateTime Function() _now;
@@ -148,6 +152,26 @@ class NotificationsController extends ChangeNotifier {
       if (_disposed || generation != _generation) return;
       await _markAsRead(newsId);
       _pendingReads.remove(newsId);
+    });
+  }
+
+  /// Marca na hora, em memória, os alertas que a tela mostra e grava depois
+  /// só esses: o que chegar por conferência no meio continua novo (R5).
+  Future<void> markAllAsRead() async {
+    if (!_hasAccount) return;
+    final Set<String> unreadIds = {
+      for (final alert in _snapshot.alerts)
+        if (!alert.isRead) alert.newsId,
+    };
+    if (unreadIds.isEmpty) return;
+    _snapshot = _snapshot.markAllRead();
+    _pendingReads.addAll(unreadIds);
+    _notify();
+    final int generation = _generation;
+    await _enqueue(() async {
+      if (_disposed || generation != _generation) return;
+      await _markAllAsRead(newsIds: unreadIds);
+      _pendingReads.removeAll(unreadIds);
     });
   }
 
