@@ -79,44 +79,47 @@ class _NotificationsPageState extends State<NotificationsPage> {
     if (controller.status == AlertsStatus.loading) {
       return const SizedBox.shrink();
     }
-    return LayoutBuilder(
-      builder: (context, constraints) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Resumo, botão e faixas ficam fixos, mas com fonte 2× não podem
-          // tomar a tela toda: passam de metade da altura, rolam por dentro e
-          // deixam o resto para a lista (FR-020, SC-008).
-          ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: constraints.maxHeight / 2),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (controller.alerts.isNotEmpty)
-                    AlertsSummaryBar(
-                      unreadCount: controller.unreadCount,
-                      onMarkAll: () => unawaited(controller.markAllAsRead()),
-                    ),
-                  AlertsNotices(
-                    showOffline:
-                        controller.lastCheckFailure is ConnectionFailure,
-                    showDisabled: controller.receiveAlerts == false,
-                  ),
-                ],
-              ),
-            ),
+    final Widget header = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (controller.alerts.isNotEmpty)
+          AlertsSummaryBar(
+            unreadCount: controller.unreadCount,
+            onMarkAll: () => unawaited(controller.markAllAsRead()),
           ),
-          Expanded(
-            child: controller.alerts.isEmpty
-                ? const _EmptyAlerts()
-                : _AlertsList(
-                    alerts: controller.alerts,
-                    now: controller.now,
-                    onOpen: _openAlert,
-                  ),
-          ),
-        ],
-      ),
+        AlertsNotices(
+          showOffline: controller.lastCheckFailure is ConnectionFailure,
+          showDisabled: controller.receiveAlerts == false,
+        ),
+      ],
+    );
+    // Com letra grande o alto fixo tomaria a tela: entra na lista e há uma
+    // única rolagem, sem gesto escondido (R12, specs/011-alertas-locais).
+    final bool largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.5;
+    if (largeText) {
+      return controller.alerts.isEmpty
+          ? ListView(children: [header, const _EmptyAlertsContent()])
+          : _AlertsList(
+              alerts: controller.alerts,
+              now: controller.now,
+              onOpen: _openAlert,
+              header: header,
+            );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        header,
+        Expanded(
+          child: controller.alerts.isEmpty
+              ? const _EmptyAlerts()
+              : _AlertsList(
+                  alerts: controller.alerts,
+                  now: controller.now,
+                  onOpen: _openAlert,
+                ),
+        ),
+      ],
     );
   }
 }
@@ -175,11 +178,16 @@ class _AlertsList extends StatelessWidget {
     required this.alerts,
     required this.now,
     required this.onOpen,
+    this.header,
   });
 
   final List<AlertEntity> alerts;
   final DateTime now;
   final ValueChanged<AlertEntity> onOpen;
+
+  /// Resumo, botão e faixas como primeiros itens (letra grande); sem ele o
+  /// alto fica fixo fora da lista.
+  final Widget? header;
 
   static String _title(AlertGroup group) => switch (group) {
     AlertGroup.today => AppStrings.notificationsGroupToday.tr(),
@@ -191,16 +199,17 @@ class _AlertsList extends StatelessWidget {
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s5,
-        AppSpacing.s2,
-        AppSpacing.s5,
-        AppSpacing.s6,
+      padding: EdgeInsets.only(
+        top: header == null ? AppSpacing.s2 : 0,
+        bottom: AppSpacing.s6,
       ),
       children: [
+        ?header,
         for (final AlertSection section in alerts.sections(now)) ...[
           Padding(
             padding: const EdgeInsets.only(
+              left: AppSpacing.s5,
+              right: AppSpacing.s5,
               top: AppSpacing.s4,
               bottom: AppSpacing.s3,
             ),
@@ -218,7 +227,11 @@ class _AlertsList extends StatelessWidget {
           ),
           for (final AlertEntity alert in section.alerts)
             Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+              padding: const EdgeInsets.only(
+                left: AppSpacing.s5,
+                right: AppSpacing.s5,
+                bottom: AppSpacing.s3,
+              ),
               child: AlertTile(
                 key: ValueKey('alert-${alert.newsId}'),
                 alert: alert,
@@ -237,29 +250,36 @@ class _EmptyAlerts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SafeEmptyState(
-              icon: LucideIcons.bell,
-              message: AppStrings.notificationsEmpty.tr(),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6),
-              child: Text(
-                AppStrings.notificationsEmptyHint.tr(),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontSize: 16,
-                  color: context.colors.textMutedForeground,
-                ),
-              ),
-            ),
-          ],
+    return const Center(
+      child: SingleChildScrollView(child: _EmptyAlertsContent()),
+    );
+  }
+}
+
+class _EmptyAlertsContent extends StatelessWidget {
+  const _EmptyAlertsContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SafeEmptyState(
+          icon: LucideIcons.bell,
+          message: AppStrings.notificationsEmpty.tr(),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6),
+          child: Text(
+            AppStrings.notificationsEmptyHint.tr(),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontSize: 16,
+              color: context.colors.textMutedForeground,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

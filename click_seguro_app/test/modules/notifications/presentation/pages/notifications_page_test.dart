@@ -594,12 +594,50 @@ void main() {
       expectInside(button);
       final Rect first = tester.getRect(find.byKey(const ValueKey('alert-a')));
       expectInside(first);
-      // Com fonte 2× o alto fixo passa de metade da tela e rola por dentro:
-      // a lista começa abaixo dele, sem cobrir nem ser coberta.
-      final Rect header = tester.getRect(find.byType(SingleChildScrollView));
-      expect(header.height, lessThanOrEqualTo(800 / 2));
-      expect(summary.top, greaterThanOrEqualTo(header.top));
-      expect(tester.getRect(find.byType(ListView)).top, header.bottom);
+      // Com fonte 2× o alto entra na lista: uma rolagem só, sem área interna.
+      expect(find.byType(Scrollable), findsOneWidget);
+      expect(textInScroll('Você tem 2 alertas novos'), findsOneWidget);
+      expect(textInScroll('Marcar todos como lidos'), findsOneWidget);
+      expect(summary.top, lessThan(tester.getTopLeft(find.text('Hoje')).dy));
+    });
+
+    testWidgets('fonte 1,3×: alto fixo sem estourar numa tela 360×800', (
+      tester,
+    ) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      repository.stored = snapshot(
+        alerts: [alertAt('a', noon(0)), alertAt('b', noon(1))],
+      );
+      repository.receiveAlerts = false;
+      await pumpSmall(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(Scrollable), findsOneWidget);
+      expect(textInScroll('Marcar todos como lidos'), findsNothing);
+      expect(textInScroll('Os alertas novos estão desligados.'), findsNothing);
+      expect(find.byKey(const ValueKey('alert-a')), findsOneWidget);
+    });
+
+    testWidgets('fonte 2×: desligado e sem internet juntos, sem estouro', (
+      tester,
+    ) async {
+      useScale2x(tester);
+      // O valor guardado diz "desligado"; a conferência falha sem internet.
+      repository.stored = snapshot(
+        receiveAlerts: false,
+        alerts: [alertAt('a', noon(0)), alertAt('b', noon(1))],
+      );
+      repository.receiveAlertsError = const ConnectionFailure();
+      await pumpSmall(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(Scrollable), findsOneWidget);
+      expect(
+        textInScroll('Os alertas novos estão desligados.'),
+        findsOneWidget,
+      );
+      expect(find.byType(SafeOfflineBanner), findsOneWidget);
     });
 
     testWidgets('fonte 2×: aviso de desligado, texto do botão quebra linha', (

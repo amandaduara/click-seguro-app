@@ -230,7 +230,7 @@
   (ação reversível); (5) avisos (sem internet, alertas desligados) como faixas fixas no alto, não
   como `SnackBar` que some; (6) contador do sino maior que o do design system.
 - **Rationale**: pedido do usuário e RNF-003/RNF-004; menos descoberta, menos erro, nada some
-  sozinho.
+  sozinho. Com letra ≥ 1,5×, o alto entra na lista (uma rolagem só), para não criar uma segunda área de rolagem (decisão de 2026-10-09, público idoso).
 - **Alternatives considered**: contador discreto de 10 sp do design system — ilegível para o
   público; `SnackBar` para "sem internet" — some antes de ser lido.
 
