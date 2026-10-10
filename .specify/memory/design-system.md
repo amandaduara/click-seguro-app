@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 1.1.0
+**Versão**: 1.1.1
 
 **Criado em**: 2026-10-04
 
@@ -351,8 +351,10 @@ Padding 20 nas laterais, 24 em cima, 12 embaixo.
   visitante, ou um texto da tela) e título 24/700 `secondary`.
 - À direita: dois botões redondos de **48 px** (o wireframe usa 44; o app aumenta para o mínimo
   de toque do RNF-003), fundo `muted`, ícone 20 `secondary`: `Bell`
-  (Notificações) com contador de não lidas (círculo `primary` mínimo 20 px, texto branco 10/700,
-  no canto superior direito) e `Settings` (Configurações).
+  (Alertas) com contador de não lidos (círculo `primary` de no mínimo 24 px, texto branco 14/700,
+  no canto superior direito; maior que o 10/700 do wireframe por legibilidade, RNF-003; "99+"
+  acima de 99; com letra grande o círculo cresce para a esquerda, sem cortar o número) e `Settings`
+  (Configurações).
 - Aparece em Início ("Notícias seguras"), Atividades ("Atividades") e Ajuda ("Central de
   ajuda"). **Não** aparece em Notícias (Reels) nem em Perfil.
 
@@ -481,6 +483,8 @@ Valores em que o app Flutter (canônico) difere do wireframe. Na versão web, us
 
 ## Histórico de versões
 
+- **1.1.1 (2026-10-09)**: contador do sino com círculo mínimo de 24 px e texto 14/700, no lugar
+  de 20 px e 10/700 (feature 011, RNF-003).
 - **1.1.0 (2026-10-08)**: alto contraste (`AppPalette`), token `input-border`, regra de leitura
   das cores por `context.colors` e de rolagem com letra grande (feature 009).
 - **1.0.1 (2026-10-04)**: barra superior com botões de 48 px e subtítulo de 14 px; faixa de sem

@@ -34,6 +34,8 @@ class NotificationBellButton extends StatelessWidget {
         width: 48,
         height: 48,
         child: Stack(
+          // Com fonte 2× o círculo cresce para a esquerda: sem cortar o número.
+          clipBehavior: Clip.none,
           children: [
             Material(
               color: context.colors.input,

@@ -1,4 +1,6 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -78,7 +80,7 @@ void main() {
     isRead: isRead,
   );
 
-  Future<void> pumpPage(WidgetTester tester) async {
+  Future<void> pumpPage(WidgetTester tester, {ThemeData? theme}) async {
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -86,10 +88,11 @@ void main() {
       tester,
       router: router,
       providers: [fakeNotificationsProvider(repository)],
+      theme: theme,
     );
   }
 
-  final Finder inScroll = find.byType(Scrollable);
+  final Finder inScroll = find.byType(ListView);
 
   Finder textInScroll(String text) =>
       find.descendant(of: inScroll, matching: find.text(text));
@@ -471,4 +474,226 @@ void main() {
       expect(find.text(disabledText), findsNothing);
     });
   });
+
+  group('acessibilidade (FR-020, SC-008)', () {
+    void useScale2x(WidgetTester tester) {
+      tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    }
+
+    /// Tela de celular pequeno (360 dp), onde a fonte 2× aperta mais.
+    Future<void> pumpSmall(WidgetTester tester, {ThemeData? theme}) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await pumpLocalized(
+        tester,
+        router: router,
+        providers: [fakeNotificationsProvider(repository)],
+        theme: theme,
+      );
+    }
+
+    void expectInside(Rect rect, {double width = 360}) {
+      expect(rect.left, greaterThanOrEqualTo(0));
+      expect(rect.right, lessThanOrEqualTo(width));
+    }
+
+    testWidgets('alvos de toque com 48 dp ou mais: alerta e botões', (
+      tester,
+    ) async {
+      repository.stored = snapshot(
+        alerts: [alertAt('a', noon(0)), alertAt('b', noon(1), isRead: true)],
+      );
+      repository.receiveAlerts = false;
+      await pumpPage(tester);
+
+      for (final String id in ['a', 'b']) {
+        final Size tile = tester.getSize(find.byKey(ValueKey('alert-$id')));
+        expect(tile.height, greaterThanOrEqualTo(48));
+        expect(tile.width, greaterThanOrEqualTo(48));
+      }
+      for (final String label in [
+        'Marcar todos como lidos',
+        'Ligar em Editar perfil',
+      ]) {
+        final Size button = tester.getSize(
+          find.ancestor(
+            of: find.text(label),
+            matching: find.byType(SafeButton),
+          ),
+        );
+        expect(button.height, greaterThanOrEqualTo(48), reason: label);
+      }
+    });
+
+    testWidgets('leitura na ordem: título, resumo, botão, grupos e alertas', (
+      tester,
+    ) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      repository.stored = snapshot(
+        alerts: [alertAt('a', noon(0)), alertAt('b', noon(1))],
+      );
+      await pumpPage(tester);
+
+      final List<double> tops = [
+        tester.getTopLeft(find.text('Alertas')).dy,
+        tester.getTopLeft(find.text('Você tem 2 alertas novos')).dy,
+        tester.getTopLeft(find.text('Marcar todos como lidos')).dy,
+        tester.getTopLeft(find.text('Hoje')).dy,
+        tester
+            .getTopLeft(find.bySemanticsLabel(RegExp('^Novo, Golpe do Pix a,')))
+            .dy,
+        tester.getTopLeft(find.text('Ontem')).dy,
+        tester
+            .getTopLeft(find.bySemanticsLabel(RegExp('^Novo, Golpe do Pix b,')))
+            .dy,
+      ];
+      expect(tops, orderedEquals([...tops]..sort()));
+      expect(tops.toSet(), hasLength(tops.length));
+      expect(
+        tester.getSemantics(find.text('Hoje')),
+        matchesSemantics(label: 'Hoje', isHeader: true),
+      );
+      expect(
+        tester.getSemantics(find.text('Você tem 2 alertas novos')),
+        matchesSemantics(label: 'Você tem 2 alertas novos', isLiveRegion: true),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('fonte 2×: lista, resumo e botão sem sobreposição', (
+      tester,
+    ) async {
+      useScale2x(tester);
+      repository.stored = snapshot(
+        alerts: [
+          alertAt('a', noon(0), title: 'Golpe do falso boleto enviado'),
+          alertAt('b', noon(1)),
+        ],
+      );
+      await pumpSmall(tester);
+
+      final BuildContext context = tester.element(
+        find.byType(NotificationsPage),
+      );
+      expect(MediaQuery.textScalerOf(context).scale(10), 20);
+      expect(tester.takeException(), isNull);
+      final Rect summary = tester.getRect(
+        find.text('Você tem 2 alertas novos'),
+      );
+      final Rect button = tester.getRect(
+        find.ancestor(
+          of: find.text('Marcar todos como lidos'),
+          matching: find.byType(SafeButton),
+        ),
+      );
+      expect(summary.bottom, lessThanOrEqualTo(button.top));
+      expect(button.height, greaterThanOrEqualTo(48));
+      expectInside(summary);
+      expectInside(button);
+      final Rect first = tester.getRect(find.byKey(const ValueKey('alert-a')));
+      expectInside(first);
+      // Com fonte 2× o alto fixo passa de metade da tela e rola por dentro:
+      // a lista começa abaixo dele, sem cobrir nem ser coberta.
+      final Rect header = tester.getRect(find.byType(SingleChildScrollView));
+      expect(header.height, lessThanOrEqualTo(800 / 2));
+      expect(summary.top, greaterThanOrEqualTo(header.top));
+      expect(tester.getRect(find.byType(ListView)).top, header.bottom);
+    });
+
+    testWidgets('fonte 2×: aviso de desligado, texto do botão quebra linha', (
+      tester,
+    ) async {
+      useScale2x(tester);
+      repository.stored = snapshot(alerts: [alertAt('a', noon(0))]);
+      repository.receiveAlerts = false;
+      await pumpSmall(tester);
+
+      expect(tester.takeException(), isNull);
+      final Finder action = find.text('Ligar em Editar perfil');
+      final Rect button = tester.getRect(
+        find.ancestor(of: action, matching: find.byType(SafeButton)),
+      );
+      final Rect text = tester.getRect(action);
+      expect(text.height, greaterThan(40), reason: 'o texto quebra em linhas');
+      expect(text.top, greaterThanOrEqualTo(button.top));
+      expect(text.bottom, lessThanOrEqualTo(button.bottom));
+      expectInside(button);
+      final Rect notice = tester.getRect(
+        find.text('Os alertas novos estão desligados.'),
+      );
+      expect(notice.bottom, lessThanOrEqualTo(button.top));
+    });
+
+    testWidgets('fonte 2×: visitante, convite e botão inteiros', (
+      tester,
+    ) async {
+      useScale2x(tester);
+      await session.startGuestSession();
+      await pumpSmall(tester);
+
+      expect(tester.takeException(), isNull);
+      final Rect button = tester.getRect(
+        find.ancestor(
+          of: find.text('Entrar ou criar conta'),
+          matching: find.byType(SafeButton),
+        ),
+      );
+      expect(button.height, greaterThanOrEqualTo(48));
+      expectInside(button);
+    });
+
+    testWidgets('fonte 2×: sem alertas, sem estouro', (tester) async {
+      useScale2x(tester);
+      await pumpSmall(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Você não tem alertas.'), findsOneWidget);
+    });
+
+    testWidgets('alto contraste: paleta da feature 009 na lista', (
+      tester,
+    ) async {
+      repository.stored = snapshot(
+        alerts: [alertAt('a', noon(0)), alertAt('b', noon(1), isRead: true)],
+      );
+      repository.receiveAlerts = false;
+      await pumpPage(tester, theme: AppTheme.highContrastTheme);
+
+      final BuildContext context = tester.element(
+        find.byType(NotificationsPage),
+      );
+      final AppPalette colors = context.colors;
+      expect(colors, AppPalette.highContrast);
+      expect(tester.takeException(), isNull);
+
+      Color colorOf(Finder finder) => tester.widget<Text>(finder).style!.color!;
+      final Color unread = colorOf(find.text('Golpe do Pix a'));
+      final Color read = colorOf(find.text('Golpe do Pix b'));
+      expect(unread, colors.secondary);
+      expect(read, colors.textMutedForeground);
+      expect(colorOf(find.text('Novo')), colors.textPrimaryForeground);
+      expect(
+        colorOf(find.text('Os alertas novos estão desligados.')),
+        colors.textForeground,
+      );
+      // Alerta lido legível: contraste mínimo 7:1 (AAA) sobre o cartão.
+      expect(_contrast(read, colors.card), greaterThanOrEqualTo(7));
+      expect(_contrast(unread, colors.card), greaterThanOrEqualTo(7));
+      expect(
+        _contrast(colors.textPrimaryForeground, colors.primary),
+        greaterThanOrEqualTo(7),
+      );
+    });
+  });
+}
+
+/// Razão de contraste WCAG entre duas cores opacas.
+double _contrast(Color a, Color b) {
+  final double la = a.computeLuminance();
+  final double lb = b.computeLuminance();
+  final double hi = la > lb ? la : lb;
+  final double lo = la > lb ? lb : la;
+  return (hi + 0.05) / (lo + 0.05);
 }

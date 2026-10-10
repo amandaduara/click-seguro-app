@@ -79,28 +79,44 @@ class _NotificationsPageState extends State<NotificationsPage> {
     if (controller.status == AlertsStatus.loading) {
       return const SizedBox.shrink();
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (controller.alerts.isNotEmpty)
-          AlertsSummaryBar(
-            unreadCount: controller.unreadCount,
-            onMarkAll: () => unawaited(controller.markAllAsRead()),
+    return LayoutBuilder(
+      builder: (context, constraints) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Resumo, botão e faixas ficam fixos, mas com fonte 2× não podem
+          // tomar a tela toda: passam de metade da altura, rolam por dentro e
+          // deixam o resto para a lista (FR-020, SC-008).
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: constraints.maxHeight / 2),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (controller.alerts.isNotEmpty)
+                    AlertsSummaryBar(
+                      unreadCount: controller.unreadCount,
+                      onMarkAll: () => unawaited(controller.markAllAsRead()),
+                    ),
+                  AlertsNotices(
+                    showOffline:
+                        controller.lastCheckFailure is ConnectionFailure,
+                    showDisabled: controller.receiveAlerts == false,
+                  ),
+                ],
+              ),
+            ),
           ),
-        AlertsNotices(
-          showOffline: controller.lastCheckFailure is ConnectionFailure,
-          showDisabled: controller.receiveAlerts == false,
-        ),
-        Expanded(
-          child: controller.alerts.isEmpty
-              ? const _EmptyAlerts()
-              : _AlertsList(
-                  alerts: controller.alerts,
-                  now: controller.now,
-                  onOpen: _openAlert,
-                ),
-        ),
-      ],
+          Expanded(
+            child: controller.alerts.isEmpty
+                ? const _EmptyAlerts()
+                : _AlertsList(
+                    alerts: controller.alerts,
+                    now: controller.now,
+                    onOpen: _openAlert,
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
