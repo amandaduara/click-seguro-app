@@ -158,7 +158,7 @@ próprio app gera os alertas a partir das notícias novas, sem backend:
 
 | Status | Método e caminho | Auth | Uso |
 |---|---|---|---|
-| 🧪 | `GET /app/news?startDate=<última verificação>&sortBy=publishedAt&sortOrder=desc&limit=50` | opcional | buscar notícias publicadas desde a última verificação (RF-020) |
+| ✅ | `GET /app/news?startDate=<última verificação>&sortBy=publishedAt&sortOrder=desc&limit=50` | opcional | buscar notícias publicadas desde a última verificação (RF-020) |
 
 - Conferido no servidor de desenvolvimento em 2026-10-09 (specs/011, T002): `startDate` aceita
   ISO-8601 UTC (`2026-10-08T02:15:30.000Z`; também sem milissegundos, com offset ou só a data);
@@ -167,7 +167,7 @@ próprio app gera os alertas a partir das notícias novas, sem backend:
   `publishedAt` igual à última verificação. `publishedAt` veio em todas as notícias. `limit=50`
   vale (máximo 100; 101 → 400): igual ao teto de alertas guardados. `GET /users/me` traz
   `receiveNotifications` (`true` na conta nova), lido pelo datasource do módulo.
-- A linha acima segue 🧪 até a validação no aparelho (specs/011, T049); depois vira ✅.
+- Validada no aparelho em 2026-10-09 (specs/011, T049): 12 notícias dos últimos 7 dias viraram 12 alertas, sem repetição ao reabrir; a linha passou de 🧪 para ✅.
 - O módulo `notifications` tem **datasource próprio** para essa chamada. Não importa o `news`
   (regra de dependência do plan §1.3).
 - Os alertas, a flag de lido e o horário da última verificação ficam no `LocalCacheService`.
