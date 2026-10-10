@@ -7,6 +7,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../fakes/fake_secure_storage_service.dart';
 import '../../../helpers/localized_app.dart';
+import '../../../helpers/notifications_provider.dart';
+import '../../notifications/fakes/alerts_fixtures.dart';
+import '../../notifications/fakes/fake_notifications_repository.dart';
 
 void main() {
   late UserSessionService session;
@@ -47,7 +50,11 @@ void main() {
   group('saudação', () {
     testWidgets('conectada → "Olá, Maria" e o título', (tester) async {
       await signIn();
-      await pumpLocalized(tester, router: buildRouter());
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
 
       expect(find.text('Olá, Maria'), findsOneWidget);
       expect(find.text('Notícias seguras'), findsOneWidget);
@@ -55,7 +62,11 @@ void main() {
 
     testWidgets('visitante → "Bem-vindo"', (tester) async {
       await session.startGuestSession();
-      await pumpLocalized(tester, router: buildRouter());
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
 
       expect(find.text('Bem-vindo'), findsOneWidget);
     });
@@ -65,6 +76,7 @@ void main() {
       await pumpLocalized(
         tester,
         router: buildRouter(subtitle: '3 notícias novas para você'),
+        providers: [fakeNotificationsProvider()],
       );
 
       expect(find.text('3 notícias novas para você'), findsOneWidget);
@@ -73,7 +85,11 @@ void main() {
 
     testWidgets('acompanha a mudança da sessão', (tester) async {
       await session.startGuestSession();
-      await pumpLocalized(tester, router: buildRouter());
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
       expect(find.text('Bem-vindo'), findsOneWidget);
 
       await signIn();
@@ -84,7 +100,11 @@ void main() {
 
     testWidgets('subtítulo com 14 px e título com 24 px', (tester) async {
       await signIn();
-      await pumpLocalized(tester, router: buildRouter());
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
 
       expect(tester.widget<Text>(find.text('Olá, Maria')).style?.fontSize, 14);
       expect(
@@ -97,7 +117,11 @@ void main() {
   group('botões', () {
     testWidgets('"Configurações" abre /settings', (tester) async {
       await session.startGuestSession();
-      await pumpLocalized(tester, router: buildRouter());
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
 
       await tester.tap(find.bySemanticsLabel('Configurações'));
       await tester.pumpAndSettle();
@@ -107,7 +131,11 @@ void main() {
 
     testWidgets('conectada, "Alertas" abre /notifications', (tester) async {
       await signIn();
-      await pumpLocalized(tester, router: buildRouter());
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
 
       await tester.tap(find.bySemanticsLabel('Alertas'));
       await tester.pumpAndSettle();
@@ -119,7 +147,11 @@ void main() {
       tester,
     ) async {
       await session.startGuestSession();
-      await pumpLocalized(tester, router: buildRouter());
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
 
       await tester.tap(find.bySemanticsLabel('Alertas'));
       await tester.pumpAndSettle();
@@ -128,12 +160,58 @@ void main() {
       expect(find.text('tela alertas'), findsNothing);
     });
 
+    testWidgets('conectada: o sino mostra o número de não lidos', (
+      tester,
+    ) async {
+      await signIn();
+      final repository = FakeNotificationsRepository()
+        ..stored = snapshot(
+          alerts: [
+            alert(newsId: 'a'),
+            alert(newsId: 'b'),
+            alert(newsId: 'c'),
+          ],
+        );
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider(repository)],
+      );
+
+      expect(find.bySemanticsLabel('Alertas, 3 novos'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+    });
+
+    testWidgets('visitante toca no sino: convite e nenhuma chamada ao '
+        'repository', (tester) async {
+      await session.startGuestSession();
+      final repository = FakeNotificationsRepository();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider(repository)],
+      );
+
+      await tester.tap(find.bySemanticsLabel('Alertas'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Entre na sua conta'), findsOneWidget);
+      expect(find.text('tela alertas'), findsNothing);
+      expect(repository.getSnapshotCalls, 0);
+      expect(repository.receiveCalls, 0);
+      expect(repository.fetchCalls, isEmpty);
+    });
+
     testWidgets('dois toques rápidos abrem uma única tela de alertas', (
       tester,
     ) async {
       await signIn();
       final router = buildRouter();
-      await pumpLocalized(tester, router: router);
+      await pumpLocalized(
+        tester,
+        router: router,
+        providers: [fakeNotificationsProvider()],
+      );
 
       await tester.tap(find.bySemanticsLabel('Alertas'));
       await tester.tap(find.bySemanticsLabel('Alertas'), warnIfMissed: false);
@@ -146,7 +224,11 @@ void main() {
 
     testWidgets('os dois botões medem pelo menos 48×48', (tester) async {
       await session.startGuestSession();
-      await pumpLocalized(tester, router: buildRouter());
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
 
       for (final label in ['Alertas', 'Configurações']) {
         final size = tester.getSize(find.bySemanticsLabel(label));
@@ -160,7 +242,11 @@ void main() {
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       await signIn();
 
-      await pumpLocalized(tester, router: buildRouter());
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
 
       expect(tester.takeException(), isNull);
     });

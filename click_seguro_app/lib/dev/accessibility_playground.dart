@@ -3,7 +3,7 @@
 // O app real (mesmo setupApp() do main.dart) com um botão de acessibilidade
 // por cima, para validar no aparelho a feature 009 enquanto a tela da B9 não
 // existe. Também tem o atalho "Notícias salvas" (feature 010) até o Perfil da
-// B7 ganhar a entrada. Não é importada pelo app; os textos são fixos por não
+// B7 ganhar a entrada e os três botões dos alertas (feature 011). Não é importada pelo app; os textos são fixos por não
 // ser parte do produto, como no style guide.
 import 'dart:async';
 
@@ -11,6 +11,9 @@ import 'package:click_seguro_app/main.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
+import 'package:click_seguro_app/modules/notifications/data/datasources/alerts_local_data_source.dart';
+import 'package:click_seguro_app/modules/notifications/data/models/alerts_snapshot_model.dart';
+import 'package:click_seguro_app/modules/notifications/domain/usecases/clear_alerts_usecase.dart';
 import 'package:click_seguro_app/modules/settings/settings.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
@@ -74,8 +77,13 @@ class _AccessibilityPanelState extends State<_AccessibilityPanel> {
         listenable: _controller,
         // Stack próprio: o Localizations fica entre o Positioned e o Stack do
         // main. Sem filhos não posicionados, o toque fora passa para o app.
-        builder: (context, _) =>
-            Stack(children: [_open ? _panel() : _toggle(), _savedNews()]),
+        builder: (context, _) => Stack(
+          children: [
+            _open ? _panel() : _toggle(),
+            _savedNews(),
+            _alertsShortcuts(),
+          ],
+        ),
       ),
     );
   }
@@ -118,6 +126,62 @@ class _AccessibilityPanelState extends State<_AccessibilityPanel> {
       ),
     ),
   );
+
+  /// Entradas fixas dos alertas (R10 de specs/011-alertas-locais): a primeira
+  /// conferência não gera alertas e o serviço de desenvolvimento não publica
+  /// notícia a pedido. Valem na próxima abertura do app.
+  Widget _alertsShortcuts() => Positioned(
+    right: 0,
+    top: 96,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _shortcut(
+          'Alertas: voltar verificação 7 dias',
+          () => unawaited(_rewindAlertsCheck()),
+        ),
+        const SizedBox(height: 4),
+        _shortcut(
+          'Alertas: apagar',
+          () => unawaited(GetIt.instance<ClearAlertsUseCase>()()),
+        ),
+        const SizedBox(height: 4),
+        _shortcut(
+          'Abrir Alertas',
+          () => unawaited(widget.router.push<void>('/notifications')),
+        ),
+      ],
+    ),
+  );
+
+  Widget _shortcut(String label, VoidCallback onTap) => Material(
+    color: Colors.black54,
+    borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      ),
+    ),
+  );
+
+  /// Grava `lastCheckAt = agora − 7 dias` no registro da conta atual,
+  /// preservando os alertas (ou criando o registro).
+  Future<void> _rewindAlertsCheck() async {
+    final AlertsLocalDataSource local = GetIt.instance<AlertsLocalDataSource>();
+    final AlertsSnapshotModel? current = await local.read();
+    await local.write(
+      AlertsSnapshotModel(
+        lastCheckAt: DateTime.now().toUtc().subtract(const Duration(days: 7)),
+        receiveAlerts: current?.receiveAlerts,
+        alerts: current?.alerts ?? const [],
+      ),
+    );
+  }
 
   Widget _panel() {
     final AccessibilityPreferences preferences = _controller.preferences;

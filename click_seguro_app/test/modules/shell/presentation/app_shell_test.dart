@@ -16,6 +16,7 @@ import '../../../fakes/fake_secure_storage_service.dart';
 import '../../../helpers/localized_app.dart';
 import '../../../helpers/news_detail_dependencies.dart';
 import '../../../helpers/feed_provider.dart';
+import '../../../helpers/notifications_provider.dart';
 import '../../../helpers/reels_provider.dart';
 import '../../../helpers/splash_provider.dart';
 
@@ -41,6 +42,7 @@ void main() {
         fakeSplashProvider(session.sessionStatus.value),
         fakeFeedProvider(),
         fakeReelsProvider(),
+        fakeNotificationsProvider(),
       ],
     );
     router.go('/home');
