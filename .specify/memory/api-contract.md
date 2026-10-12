@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.7 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-09
+**Versão**: 1.0.8 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-12
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -208,15 +208,20 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 | Status | Método e caminho | Auth | Uso | Erros |
 |---|---|---|---|---|
-| 🧪 | `GET /users/me` → `profile` | sim | RF-035 | 404 `USER_NOT_FOUND` |
-| 🧪 | `PATCH /users/me` `{name?, email?, phone?, receiveNotifications?}` → 204 | sim | RF-036, switch de alertas | 409 `USER_EMAIL_ALREADY_EXISTS` |
-| 🧪 | `POST /users/me/avatar` multipart, campo `avatar` (JPEG/PNG/WebP ≤ 5 MB) → `{avatarUrl}` | sim | RF-036 | 400 arquivo inválido, 500 `UPLOAD_FAILED` |
-| 🧪 | `DELETE /users/me/avatar` → 204 | sim | RF-036 remover foto | 500 `DELETE_FAILED` |
+| ✅ | `GET /users/me` → `profile` | sim | RF-035 | 404 `USER_NOT_FOUND` |
+| ✅ ⚠️ | `PATCH /users/me` `{name?, email?, phone?, receiveNotifications?}` → 204 | sim | RF-036, switch de alertas | 400 `VALIDATION_ERROR` com `errors[{field, message}]`; 409 `USER_EMAIL_ALREADY_EXISTS` (contrato). ⚠️ **qualquer `email` dá 500** e o **telefone não pode ser apagado** (ver nota) |
+| ✅ | `POST /users/me/avatar` multipart, campo `avatar` (JPEG/PNG/WebP ≤ 5 MB) → **200** `{avatarUrl}` | sim | RF-036 | 400 `INVALID_IMAGE_TYPE`, 500 `UPLOAD_FAILED` |
+| ✅ | `DELETE /users/me/avatar` → 204 (também sem foto) | sim | RF-036 remover foto | 500 `DELETE_FAILED` |
 | ✅ | `PATCH /users/me/change-password` `{currentPassword, newPassword}` → 204 | sim | RF-037 | 401 `INVALID_CREDENTIALS` (senha atual errada, **não** expira a sessão), 409 `USER_NEW_PASSWORD_EQUALS_OLD` |
-| 🧪 | `GET /app/educational/modules` | sim | estatísticas do perfil (módulos concluídos, lições) | — |
-| 🧪 | `GET /users/me/news/saved?limit=1` → `meta.total` | sim | estatística "notícias salvas" | — |
+| ✅ | `GET /app/educational/modules` → `{modules[{id, title, description, order, iconUrl?, lessonsCount, completedCount, progressPercent}], totalLessonsCompleted, totalLessonsAvailable}` | opcional | conquistas do perfil (lições e módulos concluídos) | — |
+| ✅ | `GET /users/me/news/{read,saved,liked}?limit=1` → `meta.total` | sim | números lidas/salvas/curtidas do perfil | — |
+| ✅ | `GET /users/me/news/{read,liked}?page&limit` → `{data[], meta}` (mesmo item da lista de salvas) | sim | listas de lidas e curtidas abertas pelo perfil | — |
 
-- `phone` no formato `+55` + 10 ou 11 dígitos (`^\+55\d{10,11}$`).
+- `phone` no formato `+55` + 10 ou 11 dígitos (`^\+55\d{10,11}$`). `null` e `""` são recusados
+  (400): **o telefone salvo não pode ser apagado**, só trocado.
+- ⚠️ **Bug do servidor (2026-10-12, backend avisado)**: `PATCH /users/me` com `email` devolve 500
+  `INTERNAL_SERVER_ERROR` para qualquer valor (e-mail novo, o próprio e-mail ou o de outra conta).
+  O app trata o 500 como falha genérica e já trata o 409 do contrato.
 - **❌ Não há endpoint de estatísticas, conquistas ou níveis.** Decisão: o `profile` monta as
   estatísticas com as duas últimas chamadas acima (datasource próprio, sem importar outros
   módulos), e as **faixas de nível (RN-008) e as conquistas são regras fixas no app**.
@@ -244,6 +249,9 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
+- **1.0.8 (2026-10-12)**: perfil conferido no servidor real (specs/012-perfil R0): `GET`/`PATCH
+  /users/me`, foto (`POST` → 200), listas e totais de lidas/salvas/curtidas, módulos com progresso.
+  ⚠️ `PATCH` com `email` dá 500; telefone não pode ser apagado.
 - **1.0.7 (2026-10-09)**: alertas locais (specs/011, T002): `limit=50` no lugar de 20 (teto de
   alertas guardados); `startDate` em ISO-8601 UTC, filtra por `publishedAt`, "maior ou igual";
   `receiveNotifications` vem em `GET /users/me` e o `PATCH` o altera (204). Linha continua 🧪

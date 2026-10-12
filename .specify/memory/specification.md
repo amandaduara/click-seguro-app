@@ -273,7 +273,7 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   conta MUST NOT apagar os contatos.
 - **RN-008 (Conquistas)**: As conquistas do perfil são derivadas das estatísticas do perfil e
   do progresso de cada módulo. As regras são fixas no app (a API não as fornece) e estão em
-  `specs/011-perfil/spec.md` (FR-008). Não há nível (decisão de 2026-10-09).
+  `specs/012-perfil/spec.md` (FR-008). Não há nível (decisão de 2026-10-09).
 
 **Critério de aceite geral**: um caso de uso só é aceito quando a RN correspondente tem teste
 automatizado (TDD, Seção III da constituição) e o comportamento de erro associado (§6) também

@@ -1,6 +1,6 @@
 # Feature Specification: Perfil
 
-**Feature Branch**: `011-perfil`
+**Feature Branch**: `012-perfil`
 
 **Created**: 2026-10-09
 
@@ -34,6 +34,8 @@ usuária em 2026-10-12 (o wireframe `ProfileScreen.tsx` deixa de ser a referênc
 - Q: As conquistas de notícias contam o quê? → A: Notícias lidas (nunca diminuem); as de atividades contam lições e módulos concluídos.
 - Q: Onde fica "Receber alertas"? → A: Nas Configurações (B8), com as linhas novas "Privacidade" e "Sobre o SafeNews". Sai desta feature.
 - Q: Os atalhos? → A: Dois cartões coloridos, "Ler mais notícias" e "Fazer novas atividades", e a engrenagem das configurações no topo.
+- Q: O servidor dá erro em qualquer troca de e-mail (conferido no plano). O e-mail continua editável? → A: Sim. Enquanto o backend não corrigir, a troca falha com uma mensagem simples; o aviso de e-mail em uso já fica pronto.
+- Q: O servidor não deixa apagar o telefone. O que fazer? → A: Não há opção de apagar: quem já tem telefone só troca por outro válido; quem não tem pode deixar em branco.
 
 ## Contexto
 
@@ -116,8 +118,9 @@ no perfil e na barra do Início; tentar um e-mail de outra conta e ver o aviso n
 4. **Given** o e-mail não tem formato válido, **When** a pessoa tenta salvar, **Then** o campo
    mostra o erro e nada é enviado.
 5. **Given** o telefone não tem DDD e número válidos (10 ou 11 dígitos), **When** a pessoa tenta
-   salvar, **Then** o campo mostra o erro e nada é enviado. O telefone é opcional: em branco, é
-   aceito.
+   salvar, **Then** o campo mostra o erro e nada é enviado. Quem ainda não tem telefone pode
+   deixar em branco; quem já tem não pode apagar, só trocar por outro válido (o campo vazio mostra
+   "Informe um telefone com DDD").
 6. **Given** o e-mail já é de outra conta, **When** a pessoa salva, **Then** o campo de e-mail
    mostra "Este e-mail já está em uso" e os outros dados não são perdidos.
 7. **Given** nada mudou, **When** a pessoa olha a tela, **Then** "Salvar" fica desabilitado.
@@ -192,7 +195,8 @@ notícias lidas; tocar numa e abrir o detalhe; voltar e tocar em "Curtidas".
 - **E-mail com maiúsculas ou espaços**: é enviado sem espaços nas pontas e em minúsculas.
 - **Telefone digitado com máscara** ("(11) 91234-5678") ou com "+55": aceito; é enviado como
   "+55" seguido de 10 ou 11 dígitos.
-- **Telefone apagado**: a pessoa pode deixar sem telefone.
+- **Telefone apagado**: não é possível apagar um telefone já salvo (o serviço não permite);
+  o campo vazio mostra o erro e nada é enviado.
 - **Nenhum módulo de atividades no serviço**: só as conquistas fixas aparecem, nenhuma por módulo,
   sem erro. "Mestre da segurança" só pode ser alcançada quando houver ao menos um módulo.
 - **Módulo sem lições**: não gera conquista própria (não há o que concluir).
@@ -263,8 +267,8 @@ notícias lidas; tocar numa e abrir o detalhe; voltar e tocar em "Curtidas".
 - **FR-011**: "Editar perfil" MUST abrir com nome, e-mail e telefone atuais e só habilitar
   "Salvar" quando algo mudou.
 - **FR-012**: O app MUST validar antes de enviar: nome de 6 a 150 caracteres (sem os espaços das
-  pontas), e-mail em formato válido e telefone vazio ou com DDD e número (10 ou 11 dígitos). Erros
-  aparecem no campo.
+  pontas), e-mail em formato válido e telefone com DDD e número (10 ou 11 dígitos), podendo ficar
+  vazio só se a pessoa ainda não tinha telefone. Erros aparecem no campo.
 - **FR-013**: Salvar MUST enviar só o que mudou, mostrar "Dados salvos" e atualizar o nome e o
   e-mail no perfil e na saudação do app.
 - **FR-014**: E-mail já usado por outra conta MUST mostrar o aviso no campo de e-mail, sem perder
@@ -323,7 +327,9 @@ notícias lidas; tocar numa e abrir o detalhe; voltar e tocar em "Curtidas".
 - **Configurações (B8)**: "Receber alertas", "Privacidade" e "Sobre o SafeNews" ficam lá
   (quadro "Configurações" do Figma); "Dados pessoais" abre a mesma tela "Editar perfil" desta
   feature.
-- **E-mail**: a troca não pede senha nem confirmação por e-mail; o serviço aceita direto.
+- **E-mail**: a troca não pede senha nem confirmação por e-mail. ⚠️ Em 2026-10-12 o serviço
+  devolvia erro interno (500) em toda troca de e-mail (backend avisado); até corrigirem, a pessoa
+  vê "Não foi possível salvar. Tente de novo mais tarde." e o que digitou continua na tela.
 - **Telefone**: opcional; só números do Brasil (+55), como o serviço exige.
 - **Foto**: escolhida pelos recursos da feature 007 (já reduzida); não fica cópia guardada no
   aparelho depois do envio, a foto exibida é a do serviço.

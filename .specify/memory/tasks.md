@@ -270,7 +270,7 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - Endpoints: `GET`/`PATCH /users/me`, `POST`/`DELETE /users/me/avatar` (multipart, F0.2),
     para os números `GET /users/me/news/read`, `/saved` e `/liked` (`limit=1` → `meta.total`) e
     para as conquistas `GET /app/educational/modules`.
-  - Regras das conquistas (RN-008) definidas em `specs/011-perfil/spec.md`; sem nível (decisão
+  - Regras das conquistas (RN-008) definidas em `specs/012-perfil/spec.md`; sem nível (decisão
     de 2026-10-09).
   - `ProfileEntity`, `StatsEntity`, `AchievementEntity` + models, com teste.
   - `ProfileRemoteDataSource` (três fontes em paralelo) e repository, com teste. 409
