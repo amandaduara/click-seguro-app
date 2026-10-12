@@ -20,6 +20,7 @@ import '../../modules/authentication/fakes/fake_auth_repository.dart';
 import '../../modules/authentication/fakes/forgot_password_controller_factory.dart';
 import '../../helpers/localized_app.dart';
 import '../../helpers/news_detail_dependencies.dart';
+import '../../helpers/profile_dependencies.dart';
 import '../../helpers/feed_provider.dart';
 import '../../helpers/notifications_provider.dart';
 import '../../helpers/reels_provider.dart';
@@ -33,6 +34,7 @@ void main() {
     session = UserSessionService(FakeSecureStorageService());
     GetIt.instance.registerSingleton<UserSessionService>(session);
     registerNewsDetailDependencies(GetIt.instance);
+    registerProfileDependencies(GetIt.instance);
     await session.startGuestSession();
     router = buildAppRouter(session);
   });

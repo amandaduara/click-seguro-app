@@ -9,6 +9,7 @@ import 'package:click_seguro_app/modules/help/help.dart';
 import 'package:click_seguro_app/modules/news/domain/repositories/news_repository.dart';
 import 'package:click_seguro_app/modules/news/news.dart';
 import 'package:click_seguro_app/modules/notifications/domain/repositories/notifications_repository.dart';
+import 'package:click_seguro_app/modules/profile/domain/repositories/profile_repository.dart';
 import 'package:click_seguro_app/modules/profile/profile.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_bottom_nav.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -20,6 +21,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'fakes/fake_secure_storage_service.dart';
 import 'modules/news/fakes/fake_news_repository.dart';
 import 'modules/notifications/fakes/fake_notifications_repository.dart';
+import 'modules/profile/fakes/fake_profile_repository.dart';
 
 /// Teste de fumaça (F0.11): sobe o app real, com os módulos do `main.dart`,
 /// como visitante e sem plataforma, e passa pelas cinco abas.
@@ -53,6 +55,10 @@ void main() {
       // Os alertas também não vão à rede no teste.
       GetIt.instance.registerSingleton<NotificationsRepository>(
         FakeNotificationsRepository(),
+      );
+      // Nem o perfil.
+      GetIt.instance.registerSingleton<ProfileRepository>(
+        FakeProfileRepository(),
       );
       session = GetIt.instance<UserSessionService>();
       await session.restoreSession();

@@ -176,6 +176,14 @@ abstract class AppStrings {
   static const String newsSavedEmpty = 'news_saved_empty';
   static const String newsSavedEmptyHint = 'news_saved_empty_hint';
   static const String newsSavedGuestBody = 'news_saved_guest_body';
+  static const String newsReadTitle = 'news_read_title';
+  static const String newsReadEmpty = 'news_read_empty';
+  static const String newsReadEmptyHint = 'news_read_empty_hint';
+  static const String newsReadGuestBody = 'news_read_guest_body';
+  static const String newsLikedTitle = 'news_liked_title';
+  static const String newsLikedEmpty = 'news_liked_empty';
+  static const String newsLikedEmptyHint = 'news_liked_empty_hint';
+  static const String newsLikedGuestBody = 'news_liked_guest_body';
 
   // --- notifications ---
   static const String notificationsTitle = 'notifications_title';
@@ -211,6 +219,88 @@ abstract class AppStrings {
   // --- profile ---
   static const String profileTitle = 'profile_title';
   static const String profileEditTitle = 'profile_edit_title';
+  static const String profileSettings = 'profile_settings';
+  static const String profileEditPhotoLabel = 'profile_edit_photo_label';
+  static const String profileStatRead = 'profile_stat_read';
+  static const String profileStatSaved = 'profile_stat_saved';
+  static const String profileStatLiked = 'profile_stat_liked';
+  static const String profileStatReadSemantic = 'profile_stat_read_semantic';
+  static const String profileStatSavedSemantic = 'profile_stat_saved_semantic';
+  static const String profileStatLikedSemantic = 'profile_stat_liked_semantic';
+  static const String profileStatsFailed = 'profile_stats_failed';
+  static const String profileAchievements = 'profile_achievements';
+  static const String profileAchievementsCount = 'profile_achievements_count';
+  static const String profileAchievementsSeeAll =
+      'profile_achievements_see_all';
+  static const String profileAchievementsFailed = 'profile_achievements_failed';
+  static const String profileAchievementsEmpty = 'profile_achievements_empty';
+  static const String profileAchievementDone = 'profile_achievement_done';
+  static const String profileAchFirstLesson = 'profile_ach_first_lesson';
+  static const String profileAchFirstModule = 'profile_ach_first_module';
+  static const String profileAchDedicatedStudent =
+      'profile_ach_dedicated_student';
+  static const String profileAchSecurityMaster = 'profile_ach_security_master';
+  static const String profileAchAttentiveReader =
+      'profile_ach_attentive_reader';
+  static const String profileAchDedicatedReader =
+      'profile_ach_dedicated_reader';
+  static const String profileAchProgressLessons =
+      'profile_ach_progress_lessons';
+  static const String profileAchProgressModules =
+      'profile_ach_progress_modules';
+  static const String profileAchProgressNews = 'profile_ach_progress_news';
+  static const String profileCtaNewsTitle = 'profile_cta_news_title';
+  static const String profileCtaNewsSub = 'profile_cta_news_sub';
+  static const String profileCtaActivitiesTitle =
+      'profile_cta_activities_title';
+  static const String profileCtaActivitiesSub = 'profile_cta_activities_sub';
+  static const String profileGuestTitle = 'profile_guest_title';
+  static const String profileGuestBody = 'profile_guest_body';
+  static const String profileGuestAction = 'profile_guest_action';
+  static const String profileGuestBenefitsTitle =
+      'profile_guest_benefits_title';
+  static const String profileGuestBenefitProgress =
+      'profile_guest_benefit_progress';
+  static const String profileGuestBenefitSaved = 'profile_guest_benefit_saved';
+  static const String profileGuestBenefitAlerts =
+      'profile_guest_benefit_alerts';
+  static const String profileGuestBenefitAchievements =
+      'profile_guest_benefit_achievements';
+  static const String profileEditName = 'profile_edit_name';
+  static const String profileEditEmail = 'profile_edit_email';
+  static const String profileEditPhone = 'profile_edit_phone';
+  static const String profileEditPhoneHint = 'profile_edit_phone_hint';
+  static const String profileEditSave = 'profile_edit_save';
+  static const String profileEditSaved = 'profile_edit_saved';
+  static const String profileEditSaveFailed = 'profile_edit_save_failed';
+  static const String profileEditErrorName = 'profile_edit_error_name';
+  static const String profileEditErrorEmail = 'profile_edit_error_email';
+  static const String profileEditErrorEmailInUse =
+      'profile_edit_error_email_in_use';
+  static const String profileEditErrorPhone = 'profile_edit_error_phone';
+  static const String profileEditErrorPhoneRequired =
+      'profile_edit_error_phone_required';
+  static const String profileEditDiscardTitle = 'profile_edit_discard_title';
+  static const String profileEditDiscardBody = 'profile_edit_discard_body';
+  static const String profileEditDiscardConfirm =
+      'profile_edit_discard_confirm';
+  static const String profileEditDiscardCancel = 'profile_edit_discard_cancel';
+  static const String profilePhotoChange = 'profile_photo_change';
+  static const String profilePhotoGallery = 'profile_photo_gallery';
+  static const String profilePhotoCamera = 'profile_photo_camera';
+  static const String profilePhotoRemove = 'profile_photo_remove';
+  static const String profilePhotoRemoveConfirmTitle =
+      'profile_photo_remove_confirm_title';
+  static const String profilePhotoRemoveConfirm =
+      'profile_photo_remove_confirm';
+  static const String profilePhotoRemoveCancel = 'profile_photo_remove_cancel';
+  static const String profilePhotoUploading = 'profile_photo_uploading';
+  static const String profilePhotoFailed = 'profile_photo_failed';
+  static const String profilePhotoInvalid = 'profile_photo_invalid';
+  static const String profilePhotoPermissionTitle =
+      'profile_photo_permission_title';
+  static const String profilePhotoPermissionBody =
+      'profile_photo_permission_body';
 
   // --- settings ---
   static const String settingsTitle = 'settings_title';
