@@ -7,7 +7,7 @@
 | Método e caminho | Sucesso | Erros tratados |
 |---|---|---|
 | `GET /users/me` | 200 `{name, email, phone?, role, receiveNotifications, avatarUrl?}` | 404 `USER_NOT_FOUND` → sessão encerrada (feature 002) |
-| `PATCH /users/me` `{name?, email?, phone?}` | 204 | 409 `USER_EMAIL_ALREADY_EXISTS` → `EmailInUseFailure`; 400 `VALIDATION_ERROR` `errors[{field}]` → `ProfileFieldFailure`; ⚠️ 500 com `email` (bug) → falha genérica |
+| `PATCH /users/me` `{name?, email?, phone?}` | 204 | 409 `USER_EMAIL_ALREADY_EXISTS` → `EmailInUseFailure`; 400 `VALIDATION_ERROR` → falha genérica (evitado pela validação local); ⚠️ 500 com `email` (bug) → falha genérica |
 | `POST /users/me/avatar` multipart `avatar` (jpeg/png/webp ≤ 5 MB) | **200** `{avatarUrl}` | 400 `INVALID_IMAGE_TYPE` → `AvatarTypeFailure`; 500 `UPLOAD_FAILED` → genérica |
 | `DELETE /users/me/avatar` | 204 | 500 `DELETE_FAILED` → genérica |
 | `GET /users/me/news/{read,saved,liked}?limit=1` | 200 `{data, meta{total}}` → só `total` | padrão |

@@ -71,7 +71,7 @@ de i18n, ajuste em 3 arquivos de `news` (lista generalizada), 1 de `common` e 1 
 | II. SOLID, DRY, KISS | A lista de salvas é generalizada em vez de copiada. A expressão do e-mail é copiada do `CredentialsValidator` (uma linha, com comentário): importar o `authentication` violaria o Princípio I, e movê-la para `common` mexeria numa feature fechada sem necessidade. | ✅ (justificado) |
 | III. TDD | Testes antes do código para models, datasource, repository, conquistas, validador, usecases, controllers e páginas; os testes de salvas da 010 continuam verdes. | ✅ |
 | IV. Stack e DI | Só pacotes já adotados; usecases e controllers registrados no `ProfileModule`. | ✅ |
-| V. Erros tipados | `EmailInUseFailure`, `ProfileFieldFailure`, `AvatarTypeFailure` a partir de códigos em constantes; status por enum; mensagens por chave. | ✅ |
+| V. Erros tipados | `EmailInUseFailure`, `AvatarTypeFailure` a partir de códigos em constantes; status por enum; mensagens por chave. | ✅ |
 | Regras globais | Sem segredo (as contas de teste não estão no código); UI usa GetIt só para obter controllers/serviços. Mudança em `common` (`profileVersion`) e `shell` (`AppTopBar`) justificada ([R6](research.md#r6-saudação-atualizada-sc-003)) e com teste. | ✅ |
 
 **Pós-design (Phase 1)**: reavaliado após o data-model e o contrato; sem desvio novo.

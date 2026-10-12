@@ -104,8 +104,9 @@ outra feature); recarregar só no `initState` (números ficariam velhos).
   (clarificação).
 - `UpdateProfileUseCase` envia **só o que mudou** (FR-013); e-mail em minúsculas e sem espaços.
 - Falhas: 409 `USER_EMAIL_ALREADY_EXISTS` → `EmailInUseFailure` (erro no campo de e-mail); 400
-  `VALIDATION_ERROR` → erro no campo indicado em `errors[].field` quando for `name`, `email` ou
-  `phone`; demais (incluindo o 500 do e-mail, R0) → `ServerFailure`/`ConnectionFailure`, com
+  `VALIDATION_ERROR` não deve ocorrer (as mesmas regras são validadas antes de enviar) e a
+  `ApiException` não traz o campo, então vira falha genérica; demais (incluindo o 500 do e-mail,
+  R0) → `ServerFailure`/`ConnectionFailure`, com
   "Não foi possível salvar. Tente de novo mais tarde." e o rascunho mantido.
 - Sucesso: `UserSessionService.updateProfile(name, email)` e "Dados salvos".
 - Sair com alterações: `PopScope` + diálogo "Descartar alterações?" (FR-016).

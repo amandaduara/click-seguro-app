@@ -38,9 +38,8 @@ Ordem: `achieved` primeiro; depois maior `progress`; empate → ordem do enum e,
 | Falha | Quando | Mensagem (chave) |
 |---|---|---|
 | `EmailInUseFailure` | 409 `USER_EMAIL_ALREADY_EXISTS` | `profile_edit_email_in_use` (no campo) |
-| `ProfileFieldFailure(field)` | 400 `VALIDATION_ERROR` com `errors[].field` ∈ {name, email, phone} | erro genérico do campo |
 | `AvatarTypeFailure` | 400 `INVALID_IMAGE_TYPE` | `profile_photo_invalid` |
-| `ConnectionFailure`, `ServerFailure`, `UnauthorizedFailure` | padrão (inclui o 500 do e-mail, R0) | `profile_edit_save_failed` na edição |
+| `ConnectionFailure`, `ServerFailure`, `UnauthorizedFailure` | padrão (inclui o 500 do e-mail, R0, e o 400 `VALIDATION_ERROR`, que a validação local evita; a `ApiException` não traz o campo) | `profile_edit_save_failed` na edição |
 
 ## Controllers
 
