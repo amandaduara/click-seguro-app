@@ -35,6 +35,13 @@ class UserSessionService {
   final ValueNotifier<UserSessionStatus> sessionStatus =
       ValueNotifier<UserSessionStatus>(UserSessionStatus.unauthenticated);
 
+  final ValueNotifier<int> _profileVersion = ValueNotifier<int>(0);
+
+  /// Sobe a cada [updateProfile] com conta: quem mostra o nome (ex.: a
+  /// saudação do Início) se atualiza sem outra mudança de sessão
+  /// (R6 de specs/012-perfil).
+  ValueListenable<int> get profileVersion => _profileVersion;
+
   bool get isAuthenticated =>
       sessionStatus.value == UserSessionStatus.authenticated;
 
@@ -119,7 +126,8 @@ class UserSessionService {
   }
 
   /// Atualiza nome e e-mail com o que o serviço informou (conferência na
-  /// abertura). Só age se conectado; não notifica [sessionStatus].
+  /// abertura ou edição do perfil). Só age se conectado; não notifica
+  /// [sessionStatus], só [profileVersion].
   Future<void> updateProfile({
     required String name,
     required String email,
@@ -128,6 +136,7 @@ class UserSessionService {
 
     userName = name;
     this.email = email;
+    _profileVersion.value++;
     await _persistAuthenticated();
   }
 

@@ -69,9 +69,13 @@ class _AppTopBarState extends State<AppTopBar> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ValueListenableBuilder<UserSessionStatus>(
-                  valueListenable: _session.sessionStatus,
-                  builder: (context, _, _) => Text(
+                // O nome muda também quando o perfil é editado (SC-003).
+                ListenableBuilder(
+                  listenable: Listenable.merge([
+                    _session.sessionStatus,
+                    _session.profileVersion,
+                  ]),
+                  builder: (context, _) => Text(
                     widget.subtitle ?? _greeting(),
                     style: textTheme.bodyMedium?.copyWith(
                       fontSize: 14,
