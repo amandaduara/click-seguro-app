@@ -1,14 +1,12 @@
 /// Progresso da conta em um módulo de atividades.
 class ModuleProgressEntity {
   const ModuleProgressEntity({
-    required this.id,
     required this.title,
     required this.order,
     required this.lessonsCount,
     required this.completedCount,
   });
 
-  final String id;
   final String title;
   final int order;
   final int lessonsCount;

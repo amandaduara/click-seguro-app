@@ -24,7 +24,6 @@ const NewsCountsEntity testCounts = NewsCountsEntity(
 const ActivityProgressEntity testProgress = ActivityProgressEntity(
   modules: [
     ModuleProgressEntity(
-      id: 'm1',
       title: 'Golpes Digitais',
       order: 1,
       lessonsCount: 3,

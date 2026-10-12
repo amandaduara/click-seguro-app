@@ -11,9 +11,9 @@ Nada novo é guardado no aparelho (a cópia da foto escolhida é apagada depois 
 |---|---|---|
 | `ProfileEntity` | `name`, `email`, `phone?` (`+55…`), `avatarUrl?`, `receiveNotifications` | `initials`: até 2 letras das primeiras palavras do nome |
 | `NewsCountsEntity` | `read`, `saved`, `liked` (int) | `meta.total` de cada lista |
-| `ModuleProgressEntity` | `id`, `title`, `order`, `lessonsCount`, `completedCount` | `isCompleted` = `lessonsCount > 0 && completedCount >= lessonsCount` |
+| `ModuleProgressEntity` | `title`, `order`, `lessonsCount`, `completedCount` | `isCompleted` = `lessonsCount > 0 && completedCount >= lessonsCount` |
 | `ActivityProgressEntity` | `modules: List<ModuleProgressEntity>`, `lessonsCompleted` (`totalLessonsCompleted`) | `modulesCompleted` = nº de módulos com `isCompleted`; `modulesWithLessons` = módulos com `lessonsCount > 0` |
-| `AchievementEntity` | `kind: AchievementKind`, `moduleId?`, `moduleTitle?`, `current`, `target`, `achieved` | `progress` = `current/target` (limitado a 1) |
+| `AchievementEntity` | `kind: AchievementKind`, `moduleTitle?`, `moduleOrder?` (desempate e cor), `current`, `target`, `achieved` | `progress` = `current/target` (limitado a 1) |
 | `ProfileUpdate` | `name?`, `email?`, `phone?` | só os campos que mudaram (FR-013) |
 
 `AchievementKind { firstLesson, firstModule, dedicatedStudent, securityMaster, attentiveReader, dedicatedReader, module }`.

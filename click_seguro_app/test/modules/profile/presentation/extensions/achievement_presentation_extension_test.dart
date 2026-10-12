@@ -18,7 +18,6 @@ void main() {
     kind: kind,
     current: current,
     target: target,
-    moduleId: kind == AchievementKind.module ? 'm$moduleOrder' : null,
     moduleTitle: kind == AchievementKind.module ? 'Golpes Digitais' : null,
     moduleOrder: moduleOrder,
   );

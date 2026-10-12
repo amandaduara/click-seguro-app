@@ -21,7 +21,6 @@ class ActivityProgressModel {
 
   static ModuleProgressEntity _moduleFromJson(Map<String, dynamic> json) =>
       ModuleProgressEntity(
-        id: json['id'] as String,
         title: json['title'] as String,
         order: (json['order'] as num).toInt(),
         lessonsCount: (json['lessonsCount'] as num).toInt(),

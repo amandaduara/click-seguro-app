@@ -88,7 +88,6 @@ void main() {
       expect(progress.lessonsCompleted, 4);
       expect(progress.modules, hasLength(2));
       final ModuleProgressEntity second = progress.modules[1];
-      expect(second.id, 'm2');
       expect(second.title, 'Phishing');
       expect(second.order, 2);
       expect(second.lessonsCount, 4);

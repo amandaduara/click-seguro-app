@@ -10,7 +10,6 @@ void main() {
     int lessons = 3,
     int completed = 0,
   }) => ModuleProgressEntity(
-    id: id,
     title: 'Módulo $id',
     order: order,
     lessonsCount: lessons,
@@ -75,12 +74,14 @@ void main() {
     );
 
     expect(of(achievements, AchievementKind.firstModule).achieved, isTrue);
-    final moduleMedal = achievements.firstWhere((a) => a.moduleId == 'm1');
+    final moduleMedal = achievements.firstWhere(
+      (a) => a.moduleTitle == 'Módulo m1',
+    );
     expect(moduleMedal.kind, AchievementKind.module);
     expect(moduleMedal.moduleTitle, 'Módulo m1');
     expect(moduleMedal.achieved, isTrue);
     expect(
-      achievements.firstWhere((a) => a.moduleId == 'm2').achieved,
+      achievements.firstWhere((a) => a.moduleTitle == 'Módulo m2').achieved,
       isFalse,
     );
   });
@@ -106,7 +107,7 @@ void main() {
       ],
     );
 
-    expect(achievements.where((a) => a.moduleId == 'vazio'), isEmpty);
+    expect(achievements.where((a) => a.moduleTitle == 'Módulo vazio'), isEmpty);
     final master = of(achievements, AchievementKind.securityMaster);
     expect((master.current, master.target, master.achieved), (1, 1, true));
   });
@@ -175,8 +176,8 @@ void main() {
 
       final modules = achievements
           .where((a) => a.kind == AchievementKind.module)
-          .map((a) => a.moduleId);
-      expect(modules, ['a', 'b']);
+          .map((a) => a.moduleTitle);
+      expect(modules, ['Módulo a', 'Módulo b']);
     });
   });
 }

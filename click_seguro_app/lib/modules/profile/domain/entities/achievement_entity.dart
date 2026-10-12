@@ -15,7 +15,6 @@ class AchievementEntity {
     required this.kind,
     required this.current,
     required this.target,
-    this.moduleId,
     this.moduleTitle,
     this.moduleOrder,
   });
@@ -23,7 +22,6 @@ class AchievementEntity {
   final AchievementKind kind;
 
   /// Só em [AchievementKind.module].
-  final String? moduleId;
   final String? moduleTitle;
 
   /// `order` do módulo no serviço: desempate e cor da medalha.

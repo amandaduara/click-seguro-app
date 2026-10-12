@@ -52,7 +52,6 @@ abstract final class AchievementsCalculator {
         if (module.lessonsCount > 0)
           AchievementEntity(
             kind: AchievementKind.module,
-            moduleId: module.id,
             moduleTitle: module.title,
             moduleOrder: module.order,
             current: module.completedCount,
