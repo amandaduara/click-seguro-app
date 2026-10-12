@@ -1,12 +1,13 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_categories_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_page_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_usecase.dart';
-import 'package:click_seguro_app/modules/news/domain/usecases/get_saved_news_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_user_news_list_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
@@ -202,8 +203,11 @@ void main() {
       expect(repository.readCalls, ['n7']);
     });
 
-    test('GetSavedNewsUseCase repassa a página', () async {
-      final result = await GetSavedNewsUseCase(repository)(3);
+    test('GetUserNewsListUseCase repassa a página', () async {
+      final result = await GetUserNewsListUseCase(repository)(
+        NewsListKind.saved,
+        3,
+      );
 
       expect(result.isRight(), isTrue);
       expect(repository.savedCalls, [3]);

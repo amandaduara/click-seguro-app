@@ -7,10 +7,11 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
-import 'package:click_seguro_app/modules/news/domain/entities/saved_news_result.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/user_news_list_result.dart';
 import 'package:click_seguro_app/modules/news/domain/repositories/news_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -150,7 +151,7 @@ class FakeNewsRepository implements NewsRepository {
   /// vazias → sucesso padrão.
   final List<Either<Failure, NewsDetailResult>> detailResults = [];
   final List<Either<Failure, Unit>> readResults = [];
-  final List<Either<Failure, SavedNewsResult>> savedResults = [];
+  final List<Either<Failure, UserNewsListResult>> savedResults = [];
 
   Completer<void>? detailGate;
   Completer<void>? savedGate;
@@ -158,6 +159,9 @@ class FakeNewsRepository implements NewsRepository {
   final List<String> detailCalls = [];
   final List<String> readCalls = [];
   final List<int> savedCalls = [];
+
+  /// Lista pedida em cada chamada de `getUserNewsList` (specs/012).
+  final List<NewsListKind> listKinds = [];
 
   Completer<void>? reelsGate;
   Completer<void>? likeGate;
@@ -265,11 +269,15 @@ class FakeNewsRepository implements NewsRepository {
   }
 
   @override
-  Future<Either<Failure, SavedNewsResult>> getSavedNews(int page) async {
+  Future<Either<Failure, UserNewsListResult>> getUserNewsList(
+    NewsListKind kind,
+    int page,
+  ) async {
     savedCalls.add(page);
+    listKinds.add(kind);
     final result = savedResults.isEmpty
-        ? Right<Failure, SavedNewsResult>(
-            SavedNewsResult(
+        ? Right<Failure, UserNewsListResult>(
+            UserNewsListResult(
               page: NewsPageEntity(items: const [], hasMore: false, page: page),
               isFromCache: false,
             ),

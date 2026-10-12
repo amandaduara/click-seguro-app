@@ -5,6 +5,7 @@ import 'package:click_seguro_app/modules/news/data/models/like_result_model.dart
 import 'package:click_seguro_app/modules/news/data/models/news_category_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_list_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/reels_page_model.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 
 import 'news_fixtures.dart';
 
@@ -26,11 +27,14 @@ class FakeNewsRemoteDataSource implements NewsRemoteDataSource {
   ApiException? markAsReadError;
   ApiException? savedError;
 
-  /// Páginas das salvas (sem entrada → página vazia, fim).
+  /// Páginas das listas da conta (sem entrada → página vazia, fim).
   final Map<int, Map<String, dynamic>> savedPages = {};
   final List<String> detailCalls = [];
   final List<String> readCalls = [];
   final List<int> savedCalls = [];
+
+  /// Lista pedida em cada chamada de `getUserNewsList` (specs/012).
+  final List<NewsListKind> listKinds = [];
 
   final List<int> feedPages = [];
 
@@ -113,8 +117,12 @@ class FakeNewsRemoteDataSource implements NewsRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> getSavedNews({required int page}) async {
+  Future<Map<String, dynamic>> getUserNewsList(
+    NewsListKind kind, {
+    required int page,
+  }) async {
     savedCalls.add(page);
+    listKinds.add(kind);
     if (savedError case final error?) throw error;
     return savedPages[page] ?? savedListJson(items: const [], page: page);
   }

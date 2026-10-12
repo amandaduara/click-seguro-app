@@ -1,35 +1,36 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
-import 'package:click_seguro_app/modules/news/domain/entities/saved_news_result.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/user_news_list_result.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
-import 'package:click_seguro_app/modules/news/presentation/controller/saved_news_controller.dart';
+import 'package:click_seguro_app/modules/news/presentation/controller/user_news_list_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 
 import '../../fakes/fake_news_repository.dart';
-import '../../fakes/saved_news_controller_factory.dart';
+import '../../fakes/user_news_list_controller_factory.dart';
 
 void main() {
   late FakeNewsRepository repository;
-  late SavedNewsController controller;
+  late UserNewsListController controller;
 
   setUp(() {
     repository = FakeNewsRepository();
-    controller = buildSavedNewsController(repository);
+    controller = buildUserNewsListController(repository);
   });
 
   tearDown(() => controller.dispose());
 
-  Right<Failure, SavedNewsResult> pageOf(
+  Right<Failure, UserNewsListResult> pageOf(
     int count, {
     int start = 1,
     int page = 1,
     bool hasMore = false,
     bool isFromCache = false,
   }) => Right(
-    SavedNewsResult(
+    UserNewsListResult(
       page: NewsPageEntity(
         items: newsItems(count, start: start),
         hasMore: hasMore,
@@ -121,7 +122,7 @@ void main() {
 
     test('dispose durante a carga não dispara erro', () async {
       final gate = repository.savedGate = Completer<void>();
-      final other = buildSavedNewsController(repository);
+      final other = buildUserNewsListController(repository);
 
       final loading = other.load();
       other.dispose();
@@ -259,5 +260,17 @@ void main() {
       expect(controller.status, FeedStatus.loaded);
       expect(controller.items, hasLength(2));
     });
+  });
+
+  test('com kind read, pede as lidas', () async {
+    final readList = buildUserNewsListController(
+      repository,
+      kind: NewsListKind.read,
+    );
+    addTearDown(readList.dispose);
+
+    await readList.load();
+
+    expect(repository.listKinds, [NewsListKind.read]);
   });
 }

@@ -16,7 +16,7 @@ import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_usecase.d
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_reels_usecase.dart';
-import 'package:click_seguro_app/modules/news/domain/usecases/get_saved_news_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_user_news_list_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
@@ -68,7 +68,7 @@ class NewsModule implements ModuleInterface {
         () => MarkNewsAsReadUseCase(injector<NewsRepository>()),
       )
       ..registerLazySingleton(
-        () => GetSavedNewsUseCase(injector<NewsRepository>()),
+        () => GetUserNewsListUseCase(injector<NewsRepository>()),
       );
   }
 

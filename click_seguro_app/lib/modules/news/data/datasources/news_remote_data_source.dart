@@ -2,6 +2,7 @@ import 'package:click_seguro_app/modules/news/data/models/like_result_model.dart
 import 'package:click_seguro_app/modules/news/data/models/news_category_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_list_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/reels_page_model.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 
 /// Pedidos de notícias ao servidor. Erros sobem como `ApiException`.
 abstract class NewsRemoteDataSource {
@@ -36,6 +37,10 @@ abstract class NewsRemoteDataSource {
   /// `POST /app/news/{id}/read` (204, idempotente).
   Future<void> markAsRead(String id);
 
-  /// Resposta crua de `GET /users/me/news/saved` (a página 1 vira cópia).
-  Future<Map<String, dynamic>> getSavedNews({required int page});
+  /// Resposta crua de `GET /users/me/news/{kind}` (a página 1 das salvas
+  /// vira cópia).
+  Future<Map<String, dynamic>> getUserNewsList(
+    NewsListKind kind, {
+    required int page,
+  });
 }

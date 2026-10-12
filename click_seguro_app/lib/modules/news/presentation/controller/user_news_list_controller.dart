@@ -1,18 +1,24 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
-import 'package:click_seguro_app/modules/news/domain/usecases/get_saved_news_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/get_user_news_list_usecase.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
 import 'package:flutter/foundation.dart';
 
 /// Estado da tela de notícias salvas, um por abertura (data-model de
 /// specs/010-detalhe-noticia). Lista vazia = [FeedStatus.loaded] com
 /// [items] vazio.
-class SavedNewsController extends ChangeNotifier {
-  SavedNewsController({required GetSavedNewsUseCase getSavedNews})
-    : _getSavedNews = getSavedNews;
+class UserNewsListController extends ChangeNotifier {
+  UserNewsListController({
+    required this.kind,
+    required GetUserNewsListUseCase getUserNewsList,
+  }) : _getUserNewsList = getUserNewsList;
 
-  final GetSavedNewsUseCase _getSavedNews;
+  /// Salvas, lidas ou curtidas (specs/012-perfil, R8).
+  final NewsListKind kind;
+
+  final GetUserNewsListUseCase _getUserNewsList;
 
   FeedStatus _status = FeedStatus.loading;
   FeedStatus get status => _status;
@@ -69,7 +75,7 @@ class SavedNewsController extends ChangeNotifier {
     _loadMoreFailure = null;
     _notify();
 
-    final result = await _getSavedNews(_page + 1);
+    final result = await _getUserNewsList(kind, _page + 1);
     if (requestId != _requestId || _disposed) return;
 
     result.fold((failure) => _loadMoreFailure = failure, (loaded) {
@@ -99,7 +105,7 @@ class SavedNewsController extends ChangeNotifier {
       _notify();
     }
 
-    final result = await _getSavedNews(1);
+    final result = await _getUserNewsList(kind, 1);
     if (requestId != _requestId || _disposed) return;
 
     result.fold(

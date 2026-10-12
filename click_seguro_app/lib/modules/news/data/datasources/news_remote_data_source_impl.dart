@@ -5,6 +5,7 @@ import 'package:click_seguro_app/modules/news/data/models/news_category_model.da
 import 'package:click_seguro_app/modules/news/data/models/news_feed_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_list_model.dart';
 import 'package:click_seguro_app/modules/news/data/models/reels_page_model.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:dio/dio.dart';
 
 class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
@@ -14,7 +15,8 @@ class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
   static const String reelsPath = '/app/news/reels';
   static const String newsPath = '/app/news';
   static const String categoriesPath = '/categories';
-  static const String savedPath = '/users/me/news/saved';
+  static String userNewsPath(NewsListKind kind) =>
+      '/users/me/news/${kind.name}';
 
   /// Reels do carrossel "Novidades".
   static const int reelsPreviewLimit = 10;
@@ -22,8 +24,8 @@ class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
   /// Reels por parte na tela de Reels (specs/008).
   static const int reelsPageSize = 10;
 
-  /// Notícias por página na lista de salvas (specs/010).
-  static const int savedPageSize = 20;
+  /// Notícias por página nas listas da conta (specs/010 e 012).
+  static const int listPageSize = 20;
 
   final ApiClient _apiClient;
 
@@ -115,10 +117,13 @@ class NewsRemoteDataSourceImpl implements NewsRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>> getSavedNews({required int page}) async {
+  Future<Map<String, dynamic>> getUserNewsList(
+    NewsListKind kind, {
+    required int page,
+  }) async {
     final response = await _apiClient.get(
-      savedPath,
-      queryParameters: {'page': page, 'limit': savedPageSize},
+      userNewsPath(kind),
+      queryParameters: {'page': page, 'limit': listPageSize},
     );
     return response.toModel((json) => json);
   }
