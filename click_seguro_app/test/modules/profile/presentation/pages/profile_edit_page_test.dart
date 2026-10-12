@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
+import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.dart';
 import 'package:click_seguro_app/modules/profile/domain/failures/profile_failures.dart';
@@ -11,6 +14,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../fakes/fake_image_storage_service.dart';
 import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../../../helpers/profile_dependencies.dart';
@@ -19,6 +23,7 @@ import '../../fakes/fake_profile_repository.dart';
 void main() {
   late UserSessionService session;
   late FakeProfileRepository repository;
+  late FakeImageStorageService storage;
 
   const ProfileEntity withPhone = ProfileEntity(
     name: 'Maria da Silva',
@@ -29,8 +34,11 @@ void main() {
   setUp(() async {
     session = UserSessionService(FakeSecureStorageService());
     GetIt.instance.registerSingleton<UserSessionService>(session);
-    repository = registerProfileDependencies(GetIt.instance)
-      ..profileResults[0] = const Right(withPhone);
+    storage = FakeImageStorageService();
+    repository = registerProfileDependencies(
+      GetIt.instance,
+      imageStorage: storage,
+    )..profileResults[0] = const Right(withPhone);
     await session.saveSession(
       accessToken: 'token',
       refreshToken: 'refresh',
@@ -251,5 +259,139 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+  });
+
+  group('foto', () {
+    const ProfileEntity withAvatar = ProfileEntity(
+      name: 'Maria da Silva',
+      email: 'maria@exemplo.com',
+      avatarUrl: 'https://img.test/antiga.png',
+    );
+
+    Finder photo() => find.bySemanticsLabel('Trocar foto');
+
+    Future<void> openSheet(WidgetTester tester) async {
+      await tester.tap(photo());
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('foto com rótulo e 48 de toque; folha sem "Remover"', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await open(tester);
+
+      expect(tester.getSize(photo()).height, greaterThanOrEqualTo(48));
+      await openSheet(tester);
+
+      expect(find.text('Galeria'), findsOneWidget);
+      expect(find.text('Câmera'), findsOneWidget);
+      expect(find.text('Remover foto'), findsNothing);
+      semantics.dispose();
+    });
+
+    testWidgets('com foto, a folha tem "Remover foto"', (tester) async {
+      final semantics = tester.ensureSemantics();
+      repository.profileResults[0] = const Right(withAvatar);
+      await open(tester);
+
+      await openSheet(tester);
+
+      expect(find.text('Remover foto'), findsOneWidget);
+      semantics.dispose();
+    });
+
+    testWidgets('escolher → "Enviando foto…" e depois some', (tester) async {
+      final semantics = tester.ensureSemantics();
+      storage.nextResult = const PickedImage('/app/images/img_1.png');
+      repository.uploadGate = Completer<void>();
+      await open(tester);
+
+      await openSheet(tester);
+      await tester.tap(find.text('Galeria'));
+      // O indicador gira enquanto envia: sem pumpAndSettle.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('Enviando foto…'), findsOneWidget);
+      expect(storage.pickedSources, [PhotoSource.gallery]);
+
+      repository.uploadGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enviando foto…'), findsNothing);
+      expect(repository.uploadCalls, ['/app/images/img_1.png']);
+      semantics.dispose();
+    });
+
+    testWidgets('sem permissão → explicação', (tester) async {
+      final semantics = tester.ensureSemantics();
+      storage.nextResult = const PickImagePermissionDenied();
+      await open(tester);
+
+      await openSheet(tester);
+      await tester.tap(find.text('Câmera'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sem acesso às fotos'), findsOneWidget);
+      expect(
+        find.text(
+          'Para escolher uma foto, libere o acesso nas configurações do '
+          'celular.',
+        ),
+        findsOneWidget,
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('remover pede confirmação e chama o serviço', (tester) async {
+      final semantics = tester.ensureSemantics();
+      repository.profileResults[0] = const Right(withAvatar);
+      await open(tester);
+
+      await openSheet(tester);
+      await tester.tap(find.text('Remover foto'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Remover a foto?'), findsOneWidget);
+      await tester.tap(find.text('Remover'));
+      await tester.pumpAndSettle();
+
+      expect(repository.removeCalls, 1);
+      semantics.dispose();
+    });
+
+    testWidgets('falha no envio → "Não foi possível trocar a foto."', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      storage.nextResult = const PickedImage('/app/images/img_1.png');
+      repository.uploadResults[0] = const Left(ServerFailure());
+      await open(tester);
+
+      await openSheet(tester);
+      await tester.tap(find.text('Galeria'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Não foi possível trocar a foto.'), findsOneWidget);
+      semantics.dispose();
+    });
+
+    testWidgets('imagem recusada → aviso de JPG ou PNG', (tester) async {
+      final semantics = tester.ensureSemantics();
+      storage.nextResult = const PickedImage('/app/images/img_1.gif');
+      repository.uploadResults[0] = const Left(AvatarTypeFailure());
+      await open(tester);
+
+      await openSheet(tester);
+      await tester.tap(find.text('Galeria'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Esta imagem não é aceita. Use uma foto JPG ou PNG.'),
+        findsOneWidget,
+      );
+      semantics.dispose();
+    });
   });
 }

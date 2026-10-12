@@ -1,20 +1,26 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
+import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/profile/domain/entities/avatar_update_outcome.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.dart';
+import 'package:click_seguro_app/modules/profile/domain/failures/profile_failures.dart';
 import 'package:click_seguro_app/modules/profile/domain/validators/profile_form_validator.dart';
 import 'package:click_seguro_app/modules/profile/presentation/controller/edit_profile_controller.dart';
 import 'package:click_seguro_app/modules/profile/presentation/extensions/phone_format.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/guest_invite.dart';
+import 'package:click_seguro_app/modules/profile/presentation/widgets/photo_sheet.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/profile_avatar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Editar nome, e-mail e telefone (US2 de specs/012-perfil). O visitante vê
@@ -136,12 +142,7 @@ class _Form extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s5),
       children: [
-        Center(
-          child: ProfileAvatar(
-            initials: profile.initials,
-            imageUrl: profile.avatarUrl,
-          ),
-        ),
+        _PhotoButton(controller: controller, initials: profile.initials),
         const SizedBox(height: AppSpacing.s6),
         SafeTextField(
           label: AppStrings.profileEditName.tr(),
@@ -181,6 +182,152 @@ class _Form extends StatelessWidget {
           loading: controller.isSaving,
           onPressed: () => _save(context),
         ),
+      ],
+    );
+  }
+}
+
+/// Foto no topo: tocar abre a folha (US3). Durante o envio, mostra a cópia
+/// local com o indicador e "Enviando foto…".
+class _PhotoButton extends StatelessWidget {
+  const _PhotoButton({required this.controller, required this.initials});
+
+  static const double _size = 96;
+
+  final EditProfileController controller;
+  final String initials;
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _change(BuildContext context) async {
+    final PhotoAction? action = await showPhotoSheet(
+      context,
+      hasPhoto: controller.avatarUrl != null,
+    );
+    if (action == null || !context.mounted) return;
+    if (action == PhotoAction.remove) return _remove(context);
+
+    final AvatarUpdateOutcome outcome = await controller.pickPhoto(
+      action == PhotoAction.camera ? PhotoSource.camera : PhotoSource.gallery,
+    );
+    if (!context.mounted) return;
+    switch (outcome) {
+      case AvatarPermissionDenied():
+        await showPhotoPermissionSheet(context);
+      case AvatarUpdateFailed(:final failure):
+        _showMessage(
+          context,
+          failure is AvatarTypeFailure
+              ? failure.message.tr()
+              : AppStrings.profilePhotoFailed.tr(),
+        );
+      case AvatarUpdated() || AvatarPickCancelled():
+        break;
+    }
+  }
+
+  Future<void> _remove(BuildContext context) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(AppStrings.profilePhotoRemoveConfirmTitle.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(AppStrings.profilePhotoRemoveCancel.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(AppStrings.profilePhotoRemoveConfirm.tr()),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final Failure? failure = await controller.removePhoto();
+    if (failure != null && context.mounted) {
+      _showMessage(context, AppStrings.profilePhotoFailed.tr());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    final bool uploading = controller.photoState == PhotoState.uploading;
+    return Column(
+      children: [
+        Semantics(
+          container: true,
+          button: true,
+          label: AppStrings.profilePhotoChange.tr(),
+          excludeSemantics: true,
+          child: GestureDetector(
+            onTap: controller.photoState == PhotoState.idle
+                ? () => _change(context)
+                : null,
+            child: SizedBox.square(
+              dimension: _size,
+              child: Stack(
+                children: [
+                  ProfileAvatar(
+                    initials: initials,
+                    imageUrl: controller.avatarUrl,
+                    localPath: controller.localPhotoPath,
+                    size: _size,
+                  ),
+                  if (uploading)
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: colors.secondary.withValues(alpha: 0.45),
+                        ),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: colors.textPrimaryForeground,
+                          ),
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colors.card, width: 3),
+                      ),
+                      child: Icon(
+                        LucideIcons.camera,
+                        size: 14,
+                        color: colors.textPrimaryForeground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (uploading) ...[
+          const SizedBox(height: AppSpacing.s2),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              AppStrings.profilePhotoUploading.tr(),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colors.textMutedForeground,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

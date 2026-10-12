@@ -23,4 +23,13 @@ class ProfileEntity {
     final String first = words.first[0];
     return (words.length == 1 ? first : first + words.last[0]).toUpperCase();
   }
+
+  /// O mesmo perfil com outra foto (ou sem foto).
+  ProfileEntity withAvatarUrl(String? avatarUrl) => ProfileEntity(
+    name: name,
+    email: email,
+    phone: phone,
+    avatarUrl: avatarUrl,
+    receiveNotifications: receiveNotifications,
+  );
 }

@@ -1,13 +1,20 @@
 import 'package:click_seguro_app/core/errors/failure.dart';
+import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
+import 'package:click_seguro_app/modules/profile/domain/entities/avatar_update_outcome.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.dart';
 import 'package:click_seguro_app/modules/profile/domain/failures/profile_failures.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/get_profile_usecase.dart';
+import 'package:click_seguro_app/modules/profile/domain/usecases/remove_avatar_usecase.dart';
+import 'package:click_seguro_app/modules/profile/domain/usecases/update_avatar_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/update_profile_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/validators/profile_form_validator.dart';
 import 'package:click_seguro_app/modules/profile/presentation/extensions/phone_format.dart';
 import 'package:flutter/widgets.dart';
 
 enum EditProfileStatus { loading, ready, error }
+
+/// O que acontece com a foto agora.
+enum PhotoState { idle, uploading, removing }
 
 /// Resultado de "Salvar": [invalid] = erros nos campos (inclusive e-mail em
 /// uso); [failed] = falha do serviço, em [EditProfileController.saveFailure].
@@ -19,8 +26,12 @@ class EditProfileController extends ChangeNotifier {
   EditProfileController({
     required GetProfileUseCase getProfile,
     required UpdateProfileUseCase updateProfile,
+    required UpdateAvatarUseCase updateAvatar,
+    required RemoveAvatarUseCase removeAvatar,
   }) : _getProfile = getProfile,
-       _updateProfile = updateProfile {
+       _updateProfile = updateProfile,
+       _updateAvatar = updateAvatar,
+       _removeAvatar = removeAvatar {
     _watch(name, () => _errors = _without(name: true));
     _watch(email, () => _errors = _without(email: true));
     _watch(phone, () => _errors = _without(phone: true));
@@ -28,6 +39,8 @@ class EditProfileController extends ChangeNotifier {
 
   final GetProfileUseCase _getProfile;
   final UpdateProfileUseCase _updateProfile;
+  final UpdateAvatarUseCase _updateAvatar;
+  final RemoveAvatarUseCase _removeAvatar;
 
   final TextEditingController name = TextEditingController();
   final TextEditingController email = TextEditingController();
@@ -56,6 +69,18 @@ class EditProfileController extends ChangeNotifier {
 
   Failure? _saveFailure;
   Failure? get saveFailure => _saveFailure;
+
+  PhotoState _photoState = PhotoState.idle;
+  PhotoState get photoState => _photoState;
+
+  String? _localPhotoPath;
+
+  /// Cópia da foto escolhida, mostrada enquanto é enviada.
+  String? get localPhotoPath => _localPhotoPath;
+
+  /// Foto salva; some na hora ao remover e volta se a remoção falhar.
+  String? get avatarUrl =>
+      _photoState == PhotoState.removing ? null : _original?.avatarUrl;
 
   bool _disposed = false;
 
@@ -137,6 +162,44 @@ class EditProfileController extends ChangeNotifier {
     );
     _notify();
     return outcome;
+  }
+
+  /// Troca a foto (R7): a cópia local aparece na hora; em falha, volta a
+  /// anterior. A foto vai direto ao serviço, sem esperar "Salvar".
+  Future<AvatarUpdateOutcome> pickPhoto(PhotoSource source) async {
+    if (_photoState != PhotoState.idle) return const AvatarPickCancelled();
+    final AvatarUpdateOutcome outcome = await _updateAvatar(
+      source,
+      onPicked: (path) {
+        _localPhotoPath = path;
+        _photoState = PhotoState.uploading;
+        _notify();
+      },
+    );
+    if (_disposed) return outcome;
+    if (outcome case AvatarUpdated(:final avatarUrl)) {
+      _original = _original?.withAvatarUrl(avatarUrl);
+    }
+    _localPhotoPath = null;
+    _photoState = PhotoState.idle;
+    _notify();
+    return outcome;
+  }
+
+  /// Remove a foto; as iniciais aparecem na hora. `null` = removida.
+  Future<Failure?> removePhoto() async {
+    if (_photoState != PhotoState.idle) return null;
+    _photoState = PhotoState.removing;
+    _notify();
+    final result = await _removeAvatar();
+    if (_disposed) return null;
+    _photoState = PhotoState.idle;
+    final Failure? failure = result.fold((failure) => failure, (_) {
+      _original = _original?.withAvatarUrl(null);
+      return null;
+    });
+    _notify();
+    return failure;
   }
 
   /// Os campos passam a mostrar [profile], que vira o original.

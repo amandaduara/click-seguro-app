@@ -241,6 +241,7 @@
   "profile_photo_invalid": "This image is not accepted. Use a JPG or PNG photo.",
   "profile_photo_permission_title": "No access to photos",
   "profile_photo_permission_body": "To choose a photo, allow access in your phone settings.",
+  "profile_photo_permission_ok": "Got it",
   "settings_title": "Settings",
   "settings_account_title": "Personal details",
   "settings_security_title": "Security",

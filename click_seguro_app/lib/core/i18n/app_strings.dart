@@ -301,6 +301,7 @@ abstract class AppStrings {
       'profile_photo_permission_title';
   static const String profilePhotoPermissionBody =
       'profile_photo_permission_body';
+  static const String profilePhotoPermissionOk = 'profile_photo_permission_ok';
 
   // --- settings ---
   static const String settingsTitle = 'settings_title';
