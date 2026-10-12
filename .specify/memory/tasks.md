@@ -198,7 +198,7 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
     - bloco de atividade relacionada (só com `suggestedModule`) →
       `context.push('/activities/$moduleId')`.
     - Com widget test.
-- [ ] **A6 Alertas locais** (RF-020 a RF-022) — a API não tem notificações
+- [x] **A6 Alertas locais** (RF-020 a RF-022) — a API não tem notificações (specs/011-alertas-locais)
   - `AlertEntity` `{newsId, title, source, publishedAt, isRead}` + model, com teste.
   - `AlertsRemoteDataSource` próprio (`GET /app/news?startDate=...&sortBy=publishedAt`), sem
     importar o módulo `news`, com teste.
@@ -206,8 +206,8 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
     teste.
   - `NotificationsRepositoryImpl` com teste.
   - `CheckNewAlertsUseCase` (sem duplicar por `newsId`; 1ª execução só marca o horário; limite
-    de 50 alertas/30 dias; respeita `receiveNotifications`), `GetAlerts`, `GetUnreadCount`,
-    `MarkAsRead`, `MarkAllAsRead`, e o agrupamento Hoje/Ontem/Anteriores numa extension
+    de 50 alertas/30 dias; respeita `receiveNotifications`), `GetAlerts`, `MarkAsRead`,
+    `MarkAllAsRead`, `ClearAlerts` (ao sair da conta; contador derivado do registro), e o agrupamento Hoje/Ontem/Anteriores numa extension
     testável. Com testes.
   - `NotificationsController` com teste.
   - `NotificationBellButton` real (contador; visitante → `requireAccount`) e `NotificationsPage`

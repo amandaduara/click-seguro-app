@@ -18,6 +18,7 @@ import '../../../fakes/fake_secure_storage_service.dart';
 import '../../authentication/fakes/controller_factory.dart';
 import '../../authentication/fakes/fake_auth_repository.dart';
 import '../../../helpers/feed_provider.dart';
+import '../../../helpers/notifications_provider.dart';
 import '../../../helpers/reels_provider.dart';
 import '../../../helpers/splash_provider.dart';
 
@@ -63,6 +64,7 @@ void main() {
               fakeSplashProvider(session.sessionStatus.value),
               fakeFeedProvider(),
               fakeReelsProvider(),
+              fakeNotificationsProvider(),
             ],
             builder: (context, _) => MaterialApp.router(
               routerConfig: router,

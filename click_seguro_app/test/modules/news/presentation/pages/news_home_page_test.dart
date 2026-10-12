@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../../../helpers/localized_app.dart';
+import '../../../../helpers/notifications_provider.dart';
 import '../../fakes/fake_news_repository.dart';
 import '../../fakes/feed_controller_factory.dart';
 
@@ -65,6 +66,7 @@ void main() {
       router: router,
       providers: [
         ChangeNotifierProvider<FeedController>.value(value: controller),
+        fakeNotificationsProvider(),
       ],
     );
     return controller;
@@ -87,6 +89,7 @@ void main() {
         router: router,
         providers: [
           ChangeNotifierProvider<FeedController>.value(value: controller),
+          fakeNotificationsProvider(),
         ],
         settle: false,
       );

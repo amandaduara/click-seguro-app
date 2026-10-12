@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.6 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-09
+**Versão**: 1.0.7 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-09
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -158,8 +158,16 @@ próprio app gera os alertas a partir das notícias novas, sem backend:
 
 | Status | Método e caminho | Auth | Uso |
 |---|---|---|---|
-| 🧪 | `GET /app/news?startDate=<última verificação>&sortBy=publishedAt&sortOrder=desc&limit=20` | opcional | buscar notícias publicadas desde a última verificação (RF-020) |
+| ✅ | `GET /app/news?startDate=<última verificação>&sortBy=publishedAt&sortOrder=desc&limit=50` | opcional | buscar notícias publicadas desde a última verificação (RF-020) |
 
+- Conferido no servidor de desenvolvimento em 2026-10-09 (specs/011, T002): `startDate` aceita
+  ISO-8601 UTC (`2026-10-08T02:15:30.000Z`; também sem milissegundos, com offset ou só a data);
+  texto inválido → 400 `VALIDATION_ERROR`. O filtro usa **`publishedAt`** (não a data original),
+  com "maior ou igual" e precisão de milissegundos; o app descarta de novo o item com
+  `publishedAt` igual à última verificação. `publishedAt` veio em todas as notícias. `limit=50`
+  vale (máximo 100; 101 → 400): igual ao teto de alertas guardados. `GET /users/me` traz
+  `receiveNotifications` (`true` na conta nova), lido pelo datasource do módulo.
+- Validada no aparelho em 2026-10-09 (specs/011, T049): 12 notícias dos últimos 7 dias viraram 12 alertas, sem repetição ao reabrir; a linha passou de 🧪 para ✅.
 - O módulo `notifications` tem **datasource próprio** para essa chamada. Não importa o `news`
   (regra de dependência do plan §1.3).
 - Os alertas, a flag de lido e o horário da última verificação ficam no `LocalCacheService`.
@@ -236,6 +244,10 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
+- **1.0.7 (2026-10-09)**: alertas locais (specs/011, T002): `limit=50` no lugar de 20 (teto de
+  alertas guardados); `startDate` em ISO-8601 UTC, filtra por `publishedAt`, "maior ou igual";
+  `receiveNotifications` vem em `GET /users/me` e o `PATCH` o altera (204). Linha continua 🧪
+  até o teste no aparelho.
 - **1.0.6 (2026-10-09)**: ordem de `GET /users/me/news/saved` conferida no aparelho (specs/010, T049),
   com 3 notícias salvas em sequência: vem da **salva mais recente para a mais antiga**, e não por
   `publishedAt`. Conta desativada → 403 `USER_INACTIVE` (e login 401 `INVALID_CREDENTIALS`).
