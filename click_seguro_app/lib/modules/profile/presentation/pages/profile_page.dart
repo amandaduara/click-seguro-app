@@ -226,12 +226,11 @@ class _LoadedProfile extends StatelessWidget {
         ProfileHeaderCard(
           profile: controller.profile!,
           onEdit: () => open('/profile/edit'),
-        ),
-        const SizedBox(height: AppSpacing.s4),
-        _Stats(
-          state: controller.counts,
-          onRetry: controller.retryCounts,
-          open: open,
+          footer: _Stats(
+            state: controller.counts,
+            onRetry: controller.retryCounts,
+            open: open,
+          ),
         ),
         const SizedBox(height: AppSpacing.s4),
         AchievementsSection(

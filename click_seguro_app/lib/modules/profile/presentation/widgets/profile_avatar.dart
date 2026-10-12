@@ -54,7 +54,7 @@ class _Initials extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(gradient: context.colors.gradient),
+      decoration: BoxDecoration(color: context.colors.input),
       child: Center(
         child: Text(
           initials,
@@ -63,7 +63,7 @@ class _Initials extends StatelessWidget {
           style: TextStyle(
             fontSize: size * 0.36,
             fontWeight: FontWeight.w800,
-            color: context.colors.textPrimaryForeground,
+            color: context.colors.secondary,
           ),
         ),
       ),
