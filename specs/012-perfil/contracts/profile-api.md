@@ -19,7 +19,7 @@
 | Caminho | Navegador | Tela | Dono |
 |---|---|---|---|
 | `/profile` | aba Perfil (já existe) | `ProfilePage` (conta ou convite) | profile |
-| `/profile/edit` | raiz (já existe) | `EditProfilePage` | profile |
+| `/profile/edit` | raiz (já existe) | `ProfileEditPage` (visitante → convite) | profile |
 | `/profile/achievements` | raiz (**nova**, filha de `/profile`) | `AchievementsPage` | profile |
 | `/news/saved` | raiz (já existe, feature 010) | lista de salvas | news |
 | `/news/read`, `/news/liked` | raiz (**novas**, antes de `/news/:id`) | mesma lista, outro `NewsListKind` | news |

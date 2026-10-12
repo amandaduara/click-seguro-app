@@ -67,7 +67,7 @@ de i18n, ajuste em 3 arquivos de `news` (lista generalizada), 1 de `common` e 1 
 
 | Princípio | Avaliação | Status |
 |-----------|-----------|--------|
-| I. Clean Architecture e módulos | `profile` ganha `data`→`domain`→`presentation`; controllers falam com usecases (e com o `ImageStorageService`, serviço de plataforma do `common`, permitido). Nada importa `news`, `activities`, `authentication` ou `notifications`: o perfil tem datasource próprio e navega por caminho. As listas de lidas/curtidas ficam no `news`, dono de `/users/me/news/*`. | ✅ |
+| I. Clean Architecture e módulos | `profile` ganha `data`→`domain`→`presentation`; controllers falam só com usecases; o `UpdateAvatarUseCase` usa o `ImageStorageService` do `common`. Nada importa `news`, `activities`, `authentication` ou `notifications`: o perfil tem datasource próprio e navega por caminho. As listas de lidas/curtidas ficam no `news`, dono de `/users/me/news/*`. | ✅ |
 | II. SOLID, DRY, KISS | A lista de salvas é generalizada em vez de copiada. A expressão do e-mail é copiada do `CredentialsValidator` (uma linha, com comentário): importar o `authentication` violaria o Princípio I, e movê-la para `common` mexeria numa feature fechada sem necessidade. | ✅ (justificado) |
 | III. TDD | Testes antes do código para models, datasource, repository, conquistas, validador, usecases, controllers e páginas; os testes de salvas da 010 continuam verdes. | ✅ |
 | IV. Stack e DI | Só pacotes já adotados; usecases e controllers registrados no `ProfileModule`. | ✅ |
@@ -119,7 +119,7 @@ lib/
     └── presentation/
         ├── controller/profile_controller.dart · edit_profile_controller.dart · area_state.dart
         ├── extensions/achievement_presentation_extension.dart
-        ├── pages/profile_page.dart · edit_profile_page.dart · achievements_page.dart
+        ├── pages/profile_page.dart · profile_edit_page.dart · achievements_page.dart
         ├── widgets/ profile_header_card · stat_tile · medal_card · achievements_section · profile_cta_card · guest_invite · photo_sheet
         └── routes/profile_routes.dart                 # + achievements
 assets/translations/{pt-BR,en-US}.json
