@@ -175,8 +175,8 @@ formato real da [R0](research.md#r0-conferência-no-servidor-real-portão-de-api
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [X] T043 Formatar só os arquivos tocados (`dart format` com os caminhos, nunca pastas inteiras), `flutter analyze` (sem avisos novos em relação à T001) e `flutter test` (todos verdes). Revisar o código de produção em busca de código morto ou só de teste e anotar o resultado. **Resultado (2026-10-12):** `flutter test` 1205 verdes (base 1028 + 177 novos); `flutter analyze` 28 issues, todos `info`, iguais à base. Revisão: saíram `AchievementEntity.moduleId` e `ModuleProgressEntity.id` (só os testes liam) e um `ProfileEntity.copyWith` sem uso; data-model ajustado
-- [ ] T044 Validar no aparelho os 16 passos do [quickstart.md](quickstart.md#2-no-aparelho) com uma conta da usuária e anotar o resultado
-- [ ] T045 Em `.specify/memory/tasks.md`, marcar B7 como `[x]` com `(specs/012-perfil)`. Commit de docs; antes da PR, `git fetch` e trazer a `develop` se tiver mudado
+- [X] T044 Validar no aparelho os 16 passos do [quickstart.md](quickstart.md#2-no-aparelho) com uma conta da usuária e anotar o resultado. **Resultado (2026-10-14):** validado pela usuária no aparelho; o cartão do perfil foi ajustado ao v4 (foto sobre a borda do cartão, números dentro dele, commit `4d9ba61`)
+- [X] T045 Em `.specify/memory/tasks.md`, marcar B7 como `[x]` com `(specs/012-perfil)`. Commit de docs; antes da PR, `git fetch` e trazer a `develop` se tiver mudado. **Resultado (2026-10-14):** `develop` sem novidades
 
 ---
 

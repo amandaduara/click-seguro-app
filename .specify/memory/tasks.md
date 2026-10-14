@@ -266,7 +266,7 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `HelpPage` (abas "Oficiais" e "Meus contatos", ligar; sem telefonia → número com copiar) e
     `ContactFormPage` (foto circular de galeria/câmera; permissão negada → salva com iniciais;
     remover com confirmação), com widget test.
-- [ ] **B7 Perfil** (RF-035, RF-036, RN-008)
+- [x] **B7 Perfil** (RF-035, RF-036, RN-008) (specs/012-perfil)
   - Endpoints: `GET`/`PATCH /users/me`, `POST`/`DELETE /users/me/avatar` (multipart, F0.2),
     para os números `GET /users/me/news/read`, `/saved` e `/liked` (`limit=1` → `meta.total`) e
     para as conquistas `GET /app/educational/modules`.
