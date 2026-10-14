@@ -1,7 +1,8 @@
 import 'package:click_seguro_app/core/routing/navigator_keys.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/news_detail_page.dart';
-import 'package:click_seguro_app/modules/news/presentation/pages/saved_news_page.dart';
+import 'package:click_seguro_app/modules/news/presentation/pages/user_news_list_page.dart';
 import 'package:click_seguro_app/modules/news/presentation/routes/news_routes.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -37,7 +38,7 @@ void main() {
   ) async {
     await open(tester, '/news/saved');
 
-    expect(find.byType(SavedNewsPage), findsOneWidget);
+    expect(find.byType(UserNewsListPage), findsOneWidget);
     expect(find.byType(NewsDetailPage), findsNothing);
   });
 
@@ -46,6 +47,23 @@ void main() {
 
     final page = tester.widget<NewsDetailPage>(find.byType(NewsDetailPage));
     expect(page.newsId, 'abc');
-    expect(find.byType(SavedNewsPage), findsNothing);
+    expect(find.byType(UserNewsListPage), findsNothing);
   });
+
+  for (final (path, kind) in [
+    ('/news/read', NewsListKind.read),
+    ('/news/liked', NewsListKind.liked),
+  ]) {
+    testWidgets('$path abre a lista ${kind.name} e não o detalhe', (
+      tester,
+    ) async {
+      await open(tester, path);
+
+      final page = tester.widget<UserNewsListPage>(
+        find.byType(UserNewsListPage),
+      );
+      expect(page.kind, kind);
+      expect(find.byType(NewsDetailPage), findsNothing);
+    });
+  }
 }

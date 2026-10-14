@@ -6,10 +6,11 @@ import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
-import 'package:click_seguro_app/modules/news/domain/entities/saved_news_result.dart';
-import 'package:click_seguro_app/modules/news/presentation/controller/saved_news_controller.dart';
-import 'package:click_seguro_app/modules/news/presentation/pages/saved_news_page.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/user_news_list_result.dart';
+import 'package:click_seguro_app/modules/news/presentation/controller/user_news_list_controller.dart';
+import 'package:click_seguro_app/modules/news/presentation/pages/user_news_list_page.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ import 'package:provider/provider.dart';
 import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_news_repository.dart';
-import '../../fakes/saved_news_controller_factory.dart';
+import '../../fakes/user_news_list_controller_factory.dart';
 
 void main() {
   late UserSessionService session;
@@ -44,14 +45,14 @@ void main() {
     userName: 'Ana',
   );
 
-  Right<Failure, SavedNewsResult> pageOf(
+  Right<Failure, UserNewsListResult> pageOf(
     int count, {
     int start = 1,
     int page = 1,
     bool hasMore = false,
     bool isFromCache = false,
   }) => Right(
-    SavedNewsResult(
+    UserNewsListResult(
       page: NewsPageEntity(
         items: newsItems(count, start: start),
         hasMore: hasMore,
@@ -61,15 +62,19 @@ void main() {
     ),
   );
 
-  GoRouter buildRouter() => GoRouter(
-    initialLocation: '/news/saved',
+  GoRouter buildRouter({NewsListKind kind = NewsListKind.saved}) => GoRouter(
+    initialLocation: '/news/${kind.name}',
     routes: [
       GoRoute(
-        path: '/news/saved',
-        builder: (_, _) => ChangeNotifierProvider<SavedNewsController>(
-          create: (_) => buildSavedNewsController(repository),
-          child: const SavedNewsPage(),
+        path: '/news/${kind.name}',
+        builder: (_, _) => ChangeNotifierProvider<UserNewsListController>(
+          create: (_) => buildUserNewsListController(repository, kind: kind),
+          child: UserNewsListPage(kind: kind),
         ),
+      ),
+      GoRoute(
+        path: '/home',
+        builder: (_, _) => const Scaffold(body: Text('início')),
       ),
       GoRoute(
         path: '/news/:id',
@@ -91,21 +96,23 @@ void main() {
     bool settle = true,
     Size size = const Size(800, 1600),
     ThemeData? theme,
+    NewsListKind kind = NewsListKind.saved,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await pumpLocalized(
       tester,
-      router: buildRouter(),
+      router: buildRouter(kind: kind),
       settle: settle,
       theme: theme,
     );
     if (!settle) await tester.pump();
   }
 
-  SavedNewsController controllerOf(WidgetTester tester) =>
-      tester.element(find.byType(SavedNewsPage)).read<SavedNewsController>();
+  UserNewsListController controllerOf(WidgetTester tester) => tester
+      .element(find.byType(UserNewsListPage))
+      .read<UserNewsListController>();
 
   group('com conta', () {
     setUp(signIn);
@@ -247,10 +254,10 @@ void main() {
 
     testWidgets('o botão grande leva ao login, sem janela', (tester) async {
       await pumpPage(tester);
-      final size = tester.getSize(find.byKey(SavedNewsPage.loginKey));
+      final size = tester.getSize(find.byKey(UserNewsListPage.loginKey));
       expect(size.height, greaterThanOrEqualTo(48));
 
-      await tester.tap(find.byKey(SavedNewsPage.loginKey));
+      await tester.tap(find.byKey(UserNewsListPage.loginKey));
       await tester.pumpAndSettle();
 
       expect(find.text('login'), findsOneWidget);
@@ -307,7 +314,7 @@ void main() {
       repository.savedResults.add(pageOf(3, isFromCache: true));
       await pumpPage(tester, size: const Size(360, 800));
 
-      final context = tester.element(find.byType(SavedNewsPage));
+      final context = tester.element(find.byType(UserNewsListPage));
       expect(MediaQuery.textScalerOf(context).scale(10), 20);
       expect(tester.takeException(), isNull);
       final first = tester.getRect(find.byType(NewsCard).first);
@@ -322,7 +329,7 @@ void main() {
       await pumpPage(tester, size: const Size(360, 800));
 
       expect(tester.takeException(), isNull);
-      final rect = tester.getRect(find.byKey(SavedNewsPage.loginKey));
+      final rect = tester.getRect(find.byKey(UserNewsListPage.loginKey));
       expect(rect.height, greaterThanOrEqualTo(48));
       expect(rect.left, greaterThanOrEqualTo(0));
       expect(rect.right, lessThanOrEqualTo(360));
@@ -347,10 +354,62 @@ void main() {
       repository.savedResults.add(pageOf(2));
       await pumpPage(tester, theme: AppTheme.highContrastTheme);
 
-      final context = tester.element(find.byType(SavedNewsPage));
+      final context = tester.element(find.byType(UserNewsListPage));
       expect(context.colors, AppPalette.highContrast);
       expect(find.byType(NewsCard), findsNWidgets(2));
       expect(tester.takeException(), isNull);
     });
+  });
+
+  group('lidas e curtidas (specs/012)', () {
+    setUp(signIn);
+
+    for (final (kind, title, empty) in [
+      (
+        NewsListKind.read,
+        'Notícias lidas',
+        'Você ainda não leu nenhuma notícia.',
+      ),
+      (
+        NewsListKind.liked,
+        'Notícias curtidas',
+        'Você ainda não curtiu nenhuma notícia.',
+      ),
+    ]) {
+      testWidgets('${kind.name}: título e lista da conta', (tester) async {
+        repository.savedResults.add(pageOf(2));
+
+        await pumpPage(tester, kind: kind);
+
+        expect(find.text(title), findsOneWidget);
+        expect(find.text('Notícia n1'), findsOneWidget);
+        expect(repository.listKinds, [kind]);
+      });
+
+      testWidgets('${kind.name}: vazio com botão para o Início', (
+        tester,
+      ) async {
+        repository.savedResults.add(pageOf(0));
+        await pumpPage(tester, kind: kind);
+
+        expect(find.text(empty), findsOneWidget);
+        await tester.tap(find.text('Voltar ao Início'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('início'), findsOneWidget);
+      });
+
+      testWidgets('${kind.name}: tocar numa notícia abre o detalhe', (
+        tester,
+      ) async {
+        repository.savedResults.add(pageOf(1));
+        await pumpPage(tester, kind: kind);
+
+        await tester.tap(find.text('Notícia n1'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('detalhe n1'), findsOneWidget);
+      });
+    }
   });
 }

@@ -266,22 +266,26 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `HelpPage` (abas "Oficiais" e "Meus contatos", ligar; sem telefonia → número com copiar) e
     `ContactFormPage` (foto circular de galeria/câmera; permissão negada → salva com iniciais;
     remover com confirmação), com widget test.
-- [ ] **B7 Perfil** (RF-035, RF-036, RN-008)
+- [x] **B7 Perfil** (RF-035, RF-036, RN-008) (specs/012-perfil)
   - Endpoints: `GET`/`PATCH /users/me`, `POST`/`DELETE /users/me/avatar` (multipart, F0.2),
-    e para as estatísticas `GET /app/educational/modules` e `GET /users/me/news/saved?limit=1`.
-  - Definir na spec da feature as faixas de nível e as regras das conquistas (RN-008, fixas no
-    app).
-  - `ProfileEntity`, `StatsEntity`, `AchievementEntity`, `LevelEntity` + models, com teste.
+    para os números `GET /users/me/news/read`, `/saved` e `/liked` (`limit=1` → `meta.total`) e
+    para as conquistas `GET /app/educational/modules`.
+  - Regras das conquistas (RN-008) definidas em `specs/012-perfil/spec.md`; sem nível (decisão
+    de 2026-10-09).
+  - `ProfileEntity`, `StatsEntity`, `AchievementEntity` + models, com teste.
   - `ProfileRemoteDataSource` (três fontes em paralelo) e repository, com teste. 409
     `USER_EMAIL_ALREADY_EXISTS` → `EmailAlreadyExistsFailure`.
-  - `GetProfileUseCase` (estatísticas, nível e conquistas), `UpdateProfileUseCase` (nome 6–150,
+  - `GetProfileUseCase` (estatísticas e conquistas), `UpdateProfileUseCase` (nome 6–150,
     e-mail, telefone `+55`), `UpdateAvatarUseCase`, `RemoveAvatarUseCase`,
     `SetReceiveAlertsUseCase`, com teste.
   - `ProfileController` e `EditProfileController`, com teste.
-  - Extension de nível/conquista com teste.
-  - `ProfilePage` (cartão, selo, estatísticas, conquistas, atalhos; visitante → convite) e
-    `EditProfilePage` (`/profile/edit`: nome, e-mail, telefone, foto, "Receber alertas"), com
-    widget test.
+  - Extension de conquistas (regras e ordem) com teste.
+  - Visual: Figma "SafeNews — Perfil e Configurações (redesign)", quadro "Perfil — com conta (v4)".
+  - `ProfilePage` (cartão com foto e nome e lápis para editar, números lidas/salvas/curtidas que
+    abrem as listas, medalhas em carrossel com "Ver todas", atalhos coloridos; visitante →
+    convite), lista de notícias lidas e curtidas (mesmo visual da de salvas) e
+    `EditProfilePage` (`/profile/edit`: nome, e-mail, telefone e foto), com widget test.
+    "Receber alertas" passou para a B8 (decisão de 2026-10-12).
 - [ ] **B8 Configurações** (RF-037, RF-042, CB-013)
   - Endpoint: `PATCH /users/me/change-password`. 401 `INVALID_CREDENTIALS` → "Senha atual
     incorreta" sem sair da conta (depende da F0.13); 409 `USER_NEW_PASSWORD_EQUALS_OLD`.
@@ -289,14 +293,20 @@ Módulos: `activities`, `help`, `profile`, `settings`.
     apagar contatos, RN-007), com teste.
   - `ChangePasswordUseCase` (RN-001 na nova senha) e `LogoutUseCase`, com teste.
   - `SettingsController` e `ChangePasswordController`, com teste.
+  - Visual: Figma "SafeNews — Perfil e Configurações (redesign)", quadro "Configurações"
+    (redesign de 2026-10-12, na B7).
   - `SettingsPage` com as linhas:
+    - cartão da conta (foto, nome, "Ver e editar seu perfil") → `/profile`;
     - Dados pessoais → `/profile/edit`;
-    - Alertas → `/notifications`;
+    - Alterar senha → `/settings/security`;
+    - "Alertas de notícias novas": chave que liga/desliga `receiveNotifications`
+      (`PATCH /users/me`), salva ao toque e volta em falha (veio da B7 em 2026-10-12);
     - Segurança → `/settings/security`;
     - Acessibilidade → `/settings/accessibility`;
     - Idioma (Português/English) → troca o idioma do app na hora e salva a escolha (RF-042;
       `context.setLocale` do easy_localization, que já guarda a escolha);
-    - Sair (com confirmação).
+    - Privacidade (como os dados são tratados) e Sobre o SafeNews (versão do app);
+    - Sair (com confirmação; lembra que os contatos de emergência ficam no celular).
   - `ChangePasswordPage`. Widget tests.
 - [ ] **B9 Acessibilidade** (RF-038 a RF-041)
   - `AccessibilityPage`: seletor de tamanho de fonte com prévia ao vivo, alto contraste e leitura

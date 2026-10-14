@@ -517,4 +517,28 @@ void main() {
       expect(session.userName, 'Maria Silva');
     });
   });
+
+  group('profileVersion (feature 012)', () {
+    test('começa em 0 e sobe a cada updateProfile com conta', () async {
+      expect(session.profileVersion.value, 0);
+      await session.saveSession(
+        accessToken: 'acesso-1',
+        refreshToken: 'renovacao-1',
+        email: 'maria@exemplo.com',
+      );
+
+      await session.updateProfile(name: 'Maria Silva', email: 'maria@novo.com');
+      await session.updateProfile(name: 'Maria Souza', email: 'maria@novo.com');
+
+      expect(session.profileVersion.value, 2);
+    });
+
+    test('sem conta não muda', () async {
+      await session.updateProfile(name: 'X', email: 'x@x.com');
+      await session.startGuestSession();
+      await session.updateProfile(name: 'X', email: 'x@x.com');
+
+      expect(session.profileVersion.value, 0);
+    });
+  });
 }

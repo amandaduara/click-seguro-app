@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// SafeTextField — campo de entrada com label superior, hint/erro e ícones
 /// laterais. A borda anima para `primary` no foco (focus-within:border-primary)
@@ -24,6 +25,7 @@ class SafeTextField extends StatefulWidget {
     this.focusNode,
     this.autofillHints,
     this.semanticsLabel,
+    this.inputFormatters,
   });
 
   final String? label;
@@ -46,6 +48,9 @@ class SafeTextField extends StatefulWidget {
 
   /// Rótulo para leitor de tela quando o campo não tem [label] visível.
   final String? semanticsLabel;
+
+  /// Ex.: máscara do telefone.
+  final List<TextInputFormatter>? inputFormatters;
 
   @override
   State<SafeTextField> createState() => _SafeTextFieldState();
@@ -137,6 +142,7 @@ class _SafeTextFieldState extends State<SafeTextField> {
                           textInputAction: widget.textInputAction,
                           onSubmitted: widget.onSubmitted,
                           autofillHints: widget.autofillHints,
+                          inputFormatters: widget.inputFormatters,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: context.colors.textForeground),
                           decoration: InputDecoration(

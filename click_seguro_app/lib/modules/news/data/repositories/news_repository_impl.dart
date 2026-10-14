@@ -11,9 +11,10 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_category_enti
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
-import 'package:click_seguro_app/modules/news/domain/entities/saved_news_result.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/user_news_list_result.dart';
 import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:click_seguro_app/modules/news/domain/repositories/news_repository.dart';
 import 'package:fpdart/fpdart.dart';
@@ -130,27 +131,31 @@ class NewsRepositoryImpl implements NewsRepository {
   });
 
   @override
-  Future<Either<Failure, SavedNewsResult>> getSavedNews(int page) =>
-      _guard(() async {
-        try {
-          final json = await _remote.getSavedNews(page: page);
-          final result = SavedNewsResult(
-            page: _parseSavedPage(json),
-            isFromCache: false,
-          );
-          if (page == 1) await _local.writeSavedPage(json);
-          return result;
-        } on ApiException catch (e) {
-          final cached = page == 1 && _noConnectionErrors.contains(e.type)
-              ? await _local.readSavedPage()
-              : null;
-          if (cached == null) rethrow;
-          return SavedNewsResult(
-            page: _parseSavedPage(cached),
-            isFromCache: true,
-          );
-        }
-      });
+  Future<Either<Failure, UserNewsListResult>> getUserNewsList(
+    NewsListKind kind,
+    int page,
+  ) => _guard(() async {
+    // Só a página 1 das salvas vira cópia (RNF-002).
+    final bool copy = kind.keepsCopy && page == 1;
+    try {
+      final json = await _remote.getUserNewsList(kind, page: page);
+      final result = UserNewsListResult(
+        page: _parseSavedPage(json),
+        isFromCache: false,
+      );
+      if (copy) await _local.writeSavedPage(json);
+      return result;
+    } on ApiException catch (e) {
+      final cached = copy && _noConnectionErrors.contains(e.type)
+          ? await _local.readSavedPage()
+          : null;
+      if (cached == null) rethrow;
+      return UserNewsListResult(
+        page: _parseSavedPage(cached),
+        isFromCache: true,
+      );
+    }
+  });
 
   /// Resposta fora do formato vira [ApiErrorType.invalidResponse], como nos
   /// pedidos que o `ApiClient` já converte.

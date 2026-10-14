@@ -48,6 +48,25 @@ void main() {
   );
 
   group('saudação', () {
+    testWidgets('nome salvo no perfil aparece sem outra mudança de sessão', (
+      tester,
+    ) async {
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      await session.updateProfile(
+        name: 'Maria Souza',
+        email: 'maria@exemplo.com',
+      );
+      await tester.pump();
+
+      expect(find.text('Olá, Maria Souza'), findsOneWidget);
+    });
+
     testWidgets('conectada → "Olá, Maria" e o título', (tester) async {
       await signIn();
       await pumpLocalized(

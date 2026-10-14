@@ -10,8 +10,9 @@ import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
-import 'package:click_seguro_app/modules/news/presentation/controller/saved_news_controller.dart';
+import 'package:click_seguro_app/modules/news/presentation/controller/user_news_list_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_footer.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -21,26 +22,28 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
-/// Notícias salvas (RF-019, specs/010-detalhe-noticia): cartões do feed, da
-/// mais recente para a mais antiga. O visitante vê o convite no lugar da
-/// lista, sem pedido ao serviço. O [SavedNewsController] vem da rota e só é
-/// usado com conta.
-class SavedNewsPage extends StatelessWidget {
-  const SavedNewsPage({super.key});
+/// Notícias salvas (RF-019, specs/010-detalhe-noticia), lidas ou curtidas
+/// (specs/012-perfil, R8): cartões do feed, da mais recente para a mais
+/// antiga. O visitante vê o convite no lugar da lista, sem pedido ao serviço.
+/// O [UserNewsListController] vem da rota e só é usado com conta.
+class UserNewsListPage extends StatelessWidget {
+  const UserNewsListPage({super.key, required this.kind});
 
   static const Key loginKey = ValueKey('saved-login');
+
+  final NewsListKind kind;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.newsSavedTitle.tr())),
+      appBar: AppBar(title: Text(kind.title.tr())),
       body: SafeArea(
         child: ValueListenableBuilder<UserSessionStatus>(
           valueListenable: GetIt.instance<UserSessionService>().sessionStatus,
           builder: (context, status, _) =>
               status == UserSessionStatus.authenticated
-              ? const _SavedList()
-              : const _GuestInvite(),
+              ? _UserNewsList(kind: kind)
+              : _GuestInvite(kind: kind),
         ),
       ),
     );
@@ -49,7 +52,9 @@ class SavedNewsPage extends StatelessWidget {
 
 /// Convite dentro da tela: texto curto e um botão grande para o login.
 class _GuestInvite extends StatelessWidget {
-  const _GuestInvite();
+  const _GuestInvite({required this.kind});
+
+  final NewsListKind kind;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +67,7 @@ class _GuestInvite extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Icon(
-              LucideIcons.bookmark,
+              _iconOf(kind),
               size: 40,
               color: context.colors.textMutedForeground,
             ),
@@ -79,13 +84,13 @@ class _GuestInvite extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s2),
             Text(
-              AppStrings.newsSavedGuestBody.tr(),
+              kind.guestBody.tr(),
               textAlign: TextAlign.center,
               style: textTheme.bodyLarge?.copyWith(fontSize: 16),
             ),
             const SizedBox(height: AppSpacing.s6),
             SafeButton(
-              key: SavedNewsPage.loginKey,
+              key: UserNewsListPage.loginKey,
               label: AppStrings.commonAccountRequiredAction.tr(),
               onPressed: () => context.go('/login'),
             ),
@@ -98,20 +103,22 @@ class _GuestInvite extends StatelessWidget {
 
 /// Lista de quem tem conta: carrega ao aparecer e de novo ao voltar de uma
 /// notícia (FR-014).
-class _SavedList extends StatefulWidget {
-  const _SavedList();
+class _UserNewsList extends StatefulWidget {
+  const _UserNewsList({required this.kind});
+
+  final NewsListKind kind;
 
   @override
-  State<_SavedList> createState() => _SavedListState();
+  State<_UserNewsList> createState() => _UserNewsListState();
 }
 
-class _SavedListState extends State<_SavedList> {
-  late final SavedNewsController _controller;
+class _UserNewsListState extends State<_UserNewsList> {
+  late final UserNewsListController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = context.read<SavedNewsController>();
+    _controller = context.read<UserNewsListController>();
     // Fora do build: a carga avisa os ouvintes na hora.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(_controller.load());
@@ -125,7 +132,8 @@ class _SavedListState extends State<_SavedList> {
 
   @override
   Widget build(BuildContext context) {
-    final SavedNewsController controller = context.watch<SavedNewsController>();
+    final UserNewsListController controller = context
+        .watch<UserNewsListController>();
     switch (controller.status) {
       case FeedStatus.loading:
         return Center(
@@ -147,12 +155,12 @@ class _SavedListState extends State<_SavedList> {
           onRetry: controller.load,
         );
       case FeedStatus.loaded:
-        if (controller.items.isEmpty) return const _EmptySaved();
+        if (controller.items.isEmpty) return _EmptyList(kind: widget.kind);
         return _list(controller);
     }
   }
 
-  Widget _list(SavedNewsController controller) {
+  Widget _list(UserNewsListController controller) {
     final DateTime now = DateTime.now();
     final List<NewsItemEntity> items = controller.items;
     return Column(
@@ -187,27 +195,31 @@ class _SavedListState extends State<_SavedList> {
   }
 }
 
-/// "Você ainda não salvou nenhuma notícia." com a dica do marcador.
-class _EmptySaved extends StatelessWidget {
-  const _EmptySaved();
+/// "Você ainda não salvou nenhuma notícia." (ou leu, ou curtiu), a dica e o
+/// botão para o Início.
+class _EmptyList extends StatelessWidget {
+  const _EmptyList({required this.kind});
+
+  final NewsListKind kind;
 
   @override
   Widget build(BuildContext context) {
     final TextTheme textTheme = Theme.of(context).textTheme;
+    // Rolável: com a fonte grande e o botão, pode não caber na tela.
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.s6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              LucideIcons.bookmark,
+              _iconOf(kind),
               size: 40,
               color: context.colors.textMutedForeground,
             ),
             const SizedBox(height: AppSpacing.s3),
             Text(
-              AppStrings.newsSavedEmpty.tr(),
+              kind.empty.tr(),
               textAlign: TextAlign.center,
               style: textTheme.bodyLarge?.copyWith(
                 fontSize: 16,
@@ -217,11 +229,20 @@ class _EmptySaved extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s2),
             Text(
-              AppStrings.newsSavedEmptyHint.tr(),
+              kind.emptyHint.tr(),
               textAlign: TextAlign.center,
               style: textTheme.bodyLarge?.copyWith(
                 fontSize: 16,
                 color: context.colors.textMutedForeground,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s5),
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: SafeButton(
+                label: AppStrings.commonBackHome.tr(),
+                size: SafeButtonSize.compact,
+                onPressed: () => context.go('/home'),
               ),
             ),
           ],
@@ -230,3 +251,9 @@ class _EmptySaved extends StatelessWidget {
     );
   }
 }
+
+IconData _iconOf(NewsListKind kind) => switch (kind) {
+  NewsListKind.saved => LucideIcons.bookmark,
+  NewsListKind.read => LucideIcons.bookOpenCheck,
+  NewsListKind.liked => LucideIcons.heart,
+};

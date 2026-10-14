@@ -2,6 +2,7 @@ import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_remote_data_source_impl.dart';
 import 'package:click_seguro_app/modules/news/data/models/news_list_model.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -163,22 +164,46 @@ void main() {
       },
     );
 
-    test('getSavedNews pede a página com 20 por página', () async {
+    test('getUserNewsList(saved) pede a página com 20 por página', () async {
       adapter.body = savedListJson(
         items: [newsItemJson(id: 'n1', isSaved: true)],
         page: 2,
         hasNextPage: true,
       );
 
-      final json = await dataSource.getSavedNews(page: 2);
+      final json = await dataSource.getUserNewsList(
+        NewsListKind.saved,
+        page: 2,
+      );
 
       final request = adapter.lastRequest!;
-      expect(request.path, NewsRemoteDataSourceImpl.savedPath);
+      expect(
+        request.path,
+        NewsRemoteDataSourceImpl.userNewsPath(NewsListKind.saved),
+      );
       expect(request.path, '/users/me/news/saved');
       expect(request.queryParameters, {'page': 2, 'limit': 20});
-      expect(NewsRemoteDataSourceImpl.savedPageSize, 20);
+      expect(NewsRemoteDataSourceImpl.listPageSize, 20);
       expect(NewsListModel.fromJson(json).items.single.id, 'n1');
     });
+
+    for (final (kind, path) in [
+      (NewsListKind.read, '/users/me/news/read'),
+      (NewsListKind.liked, '/users/me/news/liked'),
+    ]) {
+      test(
+        'getUserNewsList(${kind.name}) → GET $path com 20 por página',
+        () async {
+          adapter.body = savedListJson(items: [newsItemJson(id: 'n1')]);
+
+          await dataSource.getUserNewsList(kind, page: 1);
+
+          final request = adapter.lastRequest!;
+          expect(request.path, path);
+          expect(request.queryParameters, {'page': 1, 'limit': 20});
+        },
+      );
+    }
 
     test('404 NEWS_NOT_FOUND vira ApiException com statusCode 404', () async {
       adapter

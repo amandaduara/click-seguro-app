@@ -3,6 +3,7 @@ import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_local_data_source.dart';
 import 'package:click_seguro_app/modules/news/data/repositories/news_repository_impl.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -362,14 +363,15 @@ void main() {
     });
   });
 
-  group('getSavedNews (specs/010)', () {
+  group('getUserNewsList(saved) (specs/010)', () {
     test('página 1: resultado do servidor e grava a cópia', () async {
       remote.savedPages[1] = savedListJson(
         items: [newsItemJson(id: 's1', isSaved: true)],
         hasNextPage: true,
       );
 
-      final result = (await repository.getSavedNews(
+      final result = (await repository.getUserNewsList(
+        NewsListKind.saved,
         1,
       )).getOrElse((_) => throw StateError('esperava Right'));
 
@@ -388,7 +390,8 @@ void main() {
         page: 2,
       );
 
-      final result = (await repository.getSavedNews(
+      final result = (await repository.getUserNewsList(
+        NewsListKind.saved,
         2,
       )).getOrElse((_) => throw StateError('esperava Right'));
 
@@ -403,7 +406,8 @@ void main() {
           items: [newsItemJson(id: 'guardada', isSaved: true)],
         );
 
-        final result = (await repository.getSavedNews(
+        final result = (await repository.getUserNewsList(
+          NewsListKind.saved,
           1,
         )).getOrElse((_) => throw StateError('esperava Right'));
 
@@ -415,7 +419,7 @@ void main() {
     test('página 1 sem conexão e sem cópia: Left', () async {
       remote.savedError = apiError(ApiErrorType.connection);
 
-      final result = await repository.getSavedNews(1);
+      final result = await repository.getUserNewsList(NewsListKind.saved, 1);
 
       expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
     });
@@ -424,7 +428,7 @@ void main() {
       remote.savedError = apiError(ApiErrorType.connection);
       local.savedPage = savedListJson(items: newsItemsJson(1));
 
-      final result = await repository.getSavedNews(2);
+      final result = await repository.getUserNewsList(NewsListKind.saved, 2);
 
       expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
     });
@@ -433,7 +437,7 @@ void main() {
       remote.savedError = apiError(ApiErrorType.server);
       local.savedPage = savedListJson(items: newsItemsJson(1));
 
-      final result = await repository.getSavedNews(1);
+      final result = await repository.getUserNewsList(NewsListKind.saved, 1);
 
       expect(result.getLeft().toNullable(), isA<ServerFailure>());
     });
@@ -441,9 +445,36 @@ void main() {
     test('401 vira UnauthorizedFailure', () async {
       remote.savedError = apiError(ApiErrorType.unauthorized);
 
-      final result = await repository.getSavedNews(1);
+      final result = await repository.getUserNewsList(NewsListKind.saved, 1);
 
       expect(result.getLeft().toNullable(), isA<UnauthorizedFailure>());
     });
+  });
+
+  group('getUserNewsList(read|liked) (specs/012)', () {
+    for (final kind in [NewsListKind.read, NewsListKind.liked]) {
+      test('${kind.name}: pede a lista certa e não grava cópia', () async {
+        remote.savedPages[1] = savedListJson(items: [newsItemJson(id: 'l1')]);
+
+        final result = (await repository.getUserNewsList(
+          kind,
+          1,
+        )).getOrElse((_) => throw StateError('esperava Right'));
+
+        expect(result.page.items.single.id, 'l1');
+        expect(result.isFromCache, isFalse);
+        expect(remote.listKinds, [kind]);
+        expect(local.savedWrites, 0);
+      });
+
+      test('${kind.name}: sem internet não usa a cópia das salvas', () async {
+        remote.savedError = apiError(ApiErrorType.connection);
+        local.savedPage = savedListJson(items: newsItemsJson(1));
+
+        final result = await repository.getUserNewsList(kind, 1);
+
+        expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+      });
+    }
   });
 }

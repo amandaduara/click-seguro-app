@@ -188,9 +188,12 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 
 ### 3.7 Perfil (B7)
 
-- **RF-035**: O perfil MUST exibir cartão do usuário (nome, foto, selo de nível),
-  estatísticas (módulos concluídos, lições concluídas, notícias salvas), conquistas e atalhos.
-  Nível e conquistas são calculados no app (RN-008).
+- **RF-035**: O perfil MUST exibir cartão do usuário (nome e foto), o número de notícias lidas,
+  salvas e curtidas (cada número abre a lista dessas notícias), conquistas em forma de medalhas e
+  atalhos. As conquistas são calculadas no app (RN-008) a partir das notícias lidas e do progresso
+  nas atividades. *(Até 2026-10-09 havia um selo de nível, removido porque não há limite de
+  módulos; em 2026-10-12, o redesign trocou "módulos e lições concluídos" por lidas e curtidas e
+  tirou o e-mail do cartão.)*
 - **RF-036**: O usuário MUST poder editar seus dados (nome, e-mail e telefone), trocar e
   remover a foto de perfil e ligar/desligar "Receber alertas".
 
@@ -268,9 +271,9 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   tela de conclusão.
 - **RN-007 (Contatos locais)**: Contatos pessoais pertencem ao aparelho, não à conta: sair da
   conta MUST NOT apagar os contatos.
-- **RN-008 (Nível e conquistas)**: O selo de nível do perfil é derivado do número de módulos
-  concluídos, e as conquistas, das estatísticas do perfil. As faixas e as regras são fixas
-  no app (a API não as fornece) e são definidas na feature da tarefa B7.
+- **RN-008 (Conquistas)**: As conquistas do perfil são derivadas das estatísticas do perfil e
+  do progresso de cada módulo. As regras são fixas no app (a API não as fornece) e estão em
+  `specs/012-perfil/spec.md` (FR-008). Não há nível (decisão de 2026-10-09).
 
 **Critério de aceite geral**: um caso de uso só é aceito quando a RN correspondente tem teste
 automatizado (TDD, Seção III da constituição) e o comportamento de erro associado (§6) também

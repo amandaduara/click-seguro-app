@@ -4,9 +4,10 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_category_enti
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
-import 'package:click_seguro_app/modules/news/domain/entities/saved_news_result.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/user_news_list_result.dart';
 import 'package:fpdart/fpdart.dart';
 
 abstract class NewsRepository {
@@ -41,5 +42,8 @@ abstract class NewsRepository {
 
   /// Uma página das notícias salvas; sem internet na página 1, a cópia.
   /// Exige conta.
-  Future<Either<Failure, SavedNewsResult>> getSavedNews(int page);
+  Future<Either<Failure, UserNewsListResult>> getUserNewsList(
+    NewsListKind kind,
+    int page,
+  );
 }
