@@ -59,7 +59,8 @@ List<ModuleInterface> appModules() => [
 ];
 
 /// Registra os módulos e prepara o estado que a primeira tela precisa. Também
-/// usada pela entrada de desenvolvimento `lib/dev/accessibility_playground.dart`.
+/// usada pela entrada de desenvolvimento `lib/dev/accessibility_playground.dart`
+/// (hoje só com os atalhos dos alertas).
 Future<(ModuleManagerInterface, GoRouter)> setupApp() async {
   final ModuleManagerInterface moduleManager = ModuleManager();
   await moduleManager.registerModules(appModules());
