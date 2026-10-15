@@ -29,9 +29,9 @@ Trocar a página provisória de `/settings` pela tela do quadro do Figma e entre
 - **Visitante** ([R6](research.md#r6-visitante-e-engrenagem)): a engrenagem some no Perfil e na
   barra do topo; link direto mostra convite.
 - **Sobre** ([R7](research.md#r7-versão-do-app)): versão lida com `package_info_plus`.
-- **Portão** ([R0](research.md#r0-conferência-no-servidor-real-portão-de-api)): conferir no
-  servidor se a sessão continua válida depois da troca de senha (precisa de conta de teste,
-  com autorização).
+- **Servidor** ([R0](research.md#r0-conferência-no-servidor-real-portão-de-api), conferido em
+  2026-10-14): a troca de senha revoga o `refreshToken`; o app entra de novo sozinho com a nova
+  senha para a pessoa continuar conectada.
 
 ## Technical Context
 
@@ -139,8 +139,8 @@ porque passa a ter dois usuários reais (`authentication` e `settings`).
 
 ## Fora do código
 
-- **Conta de teste (R0)**: pedir autorização à usuária para criar uma conta nova e conferir a sessão
-  depois da troca de senha. Resultado no contrato da API (1.0.9).
+- **Contrato da API → 1.0.9** (R0): a troca de senha revoga o `refreshToken`. Conta de teste
+  `teste.claude.20261014@exemplo.com` criada com autorização (senha não guardada).
 - **Avisar o outro desenvolvedor**: a B8 move a política de senha do `authentication`, mexe no
   `AppTopBar` e na `AlertsNotices` (feature 011).
 - **Folha de confirmação ao sair**: melhoria futura (clarificação), fora desta feature.

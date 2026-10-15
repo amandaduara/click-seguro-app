@@ -8,18 +8,30 @@ features 001, 002, 003, 005, 007, 009, 011 e 012, do contrato da API 1.0.8 e do
 
 ## R0. Conferência no servidor real (portão de API)
 
-`PATCH /users/me/change-password` já está ✅ no contrato 1.0.8 (204; 401 `INVALID_CREDENTIALS`;
-409 `USER_NEW_PASSWORD_EQUALS_OLD`), assim como `GET /users/me` (com `receiveNotifications`) e
-`PATCH /users/me` `{receiveNotifications}` (conferidos na B7, R0 de specs/012).
+Feita em 2026-10-14 com a conta de teste nova `teste.claude.20261014@exemplo.com` (autorizada pela
+usuária; senhas aleatórias, não guardadas).
 
-**Falta conferir**: se, depois da troca de senha, o servidor continua aceitando o `accessToken` e o
-`refreshToken` atuais (a spec exige que a pessoa continue conectada). Exige uma conta de teste nova
-no banco compartilhado, **com autorização da usuária** (as contas antigas não têm senha guardada).
-Fica como portão da T001 das tarefas.
+| Pedido | Resultado |
+|---|---|
+| `PATCH /users/me/change-password` com a senha atual errada | ✅ 401 `INVALID_CREDENTIALS`; o `GET /users/me` seguinte dá 200 (sessão intacta) |
+| Nova senha igual à atual | ✅ 409 `USER_NEW_PASSWORD_EQUALS_OLD` |
+| Nova senha fraca | ✅ 400 `VALIDATION_ERROR` |
+| Troca certa | ✅ 204; o `accessToken` antigo continua valendo |
+| `POST /auth/app/refresh` com o `refreshToken` antigo, depois da troca | ⚠️ **401 `TOKEN_INVALID`**: a renovação é revogada |
+| Login com a senha antiga / nova | 401 / 200 |
+| `PATCH /users/me {receiveNotifications: false}` | ✅ 204; o `GET` seguinte traz `false` |
 
-**Decision**: o app assume que a sessão continua válida (comportamento comum e o que o contrato
-descreve). Se a conferência mostrar que o servidor revoga os tokens, o sucesso da troca leva ao login
-com o aviso "Senha alterada. Entre de novo com a nova senha." (spec e tarefas ajustadas na hora).
+**Decision**: sem nada a fazer, a pessoa seria derrubada com "sessão expirada" quando o
+`accessToken` vencesse. Por isso, **depois do 204 o repository entra de novo** (`POST
+/auth/app/login` com o e-mail da sessão e a nova senha) e guarda o par novo na sessão
+(`UserSessionService.saveSession`, mantendo e-mail e nome). A pessoa continua conectada (FR-013).
+Se esse login falhar, a troca já valeu: a sessão é encerrada (`logout`) e a tela de login mostra
+"Senha alterada. Entre de novo com a nova senha." Contrato da API → **1.0.9**.
+
+**Alternatives considered**: deixar a sessão expirar sozinha (a pessoa veria "sessão expirada"
+minutos depois, sem entender); mandar sempre ao login (a spec pede continuar conectada); importar o
+login do `authentication` (Princípio I: o `settings` chama `/auth/app/login` no próprio datasource,
+sem guardar a senha).
 
 ## R1. Dados da conta nas Configurações
 

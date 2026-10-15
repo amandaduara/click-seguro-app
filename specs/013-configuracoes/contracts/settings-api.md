@@ -2,13 +2,14 @@
 
 **Feature**: [../spec.md](../spec.md) · **Plan**: [../plan.md](../plan.md)
 
-## 1. Endpoints (contrato da API 1.0.8; sessão após a troca de senha a conferir, R0)
+## 1. Endpoints (contrato da API 1.0.9, conferidos em 2026-10-14, R0)
 
 | Método e caminho | Sucesso | Erros tratados |
 |---|---|---|
 | `GET /users/me` | 200 `{name, email, phone?, role, receiveNotifications, avatarUrl?}` → só `name`, `avatarUrl`, `receiveNotifications` | padrão (sem rede → cartão com o nome da sessão) |
 | `PATCH /users/me` `{receiveNotifications: bool}` | 204 | padrão → a chave volta |
-| `PATCH /users/me/change-password` `{currentPassword, newPassword}` | 204 | 401 `INVALID_CREDENTIALS` → `WrongCurrentPasswordFailure` (**não** encerra a sessão); 409 `USER_NEW_PASSWORD_EQUALS_OLD` → `SamePasswordFailure`; 400 `VALIDATION_ERROR` → genérica (evitado pela validação local) |
+| `PATCH /users/me/change-password` `{currentPassword, newPassword}` | 204 | 401 `INVALID_CREDENTIALS` → `WrongCurrentPasswordFailure` (**não** encerra a sessão); 409 `USER_NEW_PASSWORD_EQUALS_OLD` → `SamePasswordFailure`; 400 `VALIDATION_ERROR` → genérica (evitado pela validação local). Depois do 204 o `refreshToken` é revogado → entrar de novo (linha abaixo) |
+| `POST /auth/app/login` `{email, newPassword}` (logo depois da troca) | 200 `{accessToken, refreshToken}` → `UserSessionService.saveSession` | qualquer falha → `PasswordChangedReloginFailure`: sessão encerrada, login com "Senha alterada. Entre de novo com a nova senha." |
 
 ## 2. Rotas
 
@@ -31,6 +32,7 @@ leva a `/login`; convite → `go('/login')`.
 Future<Either<Failure, AccountSummaryEntity>> getAccount();
 Future<Either<Failure, Unit>> setReceiveAlerts(bool value);
 Future<Either<Failure, Unit>> changePassword({required String currentPassword, required String newPassword});
+// troca e, em seguida, entra de novo com o e-mail da sessão e a nova senha (R0)
 
 // domain/repositories/language_repository.dart
 Future<LanguageChoice> getLanguage();        // ausente/ilegível → device

@@ -250,7 +250,9 @@ versão com a instalada.
   encerrar a sessão (CB-013).
 - **FR-012**: A recusa por nova senha igual à atual MUST mostrar o aviso no campo da nova senha.
 - **FR-013**: Em sucesso, o app MUST mostrar "Senha alterada" e voltar para as configurações; a
-  pessoa continua conectada.
+  pessoa continua conectada. Como o serviço invalida a renovação da sessão depois da troca
+  (conferido em 2026-10-14), o app entra de novo com a nova senha; se não conseguir, encerra a
+  sessão e mostra no login "Senha alterada. Entre de novo com a nova senha."
 - **FR-014**: Outras falhas MUST mostrar uma mensagem simples e manter o que foi digitado.
 - **FR-015**: Sair da troca de senha com algo digitado MUST pedir confirmação para descartar.
 

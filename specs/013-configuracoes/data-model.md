@@ -22,6 +22,7 @@
 |---|---|---|
 | `WrongCurrentPasswordFailure` | 401 `INVALID_CREDENTIALS` na troca | `settings_password_error_current` (no campo) |
 | `SamePasswordFailure` | 409 `USER_NEW_PASSWORD_EQUALS_OLD` | `settings_password_error_same` (no campo) |
+| `PasswordChangedReloginFailure` | senha trocada, mas o login automático com a nova falhou (R0) | `settings_password_relogin` ("Senha alterada. Entre de novo com a nova senha."), mostrado no login depois de encerrar a sessão |
 | `ConnectionFailure`, `ServerFailure`, `UnauthorizedFailure` | padrão | genérica da tela |
 
 ## Controllers
