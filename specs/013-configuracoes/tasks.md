@@ -181,11 +181,11 @@ engrenagem só com conta (FR-001 a FR-007, FR-024, FR-025).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T038 [P] [US5] Criar `tset/presentation/privacy_and_about_pages_test.dart`: Privacidade com título e os parágrafos (contatos de emergência só no celular); Sobre com "SafeNews", o objetivo, "Versão 1.0.0" do `FakeAppInfoService` e "Trabalho de Conclusão de Curso"; fonte 2× sem estouro (texto rolável)
+- [X] T038 [P] [US5] Criar `tset/presentation/privacy_and_about_pages_test.dart`: Privacidade com título e os parágrafos (contatos de emergência só no celular); Sobre com "SafeNews", o objetivo, "Versão 1.0.0" do `FakeAppInfoService` e "Trabalho de Conclusão de Curso"; fonte 2× sem estouro (texto rolável)
 
 ### Implementação
 
-- [ ] T039 [US5] Criar `set/presentation/pages/privacy_page.dart` e `set/presentation/pages/about_page.dart` (`AppBar`, `ListView` com títulos `Semantics(header)` e parágrafos 16; Sobre lê a versão pelo `GetAppVersionUseCase` via `FutureBuilder`), ligar às rotas `privacy` e `about` e apagar o que sobrar de provisório (exceto `accessibility`, que é da B9). Faz a T038 passar
+- [X] T039 [US5] Criar `set/presentation/pages/privacy_page.dart` e `set/presentation/pages/about_page.dart` (`AppBar`, `ListView` com títulos `Semantics(header)` e parágrafos 16; Sobre lê a versão pelo `GetAppVersionUseCase` via `FutureBuilder`), ligar às rotas `privacy` e `about` e apagar o que sobrar de provisório (exceto `accessibility`, que é da B9). Faz a T038 passar
 
 **Checkpoint**: testes da US5 e suíte verdes. Commit da US5.
 

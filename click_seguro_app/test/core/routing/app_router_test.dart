@@ -91,8 +91,8 @@ void main() {
       '/settings': SettingsPage,
       '/settings/security': ChangePasswordPage,
       '/settings/accessibility': SettingsSectionPage,
-      '/settings/privacy': SettingsSectionPage,
-      '/settings/about': SettingsSectionPage,
+      '/settings/privacy': PrivacyPage,
+      '/settings/about': AboutPage,
     };
 
     tabPaths.forEach((path, page) {

@@ -1,6 +1,8 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/routing/navigator_keys.dart';
+import 'package:click_seguro_app/modules/settings/presentation/pages/about_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/change_password_page.dart';
+import 'package:click_seguro_app/modules/settings/presentation/pages/privacy_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_section_page.dart';
 import 'package:go_router/go_router.dart';
@@ -28,14 +30,12 @@ final List<RouteBase> settingsRoutes = [
       GoRoute(
         path: 'privacy',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) =>
-            const SettingsSectionPage(titleKey: AppStrings.settingsPrivacy),
+        builder: (context, state) => const PrivacyPage(),
       ),
       GoRoute(
         path: 'about',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) =>
-            const SettingsSectionPage(titleKey: AppStrings.settingsAboutApp),
+        builder: (context, state) => const AboutPage(),
       ),
     ],
   ),

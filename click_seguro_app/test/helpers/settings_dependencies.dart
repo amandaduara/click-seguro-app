@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/modules/common/services/app_info_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/change_password_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_account_usecase.dart';
@@ -26,9 +27,11 @@ FakeAccountRepository registerSettingsDependencies(
   final FakeLanguageRepository language = languages ?? FakeLanguageRepository();
   final FakeAccountRepository account =
       accountRepository ?? FakeAccountRepository();
+  final FakeAppInfoService info = appInfo ?? FakeAppInfoService();
   injector
+    ..registerSingleton<AppInfoService>(info)
     ..registerSingleton(GetAccountUseCase(account))
-    ..registerSingleton(GetAppVersionUseCase(appInfo ?? FakeAppInfoService()))
+    ..registerSingleton(GetAppVersionUseCase(info))
     ..registerLazySingleton(() => LogoutUseCase(injector<UserSessionService>()))
     ..registerSingleton(ChangePasswordUseCase(account))
     ..registerSingleton(SetReceiveAlertsUseCase(account))
