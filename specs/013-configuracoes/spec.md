@@ -18,7 +18,21 @@ da [feature 012](../012-perfil/spec.md) · aviso de alertas desligados da
 [feature 002](../002-apiclient-renovacao-sessao/spec.md) · regra de senha da
 [feature 003](../003-login-cadastro-visitante/spec.md) · visual: arquivo do Figma
 "SafeNews — Perfil e Configurações (redesign)", quadro **Configurações** (redesign de
-2026-10-12, junto com a B7).
+2026-10-12, junto com a B7), captura enviada pela usuária em 2026-10-14.
+
+## Clarifications
+
+### Session 2026-10-14
+
+- Captura do quadro "Configurações" (Figma) recebida: seções **Conta** (Dados pessoais, Alterar
+  senha), **Alertas**, **Leitura e aparência** (Acessibilidade, Idioma) e **Sobre** (Privacidade,
+  Sobre o SafeNews); cada linha com uma frase de apoio; o idioma atual à direita da linha; a
+  versão na linha "Sobre o SafeNews"; botão "Sair da conta" com a frase sobre os contatos de
+  emergência logo abaixo. Não há seção "Segurança".
+- Q: Ao tocar em "Sair da conta", o app pede confirmação ou sai direto? → A: Sai direto (opção B); a frase embaixo do botão é o lembrete. Uma folha de confirmação fica para uma melhoria futura, fora desta feature.
+- Q: A escolha de idioma tem a opção de voltar ao idioma do celular? → A: Sim (opção A): três opções, "Idioma do celular" (padrão), "Português" e "English".
+- Q: O que o visitante vê nas Configurações? → A: O visitante não chega às Configurações: a engrenagem fica escondida para quem não tem conta (no Perfil e na barra do topo das abas). Quem abrir `/settings` sem conta por link direto vê o convite para entrar.
+- Q: Quais créditos aparecem em "Sobre o SafeNews"? → A: Genéricos: "Trabalho de Conclusão de Curso", sem nomes nem instituição.
 
 ## Contexto
 
@@ -33,34 +47,34 @@ e leitura automática) é a B9, a próxima feature; aqui só existe a linha que 
 ### User Story 1 - Ver as configurações e sair da conta (Priority: P1)
 
 A pessoa toca na engrenagem e vê as configurações organizadas em seções: o cartão da própria
-conta, Conta, Alertas, Segurança, Preferências e Sobre. No fim, "Sair da conta" pede confirmação
-e lembra que os contatos de emergência continuam no celular.
+conta, Conta, Alertas, Leitura e aparência e Sobre. No fim, o botão "Sair da conta", com a frase
+lembrando que os contatos de emergência continuam no celular.
 
 **Why this priority**: sem isso a engrenagem leva a uma tela vazia e não existe como sair da
 conta (RF-037). É o mínimo para a tela fazer sentido.
 
 **Independent Test**: com uma conta, tocar na engrenagem, ver as seções e o cartão com nome e
-foto, tocar em "Sair da conta", confirmar e chegar ao login.
+foto, tocar em "Sair da conta" e chegar ao login.
 
 **Acceptance Scenarios**:
 
 1. **Given** a pessoa tem conta, **When** abre as configurações, **Then** vê o cartão com a foto
    (ou as iniciais), o nome e "Ver e editar seu perfil", seguido das seções Conta, Alertas,
-   Segurança, Preferências e Sobre, e o botão "Sair da conta".
+   Leitura e aparência e Sobre, e o botão "Sair da conta" com a frase "Ao sair, seus contatos de
+   emergência continuam guardados neste celular." logo abaixo.
 2. **Given** as configurações abertas, **When** a pessoa toca no cartão da conta, **Then** vai
    para o Perfil.
 3. **Given** as configurações abertas, **When** a pessoa toca em "Dados pessoais", **Then** abre
    a edição de dados (a mesma do lápis do Perfil).
 4. **Given** as configurações abertas, **When** a pessoa toca em "Acessibilidade", **Then** abre
    a tela de acessibilidade.
-5. **Given** a pessoa toca em "Sair da conta", **When** o aviso aparece, **Then** ele explica que
-   os contatos de emergência continuam no celular e oferece "Sair" e "Cancelar".
-6. **Given** a pessoa confirma a saída, **When** sai, **Then** chega ao login, e os contatos de
+5. **Given** a pessoa toca em "Sair da conta", **When** toca, **Then** sai na hora, sem aviso de
+   confirmação, e chega ao login.
+6. **Given** a pessoa saiu da conta, **When** volta a usar o app, **Then** os contatos de
    emergência e as preferências do aparelho (idioma e acessibilidade) continuam lá (RN-007).
-7. **Given** a pessoa é visitante, **When** abre as configurações, **Then** vê no lugar do cartão
-   o convite para entrar ou criar conta, não vê as linhas que exigem conta (Dados pessoais,
-   Alertas, Alterar senha) e vê "Sair do modo visitante", que leva ao login. Nenhuma chamada ao
-   serviço é feita (RN-003).
+7. **Given** a pessoa é visitante, **When** olha o topo do Perfil e das abas, **Then** não há
+   engrenagem: o visitante não chega às Configurações. Se abrir as Configurações por um link
+   direto, vê só o convite para entrar ou criar conta, sem chamada ao serviço (RN-003).
 8. **Given** os dados da conta não puderam ser buscados (sem internet), **When** a tela abre,
    **Then** o cartão mostra o nome guardado na sessão e as iniciais, e as outras linhas funcionam.
 
@@ -133,8 +147,9 @@ voltar e ligar de novo.
 
 ### User Story 4 - Escolher o idioma (Priority: P2)
 
-Em "Idioma", a pessoa escolhe Português ou English. O app troca na hora e lembra da escolha nas
-próximas aberturas. Sem escolha, o app segue o idioma do aparelho.
+Em "Idioma", a pessoa escolhe "Idioma do celular", Português ou English. O app troca na hora e
+lembra da escolha nas próximas aberturas. "Idioma do celular" é o padrão e faz o app seguir o
+idioma do aparelho.
 
 **Why this priority**: é o RF-042; os textos já existem nos dois idiomas, falta só a escolha.
 
@@ -143,23 +158,25 @@ continuar em inglês; voltar para Português.
 
 **Acceptance Scenarios**:
 
-1. **Given** a pessoa abre "Idioma", **When** a escolha aparece, **Then** há "Português" e
-   "English", cada um no próprio idioma, com o atual marcado.
+1. **Given** a pessoa abre "Idioma", **When** a escolha aparece, **Then** há "Idioma do celular",
+   "Português" e "English" (os dois últimos escritos no próprio idioma), com a escolha atual
+   marcada; à direita da linha aparece o nome da escolha atual.
 2. **Given** a pessoa escolhe outro idioma, **When** confirma, **Then** todos os textos do app
    mudam na hora, sem reiniciar, e a leitura em voz alta passa a usar esse idioma.
 3. **Given** a pessoa escolheu um idioma, **When** fecha e abre o app, **Then** ele abre no
    idioma escolhido.
-4. **Given** a pessoa nunca escolheu, **When** abre o app, **Then** ele usa o idioma do aparelho
-   (português do Brasil ou inglês; outro idioma cai em português).
-5. **Given** a pessoa é visitante, **When** escolhe um idioma, **Then** funciona igual (não
-   exige conta).
+4. **Given** a pessoa nunca escolheu ou escolheu "Idioma do celular", **When** abre o app,
+   **Then** ele usa o idioma do aparelho (português do Brasil ou inglês; outro idioma cai em
+   português), inclusive se o idioma do celular mudar depois.
+5. **Given** a pessoa tinha escolhido English, **When** escolhe "Idioma do celular", **Then** o
+   app volta a seguir o aparelho na hora.
 
 ---
 
 ### User Story 5 - Privacidade e Sobre (Priority: P3)
 
 "Privacidade" explica, em linguagem simples, quais dados o app guarda e onde. "Sobre o SafeNews"
-mostra o que é o app, a versão instalada e os créditos do TCC.
+mostra o que é o app, a versão instalada e o crédito genérico do TCC.
 
 **Why this priority**: completa as linhas do quadro (RF-037: nenhuma linha morta), mas não muda o
 uso do app.
@@ -174,16 +191,17 @@ versão com a instalada.
    contatos de emergência e as fotos deles ficam só no celular (RN-007); e que as preferências
    de idioma e acessibilidade ficam no aparelho.
 2. **Given** a pessoa toca em "Sobre o SafeNews", **When** a tela abre, **Then** mostra o nome do
-   app, uma frase sobre o objetivo, a versão instalada e os créditos do TCC.
+   app, uma frase sobre o objetivo, a versão instalada e o crédito genérico "Trabalho de
+   Conclusão de Curso" (sem nomes nem instituição).
 
 ---
 
 ### Edge Cases
 
-- **Sessão expira com a tela aberta**: o aviso de sessão expirada da feature 005 aparece; as
-  linhas que exigem conta passam a se comportar como no modo visitante.
+- **Sessão expira com a tela aberta**: o aviso de sessão expirada da feature 005 aparece; a tela
+  passa a mostrar o convite para entrar, como no link direto do visitante.
 - **Senha atual errada** (CB-013): só o aviso no campo; nunca encerra a sessão.
-- **Toque duplo em "Sair da conta" ou em "Salvar"**: abre um só aviso; envia uma só vez.
+- **Toque duplo em "Sair da conta" ou em "Salvar"**: sai ou envia uma só vez.
 - **Troca de idioma com a troca de senha aberta**: os textos mudam; o que foi digitado continua.
 - **Fonte 200% e alto contraste** (RNF-003/004): as linhas quebram o texto sem cortar; a chave
   e as setas continuam visíveis e com área de toque de 48.
@@ -198,24 +216,27 @@ versão com a instalada.
 **Tela de configurações**
 
 - **FR-001**: A tela MUST mostrar, nesta ordem: o cartão da conta; a seção **Conta** com "Dados
-  pessoais"; **Alertas** com a chave "Alertas de notícias novas"; **Segurança** com "Alterar
-  senha"; **Preferências** com "Acessibilidade" e "Idioma"; **Sobre** com "Privacidade" e
-  "Sobre o SafeNews"; e o botão "Sair da conta".
+  pessoais" ("Nome, e-mail, telefone e foto") e "Alterar senha" ("Troque a senha de entrada no
+  app"); **Alertas** com a chave "Alertas de notícias novas" ("Avisamos quando sair uma notícia
+  de golpe"); **Leitura e aparência** com "Acessibilidade" ("Tamanho da letra, contraste e
+  leitura em voz alta") e "Idioma" (com o idioma atual à direita); **Sobre** com "Privacidade"
+  ("Como cuidamos dos seus dados") e "Sobre o SafeNews" (com a versão instalada); e o botão
+  "Sair da conta", com a frase sobre os contatos de emergência logo abaixo.
 - **FR-002**: Toda linha MUST levar a uma tela ou ação que funciona (RF-037). "Acessibilidade"
   abre a tela de acessibilidade (conteúdo na B9).
 - **FR-003**: O cartão da conta MUST mostrar a foto (ou as iniciais), o nome e "Ver e editar seu
   perfil"; tocar nele MUST levar ao Perfil.
 - **FR-004**: "Dados pessoais" MUST abrir a edição de dados da B7.
-- **FR-005**: O visitante MUST ver o convite para entrar ou criar conta no lugar do cartão, MUST
-  NOT ver Dados pessoais, Alertas e Alterar senha, e MUST ver "Sair do modo visitante" no lugar
-  de "Sair da conta". Nenhuma chamada ao serviço é feita para o visitante (RN-003).
+- **FR-005**: As Configurações MUST ser só de quem tem conta: a engrenagem MUST ficar escondida
+  para o visitante no Perfil e na barra do topo das abas (Início, Atividades, Ajuda), e quem
+  abrir `/settings` sem conta MUST ver só o convite para entrar, sem chamada ao serviço (RN-003).
 
 **Sair**
 
-- **FR-006**: "Sair da conta" MUST pedir confirmação, com o texto lembrando que os contatos de
-  emergência continuam no celular.
-- **FR-007**: Ao confirmar, o app MUST encerrar a sessão e ir ao login, sem apagar contatos de
-  emergência, fotos deles nem preferências do aparelho (RN-007).
+- **FR-006**: "Sair da conta" MUST encerrar a sessão no primeiro toque, sem aviso de confirmação;
+  a frase embaixo do botão lembra que os contatos de emergência continuam no celular.
+- **FR-007**: Ao sair, o app MUST ir ao login, sem apagar contatos de emergência, fotos deles nem
+  preferências do aparelho (RN-007).
 
 **Senha**
 
@@ -244,18 +265,19 @@ versão com a instalada.
 
 **Idioma**
 
-- **FR-019**: "Idioma" MUST oferecer Português e English, com o atual marcado, e trocar todos os
-  textos do app na hora (RF-042).
-- **FR-020**: A escolha MUST ser lembrada no aparelho; sem escolha, o app MUST seguir o idioma
-  do aparelho (pt-BR ou en-US; outro cai em pt-BR).
+- **FR-019**: "Idioma" MUST oferecer "Idioma do celular", Português e English, com a escolha
+  atual marcada e o nome dela à direita da linha, e trocar todos os textos do app na hora
+  (RF-042).
+- **FR-020**: A escolha MUST ser lembrada no aparelho. "Idioma do celular" é o padrão: o app MUST
+  seguir o idioma do aparelho (pt-BR ou en-US; outro cai em pt-BR), também quando ele mudar.
 - **FR-021**: A leitura em voz alta MUST seguir o idioma escolhido (RF-042).
 
 **Privacidade e Sobre**
 
 - **FR-022**: "Privacidade" MUST explicar, em linguagem simples, o que fica no serviço e o que fica
   só no celular (RN-007, RNF-008).
-- **FR-023**: "Sobre o SafeNews" MUST mostrar o nome do app, o objetivo, a versão instalada e os
-  créditos do TCC.
+- **FR-023**: "Sobre o SafeNews" MUST mostrar o nome do app, o objetivo, a versão instalada e o
+  crédito genérico "Trabalho de Conclusão de Curso", sem nomes nem instituição.
 
 **Acessibilidade e textos**
 
@@ -268,13 +290,14 @@ versão com a instalada.
 
 - **Configuração de alertas**: o valor "receber alertas" da conta, lido e salvo no serviço.
 - **Troca de senha**: senha atual, nova senha e confirmação (nunca guardadas no aparelho).
-- **Idioma escolhido**: Português ou English, guardado no aparelho; ausente = idioma do aparelho.
+- **Idioma escolhido**: "Idioma do celular", Português ou English, guardado no aparelho; ausente =
+  "Idioma do celular".
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: Todas as 9 linhas e o botão de sair das configurações levam a uma tela ou ação que
+- **SC-001**: Todas as 8 linhas e o botão de sair das configurações levam a uma tela ou ação que
   funciona (zero linhas "em breve" além do conteúdo da Acessibilidade, que é a B9).
 - **SC-002**: A pessoa troca a senha em até 1 minuto, e com a senha atual errada continua
   conectada em 100% das tentativas.
@@ -289,13 +312,15 @@ versão com a instalada.
 
 ## Assumptions
 
+- Visitante: como não chega às Configurações, não escolhe idioma nem abre a acessibilidade nesta
+  feature (segue o idioma do celular). A B9 pode rever o acesso do visitante à acessibilidade.
+- Fora do escopo: folha de confirmação ao sair da conta (melhoria futura, decisão de 2026-10-14).
+
 - O conteúdo da tela de acessibilidade é a B9 (próxima feature). Nesta feature a linha
   "Acessibilidade" leva à rota que já existe, e a B9 substitui o conteúdo antes da integração (C3).
-- Segurança tem só "Alterar senha" (o plano de tarefas listava "Segurança" e "Alterar senha" para
-  a mesma tela).
 - Os textos de Privacidade e Sobre são fixos no app, escritos nesta feature; não há endpoint.
 - A versão mostrada é a do app instalado.
 - O cartão da conta usa os dados do perfil da B7 (`GET /users/me`), que trazem também o valor de
   "receber alertas"; sem rede, usa o nome guardado na sessão.
-- Visual: o quadro "Configurações" do Figma; o acesso ao Figma pela ferramenta está sem cota, então
-  o plano vai usar uma captura do quadro enviada pela usuária.
+- Visual: o quadro "Configurações" do Figma, pela captura enviada em 2026-10-14 (a ferramenta do
+  Figma está sem cota).
