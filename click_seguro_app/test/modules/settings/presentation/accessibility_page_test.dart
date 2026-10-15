@@ -1,5 +1,6 @@
-import 'dart:ui' show CheckedState;
+import 'dart:ui' show CheckedState, Tristate;
 
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/main.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
@@ -109,6 +110,12 @@ void main() {
     await tester.tap(find.text(label));
     await tester.pumpAndSettle();
   }
+
+  Tristate toggled(WidgetTester tester, String label) => tester
+      .getSemantics(find.text(label))
+      .getSemanticsData()
+      .flagsCollection
+      .isToggled;
 
   CheckedState checked(WidgetTester tester, String label) => tester
       .getSemantics(find.text(label))
@@ -235,6 +242,68 @@ void main() {
       expect(find.text('Default'), findsOneWidget);
       await reveal(tester, find.text('Extra large'));
       expect(find.text('Extra large'), findsOneWidget);
+    });
+  });
+
+  group('alto contraste', () {
+    const String label = 'Alto contraste';
+
+    testWidgets('seção "Aparência" com a chave desligada', (tester) async {
+      await pumpAccessibility(tester);
+      await reveal(tester, find.text(label));
+
+      expect(find.text('Aparência'), findsOneWidget);
+      expect(find.text('Cores mais fortes para ler melhor'), findsOneWidget);
+      expect(toggled(tester, label), Tristate.isFalse);
+    });
+
+    testWidgets('ligar muda o app na hora e grava; desligar volta', (
+      tester,
+    ) async {
+      await pumpAccessibility(tester);
+
+      await tapOption(tester, label);
+
+      expect(toggled(tester, label), Tristate.isTrue);
+      expect(page(tester).colors, AppPalette.highContrast);
+      expect(stored().highContrast, isTrue);
+
+      await tapOption(tester, label);
+
+      expect(page(tester).colors, AppPalette.light);
+      expect(stored().highContrast, isFalse);
+    });
+
+    testWidgets('na próxima abertura já abre em alto contraste', (
+      tester,
+    ) async {
+      store(
+        const AccessibilityPreferences.defaults().copyWith(highContrast: true),
+      );
+      await pumpAccessibility(tester);
+
+      expect(page(tester).colors, AppPalette.highContrast);
+      await reveal(tester, find.text(label));
+      expect(toggled(tester, label), Tristate.isTrue);
+    });
+
+    testWidgets('alto contraste + letra máxima com o celular em 2×', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1080, 2340);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      store(
+        const AccessibilityPreferences.defaults().copyWith(
+          highContrast: true,
+          fontScale: FontScaleLevel.largest,
+        ),
+      );
+      await pumpAccessibility(tester, systemScale: 2.0);
+
+      await reveal(tester, find.text(label));
+      expect(tester.takeException(), isNull);
+      expect(toggled(tester, label), Tristate.isTrue);
     });
   });
 }

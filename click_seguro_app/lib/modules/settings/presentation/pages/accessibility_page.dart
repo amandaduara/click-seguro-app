@@ -6,8 +6,10 @@ import 'package:click_seguro_app/modules/settings/presentation/extensions/access
 import 'package:click_seguro_app/modules/settings/presentation/widgets/font_preview_card.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_option_tile.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_section.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_switch_tile.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Tela de Acessibilidade (B9, specs/014-acessibilidade). Cada escolha vale na
@@ -51,6 +53,19 @@ class AccessibilityPage extends StatelessWidget {
                     ),
                 ],
               ),
+            ),
+            SettingsSection(
+              title: AppStrings.settingsAccessibilitySectionAppearance.tr(),
+              children: [
+                SettingsSwitchTile(
+                  icon: LucideIcons.contrast,
+                  title: AppStrings.settingsAccessibilityHighContrast.tr(),
+                  subtitle: AppStrings.settingsAccessibilityHighContrastSub
+                      .tr(),
+                  value: preferences.highContrast,
+                  onChanged: controller.setHighContrast,
+                ),
+              ],
             ),
           ],
         ),

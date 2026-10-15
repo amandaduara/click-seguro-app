@@ -108,11 +108,11 @@ abertura (FR-001 a FR-003, FR-007 a FR-012, FR-017).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T015 [US2] Em `tset/presentation/accessibility_page_test.dart`, grupo "alto contraste": seção "Aparência" com "Alto contraste" e "Cores mais fortes para ler melhor", chave desligada; tocar → chave ligada, `page.colors == AppPalette.highContrast` e gravado com `highContrast: true`; tocar de novo → `AppPalette.light`; próxima abertura com contraste salvo → chave ligada e tema de alto contraste; alto contraste + "Muito grande" + `systemScale: 2.0` → sem estouro
+- [X] T015 [US2] Em `tset/presentation/accessibility_page_test.dart`, grupo "alto contraste": seção "Aparência" com "Alto contraste" e "Cores mais fortes para ler melhor", chave desligada; tocar → chave ligada, `page.colors == AppPalette.highContrast` e gravado com `highContrast: true`; tocar de novo → `AppPalette.light`; próxima abertura com contraste salvo → chave ligada e tema de alto contraste; alto contraste + "Muito grande" + `systemScale: 2.0` → sem estouro
 
 ### Implementação
 
-- [ ] T016 [US2] Em `set/presentation/pages/accessibility_page.dart`, depois da seção de tamanho: `SettingsSection(title: settingsAccessibilitySectionAppearance)` com `SettingsSwitchTile(icon: LucideIcons.contrast, title: settingsAccessibilityHighContrast, subtitle: settingsAccessibilityHighContrastSub, value: preferences.highContrast, onChanged: controller.setHighContrast)`. Faz a T015 passar
+- [X] T016 [US2] Em `set/presentation/pages/accessibility_page.dart`, depois da seção de tamanho: `SettingsSection(title: settingsAccessibilitySectionAppearance)` com `SettingsSwitchTile(icon: LucideIcons.contrast, title: settingsAccessibilityHighContrast, subtitle: settingsAccessibilityHighContrastSub, value: preferences.highContrast, onChanged: controller.setHighContrast)`. Faz a T015 passar
 
 **Checkpoint**: arquivo de teste da página verde. Commit da US2.
 
