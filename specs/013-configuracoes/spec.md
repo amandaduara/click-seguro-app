@@ -167,7 +167,8 @@ continuar em inglês; voltar para Português.
    idioma escolhido.
 4. **Given** a pessoa nunca escolheu ou escolheu "Idioma do celular", **When** abre o app,
    **Then** ele usa o idioma do aparelho (português do Brasil ou inglês; outro idioma cai em
-   português), inclusive se o idioma do celular mudar depois.
+   português), inclusive se o idioma do celular mudar depois (vale a partir da próxima
+   abertura do app).
 5. **Given** a pessoa tinha escolhido English, **When** escolhe "Idioma do celular", **Then** o
    app volta a seguir o aparelho na hora.
 
@@ -202,7 +203,6 @@ versão com a instalada.
   passa a mostrar o convite para entrar, como no link direto do visitante.
 - **Senha atual errada** (CB-013): só o aviso no campo; nunca encerra a sessão.
 - **Toque duplo em "Sair da conta" ou em "Salvar"**: sai ou envia uma só vez.
-- **Troca de idioma com a troca de senha aberta**: os textos mudam; o que foi digitado continua.
 - **Fonte 200% e alto contraste** (RNF-003/004): as linhas quebram o texto sem cortar; a chave
   e as setas continuam visíveis e com área de toque de 48.
 - **Sair sem internet**: sair funciona sem rede (só o aparelho).
@@ -271,7 +271,8 @@ versão com a instalada.
   atual marcada e o nome dela à direita da linha, e trocar todos os textos do app na hora
   (RF-042).
 - **FR-020**: A escolha MUST ser lembrada no aparelho. "Idioma do celular" é o padrão: o app MUST
-  seguir o idioma do aparelho (pt-BR ou en-US; outro cai em pt-BR), também quando ele mudar.
+  seguir o idioma do aparelho (pt-BR ou en-US; outro cai em pt-BR), também quando ele mudar
+  (a partir da próxima abertura do app).
 - **FR-021**: A leitura em voz alta MUST seguir o idioma escolhido (RF-042).
 
 **Privacidade e Sobre**
@@ -322,7 +323,8 @@ versão com a instalada.
   "Acessibilidade" leva à rota que já existe, e a B9 substitui o conteúdo antes da integração (C3).
 - Os textos de Privacidade e Sobre são fixos no app, escritos nesta feature; não há endpoint.
 - A versão mostrada é a do app instalado.
-- O cartão da conta usa os dados do perfil da B7 (`GET /users/me`), que trazem também o valor de
+- O cartão da conta lê `GET /users/me` pelo próprio módulo de configurações (os mesmos dados do
+  perfil da B7), que traz também o valor de
   "receber alertas"; sem rede, usa o nome guardado na sessão.
 - Visual: o quadro "Configurações" do Figma, pela captura enviada em 2026-10-14 (a ferramenta do
   Figma está sem cota).

@@ -22,6 +22,7 @@
 |---|---|---|
 | `WrongCurrentPasswordFailure` | 401 `INVALID_CREDENTIALS` na troca | `settings_password_error_current` (no campo) |
 | `SamePasswordFailure` | 409 `USER_NEW_PASSWORD_EQUALS_OLD` | `settings_password_error_same` (no campo) |
+| `WeakPasswordFailure` | nova senha fora do RN-001 chegando ao usecase (proteção; o controller valida antes) | `settings_password_error_rules` |
 | `PasswordChangedReloginFailure` | senha trocada, mas o login automático com a nova falhou (R0) | `settings_password_relogin` ("Senha alterada. Entre de novo com a nova senha."), mostrado no login depois de encerrar a sessão |
 | `ConnectionFailure`, `ServerFailure`, `UnauthorizedFailure` | padrão | genérica da tela |
 
@@ -59,7 +60,9 @@ Método: `save() → ChangePasswordResult { saved, invalid, failed }` (+ `saveFa
   comportamento).
 - `shell`: `AppTopBar` esconde a engrenagem para quem não tem conta.
 - `profile`: `ProfilePage` esconde a engrenagem para o visitante.
-- `notifications`: `AlertsNotices` abre `/settings` e a tela confere de novo ao voltar.
+- `notifications`: `AlertsNotices` abre `/settings` e a tela confere de novo ao voltar; o texto
+  `notifications_disabled_action` passa de "Ligar em Editar perfil" para "Ligar nas Configurações"
+  ("Turn on in Settings").
 
 ## Chaves de i18n (novas, prefixo `settings_`; inglês equivalente)
 
