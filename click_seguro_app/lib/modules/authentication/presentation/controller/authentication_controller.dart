@@ -1,13 +1,13 @@
 import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/field_error.dart';
-import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/enter_as_guest_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/evaluate_password_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/login_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/register_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/validate_auth_form_usecase.dart';
+import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 

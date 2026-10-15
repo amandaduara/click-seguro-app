@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:click_seguro_app/modules/authentication/presentation/widgets/password_rules_list.dart';
+import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';

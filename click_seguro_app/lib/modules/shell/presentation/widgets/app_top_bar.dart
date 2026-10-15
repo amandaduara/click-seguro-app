@@ -100,8 +100,17 @@ class _AppTopBarState extends State<AppTopBar> {
           ),
           const SizedBox(width: AppSpacing.s2),
           NotificationBellButton(onPressed: _openNotifications),
-          const SizedBox(width: AppSpacing.s2),
-          _SettingsButton(onPressed: () => _open('/settings')),
+          // As Configurações são só de quem tem conta (specs/013, R6).
+          ValueListenableBuilder<UserSessionStatus>(
+            valueListenable: _session.sessionStatus,
+            builder: (context, status, _) =>
+                status == UserSessionStatus.authenticated
+                ? Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.s2),
+                    child: _SettingsButton(onPressed: () => _open('/settings')),
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );

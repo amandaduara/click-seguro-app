@@ -134,8 +134,8 @@ void main() {
   });
 
   group('botões', () {
-    testWidgets('"Configurações" abre /settings', (tester) async {
-      await session.startGuestSession();
+    testWidgets('conectada: "Configurações" abre /settings', (tester) async {
+      await signIn();
       await pumpLocalized(
         tester,
         router: buildRouter(),
@@ -146,6 +146,37 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('tela configurações'), findsOneWidget);
+    });
+
+    for (final (label, enter) in [
+      ('visitante', (UserSessionService s) => s.startGuestSession()),
+      ('desconectada', (UserSessionService s) => s.logout()),
+    ]) {
+      testWidgets('$label: sem a engrenagem das configurações', (tester) async {
+        await enter(session);
+        await pumpLocalized(
+          tester,
+          router: buildRouter(),
+          providers: [fakeNotificationsProvider()],
+        );
+
+        expect(find.bySemanticsLabel('Configurações'), findsNothing);
+        expect(find.bySemanticsLabel('Alertas'), findsOneWidget);
+      });
+    }
+
+    testWidgets('a engrenagem aparece ao entrar na conta', (tester) async {
+      await session.startGuestSession();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      await signIn();
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel('Configurações'), findsOneWidget);
     });
 
     testWidgets('conectada, "Alertas" abre /notifications', (tester) async {
@@ -242,7 +273,7 @@ void main() {
     });
 
     testWidgets('os dois botões medem pelo menos 48×48', (tester) async {
-      await session.startGuestSession();
+      await signIn();
       await pumpLocalized(
         tester,
         router: buildRouter(),

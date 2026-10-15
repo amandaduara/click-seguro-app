@@ -4,6 +4,7 @@ import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/app_info_service.dart';
 import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/local_cache_service.dart';
@@ -52,6 +53,9 @@ class CommonModule implements ModuleInterface {
     injector.registerLazySingleton<ShareService>(() => SharePlusShareService());
     injector.registerLazySingleton<ImageStorageService>(
       () => PlatformImageStorageService(),
+    );
+    injector.registerLazySingleton<AppInfoService>(
+      () => PackageInfoAppInfoService(),
     );
     // Um por página: cada uma prepara o idioma e descarta ao fechar.
     injector.registerFactory(

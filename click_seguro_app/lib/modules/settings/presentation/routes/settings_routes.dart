@@ -4,7 +4,8 @@ import 'package:click_seguro_app/modules/settings/presentation/pages/settings_pa
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_section_page.dart';
 import 'package:go_router/go_router.dart';
 
-/// Telas do módulo sobre as abas.
+/// Telas do módulo sobre as abas. "Dados pessoais" abre `/profile/edit`
+/// (feature 012), por isso não há `/settings/account`.
 final List<RouteBase> settingsRoutes = [
   GoRoute(
     path: '/settings',
@@ -12,17 +13,10 @@ final List<RouteBase> settingsRoutes = [
     builder: (context, state) => const SettingsPage(),
     routes: [
       GoRoute(
-        path: 'account',
-        parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const SettingsSectionPage(
-          titleKey: AppStrings.settingsAccountTitle,
-        ),
-      ),
-      GoRoute(
         path: 'security',
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const SettingsSectionPage(
-          titleKey: AppStrings.settingsSecurityTitle,
+          titleKey: AppStrings.settingsChangePassword,
         ),
       ),
       GoRoute(
@@ -31,6 +25,18 @@ final List<RouteBase> settingsRoutes = [
         builder: (context, state) => const SettingsSectionPage(
           titleKey: AppStrings.settingsAccessibilityTitle,
         ),
+      ),
+      GoRoute(
+        path: 'privacy',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) =>
+            const SettingsSectionPage(titleKey: AppStrings.settingsPrivacy),
+      ),
+      GoRoute(
+        path: 'about',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) =>
+            const SettingsSectionPage(titleKey: AppStrings.settingsAboutApp),
       ),
     ],
   ),

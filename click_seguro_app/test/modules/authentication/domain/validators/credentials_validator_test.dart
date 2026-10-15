@@ -1,7 +1,7 @@
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/field_error.dart';
-import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
 import 'package:click_seguro_app/modules/authentication/domain/validators/credentials_validator.dart';
+import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

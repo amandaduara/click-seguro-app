@@ -309,6 +309,79 @@ abstract class AppStrings {
   static const String settingsSecurityTitle = 'settings_security_title';
   static const String settingsAccessibilityTitle =
       'settings_accessibility_title';
+  static const String settingsAccountCardAction =
+      'settings_account_card_action';
+  static const String settingsSectionAccount = 'settings_section_account';
+  static const String settingsSectionAlerts = 'settings_section_alerts';
+  static const String settingsSectionReading = 'settings_section_reading';
+  static const String settingsSectionAbout = 'settings_section_about';
+  static const String settingsPersonalData = 'settings_personal_data';
+  static const String settingsPersonalDataSub = 'settings_personal_data_sub';
+  static const String settingsChangePassword = 'settings_change_password';
+  static const String settingsChangePasswordSub =
+      'settings_change_password_sub';
+  static const String settingsAlerts = 'settings_alerts';
+  static const String settingsAlertsSub = 'settings_alerts_sub';
+  static const String settingsAlertsFailed = 'settings_alerts_failed';
+  static const String settingsAccountLoadFailed =
+      'settings_account_load_failed';
+  static const String settingsAccessibility = 'settings_accessibility';
+  static const String settingsAccessibilitySub = 'settings_accessibility_sub';
+  static const String settingsLanguage = 'settings_language';
+  static const String settingsLanguageDevice = 'settings_language_device';
+  static const String settingsLanguagePortuguese =
+      'settings_language_portuguese';
+  static const String settingsLanguageEnglish = 'settings_language_english';
+  static const String settingsPrivacy = 'settings_privacy';
+  static const String settingsPrivacySub = 'settings_privacy_sub';
+  static const String settingsAboutApp = 'settings_about_app';
+  static const String settingsVersion = 'settings_version';
+  static const String settingsLogout = 'settings_logout';
+  static const String settingsLogoutNote = 'settings_logout_note';
+  static const String settingsGuestTitle = 'settings_guest_title';
+  static const String settingsGuestBody = 'settings_guest_body';
+  static const String settingsGuestAction = 'settings_guest_action';
+  static const String settingsPasswordCurrent = 'settings_password_current';
+  static const String settingsPasswordNew = 'settings_password_new';
+  static const String settingsPasswordConfirm = 'settings_password_confirm';
+  static const String settingsPasswordShow = 'settings_password_show';
+  static const String settingsPasswordHide = 'settings_password_hide';
+  static const String settingsPasswordRulesTitle =
+      'settings_password_rules_title';
+  static const String settingsPasswordSave = 'settings_password_save';
+  static const String settingsPasswordSaved = 'settings_password_saved';
+  static const String settingsPasswordFailed = 'settings_password_failed';
+  static const String settingsPasswordRelogin = 'settings_password_relogin';
+  static const String settingsPasswordErrorRequired =
+      'settings_password_error_required';
+  static const String settingsPasswordErrorRules =
+      'settings_password_error_rules';
+  static const String settingsPasswordErrorMismatch =
+      'settings_password_error_mismatch';
+  static const String settingsPasswordErrorCurrent =
+      'settings_password_error_current';
+  static const String settingsPasswordErrorSame =
+      'settings_password_error_same';
+  static const String settingsPasswordDiscardTitle =
+      'settings_password_discard_title';
+  static const String settingsPasswordDiscardBody =
+      'settings_password_discard_body';
+  static const String settingsPasswordDiscardConfirm =
+      'settings_password_discard_confirm';
+  static const String settingsPasswordDiscardCancel =
+      'settings_password_discard_cancel';
+  static const String settingsPrivacyAccountTitle =
+      'settings_privacy_account_title';
+  static const String settingsPrivacyAccountBody =
+      'settings_privacy_account_body';
+  static const String settingsPrivacyDeviceTitle =
+      'settings_privacy_device_title';
+  static const String settingsPrivacyDeviceBody =
+      'settings_privacy_device_body';
+  static const String settingsPrivacyUseTitle = 'settings_privacy_use_title';
+  static const String settingsPrivacyUseBody = 'settings_privacy_use_body';
+  static const String settingsAboutGoal = 'settings_about_goal';
+  static const String settingsAboutCredits = 'settings_about_credits';
 
   static const String errorGeneric = 'error_generic';
   static const String errorConnection = 'error_connection';

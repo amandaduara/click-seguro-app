@@ -20,6 +20,7 @@ import '../../authentication/fakes/fake_auth_repository.dart';
 import '../../../helpers/feed_provider.dart';
 import '../../../helpers/notifications_provider.dart';
 import '../../../helpers/reels_provider.dart';
+import '../../../helpers/settings_dependencies.dart';
 import '../../../helpers/splash_provider.dart';
 
 /// FR-013 de specs/005-shell-navegacao-base e SC-008 da feature 001: a
@@ -31,6 +32,7 @@ void main() {
   setUp(() async {
     session = UserSessionService(FakeSecureStorageService());
     GetIt.instance.registerSingleton<UserSessionService>(session);
+    registerSettingsDependencies(GetIt.instance);
     router = buildAppRouter(session);
   });
 

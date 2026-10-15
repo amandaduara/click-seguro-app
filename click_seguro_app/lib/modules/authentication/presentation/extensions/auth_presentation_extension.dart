@@ -1,6 +1,6 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/field_error.dart';
-import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
+import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 
 extension FieldErrorPresentation on FieldError {
   /// Chave de tradução da mensagem exibida sob o campo.
