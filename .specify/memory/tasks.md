@@ -286,7 +286,12 @@ Módulos: `activities`, `help`, `profile`, `settings`.
     convite), lista de notícias lidas e curtidas (mesmo visual da de salvas) e
     `EditProfilePage` (`/profile/edit`: nome, e-mail, telefone e foto), com widget test.
     "Receber alertas" passou para a B8 (decisão de 2026-10-12).
-- [ ] **B8 Configurações** (RF-037, RF-042, CB-013)
+- [x] **B8 Configurações** (RF-037, RF-042, CB-013) (specs/013-configuracoes)
+  - Entregue (2026-10-15): "Segurança" ficou dentro de Conta ("Alterar senha"); rota
+    `/settings/account` removida ("Dados pessoais" abre `/profile/edit`); "Sair da conta" sem
+    confirmação (folha de confirmação fica para depois); o visitante não chega às
+    Configurações (engrenagem escondida); idioma com "Idioma do celular"; depois da troca de
+    senha o app entra de novo (o servidor revoga o refreshToken, contrato 1.0.9).
   - Endpoint: `PATCH /users/me/change-password`. 401 `INVALID_CREDENTIALS` → "Senha atual
     incorreta" sem sair da conta (depende da F0.13); 409 `USER_NEW_PASSWORD_EQUALS_OLD`.
   - `SettingsRepositoryImpl` com `changePassword` e `logout` (via `UserSessionService`, sem
