@@ -10,9 +10,6 @@ class AccountSummaryEntity {
   final String? avatarUrl;
   final bool receiveNotifications;
 
-  /// Iniciais da primeira e da última palavra do nome (sem foto).
-  String get initials => initialsOf(name);
-
   AccountSummaryEntity withReceiveNotifications(bool value) =>
       AccountSummaryEntity(
         name: name,

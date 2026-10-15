@@ -69,8 +69,6 @@ void main() {
     'profile_title',
     'profile_edit_title',
     'settings_title',
-    'settings_account_title',
-    'settings_security_title',
     'settings_accessibility_title',
   ];
 

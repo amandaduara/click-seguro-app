@@ -243,8 +243,6 @@
   "profile_photo_permission_body": "To choose a photo, allow access in your phone settings.",
   "profile_photo_permission_ok": "Got it",
   "settings_title": "Settings",
-  "settings_account_title": "Personal details",
-  "settings_security_title": "Security",
   "settings_accessibility_title": "Accessibility",
   "settings_account_card_action": "See and edit your profile",
   "settings_section_account": "Account",

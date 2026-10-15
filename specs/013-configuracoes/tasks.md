@@ -193,7 +193,7 @@ engrenagem só com conta (FR-001 a FR-007, FR-024, FR-025).
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T040 Formatar só os arquivos tocados (`dart format` com os caminhos), `flutter analyze` (sem avisos novos em relação à T001) e `flutter test` (todos verdes). Revisar o código de produção em busca de código morto ou só de teste (ex.: `SettingsSectionPage` sem uso fora da acessibilidade) e anotar o resultado
+- [X] T040 Formatar só os arquivos tocados (`dart format` com os caminhos), `flutter analyze` (sem avisos novos em relação à T001) e `flutter test` (todos verdes). Revisar o código de produção em busca de código morto ou só de teste (ex.: `SettingsSectionPage` sem uso fora da acessibilidade) e anotar o resultado. **Resultado (2026-10-15):** `flutter test` 1312 verdes (base 1205 + 107); `flutter analyze` 28 issues, todos `info`, iguais à base. Revisão: saíram o getter `AccountSummaryEntity.initials` (a página usa `initialsOf`) e as chaves `settings_account_title`/`settings_security_title` das rotas provisórias removidas; `SettingsSectionPage` fica só para a acessibilidade (B9)
 - [ ] T041 Validar no aparelho os 18 passos do [quickstart.md](quickstart.md#2-no-aparelho) com uma conta da usuária e anotar o resultado
 - [ ] T042 Em `.specify/memory/tasks.md`, marcar B8 como `[x]` com `(specs/013-configuracoes)` e anotar: rota `/settings/account` removida; Segurança dentro de Conta; sair sem confirmação (folha de confirmação futura); visitante sem Configurações. Commit de docs; antes da PR, `git fetch` e trazer a `develop` se tiver mudado
 

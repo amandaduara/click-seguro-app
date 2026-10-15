@@ -305,8 +305,6 @@ abstract class AppStrings {
 
   // --- settings ---
   static const String settingsTitle = 'settings_title';
-  static const String settingsAccountTitle = 'settings_account_title';
-  static const String settingsSecurityTitle = 'settings_security_title';
   static const String settingsAccessibilityTitle =
       'settings_accessibility_title';
   static const String settingsAccountCardAction =
