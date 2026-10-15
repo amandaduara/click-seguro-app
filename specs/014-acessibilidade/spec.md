@@ -135,7 +135,7 @@ aparece, abrir as Configurações, conferir que só os itens sem conta aparecem 
 1. **Given** a pessoa é visitante, **When** olha o topo das abas (Início, Atividades, Ajuda) e do
    Perfil, **Then** vê a engrenagem das Configurações, como quem tem conta.
 2. **Given** a pessoa é visitante, **When** abre as Configurações, **Then** vê as seções
-   "Leitura" (Acessibilidade e Idioma) e "Sobre" (Privacidade e Sobre o SafeNews), e nada mais:
+   "Leitura e aparência" (Acessibilidade e Idioma) e "Sobre" (Privacidade e Sobre o SafeNews), e nada mais:
    **não** vê o cartão da conta, Dados pessoais, Trocar senha, Alertas, "Sair da conta" nem
    convite para entrar ou criar conta.
 3. **Given** as Configurações do visitante, **When** ele toca em "Acessibilidade", **Then** abre a
@@ -247,7 +247,7 @@ aparece, abrir as Configurações, conferir que só os itens sem conta aparecem 
   passo extra do público idoso.
 - **Sem "restaurar padrões"**: com quatro opções visíveis numa tela só, voltar ao padrão é um toque
   em cada uma; um botão a mais fica fora desta feature.
-- **Configurações do visitante**: a lista começa direto na seção "Leitura", sem cartão nem
+- **Configurações do visitante**: a lista começa direto na seção "Leitura e aparência", sem cartão nem
   convite (o convite para entrar continua no Perfil, feature 012). O
   idioma escolhido pelo visitante fica guardado no aparelho como o de quem tem conta (feature 013).
 - **Visual**: segue o estilo das Configurações da B8 (seções com título, linhas com ícone e chave)
