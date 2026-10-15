@@ -12,6 +12,7 @@ import 'package:click_seguro_app/modules/authentication/domain/enums/reset_step.
 import 'package:click_seguro_app/modules/authentication/presentation/controller/forgot_password_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/extensions/auth_presentation_extension.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/resend_code_button.dart';
+import 'package:click_seguro_app/modules/common/presentation/extensions/password_rule_presentation.dart';
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';

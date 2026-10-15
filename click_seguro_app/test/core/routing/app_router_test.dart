@@ -89,7 +89,7 @@ void main() {
       '/profile/achievements': AchievementsPage,
       '/notifications': NotificationsPage,
       '/settings': SettingsPage,
-      '/settings/security': SettingsSectionPage,
+      '/settings/security': ChangePasswordPage,
       '/settings/accessibility': SettingsSectionPage,
       '/settings/privacy': SettingsSectionPage,
       '/settings/about': SettingsSectionPage,

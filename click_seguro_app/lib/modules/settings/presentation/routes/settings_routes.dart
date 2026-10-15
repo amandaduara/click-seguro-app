@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/routing/navigator_keys.dart';
+import 'package:click_seguro_app/modules/settings/presentation/pages/change_password_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_section_page.dart';
 import 'package:go_router/go_router.dart';
@@ -15,9 +16,7 @@ final List<RouteBase> settingsRoutes = [
       GoRoute(
         path: 'security',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const SettingsSectionPage(
-          titleKey: AppStrings.settingsChangePassword,
-        ),
+        builder: (context, state) => const ChangePasswordPage(),
       ),
       GoRoute(
         path: 'accessibility',

@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/modules/authentication/domain/enums/field_error.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/extensions/auth_presentation_extension.dart';
+import 'package:click_seguro_app/modules/common/presentation/extensions/password_rule_presentation.dart';
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:flutter_test/flutter_test.dart';
 

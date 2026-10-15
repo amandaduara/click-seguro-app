@@ -18,12 +18,14 @@ import 'package:click_seguro_app/modules/settings/data/repositories/language_rep
 import 'package:click_seguro_app/modules/settings/domain/repositories/accessibility_repository.dart';
 import 'package:click_seguro_app/modules/settings/domain/repositories/account_repository.dart';
 import 'package:click_seguro_app/modules/settings/domain/repositories/language_repository.dart';
+import 'package:click_seguro_app/modules/settings/domain/usecases/change_password_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_accessibility_preferences_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_account_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_app_version_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/logout_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/save_accessibility_preferences_usecase.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/accessibility_controller.dart';
+import 'package:click_seguro_app/modules/settings/presentation/controller/change_password_controller.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/settings_controller.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -56,6 +58,15 @@ class SettingsModule implements ModuleInterface {
       )
       ..registerLazySingleton(
         () => LogoutUseCase(injector<UserSessionService>()),
+      )
+      ..registerLazySingleton(
+        () => ChangePasswordUseCase(injector<AccountRepository>()),
+      )
+      ..registerFactory(
+        () => ChangePasswordController(
+          changePassword: injector<ChangePasswordUseCase>(),
+          logout: injector<LogoutUseCase>(),
+        ),
       )
       // Um por abertura da tela.
       ..registerFactory(

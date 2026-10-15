@@ -12,6 +12,7 @@ import 'package:click_seguro_app/modules/authentication/presentation/extensions/
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_mode_switch.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/or_divider.dart';
+import 'package:click_seguro_app/modules/common/presentation/extensions/password_rule_presentation.dart';
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';

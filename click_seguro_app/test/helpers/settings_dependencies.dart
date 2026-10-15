@@ -1,7 +1,9 @@
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/settings/domain/usecases/change_password_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_account_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_app_version_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/logout_usecase.dart';
+import 'package:click_seguro_app/modules/settings/presentation/controller/change_password_controller.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/settings_controller.dart';
 import 'package:get_it/get_it.dart';
 
@@ -22,6 +24,13 @@ FakeAccountRepository registerSettingsDependencies(
     ..registerSingleton(GetAccountUseCase(account))
     ..registerSingleton(GetAppVersionUseCase(appInfo ?? FakeAppInfoService()))
     ..registerLazySingleton(() => LogoutUseCase(injector<UserSessionService>()))
+    ..registerSingleton(ChangePasswordUseCase(account))
+    ..registerFactory(
+      () => ChangePasswordController(
+        changePassword: injector<ChangePasswordUseCase>(),
+        logout: injector<LogoutUseCase>(),
+      ),
+    )
     ..registerFactory(
       () => SettingsController(
         getAccount: injector<GetAccountUseCase>(),
