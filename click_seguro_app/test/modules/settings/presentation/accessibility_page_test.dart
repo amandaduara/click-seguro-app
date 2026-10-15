@@ -5,6 +5,7 @@ import 'package:click_seguro_app/main.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
+import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/settings/data/datasources/accessibility_local_data_source_impl.dart';
 import 'package:click_seguro_app/modules/settings/data/models/accessibility_preferences_model.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/accessibility_controller.dart';
@@ -304,6 +305,66 @@ void main() {
       await reveal(tester, find.text(label));
       expect(tester.takeException(), isNull);
       expect(toggled(tester, label), Tristate.isTrue);
+    });
+  });
+
+  group('leitura em voz alta', () {
+    const String autoRead = 'Ler automaticamente';
+
+    testWidgets('chave desligada, velocidades com "Normal" marcada', (
+      tester,
+    ) async {
+      await pumpAccessibility(tester);
+      await reveal(tester, find.text('Rápida'));
+
+      expect(find.text('Leitura em voz alta'), findsOneWidget);
+      expect(
+        find.text('Ao abrir uma notícia, o app começa a ler sozinho'),
+        findsOneWidget,
+      );
+      expect(toggled(tester, autoRead), Tristate.isFalse);
+      expect(find.text('Velocidade da voz'), findsOneWidget);
+      expect(checked(tester, 'Normal'), CheckedState.isTrue);
+      expect(checked(tester, 'Lenta'), CheckedState.isFalse);
+    });
+
+    testWidgets('ligar a leitura automática vale na hora e grava', (
+      tester,
+    ) async {
+      await pumpAccessibility(tester);
+
+      await tapOption(tester, autoRead);
+
+      expect(toggled(tester, autoRead), Tristate.isTrue);
+      expect(notifier.value.autoReadAloud, isTrue);
+      expect(stored().autoReadAloud, isTrue);
+    });
+
+    testWidgets('"Lenta" com a leitura automática desligada', (tester) async {
+      await pumpAccessibility(tester);
+
+      await tapOption(tester, 'Lenta');
+
+      expect(checked(tester, 'Lenta'), CheckedState.isTrue);
+      expect(notifier.value.readingSpeed, ReadingSpeed.slow);
+      expect(notifier.value.autoReadAloud, isFalse);
+      expect(stored().readingSpeed, ReadingSpeed.slow);
+    });
+
+    testWidgets('na próxima abertura as duas escolhas aparecem', (
+      tester,
+    ) async {
+      store(
+        const AccessibilityPreferences.defaults().copyWith(
+          autoReadAloud: true,
+          readingSpeed: ReadingSpeed.fast,
+        ),
+      );
+      await pumpAccessibility(tester);
+      await reveal(tester, find.text('Rápida'));
+
+      expect(toggled(tester, autoRead), Tristate.isTrue);
+      expect(checked(tester, 'Rápida'), CheckedState.isTrue);
     });
   });
 }

@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
+import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/accessibility_controller.dart';
 import 'package:click_seguro_app/modules/settings/presentation/extensions/accessibility_presentation.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/font_preview_card.dart';
@@ -66,6 +67,34 @@ class AccessibilityPage extends StatelessWidget {
                   onChanged: controller.setHighContrast,
                 ),
               ],
+            ),
+            SettingsSection(
+              title: AppStrings.settingsAccessibilitySectionVoice.tr(),
+              children: [
+                SettingsSwitchTile(
+                  icon: LucideIcons.volume2,
+                  title: AppStrings.settingsAccessibilityAutoRead.tr(),
+                  subtitle: AppStrings.settingsAccessibilityAutoReadSub.tr(),
+                  value: preferences.autoReadAloud,
+                  onChanged: controller.setAutoReadAloud,
+                ),
+              ],
+            ),
+            // A velocidade vale também para o "Ouvir", por isso fica
+            // disponível com a leitura automática desligada (R5).
+            SettingsSectionTitle(AppStrings.settingsAccessibilitySpeed.tr()),
+            RadioGroup<ReadingSpeed>(
+              groupValue: preferences.readingSpeed,
+              onChanged: (speed) => controller.setReadingSpeed(speed!),
+              child: SettingsCard(
+                children: [
+                  for (final ReadingSpeed speed in ReadingSpeed.values)
+                    SettingsOptionTile<ReadingSpeed>(
+                      value: speed,
+                      title: speed.label,
+                    ),
+                ],
+              ),
             ),
           ],
         ),

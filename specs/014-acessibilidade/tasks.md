@@ -126,11 +126,11 @@ abertura (FR-001 a FR-003, FR-007 a FR-012, FR-017).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T017 [US3] Em `tset/presentation/accessibility_page_test.dart`, grupo "leitura em voz alta": seção "Leitura em voz alta" com "Ler automaticamente" e "Ao abrir uma notícia, o app começa a ler sozinho" (desligada), o subtítulo "Velocidade da voz" e "Lenta", "Normal" (marcada), "Rápida"; ligar a chave → `notifier.value.autoReadAloud == true` e gravado; escolher "Lenta" → marcada, `notifier.value.readingSpeed == ReadingSpeed.slow` e gravado; velocidade escolhível com a leitura automática desligada; próxima abertura → as duas escolhas aparecem
+- [X] T017 [US3] Em `tset/presentation/accessibility_page_test.dart`, grupo "leitura em voz alta": seção "Leitura em voz alta" com "Ler automaticamente" e "Ao abrir uma notícia, o app começa a ler sozinho" (desligada), o subtítulo "Velocidade da voz" e "Lenta", "Normal" (marcada), "Rápida"; ligar a chave → `notifier.value.autoReadAloud == true` e gravado; escolher "Lenta" → marcada, `notifier.value.readingSpeed == ReadingSpeed.slow` e gravado; velocidade escolhível com a leitura automática desligada; próxima abertura → as duas escolhas aparecem
 
 ### Implementação
 
-- [ ] T018 [US3] Em `set/presentation/pages/accessibility_page.dart`, depois de Aparência: `SettingsSection(title: settingsAccessibilitySectionVoice)` com `SettingsSwitchTile(icon: LucideIcons.volume2, title: settingsAccessibilityAutoRead, subtitle: settingsAccessibilityAutoReadSub, value: preferences.autoReadAloud, onChanged: controller.setAutoReadAloud)`; abaixo dela, `SettingsSectionTitle(settingsAccessibilitySpeed)` e um `RadioGroup<ReadingSpeed>` (`groupValue: preferences.readingSpeed`, `onChanged: (s) => controller.setReadingSpeed(s!)`) envolvendo um `SettingsCard` com um `SettingsOptionTile` por `ReadingSpeed.values` (`title: speed.labelKey.tr()`). Faz a T017 passar
+- [X] T018 [US3] Em `set/presentation/pages/accessibility_page.dart`, depois de Aparência: `SettingsSection(title: settingsAccessibilitySectionVoice)` com `SettingsSwitchTile(icon: LucideIcons.volume2, title: settingsAccessibilityAutoRead, subtitle: settingsAccessibilityAutoReadSub, value: preferences.autoReadAloud, onChanged: controller.setAutoReadAloud)`; abaixo dela, `SettingsSectionTitle(settingsAccessibilitySpeed)` e um `RadioGroup<ReadingSpeed>` (`groupValue: preferences.readingSpeed`, `onChanged: (s) => controller.setReadingSpeed(s!)`) envolvendo um `SettingsCard` com um `SettingsOptionTile` por `ReadingSpeed.values` (`title: speed.labelKey.tr()`). Faz a T017 passar
 
 **Checkpoint**: arquivo de teste da página verde. Commit da US3.
 
