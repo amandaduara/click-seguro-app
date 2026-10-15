@@ -42,10 +42,10 @@ void main() {
         ),
         GoRoute(path: '/login', builder: (_, _) => const Text('tela login')),
         GoRoute(
-          path: '/profile/edit',
+          path: '/settings',
           builder: (_, _) => Scaffold(
             appBar: AppBar(),
-            body: const Text('tela editar perfil'),
+            body: const Text('tela configurações'),
           ),
         ),
         GoRoute(
@@ -364,7 +364,7 @@ void main() {
 
   group('visitante e desligado', () {
     const String disabledText = 'Os alertas novos estão desligados.';
-    final Finder disabledAction = find.text('Ligar em Editar perfil');
+    final Finder disabledAction = find.text('Ligar nas Configurações');
 
     testWidgets('visitante: convite dentro da tela e nenhum pedido', (
       tester,
@@ -426,7 +426,7 @@ void main() {
       },
     );
 
-    testWidgets('desligado: aviso fixo, botão para o perfil e lista visível', (
+    testWidgets('desligado: aviso fixo, botão para as configurações e lista', (
       tester,
     ) async {
       repository.stored = snapshot(alerts: [alertAt('a', noon(0))]);
@@ -453,7 +453,23 @@ void main() {
       await tester.tap(disabledAction);
       await tester.pumpAndSettle();
 
-      expect(find.text('tela editar perfil'), findsOneWidget);
+      expect(find.text('tela configurações'), findsOneWidget);
+    });
+
+    testWidgets('voltar das configurações confere de novo', (tester) async {
+      repository.stored = snapshot(alerts: [alertAt('a', noon(0))]);
+      repository.receiveAlerts = false;
+      await pumpPage(tester);
+      final int before = repository.receiveCalls;
+      repository.receiveAlerts = true;
+
+      await tester.tap(disabledAction);
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expect(repository.receiveCalls, greaterThan(before));
+      expect(find.text(disabledText), findsNothing);
     });
 
     testWidgets('ligado ou desconhecido: sem aviso', (tester) async {
@@ -515,7 +531,7 @@ void main() {
       }
       for (final String label in [
         'Marcar todos como lidos',
-        'Ligar em Editar perfil',
+        'Ligar nas Configurações',
       ]) {
         final Size button = tester.getSize(
           find.ancestor(
@@ -649,7 +665,7 @@ void main() {
       await pumpSmall(tester);
 
       expect(tester.takeException(), isNull);
-      final Finder action = find.text('Ligar em Editar perfil');
+      final Finder action = find.text('Ligar nas Configurações');
       final Rect button = tester.getRect(
         find.ancestor(of: action, matching: find.byType(SafeButton)),
       );

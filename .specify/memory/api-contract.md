@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.8 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-12
+**Versão**: 1.0.9 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-14
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -212,7 +212,7 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 | ✅ ⚠️ | `PATCH /users/me` `{name?, email?, phone?, receiveNotifications?}` → 204 | sim | RF-036, switch de alertas | 400 `VALIDATION_ERROR` com `errors[{field, message}]`; 409 `USER_EMAIL_ALREADY_EXISTS` (contrato). ⚠️ **qualquer `email` dá 500** e o **telefone não pode ser apagado** (ver nota) |
 | ✅ | `POST /users/me/avatar` multipart, campo `avatar` (JPEG/PNG/WebP ≤ 5 MB) → **200** `{avatarUrl}` | sim | RF-036 | 400 `INVALID_IMAGE_TYPE`, 500 `UPLOAD_FAILED` |
 | ✅ | `DELETE /users/me/avatar` → 204 (também sem foto) | sim | RF-036 remover foto | 500 `DELETE_FAILED` |
-| ✅ | `PATCH /users/me/change-password` `{currentPassword, newPassword}` → 204 | sim | RF-037 | 401 `INVALID_CREDENTIALS` (senha atual errada, **não** expira a sessão), 409 `USER_NEW_PASSWORD_EQUALS_OLD` |
+| ✅ | `PATCH /users/me/change-password` `{currentPassword, newPassword}` → 204 | sim | RF-037 | 401 `INVALID_CREDENTIALS` (senha atual errada, **não** expira a sessão), 409 `USER_NEW_PASSWORD_EQUALS_OLD`, 400 `VALIDATION_ERROR`. ⚠️ Depois do 204 o `accessToken` continua valendo, mas o **`refreshToken` é revogado** (401 `TOKEN_INVALID`): o app entra de novo com a nova senha |
 | ✅ | `GET /app/educational/modules` → `{modules[{id, title, description, order, iconUrl?, lessonsCount, completedCount, progressPercent}], totalLessonsCompleted, totalLessonsAvailable}` | opcional | conquistas do perfil (lições e módulos concluídos) | — |
 | ✅ | `GET /users/me/news/{read,saved,liked}?limit=1` → `meta.total` | sim | números lidas/salvas/curtidas do perfil | — |
 | ✅ | `GET /users/me/news/{read,liked}?page&limit` → `{data[], meta}` (mesmo item da lista de salvas) | sim | listas de lidas e curtidas abertas pelo perfil | — |
@@ -249,6 +249,10 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
+- **1.0.9 (2026-10-14)**: troca de senha conferida no servidor real (specs/013-configuracoes R0):
+  401/409/400 como no contrato; depois da troca o `refreshToken` anterior é recusado (401
+  `TOKEN_INVALID`) e o `accessToken` continua valendo até vencer. `PATCH /users/me
+  {receiveNotifications}` → 204 e o `GET` reflete.
 - **1.0.8 (2026-10-12)**: perfil conferido no servidor real (specs/012-perfil R0): `GET`/`PATCH
   /users/me`, foto (`POST` → 200), listas e totais de lidas/salvas/curtidas, módulos com progresso.
   ⚠️ `PATCH` com `email` dá 500; telefone não pode ser apagado.

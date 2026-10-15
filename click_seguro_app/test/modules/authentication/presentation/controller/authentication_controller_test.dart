@@ -1,10 +1,10 @@
-import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
 import 'dart:async';
 
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/field_error.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
+import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 

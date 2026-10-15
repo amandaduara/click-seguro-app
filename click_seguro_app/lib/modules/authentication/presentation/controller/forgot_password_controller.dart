@@ -3,13 +3,13 @@ import 'dart:math' as math;
 import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/field_error.dart';
-import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/reset_step.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/evaluate_password_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/request_password_reset_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/reset_password_usecase.dart';
 import 'package:click_seguro_app/modules/authentication/domain/usecases/verify_reset_code_usecase.dart';
+import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 

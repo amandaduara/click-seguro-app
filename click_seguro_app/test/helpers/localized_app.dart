@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/widgets/locale_rebuilder.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,7 +11,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// `MultiProvider` dos módulos no `main.dart`. Com [settle] falso, não espera
 /// as animações terminarem (ex.: um indicador de carregando sem fim). O
 /// idioma inicial é [locale] (padrão pt-BR). [theme] troca o tema do app (ex.:
-/// o de alto contraste).
+/// o de alto contraste). Como no app, o `LocaleRebuilder` reconstrói as telas
+/// quando o idioma muda.
 Future<void> pumpLocalized(
   WidgetTester tester, {
   Widget? child,
@@ -29,6 +31,7 @@ Future<void> pumpLocalized(
       ? MaterialApp.router(
           routerConfig: router,
           theme: theme,
+          builder: (_, child) => LocaleRebuilder(child: child!),
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
           locale: context.locale,
@@ -36,6 +39,7 @@ Future<void> pumpLocalized(
       : MaterialApp(
           home: child,
           theme: theme,
+          builder: (_, child) => LocaleRebuilder(child: child!),
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
           locale: context.locale,

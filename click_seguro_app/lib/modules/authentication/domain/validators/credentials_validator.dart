@@ -1,6 +1,6 @@
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/field_error.dart';
-import 'package:click_seguro_app/modules/authentication/domain/enums/password_rule.dart';
+import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 
 /// Regras do RN-001, as mesmas da API (ver api-contract.md). Devolve os
 /// erros por campo; mapa vazio = válido.
@@ -10,8 +10,6 @@ class CredentialsValidator {
   static const int nameMinLength = 6;
   static const int nameMaxLength = 150;
   static const int emailMaxLength = 255;
-  static const int passwordMinLength = 8;
-  static const int passwordMaxLength = 64;
   static const int codeMinLength = 6;
 
   /// Mesma expressão do OpenAPI.
@@ -67,15 +65,10 @@ class CredentialsValidator {
     });
   }
 
-  Set<PasswordRule> passwordRules(String password) => {
-    if (password.length >= passwordMinLength &&
-        password.length <= passwordMaxLength)
-      PasswordRule.length,
-    if (password.contains(RegExp('[A-Z]'))) PasswordRule.uppercase,
-    if (password.contains(RegExp('[a-z]'))) PasswordRule.lowercase,
-    if (password.contains(RegExp('[0-9]'))) PasswordRule.digit,
-    if (password.contains(RegExp('[^A-Za-z0-9]'))) PasswordRule.special,
-  };
+  /// Regras da senha atendidas (lista viva do cadastro); a política é do
+  /// `common`, compartilhada com a troca de senha.
+  Set<PasswordRule> passwordRules(String password) =>
+      PasswordPolicy.rulesMet(password);
 
   FieldError? _nameError(String name) {
     final trimmed = name.trim();
@@ -97,9 +90,7 @@ class CredentialsValidator {
 
   FieldError? _newPasswordError(String password) {
     if (password.isEmpty) return FieldError.required;
-    return passwordRules(password).length == PasswordRule.values.length
-        ? null
-        : FieldError.passwordRules;
+    return PasswordPolicy.isValid(password) ? null : FieldError.passwordRules;
   }
 
   Map<AuthField, FieldError> _result(Map<AuthField, FieldError?> errors) =>

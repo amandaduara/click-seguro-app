@@ -21,6 +21,7 @@ import '../../modules/authentication/fakes/forgot_password_controller_factory.da
 import '../../helpers/localized_app.dart';
 import '../../helpers/news_detail_dependencies.dart';
 import '../../helpers/profile_dependencies.dart';
+import '../../helpers/settings_dependencies.dart';
 import '../../helpers/feed_provider.dart';
 import '../../helpers/notifications_provider.dart';
 import '../../helpers/reels_provider.dart';
@@ -35,6 +36,7 @@ void main() {
     GetIt.instance.registerSingleton<UserSessionService>(session);
     registerNewsDetailDependencies(GetIt.instance);
     registerProfileDependencies(GetIt.instance);
+    registerSettingsDependencies(GetIt.instance);
     await session.startGuestSession();
     router = buildAppRouter(session);
   });
@@ -87,9 +89,10 @@ void main() {
       '/profile/achievements': AchievementsPage,
       '/notifications': NotificationsPage,
       '/settings': SettingsPage,
-      '/settings/account': SettingsSectionPage,
-      '/settings/security': SettingsSectionPage,
+      '/settings/security': ChangePasswordPage,
       '/settings/accessibility': SettingsSectionPage,
+      '/settings/privacy': PrivacyPage,
+      '/settings/about': AboutPage,
     };
 
     tabPaths.forEach((path, page) {
@@ -115,9 +118,9 @@ void main() {
     testWidgets('subtelas de configurações têm o próprio título', (
       tester,
     ) async {
-      await open(tester, '/settings/account');
+      await open(tester, '/settings/security');
 
-      expect(find.text('Dados pessoais'), findsWidgets);
+      expect(find.text('Alterar senha'), findsWidgets);
     });
 
     testWidgets('/help/contact/new não é lido como identificador', (
