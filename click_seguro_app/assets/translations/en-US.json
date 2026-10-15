@@ -287,7 +287,7 @@
   "settings_logout": "Sign out",
   "settings_logout_note": "When you sign out, your emergency contacts stay saved on this phone.",
   "settings_guest_title": "Sign in to your account",
-  "settings_guest_body": "Settings belong to your account.",
+  "settings_guest_body": "Sign in to your account to change your password.",
   "settings_guest_action": "Sign in or create account",
   "settings_password_current": "Current password",
   "settings_password_new": "New password",

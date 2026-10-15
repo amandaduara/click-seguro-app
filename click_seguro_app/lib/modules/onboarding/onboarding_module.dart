@@ -29,7 +29,8 @@ class OnboardingModule implements ModuleInterface {
   List<SingleChildWidget> providers(GetIt injector) {
     return [
       ChangeNotifierProvider(
-        create: (_) => OnboardingController(injector<CompleteOnboardingUseCase>()),
+        create: (_) =>
+            OnboardingController(injector<CompleteOnboardingUseCase>()),
       ),
     ];
   }

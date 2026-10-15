@@ -8,7 +8,8 @@ import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 extension ApiFailureMapper on ApiException {
   Failure toFailure() {
     return switch (type) {
-      ApiErrorType.connection || ApiErrorType.timeout => const ConnectionFailure(),
+      ApiErrorType.connection ||
+      ApiErrorType.timeout => const ConnectionFailure(),
       ApiErrorType.unauthorized => const UnauthorizedFailure(),
       _ => const ServerFailure(),
     };

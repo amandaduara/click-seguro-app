@@ -152,7 +152,7 @@ void main() {
       ('visitante', (UserSessionService s) => s.startGuestSession()),
       ('desconectada', (UserSessionService s) => s.logout()),
     ]) {
-      testWidgets('$label: sem a engrenagem das configurações', (tester) async {
+      testWidgets('$label: a engrenagem abre /settings', (tester) async {
         await enter(session);
         await pumpLocalized(
           tester,
@@ -160,24 +160,12 @@ void main() {
           providers: [fakeNotificationsProvider()],
         );
 
-        expect(find.bySemanticsLabel('Configurações'), findsNothing);
-        expect(find.bySemanticsLabel('Alertas'), findsOneWidget);
+        await tester.tap(find.bySemanticsLabel('Configurações'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('tela configurações'), findsOneWidget);
       });
     }
-
-    testWidgets('a engrenagem aparece ao entrar na conta', (tester) async {
-      await session.startGuestSession();
-      await pumpLocalized(
-        tester,
-        router: buildRouter(),
-        providers: [fakeNotificationsProvider()],
-      );
-
-      await signIn();
-      await tester.pumpAndSettle();
-
-      expect(find.bySemanticsLabel('Configurações'), findsOneWidget);
-    });
 
     testWidgets('conectada, "Alertas" abre /notifications', (tester) async {
       await signIn();

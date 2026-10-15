@@ -287,7 +287,7 @@
   "settings_logout": "Sair da conta",
   "settings_logout_note": "Ao sair, seus contatos de emergência continuam guardados neste celular.",
   "settings_guest_title": "Entre na sua conta",
-  "settings_guest_body": "As configurações são da sua conta.",
+  "settings_guest_body": "Para trocar a senha, entre na sua conta.",
   "settings_guest_action": "Entrar ou criar conta",
   "settings_password_current": "Senha atual",
   "settings_password_new": "Nova senha",

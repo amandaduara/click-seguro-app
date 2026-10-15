@@ -47,7 +47,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final OnboardingController controller = context.watch<OnboardingController>();
+    final OnboardingController controller = context
+        .watch<OnboardingController>();
     final OnboardingPageContent currentContent =
         OnboardingPageContent.pages[controller.currentPage];
 

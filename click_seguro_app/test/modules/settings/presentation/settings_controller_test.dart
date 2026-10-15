@@ -43,6 +43,21 @@ void main() {
     expect(controller.appVersion, '1.0.0');
   });
 
+  test('loadDeviceSettings: versão e idioma, sem pedir a conta', () async {
+    controller = buildSettingsController(
+      repository,
+      session,
+      languages: FakeLanguageRepository(LanguageChoice.english),
+    );
+
+    await controller.loadDeviceSettings();
+
+    expect(controller.appVersion, '1.0.0');
+    expect(controller.language, LanguageChoice.english);
+    expect(controller.account, isA<AccountLoading>());
+    expect(repository.totalCalls, 0);
+  });
+
   test('conta falha → failed com a falha', () async {
     repository.accountResults[0] = const Left(ConnectionFailure());
 

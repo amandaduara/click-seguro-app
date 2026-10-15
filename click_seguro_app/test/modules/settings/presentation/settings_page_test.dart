@@ -205,26 +205,91 @@ void main() {
   });
 
   group('sem conta', () {
-    testWidgets('visitante por link direto vê o convite, sem pedido', (
+    const List<String> accountOnly = [
+      'Maria da Silva',
+      'Conta',
+      'Dados pessoais',
+      'Alterar senha',
+      'Alertas',
+      'Alertas de notícias novas',
+      'Sair da conta',
+      'Entre na sua conta',
+      'Entrar ou criar conta',
+    ];
+
+    void expectGuestList() {
+      for (final text in [
+        'Leitura e aparência',
+        'Acessibilidade',
+        'Idioma',
+        'Sobre',
+        'Privacidade',
+        'Sobre o SafeNews',
+        'Versão 1.0.0',
+      ]) {
+        expect(find.text(text), findsOneWidget, reason: text);
+      }
+      for (final text in accountOnly) {
+        expect(find.text(text), findsNothing, reason: text);
+      }
+    }
+
+    testWidgets('visitante vê só o que não precisa de conta, sem pedido', (
       tester,
     ) async {
       await session.startGuestSession();
       await open(tester);
 
-      expect(find.text('Entre na sua conta'), findsOneWidget);
+      expectGuestList();
       expect(repository.totalCalls, 0);
-
-      await tapAndSettle(tester, find.text('Entrar ou criar conta'));
-      expectPage('/login');
     });
 
-    testWidgets('sessão expira com a tela aberta → convite', (tester) async {
+    testWidgets('visitante: cada linha abre a sua tela', (tester) async {
+      await session.startGuestSession();
+      await open(tester);
+
+      for (final (row, path) in [
+        ('Acessibilidade', '/settings/accessibility'),
+        ('Privacidade', '/settings/privacy'),
+        ('Sobre o SafeNews', '/settings/about'),
+      ]) {
+        await tapAndSettle(tester, find.text(row));
+        expectPage(path);
+        await back(tester);
+      }
+    });
+
+    testWidgets('sessão expira com a tela aberta → lista do visitante', (
+      tester,
+    ) async {
       await open(tester);
 
       await session.expire();
       await tester.pumpAndSettle();
 
-      expect(find.text('Entre na sua conta'), findsOneWidget);
+      expectGuestList();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('visitante com fonte 2× num celular: sem estouro', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2340)
+        ..devicePixelRatio = 3;
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await session.startGuestSession();
+
+      await open(tester);
+      await tester.scrollUntilVisible(
+        find.text('Sobre o SafeNews'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      expect(tester.takeException(), isNull);
     });
   });
 
@@ -371,6 +436,23 @@ void main() {
         expect(tester.getSize(tile).height, greaterThanOrEqualTo(56));
       }
       expect(find.byIcon(LucideIcons.check), findsOneWidget);
+    });
+
+    // A folha é a mesma da conta (_ReadingSection); a troca de tradução já é
+    // coberta no teste abaixo. Escolher "Português" evita carregar o inglês
+    // duas vezes no mesmo arquivo, o que o easy_localization não refaz.
+    testWidgets('visitante escolhe o idioma: guarda, sem pedido', (
+      tester,
+    ) async {
+      await session.startGuestSession();
+      await open(tester);
+
+      await openSheet(tester, 'Idioma');
+      await choose(tester, 'Português');
+
+      expect(find.text('Português'), findsOneWidget);
+      expect(languages.saved, [LanguageChoice.portuguese]);
+      expect(repository.totalCalls, 0);
     });
 
     testWidgets('English troca o app na hora e guarda; depois volta ao '

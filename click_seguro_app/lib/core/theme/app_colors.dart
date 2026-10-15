@@ -6,7 +6,7 @@ abstract class AppColors {
   // Cores Principais
   static const Color primary = Color(0xFFFE3152);
   static const Color secondary = Color(0xFF182A4E);
-  
+
   // Cores de Fundo e Estrutura
   static const Color background = Color(0xFFFFFDFB);
   static const Color card = Color(0xFFFFFFFF);
@@ -18,9 +18,7 @@ abstract class AppColors {
   static const Color warning = Color(0xFFF59E0B);
 
   // Gradiente
-  static const gradient = LinearGradient(
-    colors: [primary, primaryGlow],
-  );
+  static const gradient = LinearGradient(colors: [primary, primaryGlow]);
 
   // Cores de Texto (Foregrounds)
   static const Color textForeground = Color(0xFF121932);
