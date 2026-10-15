@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/settings/domain/entities/language_choice.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/account_state.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/settings_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,7 @@ import 'package:fpdart/fpdart.dart';
 
 import '../../../fakes/fake_secure_storage_service.dart';
 import '../fakes/fake_account_repository.dart';
+import '../fakes/fake_language_repository.dart';
 import '../fakes/settings_controller_factory.dart';
 
 void main() {
@@ -134,5 +136,23 @@ void main() {
       expect(await controller.setReceiveAlerts(false), isNull);
       expect(repository.alertsCalls, isEmpty);
     });
+  });
+
+  test('idioma: lê na carga e guarda a escolha', () async {
+    final languages = FakeLanguageRepository(LanguageChoice.portuguese);
+    final withLanguages = buildSettingsController(
+      repository,
+      session,
+      languages: languages,
+    );
+    addTearDown(withLanguages.dispose);
+
+    await withLanguages.load();
+    expect(withLanguages.language, LanguageChoice.portuguese);
+
+    await withLanguages.setLanguage(LanguageChoice.english);
+
+    expect(withLanguages.language, LanguageChoice.english);
+    expect(languages.saved, [LanguageChoice.english]);
   });
 }

@@ -1,17 +1,20 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/settings/domain/entities/account_summary_entity.dart';
+import 'package:click_seguro_app/modules/settings/domain/entities/language_choice.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../fakes/fake_secure_storage_service.dart';
 import '../../../helpers/localized_app.dart';
 import '../../../helpers/settings_dependencies.dart';
 import '../fakes/fake_account_repository.dart';
+import '../fakes/fake_language_repository.dart';
 
 void main() {
   late UserSessionService session;
@@ -267,11 +270,7 @@ void main() {
       expect(tester.widget<Switch>(alertsSwitch()).value, isTrue);
       expect(
         tester.getSemantics(alertsSwitch()),
-        isSemantics(
-          hasToggledState: true,
-          isToggled: true,
-          isEnabled: true,
-        ),
+        isSemantics(hasToggledState: true, isToggled: true, isEnabled: true),
       );
       semantics.dispose();
     });
@@ -315,6 +314,80 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.widget<Switch>(alertsSwitch()).onChanged, isNotNull);
+    });
+  });
+
+  group('idioma', () {
+    late FakeLanguageRepository languages;
+
+    setUp(() async {
+      await GetIt.instance.reset();
+      session = UserSessionService(FakeSecureStorageService());
+      GetIt.instance.registerSingleton<UserSessionService>(session);
+      languages = FakeLanguageRepository();
+      repository = registerSettingsDependencies(
+        GetIt.instance,
+        languages: languages,
+      );
+      await session.saveSession(
+        accessToken: 'acesso-1',
+        refreshToken: 'renovacao-1',
+        email: 'maria@exemplo.com',
+        userName: 'Maria da Silva',
+      );
+      router = buildRouter();
+    });
+
+    /// A troca de idioma carrega o arquivo de tradução de verdade.
+    Future<void> choose(WidgetTester tester, String option) async {
+      await tester.tap(find.text(option).last);
+      // A folha fecha num quadro; só então a tradução carrega (fora do
+      // relógio falso).
+      for (var i = 0; i < 3; i++) {
+        await tester.pumpAndSettle();
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+      }
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> openSheet(WidgetTester tester, String row) =>
+        tapAndSettle(tester, find.text(row));
+
+    testWidgets('linha mostra a escolha e a folha tem as três opções', (
+      tester,
+    ) async {
+      await open(tester);
+
+      expect(find.text('Idioma do celular'), findsOneWidget);
+      await openSheet(tester, 'Idioma');
+
+      for (final option in ['Idioma do celular', 'Português', 'English']) {
+        final Finder tile = find.ancestor(
+          of: find.text(option).last,
+          matching: find.byType(ListTile),
+        );
+        expect(tester.getSize(tile).height, greaterThanOrEqualTo(56));
+      }
+      expect(find.byIcon(LucideIcons.check), findsOneWidget);
+    });
+
+    testWidgets('English troca o app na hora e guarda; depois volta ao '
+        'celular', (tester) async {
+      await open(tester);
+
+      await openSheet(tester, 'Idioma');
+      await choose(tester, 'English');
+
+      expect(find.text('Settings'), findsOneWidget);
+      expect(find.text('English'), findsOneWidget);
+      expect(languages.saved, [LanguageChoice.english]);
+
+      await openSheet(tester, 'Language');
+      await choose(tester, 'Phone language');
+
+      expect(languages.saved, [LanguageChoice.english, LanguageChoice.device]);
     });
   });
 }

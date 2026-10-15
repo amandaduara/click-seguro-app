@@ -1,7 +1,10 @@
 import 'package:click_seguro_app/core/errors/failure.dart';
+import 'package:click_seguro_app/modules/settings/domain/entities/language_choice.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_account_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_app_version_usecase.dart';
+import 'package:click_seguro_app/modules/settings/domain/usecases/get_language_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/logout_usecase.dart';
+import 'package:click_seguro_app/modules/settings/domain/usecases/save_language_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/set_receive_alerts_usecase.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/account_state.dart';
 import 'package:flutter/foundation.dart';
@@ -14,15 +17,26 @@ class SettingsController extends ChangeNotifier {
     required GetAppVersionUseCase getAppVersion,
     required LogoutUseCase logout,
     required SetReceiveAlertsUseCase setReceiveAlerts,
+    required GetLanguageUseCase getLanguage,
+    required SaveLanguageUseCase saveLanguage,
   }) : _getAccount = getAccount,
        _getAppVersion = getAppVersion,
        _logout = logout,
-       _setReceiveAlerts = setReceiveAlerts;
+       _setReceiveAlerts = setReceiveAlerts,
+       _getLanguage = getLanguage,
+       _saveLanguage = saveLanguage;
 
   final GetAccountUseCase _getAccount;
   final GetAppVersionUseCase _getAppVersion;
   final LogoutUseCase _logout;
   final SetReceiveAlertsUseCase _setReceiveAlerts;
+  final GetLanguageUseCase _getLanguage;
+  final SaveLanguageUseCase _saveLanguage;
+
+  LanguageChoice _language = LanguageChoice.device;
+
+  /// Escolha guardada; a página aplica no `easy_localization` (R5).
+  LanguageChoice get language => _language;
 
   AccountState _account = const AccountLoading();
   AccountState get account => _account;
@@ -41,7 +55,7 @@ class SettingsController extends ChangeNotifier {
   bool _disposed = false;
 
   Future<void> load() async {
-    await Future.wait([_loadAccount(), _loadVersion()]);
+    await Future.wait([_loadAccount(), _loadVersion(), _loadLanguage()]);
   }
 
   /// Também ao voltar da edição de dados: nome e foto podem ter mudado.
@@ -64,6 +78,12 @@ class SettingsController extends ChangeNotifier {
     return failure;
   }
 
+  Future<void> setLanguage(LanguageChoice choice) async {
+    _language = choice;
+    _notify();
+    await _saveLanguage(choice);
+  }
+
   /// Sai da conta uma vez só, mesmo com toque duplo.
   Future<void> logout() async {
     if (_loggingOut) return;
@@ -82,6 +102,13 @@ class SettingsController extends ChangeNotifier {
     final String version = await _getAppVersion();
     if (_disposed) return;
     _appVersion = version;
+    _notify();
+  }
+
+  Future<void> _loadLanguage() async {
+    final LanguageChoice language = await _getLanguage();
+    if (_disposed) return;
+    _language = language;
     _notify();
   }
 

@@ -22,7 +22,9 @@ import 'package:click_seguro_app/modules/settings/domain/usecases/change_passwor
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_accessibility_preferences_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_account_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_app_version_usecase.dart';
+import 'package:click_seguro_app/modules/settings/domain/usecases/get_language_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/logout_usecase.dart';
+import 'package:click_seguro_app/modules/settings/domain/usecases/save_language_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/set_receive_alerts_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/save_accessibility_preferences_usecase.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/accessibility_controller.dart';
@@ -66,6 +68,12 @@ class SettingsModule implements ModuleInterface {
       ..registerLazySingleton(
         () => SetReceiveAlertsUseCase(injector<AccountRepository>()),
       )
+      ..registerLazySingleton(
+        () => GetLanguageUseCase(injector<LanguageRepository>()),
+      )
+      ..registerLazySingleton(
+        () => SaveLanguageUseCase(injector<LanguageRepository>()),
+      )
       ..registerFactory(
         () => ChangePasswordController(
           changePassword: injector<ChangePasswordUseCase>(),
@@ -79,6 +87,8 @@ class SettingsModule implements ModuleInterface {
           getAppVersion: injector<GetAppVersionUseCase>(),
           logout: injector<LogoutUseCase>(),
           setReceiveAlerts: injector<SetReceiveAlertsUseCase>(),
+          getLanguage: injector<GetLanguageUseCase>(),
+          saveLanguage: injector<SaveLanguageUseCase>(),
         ),
       )
       ..registerLazySingleton<AccessibilityLocalDataSource>(

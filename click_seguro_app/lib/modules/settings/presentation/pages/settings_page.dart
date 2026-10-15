@@ -5,10 +5,13 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/settings/domain/entities/account_summary_entity.dart';
+import 'package:click_seguro_app/modules/settings/domain/entities/language_choice.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/account_state.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/settings_controller.dart';
+import 'package:click_seguro_app/modules/settings/presentation/extensions/language_choice_presentation.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/account_card.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/alerts_switch_tile.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/language_sheet.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_guest_invite.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_section.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_tile.dart';
@@ -74,6 +77,25 @@ class _SettingsList extends StatelessWidget {
       );
   }
 
+  /// Troca o idioma na hora (RF-042). "Idioma do celular" apaga o idioma
+  /// guardado pelo easy_localization, para a próxima abertura seguir o
+  /// aparelho de novo.
+  Future<void> _chooseLanguage(
+    BuildContext context,
+    SettingsController controller,
+  ) async {
+    final LanguageChoice? choice = await showLanguageSheet(
+      context,
+      current: controller.language,
+    );
+    if (choice == null || !context.mounted) return;
+    await context.setLocale(choice.localeFor(context.deviceLocale));
+    if (choice == LanguageChoice.device && context.mounted) {
+      await context.deleteSaveLocale();
+    }
+    await controller.setLanguage(choice);
+  }
+
   @override
   Widget build(BuildContext context) {
     final SettingsController controller = context.watch<SettingsController>();
@@ -133,6 +155,12 @@ class _SettingsList extends StatelessWidget {
               title: AppStrings.settingsAccessibility.tr(),
               subtitle: AppStrings.settingsAccessibilitySub.tr(),
               onTap: () => context.push('/settings/accessibility'),
+            ),
+            SettingsTile(
+              icon: LucideIcons.globe,
+              title: AppStrings.settingsLanguage.tr(),
+              value: controller.language.label,
+              onTap: () => _chooseLanguage(context, controller),
             ),
           ],
         ),
