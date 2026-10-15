@@ -171,8 +171,8 @@ serviço (FR-013 a FR-016, [R6](research.md#r6-visitante-nas-configurações)).
 - [X] T027 Limpar `app/lib/dev/accessibility_playground.dart` ([R8](research.md#r8-atalhos-de-desenvolvimento)): remover o botão e o painel de acessibilidade (`_toggle`, `_panel`, o `AccessibilityController`, o estado `_open`) e o atalho "Notícias salvas" (`_savedNews`); manter os atalhos dos alertas; renomear a classe do overlay para refletir o que sobrou (`_AlertsShortcuts`) e reescrever o comentário do topo (o nome do arquivo fica: as specs 009 e 010 o citam); remover imports sem uso. Conferir `flutter run -t lib/dev/accessibility_playground.dart` compilando (`flutter analyze` basta)
 - [X] T028 Revisão de código sem uso e de código só para teste (prática do projeto): procurar em `set/`, `app/lib/modules/shell/` e `app/lib/modules/profile/` widgets, parâmetros, chaves de i18n ou imports que ficaram sem uso (ex.: `settings_guest_title`/`action` continuam usados pela `ChangePasswordPage`; `ComingSoonView` continua usado por outras abas); remover o que sobrar e ajustar testes
 - [X] T029 `flutter analyze` sem novos avisos em relação à linha de base da T001 e `flutter test` inteiro verde; anotar os números aqui. **Resultado (2026-10-15):** `flutter analyze` 28 issues, todos `info` (igual à linha de base); `flutter test` 1344 verdes (+32)
-- [ ] T030 Validação no aparelho: rodar os 17 passos do [quickstart](quickstart.md) (a usuária valida); anotar o que falhar como tarefa nova
-- [ ] T031 Fechar a feature: marcar a B9 em `.specify/memory/tasks.md` e anotar ali que a engrenagem passou a aparecer para o visitante (revê a B8); marcar as tarefas deste arquivo; commit de docs
+- [X] T030 Validação no aparelho: rodar os 17 passos do [quickstart](quickstart.md) (a usuária valida); anotar o que falhar como tarefa nova. **Validado pela usuária no aparelho em 2026-10-15, sem falhas**
+- [X] T031 Fechar a feature: marcar a B9 em `.specify/memory/tasks.md` e anotar ali que a engrenagem passou a aparecer para o visitante (revê a B8); marcar as tarefas deste arquivo; commit de docs
 
 ---
 

@@ -290,7 +290,7 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - Entregue (2026-10-15): "Segurança" ficou dentro de Conta ("Alterar senha"); rota
     `/settings/account` removida ("Dados pessoais" abre `/profile/edit`); "Sair da conta" sem
     confirmação (folha de confirmação fica para depois); o visitante não chega às
-    Configurações (engrenagem escondida); idioma com "Idioma do celular"; depois da troca de
+    Configurações (engrenagem escondida; revisto na B9); idioma com "Idioma do celular"; depois da troca de
     senha o app entra de novo (o servidor revoga o refreshToken, contrato 1.0.9).
   - Endpoint: `PATCH /users/me/change-password`. 401 `INVALID_CREDENTIALS` → "Senha atual
     incorreta" sem sair da conta (depende da F0.13); 409 `USER_NEW_PASSWORD_EQUALS_OLD`.
@@ -313,10 +313,15 @@ Módulos: `activities`, `help`, `profile`, `settings`.
     - Privacidade (como os dados são tratados) e Sobre o SafeNews (versão do app);
     - Sair (com confirmação; lembra que os contatos de emergência ficam no celular).
   - `ChangePasswordPage`. Widget tests.
-- [ ] **B9 Acessibilidade** (RF-038 a RF-041)
+- [x] **B9 Acessibilidade** (RF-038 a RF-041) (specs/014-acessibilidade)
   - `AccessibilityPage`: seletor de tamanho de fonte com prévia ao vivo, alto contraste e leitura
     automática. Usa a infraestrutura da F0.6.
   - Widget test: mudar a opção reflete no app e persiste (fake do `LocalCacheService`).
+  - Entregue (2026-10-15): a tela também escolhe a velocidade da voz (guardada pela F0.6, sem
+    outro lugar para mudar). **Revê a B8:** a engrenagem aparece também para o visitante, e as
+    Configurações dele mostram só Leitura e aparência (Acessibilidade, Idioma) e Sobre, sem
+    convite e sem pedido ao serviço. Ler sozinho nas perguntas fica para a B2, que deve ler
+    `autoReadAloud` como a notícia já faz e citar as atividades no subtítulo da chave.
 
 ---
 
