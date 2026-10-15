@@ -82,4 +82,57 @@ void main() {
 
     await expectLater(loading, completes);
   });
+
+  group('alertas', () {
+    bool? alertsOn() => switch (controller.account) {
+      AccountLoaded(:final account) => account.receiveNotifications,
+      _ => null,
+    };
+
+    test('muda na hora e fica salvando até a resposta', () async {
+      await controller.load();
+      repository.alertsGate = Completer<void>();
+
+      final saving = controller.setReceiveAlerts(false);
+
+      expect(alertsOn(), isFalse);
+      expect(controller.isSavingAlerts, isTrue);
+      repository.alertsGate!.complete();
+      expect(await saving, isNull);
+      expect(controller.isSavingAlerts, isFalse);
+      expect(alertsOn(), isFalse);
+      expect(repository.alertsCalls, [false]);
+    });
+
+    test('falha → volta ao valor anterior e devolve a falha', () async {
+      await controller.load();
+      repository.alertsResults[0] = const Left(ConnectionFailure());
+
+      final failure = await controller.setReceiveAlerts(false);
+
+      expect(failure, isA<ConnectionFailure>());
+      expect(alertsOn(), isTrue);
+    });
+
+    test('toque durante o envio é ignorado', () async {
+      await controller.load();
+      repository.alertsGate = Completer<void>();
+
+      final first = controller.setReceiveAlerts(false);
+      await controller.setReceiveAlerts(true);
+      repository.alertsGate!.complete();
+      await first;
+
+      expect(repository.alertsCalls, [false]);
+      expect(alertsOn(), isFalse);
+    });
+
+    test('sem conta carregada não faz nada', () async {
+      repository.accountResults[0] = const Left(ConnectionFailure());
+      await controller.load();
+
+      expect(await controller.setReceiveAlerts(false), isNull);
+      expect(repository.alertsCalls, isEmpty);
+    });
+  });
 }

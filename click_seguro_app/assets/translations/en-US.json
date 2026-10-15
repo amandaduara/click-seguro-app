@@ -167,7 +167,7 @@
   "notifications_empty_hint": "When a new story comes out, it shows up here.",
   "notifications_guest_body": "Sign in to your account to get alerts about new stories.",
   "notifications_disabled_notice": "New alerts are turned off.",
-  "notifications_disabled_action": "Turn on in Edit profile",
+  "notifications_disabled_action": "Turn on in Settings",
   "notifications_bell_label": "Alerts, {} new",
   "notifications_bell_label_one": "Alerts, 1 new",
   "notifications_semantic_new": "New, {}",

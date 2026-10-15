@@ -248,4 +248,73 @@ void main() {
       greaterThanOrEqualTo(48),
     );
   });
+
+  group('alertas', () {
+    Finder alertsSwitch() => find.byType(Switch);
+
+    testWidgets('linha com o texto e a chave com o valor da conta', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await open(tester);
+
+      expect(find.text('Alertas'), findsOneWidget);
+      expect(find.text('Alertas de notícias novas'), findsOneWidget);
+      expect(
+        find.text('Avisamos quando sair uma notícia de golpe'),
+        findsOneWidget,
+      );
+      expect(tester.widget<Switch>(alertsSwitch()).value, isTrue);
+      expect(
+        tester.getSemantics(alertsSwitch()),
+        isSemantics(
+          hasToggledState: true,
+          isToggled: true,
+          isEnabled: true,
+        ),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('tocar desliga na hora e salva', (tester) async {
+      await open(tester);
+
+      await tester.tap(alertsSwitch());
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Switch>(alertsSwitch()).value, isFalse);
+      expect(repository.alertsCalls, [false]);
+    });
+
+    testWidgets('falha → volta e avisa', (tester) async {
+      repository.alertsResults[0] = const Left(ConnectionFailure());
+      await open(tester);
+
+      await tester.tap(alertsSwitch());
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Switch>(alertsSwitch()).value, isTrue);
+      expect(
+        find.text('Não foi possível mudar os alertas. Tente de novo.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('conta com erro → chave desabilitada e tentar de novo', (
+      tester,
+    ) async {
+      repository.accountResults
+        ..[0] = const Left(ConnectionFailure())
+        ..add(const Right(testAccount));
+      await open(tester);
+
+      expect(tester.widget<Switch>(alertsSwitch()).onChanged, isNull);
+      expect(find.text('Não foi possível carregar'), findsOneWidget);
+
+      await tester.tap(find.text('Tentar novamente'));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Switch>(alertsSwitch()).onChanged, isNotNull);
+    });
+  });
 }

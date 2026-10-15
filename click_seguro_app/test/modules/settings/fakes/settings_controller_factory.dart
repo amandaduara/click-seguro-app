@@ -2,6 +2,7 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_account_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_app_version_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/logout_usecase.dart';
+import 'package:click_seguro_app/modules/settings/domain/usecases/set_receive_alerts_usecase.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/settings_controller.dart';
 
 import '../../../fakes/fake_app_info_service.dart';
@@ -16,4 +17,5 @@ SettingsController buildSettingsController(
   getAccount: GetAccountUseCase(repository),
   getAppVersion: GetAppVersionUseCase(appInfo ?? FakeAppInfoService()),
   logout: LogoutUseCase(session),
+  setReceiveAlerts: SetReceiveAlertsUseCase(repository),
 );

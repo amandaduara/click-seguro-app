@@ -167,7 +167,7 @@
   "notifications_empty_hint": "Quando sair uma notícia nova, ela aparece aqui.",
   "notifications_guest_body": "Entre na sua conta para receber alertas de notícias novas.",
   "notifications_disabled_notice": "Os alertas novos estão desligados.",
-  "notifications_disabled_action": "Ligar em Editar perfil",
+  "notifications_disabled_action": "Ligar nas Configurações",
   "notifications_bell_label": "Alertas, {} novos",
   "notifications_bell_label_one": "Alertas, 1 novo",
   "notifications_semantic_new": "Novo, {}",

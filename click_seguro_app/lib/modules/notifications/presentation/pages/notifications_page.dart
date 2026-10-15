@@ -59,6 +59,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
     }
   }
 
+  /// A chave de alertas fica nas Configurações (specs/013); na volta,
+  /// confere de novo para o aviso refletir o que mudou.
+  Future<void> _openSettings() async {
+    await context.push<void>(AlertsNotices.settingsRoute);
+    if (mounted) unawaited(_controller.checkNew(force: true));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,6 +97,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         AlertsNotices(
           showOffline: controller.lastCheckFailure is ConnectionFailure,
           showDisabled: controller.receiveAlerts == false,
+          onOpenSettings: _openSettings,
         ),
       ],
     );

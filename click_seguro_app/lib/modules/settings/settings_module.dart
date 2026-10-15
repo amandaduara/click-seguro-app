@@ -23,6 +23,7 @@ import 'package:click_seguro_app/modules/settings/domain/usecases/get_accessibil
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_account_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/get_app_version_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/logout_usecase.dart';
+import 'package:click_seguro_app/modules/settings/domain/usecases/set_receive_alerts_usecase.dart';
 import 'package:click_seguro_app/modules/settings/domain/usecases/save_accessibility_preferences_usecase.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/accessibility_controller.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/change_password_controller.dart';
@@ -62,6 +63,9 @@ class SettingsModule implements ModuleInterface {
       ..registerLazySingleton(
         () => ChangePasswordUseCase(injector<AccountRepository>()),
       )
+      ..registerLazySingleton(
+        () => SetReceiveAlertsUseCase(injector<AccountRepository>()),
+      )
       ..registerFactory(
         () => ChangePasswordController(
           changePassword: injector<ChangePasswordUseCase>(),
@@ -74,6 +78,7 @@ class SettingsModule implements ModuleInterface {
           getAccount: injector<GetAccountUseCase>(),
           getAppVersion: injector<GetAppVersionUseCase>(),
           logout: injector<LogoutUseCase>(),
+          setReceiveAlerts: injector<SetReceiveAlertsUseCase>(),
         ),
       )
       ..registerLazySingleton<AccessibilityLocalDataSource>(

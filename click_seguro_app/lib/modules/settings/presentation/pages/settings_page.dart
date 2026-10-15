@@ -8,6 +8,7 @@ import 'package:click_seguro_app/modules/settings/domain/entities/account_summar
 import 'package:click_seguro_app/modules/settings/presentation/controller/account_state.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/settings_controller.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/account_card.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/alerts_switch_tile.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_guest_invite.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_section.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_tile.dart';
@@ -59,6 +60,20 @@ class _SettingsList extends StatelessWidget {
     unawaited(controller.retryAccount());
   }
 
+  Future<void> _setAlerts(
+    BuildContext context,
+    SettingsController controller,
+    bool value,
+  ) async {
+    final failure = await controller.setReceiveAlerts(value);
+    if (failure == null || !context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text(AppStrings.settingsAlertsFailed.tr())),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final SettingsController controller = context.watch<SettingsController>();
@@ -96,6 +111,17 @@ class _SettingsList extends StatelessWidget {
               title: AppStrings.settingsChangePassword.tr(),
               subtitle: AppStrings.settingsChangePasswordSub.tr(),
               onTap: () => context.push('/settings/security'),
+            ),
+          ],
+        ),
+        SettingsSection(
+          title: AppStrings.settingsSectionAlerts.tr(),
+          children: [
+            AlertsSwitchTile(
+              value: account?.receiveNotifications,
+              saving: controller.isSavingAlerts,
+              onChanged: (value) => _setAlerts(context, controller, value),
+              onRetry: controller.retryAccount,
             ),
           ],
         ),
