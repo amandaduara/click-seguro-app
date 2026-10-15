@@ -56,9 +56,9 @@ alto contraste (RNF-003/004); visitante nunca chama o serviço (RN-003); textos 
 importar outros módulos.
 
 **Scale/Scope**: módulo `settings` com ~5 arquivos novos (página, 3 widgets, extensão de rótulos) e
-ajustes na `SettingsPage`, `SettingsController`, `AlertsSwitchTile` e rotas; ~16 chaves de i18n;
-ajustes pequenos em `shell` (`AppTopBar`) e `profile` (`ProfilePage`); 1 arquivo de teste novo e
-5 ajustados.
+ajustes na `SettingsPage`, `SettingsController`, `SettingsSection` (extrai `SettingsSectionTitle` e `SettingsCard`), `AlertsSwitchTile` e rotas; 18 chaves de i18n novas e 1 alterada;
+ajustes pequenos em `shell` (`AppTopBar`) e `profile` (`ProfilePage`); 4 arquivos de teste novos (página, rótulos e dois widgets) e
+6 ajustados (inclui o `app_router_test.dart`), mais o helper `fakeAccessibilityProvider()`.
 
 ## Constitution Check
 
@@ -111,10 +111,14 @@ lib/
         ├── settings_option_tile.dart                           # NOVO (RadioGroup)
         ├── settings_switch_tile.dart                           # NOVO (extraído)
         ├── font_preview_card.dart                              # NOVO
+        ├── settings_section.dart                               # + SettingsSectionTitle e SettingsCard
         └── alerts_switch_tile.dart                             # usa SettingsSwitchTile
 assets/translations/{pt-BR,en-US}.json                          # + chaves; settings_guest_body alterado
 
 test/modules/settings/presentation/accessibility_page_test.dart # NOVO
+test/modules/settings/presentation/{extensions,widgets}/        # NOVOS: rótulos, option tile, switch tile
+test/helpers/                                                   # + fakeAccessibilityProvider()
+test/core/routing/app_router_test.dart                          # rota → AccessibilityPage
 test/modules/settings/presentation/{settings_page,settings_controller,change_password_page}_test.dart
 test/modules/shell/presentation/app_top_bar_test.dart
 test/modules/profile/presentation/pages/profile_page_test.dart

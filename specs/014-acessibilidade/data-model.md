@@ -75,6 +75,7 @@ sessão expira com a tela aberta ──────→ (nada recarrega)     → 
 | `SettingsOptionTile<T>` | linha de escolha única com `Radio<T>` dentro de um `RadioGroup<T>` (R3) |
 | `SettingsSwitchTile` | linha com chave, extraída da `AlertsSwitchTile` (R4) |
 | `FontPreviewCard` | cartão com o texto de exemplo (R2) |
+| `SettingsSectionTitle` · `SettingsCard` | extraídos do `SettingsSection` (que passa a ser os dois em coluna), para a prévia e o rótulo da velocidade ficarem fora do cartão |
 
 ## 4. Textos novos e alterados (i18n)
 
