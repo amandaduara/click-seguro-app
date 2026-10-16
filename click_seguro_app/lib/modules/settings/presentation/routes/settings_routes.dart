@@ -1,10 +1,9 @@
-import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/routing/navigator_keys.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/about_page.dart';
+import 'package:click_seguro_app/modules/settings/presentation/pages/accessibility_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/change_password_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/privacy_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_page.dart';
-import 'package:click_seguro_app/modules/settings/presentation/pages/settings_section_page.dart';
 import 'package:go_router/go_router.dart';
 
 /// Telas do módulo sobre as abas. "Dados pessoais" abre `/profile/edit`
@@ -23,9 +22,7 @@ final List<RouteBase> settingsRoutes = [
       GoRoute(
         path: 'accessibility',
         parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const SettingsSectionPage(
-          titleKey: AppStrings.settingsAccessibilityTitle,
-        ),
+        builder: (context, state) => const AccessibilityPage(),
       ),
       GoRoute(
         path: 'privacy',

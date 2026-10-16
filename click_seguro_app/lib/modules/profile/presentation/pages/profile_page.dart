@@ -87,8 +87,8 @@ class _WithHeader extends StatelessWidget {
   }
 }
 
-/// Título "Perfil" e, para quem tem conta, a engrenagem das configurações
-/// (specs/013, R6).
+/// Título "Perfil" e a engrenagem das configurações, também para o visitante
+/// (specs/014, R6).
 class _Header extends StatelessWidget {
   const _Header();
 
@@ -110,26 +110,25 @@ class _Header extends StatelessWidget {
             ),
           ),
         ),
-        if (GetIt.instance<UserSessionService>().isAuthenticated)
-          Tooltip(
-            message: AppStrings.profileSettings.tr(),
-            child: Material(
-              color: colors.card,
-              shape: CircleBorder(side: BorderSide(color: colors.border)),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () => context.push('/settings'),
-                child: SizedBox.square(
-                  dimension: 48,
-                  child: Icon(
-                    LucideIcons.settings,
-                    size: 22,
-                    color: colors.secondary,
-                  ),
+        Tooltip(
+          message: AppStrings.profileSettings.tr(),
+          child: Material(
+            color: colors.card,
+            shape: CircleBorder(side: BorderSide(color: colors.border)),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => context.push('/settings'),
+              child: SizedBox.square(
+                dimension: 48,
+                child: Icon(
+                  LucideIcons.settings,
+                  size: 22,
+                  color: colors.secondary,
                 ),
               ),
             ),
           ),
+        ),
       ],
     );
   }

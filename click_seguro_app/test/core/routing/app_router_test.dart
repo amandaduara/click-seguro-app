@@ -18,6 +18,7 @@ import '../../fakes/fake_secure_storage_service.dart';
 import '../../modules/authentication/fakes/controller_factory.dart';
 import '../../modules/authentication/fakes/fake_auth_repository.dart';
 import '../../modules/authentication/fakes/forgot_password_controller_factory.dart';
+import '../../helpers/accessibility_provider.dart';
 import '../../helpers/localized_app.dart';
 import '../../helpers/news_detail_dependencies.dart';
 import '../../helpers/profile_dependencies.dart';
@@ -60,6 +61,7 @@ void main() {
         fakeFeedProvider(),
         fakeReelsProvider(),
         fakeNotificationsProvider(),
+        fakeAccessibilityProvider(),
       ],
     );
     router.go(location);
@@ -90,7 +92,7 @@ void main() {
       '/notifications': NotificationsPage,
       '/settings': SettingsPage,
       '/settings/security': ChangePasswordPage,
-      '/settings/accessibility': SettingsSectionPage,
+      '/settings/accessibility': AccessibilityPage,
       '/settings/privacy': PrivacyPage,
       '/settings/about': AboutPage,
     };

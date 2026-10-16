@@ -101,6 +101,23 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets('visitante: convite para entrar, sem pedido', (tester) async {
+    await session.startGuestSession();
+    await open(tester);
+
+    expect(find.text('Entre na sua conta'), findsOneWidget);
+    expect(
+      find.text('Para trocar a senha, entre na sua conta.'),
+      findsOneWidget,
+    );
+    expect(repository.totalCalls, 0);
+
+    await tester.tap(find.text('Entrar ou criar conta'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('page:/login'), findsOneWidget);
+  });
+
   testWidgets('três campos ocultos com "Mostrar senha" de 48', (tester) async {
     final semantics = tester.ensureSemantics();
     await open(tester);

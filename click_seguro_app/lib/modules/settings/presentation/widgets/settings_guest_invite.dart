@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// `/settings` sem conta (link direto ou sessão expirada): só o convite, sem
-/// pedido ao serviço (RN-003, R6 de specs/013).
+/// Alterar senha sem conta (link direto ou sessão expirada): só o convite,
+/// sem pedido ao serviço (RN-003). As Configurações do visitante não o usam
+/// mais (R6 de specs/014).
 class SettingsGuestInvite extends StatelessWidget {
   const SettingsGuestInvite({super.key});
 

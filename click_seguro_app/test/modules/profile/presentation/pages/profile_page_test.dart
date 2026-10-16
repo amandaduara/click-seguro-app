@@ -109,10 +109,12 @@ void main() {
   group('visitante', () {
     setUp(() => session.startGuestSession());
 
-    testWidgets('não vê a engrenagem das configurações', (tester) async {
+    testWidgets('vê a engrenagem e ela abre as configurações', (tester) async {
       await open(tester);
 
-      expect(find.byTooltip('Configurações'), findsNothing);
+      await tapAndSettle(tester, find.byTooltip('Configurações'));
+
+      expectPage('/settings');
     });
 
     testWidgets('vê o convite e nenhum pedido sai', (tester) async {

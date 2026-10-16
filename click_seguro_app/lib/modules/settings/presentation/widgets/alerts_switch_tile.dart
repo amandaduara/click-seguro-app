@@ -1,6 +1,6 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
-import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_tile.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_switch_tile.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -29,19 +29,14 @@ class AlertsSwitchTile extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SettingsTile(
+        SettingsSwitchTile(
           icon: LucideIcons.bell,
           title: AppStrings.settingsAlerts.tr(),
           subtitle: current == null
               ? AppStrings.settingsAccountLoadFailed.tr()
               : AppStrings.settingsAlertsSub.tr(),
-          onTap: enabled ? () => onChanged(!current) : null,
-          trailing: Switch(
-            value: current ?? false,
-            activeThumbColor: colors.card,
-            activeTrackColor: colors.success,
-            onChanged: enabled ? onChanged : null,
-          ),
+          value: current ?? false,
+          onChanged: enabled ? onChanged : null,
         ),
         if (current == null)
           Align(

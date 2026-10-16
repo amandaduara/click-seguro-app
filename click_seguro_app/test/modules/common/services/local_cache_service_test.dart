@@ -15,7 +15,10 @@ void main() {
   test('writeJson seguido de readJson devolve o mesmo Map', () async {
     final cache = await build();
 
-    await cache.writeJson('feed', {'page': 1, 'ids': ['a', 'b']});
+    await cache.writeJson('feed', {
+      'page': 1,
+      'ids': ['a', 'b'],
+    });
 
     expect(await cache.readJson('feed'), {
       'page': 1,

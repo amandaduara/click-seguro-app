@@ -3,7 +3,7 @@ import 'package:click_seguro_app/modules/common/services/secure_storage_service.
 /// Armazenamento seguro em memória para testes, com falhas configuráveis.
 class FakeSecureStorageService implements SecureStorageService {
   FakeSecureStorageService([Map<String, String>? initial])
-      : values = {...?initial};
+    : values = {...?initial};
 
   final Map<String, String> values;
 

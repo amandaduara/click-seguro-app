@@ -12,7 +12,6 @@ import 'package:click_seguro_app/modules/settings/presentation/extensions/langua
 import 'package:click_seguro_app/modules/settings/presentation/widgets/account_card.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/alerts_switch_tile.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/language_sheet.dart';
-import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_guest_invite.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_section.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_tile.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -22,8 +21,9 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
-/// Configurações (B8, specs/013-configuracoes), no quadro do Figma. Só para
-/// quem tem conta; sem conta, o convite.
+/// Configurações (B8, specs/013-configuracoes), no quadro do Figma. Com
+/// conta, a lista inteira; sem conta, só o que não precisa de conta (R6 de
+/// specs/014-acessibilidade).
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -33,17 +33,53 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(AppStrings.settingsTitle.tr())),
       body: SafeArea(
-        child: ValueListenableBuilder<UserSessionStatus>(
-          valueListenable: session.sessionStatus,
-          builder: (context, status, _) =>
-              status == UserSessionStatus.authenticated
-              ? ChangeNotifierProvider<SettingsController>(
-                  create: (_) => GetIt.instance<SettingsController>()..load(),
-                  child: _SettingsList(sessionName: session.userName ?? ''),
-                )
-              : const SettingsGuestInvite(),
+        // Um controller só: se a sessão expira com a tela aberta, a lista do
+        // visitante usa o idioma e a versão já carregados.
+        child: ChangeNotifierProvider<SettingsController>(
+          create: (_) {
+            final SettingsController controller =
+                GetIt.instance<SettingsController>();
+            unawaited(
+              session.isAuthenticated
+                  ? controller.load()
+                  : controller.loadDeviceSettings(),
+            );
+            return controller;
+          },
+          child: ValueListenableBuilder<UserSessionStatus>(
+            valueListenable: session.sessionStatus,
+            builder: (context, status, _) =>
+                status == UserSessionStatus.authenticated
+                ? _SettingsList(sessionName: session.userName ?? '')
+                : const _GuestSettingsList(),
+          ),
         ),
       ),
+    );
+  }
+}
+
+const EdgeInsets _listPadding = EdgeInsets.fromLTRB(
+  AppSpacing.s5,
+  AppSpacing.s4,
+  AppSpacing.s5,
+  AppSpacing.s6,
+);
+
+/// Sem conta: sem cartão, sem itens da conta, sem "Sair" e sem convite
+/// (clarificação de 2026-10-15).
+class _GuestSettingsList extends StatelessWidget {
+  const _GuestSettingsList();
+
+  @override
+  Widget build(BuildContext context) {
+    final SettingsController controller = context.watch<SettingsController>();
+    return ListView(
+      padding: _listPadding,
+      children: [
+        _ReadingSection(controller: controller),
+        _AboutSection(version: controller.appVersion),
+      ],
     );
   }
 }
@@ -77,25 +113,6 @@ class _SettingsList extends StatelessWidget {
       );
   }
 
-  /// Troca o idioma na hora (RF-042). "Idioma do celular" apaga o idioma
-  /// guardado pelo easy_localization, para a próxima abertura seguir o
-  /// aparelho de novo.
-  Future<void> _chooseLanguage(
-    BuildContext context,
-    SettingsController controller,
-  ) async {
-    final LanguageChoice? choice = await showLanguageSheet(
-      context,
-      current: controller.language,
-    );
-    if (choice == null || !context.mounted) return;
-    await context.setLocale(choice.localeFor(context.deviceLocale));
-    if (choice == LanguageChoice.device && context.mounted) {
-      await context.deleteSaveLocale();
-    }
-    await controller.setLanguage(choice);
-  }
-
   @override
   Widget build(BuildContext context) {
     final SettingsController controller = context.watch<SettingsController>();
@@ -104,14 +121,8 @@ class _SettingsList extends StatelessWidget {
       _ => null,
     };
     final String name = account?.name ?? sessionName;
-    final String? version = controller.appVersion;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s5,
-        AppSpacing.s4,
-        AppSpacing.s5,
-        AppSpacing.s6,
-      ),
+      padding: _listPadding,
       children: [
         AccountCard(
           name: name,
@@ -147,42 +158,8 @@ class _SettingsList extends StatelessWidget {
             ),
           ],
         ),
-        SettingsSection(
-          title: AppStrings.settingsSectionReading.tr(),
-          children: [
-            SettingsTile(
-              icon: LucideIcons.type,
-              title: AppStrings.settingsAccessibility.tr(),
-              subtitle: AppStrings.settingsAccessibilitySub.tr(),
-              onTap: () => context.push('/settings/accessibility'),
-            ),
-            SettingsTile(
-              icon: LucideIcons.globe,
-              title: AppStrings.settingsLanguage.tr(),
-              value: controller.language.label,
-              onTap: () => _chooseLanguage(context, controller),
-            ),
-          ],
-        ),
-        SettingsSection(
-          title: AppStrings.settingsSectionAbout.tr(),
-          children: [
-            SettingsTile(
-              icon: LucideIcons.shield,
-              title: AppStrings.settingsPrivacy.tr(),
-              subtitle: AppStrings.settingsPrivacySub.tr(),
-              onTap: () => context.push('/settings/privacy'),
-            ),
-            SettingsTile(
-              icon: LucideIcons.info,
-              title: AppStrings.settingsAboutApp.tr(),
-              subtitle: version == null || version.isEmpty
-                  ? null
-                  : AppStrings.settingsVersion.tr(args: [version]),
-              onTap: () => context.push('/settings/about'),
-            ),
-          ],
-        ),
+        _ReadingSection(controller: controller),
+        _AboutSection(version: controller.appVersion),
         const SizedBox(height: AppSpacing.s6),
         _LogoutButton(onPressed: controller.logout),
         const SizedBox(height: AppSpacing.s3),
@@ -193,6 +170,82 @@ class _SettingsList extends StatelessWidget {
             fontSize: 14,
             color: context.colors.textMutedForeground,
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// "Leitura e aparência": Acessibilidade e Idioma, com ou sem conta.
+class _ReadingSection extends StatelessWidget {
+  const _ReadingSection({required this.controller});
+
+  final SettingsController controller;
+
+  /// Troca o idioma na hora (RF-042). "Idioma do celular" apaga o idioma
+  /// guardado pelo easy_localization, para a próxima abertura seguir o
+  /// aparelho de novo.
+  Future<void> _chooseLanguage(BuildContext context) async {
+    final LanguageChoice? choice = await showLanguageSheet(
+      context,
+      current: controller.language,
+    );
+    if (choice == null || !context.mounted) return;
+    await context.setLocale(choice.localeFor(context.deviceLocale));
+    if (choice == LanguageChoice.device && context.mounted) {
+      await context.deleteSaveLocale();
+    }
+    await controller.setLanguage(choice);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingsSection(
+      title: AppStrings.settingsSectionReading.tr(),
+      children: [
+        SettingsTile(
+          icon: LucideIcons.type,
+          title: AppStrings.settingsAccessibility.tr(),
+          subtitle: AppStrings.settingsAccessibilitySub.tr(),
+          onTap: () => context.push('/settings/accessibility'),
+        ),
+        SettingsTile(
+          icon: LucideIcons.globe,
+          title: AppStrings.settingsLanguage.tr(),
+          value: controller.language.label,
+          onTap: () => _chooseLanguage(context),
+        ),
+      ],
+    );
+  }
+}
+
+/// "Sobre": Privacidade e Sobre o SafeNews com a versão, com ou sem conta.
+class _AboutSection extends StatelessWidget {
+  const _AboutSection({required this.version});
+
+  /// Versão instalada; `null` até carregar.
+  final String? version;
+
+  @override
+  Widget build(BuildContext context) {
+    final String? version = this.version;
+    return SettingsSection(
+      title: AppStrings.settingsSectionAbout.tr(),
+      children: [
+        SettingsTile(
+          icon: LucideIcons.shield,
+          title: AppStrings.settingsPrivacy.tr(),
+          subtitle: AppStrings.settingsPrivacySub.tr(),
+          onTap: () => context.push('/settings/privacy'),
+        ),
+        SettingsTile(
+          icon: LucideIcons.info,
+          title: AppStrings.settingsAboutApp.tr(),
+          subtitle: version == null || version.isEmpty
+              ? null
+              : AppStrings.settingsVersion.tr(args: [version]),
+          onTap: () => context.push('/settings/about'),
         ),
       ],
     );

@@ -10,7 +10,8 @@ import 'package:click_seguro_app/modules/settings/presentation/controller/accoun
 import 'package:flutter/foundation.dart';
 
 /// Estado da tela de Configurações, um por abertura (data-model de
-/// specs/013-configuracoes).
+/// specs/013-configuracoes). Sem conta, só o que é do aparelho
+/// ([loadDeviceSettings], R6 de specs/014-acessibilidade).
 class SettingsController extends ChangeNotifier {
   SettingsController({
     required GetAccountUseCase getAccount,
@@ -55,7 +56,12 @@ class SettingsController extends ChangeNotifier {
   bool _disposed = false;
 
   Future<void> load() async {
-    await Future.wait([_loadAccount(), _loadVersion(), _loadLanguage()]);
+    await Future.wait([_loadAccount(), loadDeviceSettings()]);
+  }
+
+  /// Versão e idioma, sem pedido ao serviço (RN-003): o que o visitante vê.
+  Future<void> loadDeviceSettings() async {
+    await Future.wait([_loadVersion(), _loadLanguage()]);
   }
 
   /// Também ao voltar da edição de dados: nome e foto podem ter mudado.

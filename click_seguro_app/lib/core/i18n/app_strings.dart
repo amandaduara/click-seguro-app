@@ -325,6 +325,40 @@ abstract class AppStrings {
       'settings_account_load_failed';
   static const String settingsAccessibility = 'settings_accessibility';
   static const String settingsAccessibilitySub = 'settings_accessibility_sub';
+  static const String settingsAccessibilitySectionFont =
+      'settings_accessibility_section_font';
+  static const String settingsAccessibilityPreviewTitle =
+      'settings_accessibility_preview_title';
+  static const String settingsAccessibilityPreviewBody =
+      'settings_accessibility_preview_body';
+  static const String settingsAccessibilityFontStandard =
+      'settings_accessibility_font_standard';
+  static const String settingsAccessibilityFontLarge =
+      'settings_accessibility_font_large';
+  static const String settingsAccessibilityFontLarger =
+      'settings_accessibility_font_larger';
+  static const String settingsAccessibilityFontLargest =
+      'settings_accessibility_font_largest';
+  static const String settingsAccessibilitySectionAppearance =
+      'settings_accessibility_section_appearance';
+  static const String settingsAccessibilityHighContrast =
+      'settings_accessibility_high_contrast';
+  static const String settingsAccessibilityHighContrastSub =
+      'settings_accessibility_high_contrast_sub';
+  static const String settingsAccessibilitySectionVoice =
+      'settings_accessibility_section_voice';
+  static const String settingsAccessibilityAutoRead =
+      'settings_accessibility_auto_read';
+  static const String settingsAccessibilityAutoReadSub =
+      'settings_accessibility_auto_read_sub';
+  static const String settingsAccessibilitySpeed =
+      'settings_accessibility_speed';
+  static const String settingsAccessibilitySpeedSlow =
+      'settings_accessibility_speed_slow';
+  static const String settingsAccessibilitySpeedNormal =
+      'settings_accessibility_speed_normal';
+  static const String settingsAccessibilitySpeedFast =
+      'settings_accessibility_speed_fast';
   static const String settingsLanguage = 'settings_language';
   static const String settingsLanguageDevice = 'settings_language_device';
   static const String settingsLanguagePortuguese =

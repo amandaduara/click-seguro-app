@@ -1,20 +1,18 @@
 // Só para desenvolvimento: flutter run -t lib/dev/accessibility_playground.dart
 //
-// O app real (mesmo setupApp() do main.dart) com um botão de acessibilidade
-// por cima, para validar no aparelho a feature 009 enquanto a tela da B9 não
-// existe. Também tem o atalho "Notícias salvas" (feature 010) até o Perfil da
-// B7 ganhar a entrada e os três botões dos alertas (feature 011). Não é importada pelo app; os textos são fixos por não
-// ser parte do produto, como no style guide.
+// O app real (mesmo setupApp() do main.dart) com os três botões dos alertas
+// (feature 011) por cima. O painel de acessibilidade da feature 009 e o atalho
+// "Notícias salvas" da 010 saíram: a tela de Acessibilidade (B9) e o Perfil
+// (B7) já têm essas entradas (R8 de specs/014-acessibilidade). O nome do
+// arquivo ficou, porque as specs anteriores o citam. Não é importada pelo app;
+// os textos são fixos por não ser parte do produto, como no style guide.
 import 'dart:async';
 
 import 'package:click_seguro_app/main.dart';
-import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
-import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/notifications/data/datasources/alerts_local_data_source.dart';
 import 'package:click_seguro_app/modules/notifications/data/models/alerts_snapshot_model.dart';
 import 'package:click_seguro_app/modules/notifications/domain/usecases/clear_alerts_usecase.dart';
-import 'package:click_seguro_app/modules/settings/settings.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -40,7 +38,7 @@ Future<void> main() async {
               router: router,
               accessibility: GetIt.instance<AccessibilityPreferencesNotifier>(),
             ),
-            _AccessibilityPanel(router: router),
+            _AlertsShortcuts(router: router),
           ],
         ),
       ),
@@ -48,22 +46,14 @@ Future<void> main() async {
   );
 }
 
-/// Botão pequeno na borda esquerda; aberto, troca as quatro preferências pelo
-/// `AccessibilityController`, como a tela da B9 fará.
-class _AccessibilityPanel extends StatefulWidget {
-  const _AccessibilityPanel({required this.router});
+/// Entradas fixas dos alertas (R10 de specs/011-alertas-locais): a primeira
+/// conferência não gera alertas e o serviço de desenvolvimento não publica
+/// notícia a pedido. Valem na próxima abertura do app.
+class _AlertsShortcuts extends StatelessWidget {
+  const _AlertsShortcuts({required this.router});
 
-  /// O painel fica acima do `ClickSeguroApp`, sem contexto do `go_router`.
+  /// Os botões ficam acima do `ClickSeguroApp`, sem contexto do `go_router`.
   final GoRouter router;
-
-  @override
-  State<_AccessibilityPanel> createState() => _AccessibilityPanelState();
-}
-
-class _AccessibilityPanelState extends State<_AccessibilityPanel> {
-  final AccessibilityController _controller =
-      GetIt.instance<AccessibilityController>();
-  bool _open = false;
 
   @override
   Widget build(BuildContext context) {
@@ -73,86 +63,37 @@ class _AccessibilityPanelState extends State<_AccessibilityPanel> {
         DefaultMaterialLocalizations.delegate,
         DefaultWidgetsLocalizations.delegate,
       ],
-      child: ListenableBuilder(
-        listenable: _controller,
-        // Stack próprio: o Localizations fica entre o Positioned e o Stack do
-        // main. Sem filhos não posicionados, o toque fora passa para o app.
-        builder: (context, _) => Stack(
-          children: [
-            _open ? _panel() : _toggle(),
-            _savedNews(),
-            _alertsShortcuts(),
-          ],
-        ),
+      // Stack próprio: o Localizations fica entre o Positioned e o Stack do
+      // main. Sem filhos não posicionados, o toque fora passa para o app.
+      child: Stack(
+        children: [
+          Positioned(
+            right: 0,
+            top: 48,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _shortcut(
+                  'Alertas: voltar verificação 7 dias',
+                  () => unawaited(_rewindAlertsCheck()),
+                ),
+                const SizedBox(height: 4),
+                _shortcut(
+                  'Alertas: apagar',
+                  () => unawaited(GetIt.instance<ClearAlertsUseCase>()()),
+                ),
+                const SizedBox(height: 4),
+                _shortcut(
+                  'Abrir Alertas',
+                  () => unawaited(router.push<void>('/notifications')),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
-
-  Widget _toggle() => Positioned(
-    left: 0,
-    top: 0,
-    bottom: 0,
-    child: Center(
-      child: Material(
-        color: Colors.black54,
-        borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
-        child: InkWell(
-          onTap: () => setState(() => _open = true),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 14),
-            child: Icon(Icons.accessibility_new, color: Colors.white, size: 18),
-          ),
-        ),
-      ),
-    ),
-  );
-
-  /// Entrada fixa para "Notícias salvas" (R8 de specs/010-detalhe-noticia).
-  Widget _savedNews() => Positioned(
-    right: 0,
-    top: 48,
-    child: Material(
-      color: Colors.black54,
-      borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
-      child: InkWell(
-        onTap: () => unawaited(widget.router.push<void>('/news/saved')),
-        child: const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Text(
-            'Notícias salvas',
-            style: TextStyle(color: Colors.white, fontSize: 12),
-          ),
-        ),
-      ),
-    ),
-  );
-
-  /// Entradas fixas dos alertas (R10 de specs/011-alertas-locais): a primeira
-  /// conferência não gera alertas e o serviço de desenvolvimento não publica
-  /// notícia a pedido. Valem na próxima abertura do app.
-  Widget _alertsShortcuts() => Positioned(
-    right: 0,
-    top: 96,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        _shortcut(
-          'Alertas: voltar verificação 7 dias',
-          () => unawaited(_rewindAlertsCheck()),
-        ),
-        const SizedBox(height: 4),
-        _shortcut(
-          'Alertas: apagar',
-          () => unawaited(GetIt.instance<ClearAlertsUseCase>()()),
-        ),
-        const SizedBox(height: 4),
-        _shortcut(
-          'Abrir Alertas',
-          () => unawaited(widget.router.push<void>('/notifications')),
-        ),
-      ],
-    ),
-  );
 
   Widget _shortcut(String label, VoidCallback onTap) => Material(
     color: Colors.black54,
@@ -179,79 +120,6 @@ class _AccessibilityPanelState extends State<_AccessibilityPanel> {
         lastCheckAt: DateTime.now().toUtc().subtract(const Duration(days: 7)),
         receiveAlerts: current?.receiveAlerts,
         alerts: current?.alerts ?? const [],
-      ),
-    );
-  }
-
-  Widget _panel() {
-    final AccessibilityPreferences preferences = _controller.preferences;
-    return Positioned(
-      left: 12,
-      right: 12,
-      bottom: 24,
-      child: Material(
-        elevation: 12,
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Acessibilidade (dev)',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => setState(() => _open = false),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const Text('Tamanho da letra'),
-              Wrap(
-                spacing: 6,
-                children: [
-                  for (final FontScaleLevel level in FontScaleLevel.values)
-                    ChoiceChip(
-                      label: Text('${(level.factor * 100).round()}%'),
-                      selected: preferences.fontScale == level,
-                      onSelected: (_) => _controller.setFontScale(level),
-                    ),
-                ],
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Alto contraste'),
-                value: preferences.highContrast,
-                onChanged: _controller.setHighContrast,
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Leitura automática'),
-                value: preferences.autoReadAloud,
-                onChanged: _controller.setAutoReadAloud,
-              ),
-              const Text('Velocidade da voz'),
-              Wrap(
-                spacing: 6,
-                children: [
-                  for (final ReadingSpeed speed in ReadingSpeed.values)
-                    ChoiceChip(
-                      label: Text(speed.name),
-                      selected: preferences.readingSpeed == speed,
-                      onSelected: (_) => _controller.setReadingSpeed(speed),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

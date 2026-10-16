@@ -10,8 +10,7 @@ class OnboardingController extends ChangeNotifier {
   int _currentPage = 0;
   int get currentPage => _currentPage;
 
-  bool get isLastPage =>
-      _currentPage == OnboardingPageContent.pages.length - 1;
+  bool get isLastPage => _currentPage == OnboardingPageContent.pages.length - 1;
 
   void onPageChanged(int page) {
     _currentPage = page;
