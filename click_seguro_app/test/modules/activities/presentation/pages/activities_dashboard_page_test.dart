@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/activities_dashboard_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/module_card.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -253,6 +254,76 @@ void main() {
     expect(label, contains('Em andamento'));
     expect(label, contains('2 de 3 lições'));
     expect(label, contains('Entenda como criminosos clonam contas.'));
+  });
+
+  group('abrir (US2)', () {
+    testWidgets('tocar no cartão abre o módulo', (tester) async {
+      await open(tester);
+
+      await tester.tap(find.text('Golpes Digitais'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities/m1'), findsOneWidget);
+    });
+
+    testWidgets('dois toques rápidos abrem uma tela só', (tester) async {
+      await open(tester);
+
+      await tester.tap(find.text('Golpes Digitais'));
+      await tester.tap(find.text('Golpes Digitais'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities/m1'), findsNothing);
+      expect(find.byType(ActivitiesDashboardPage), findsOneWidget);
+    });
+
+    testWidgets('módulo indisponível não abre nem é botão', (tester) async {
+      repository = FakeActivitiesRepository([
+        Right(
+          dashboard(
+            modules: [moduleJson(lessonsCount: 0)],
+            totalLessonsAvailable: 0,
+          ),
+        ),
+      ]);
+      await open(tester);
+
+      await tester.tap(find.text('Golpes Digitais'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities/m1'), findsNothing);
+      expect(
+        tester
+            .getSemantics(card('Golpes Digitais'))
+            .getSemanticsData()
+            .flagsCollection
+            .isButton,
+        isFalse,
+      );
+    });
+
+    testWidgets('voltar do módulo recarrega sem mostrar carregando', (
+      tester,
+    ) async {
+      repository = FakeActivitiesRepository([
+        Right(dashboard(totalLessonsCompleted: 0)),
+        Right(
+          dashboard(modules: threeModulesJson(m1: 1), totalLessonsCompleted: 1),
+        ),
+      ]);
+      await open(tester);
+
+      await tester.tap(find.text('Golpes Digitais'));
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pump();
+
+      expect(find.byType(SafeLoadingState), findsNothing);
+      await tester.pumpAndSettle();
+      expect(find.text('1 de 9 lições concluídas'), findsOneWidget);
+    });
   });
 
   testWidgets('em inglês', (tester) async {

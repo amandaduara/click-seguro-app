@@ -48,6 +48,22 @@ class ActivitiesDashboardController extends ChangeNotifier {
     _notify();
   }
 
+  /// Ao voltar para o painel (FR-006): sem "carregando"; se falhar, o
+  /// conteúdo já mostrado fica (FR-011). Sem conteúdo, é uma carga normal.
+  Future<void> refresh() async {
+    if (_dashboard == null) return load();
+    final int request = ++_requestId;
+    final result = await _getDashboard();
+    if (_disposed || request != _requestId) return;
+    result.fold((_) {}, (dashboard) {
+      _dashboard = dashboard;
+      _status = dashboard.isEmpty
+          ? ActivitiesDashboardStatus.empty
+          : ActivitiesDashboardStatus.loaded;
+    });
+    _notify();
+  }
+
   @override
   void dispose() {
     _disposed = true;

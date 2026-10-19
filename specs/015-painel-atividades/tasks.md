@@ -117,12 +117,12 @@ registrado e o mixin de recarregar ao voltar.
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T023 [P] [US2] Em `tact/presentation/controller/activities_dashboard_controller_test.dart`: `refresh()` com conteúdo não passa por `loading` e troca o `dashboard`; `refresh()` que falha mantém `loaded` e o `dashboard` anterior; `refresh()` sem conteúdo se comporta como `load()`
-- [ ] T024 [US2] Em `tact/presentation/pages/activities_dashboard_page_test.dart`, grupo "abrir": tocar em "Golpes Digitais" abre `/activities/m1`; dois toques rápidos abrem uma tela só (contar páginas `/activities/m1` na pilha); cartão indisponível não abre e não tem `button` na semântica; voltar do módulo com o fake devolvendo "1 de 9" → o painel mostra "1 de 9" sem `SafeLoadingState`; trocar de aba e voltar recarrega (contador do fake +1) sem `SafeLoadingState`
+- [X] T023 [P] [US2] Em `tact/presentation/controller/activities_dashboard_controller_test.dart`: `refresh()` com conteúdo não passa por `loading` e troca o `dashboard`; `refresh()` que falha mantém `loaded` e o `dashboard` anterior; `refresh()` sem conteúdo se comporta como `load()`
+- [X] T024 [US2] Em `tact/presentation/pages/activities_dashboard_page_test.dart`, grupo "abrir": tocar em "Golpes Digitais" abre `/activities/m1`; dois toques rápidos abrem uma tela só (contar páginas `/activities/m1` na pilha); cartão indisponível não abre e não tem `button` na semântica; voltar do módulo com o fake devolvendo "1 de 9" → o painel mostra "1 de 9" sem `SafeLoadingState`; trocar de aba e voltar recarrega (contador do fake +1) sem `SafeLoadingState` (coberto pelo teste do mixin, T006, que tem um shell de abas; o roteador deste teste não tem abas)
 
 ### Implementação
 
-- [ ] T025 [US2] Em `act/presentation/controller/activities_dashboard_controller.dart`, `refresh()` conforme a T023. Na página, o estado da lista usa o `RefreshOnReturnMixin` (`tabPath = '/activities'`, `onReturn` → `controller.refresh()`); o toque no cartão disponível chama `pushAndRefresh('/activities/${module.id}')` com trava de abertura (`_opening`, como o `AppTopBar`); cartão indisponível recebe `onTap: null`. Faz a T023 e a T024 passar
+- [X] T025 [US2] Em `act/presentation/controller/activities_dashboard_controller.dart`, `refresh()` conforme a T023. Na página, o estado da lista usa o `RefreshOnReturnMixin` (`tabPath = '/activities'`, `onReturn` → `controller.refresh()`); o toque no cartão disponível chama `pushAndRefresh('/activities/${module.id}')` com trava de abertura (`_opening`, como o `AppTopBar`); cartão indisponível recebe `onTap: null`. Faz a T023 e a T024 passar
 
 **Checkpoint**: arquivos de teste do painel verdes. Commit da US2.
 

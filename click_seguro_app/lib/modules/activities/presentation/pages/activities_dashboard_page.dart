@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/refresh_on_return.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_summary_entity.dart';
@@ -16,6 +19,8 @@ import 'package:provider/provider.dart';
 /// Aba Atividades: progresso geral e os módulos (B1, specs/015-painel-atividades).
 class ActivitiesDashboardPage extends StatelessWidget {
   const ActivitiesDashboardPage({super.key});
+
+  static const String path = '/activities';
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +43,35 @@ class ActivitiesDashboardPage extends StatelessWidget {
   }
 }
 
-class _DashboardBody extends StatelessWidget {
+/// Recarrega ao voltar à aba ou de um módulo (FR-006, R6).
+class _DashboardBody extends StatefulWidget {
   const _DashboardBody();
+
+  @override
+  State<_DashboardBody> createState() => _DashboardBodyState();
+}
+
+class _DashboardBodyState extends State<_DashboardBody>
+    with RefreshOnReturnMixin<_DashboardBody> {
+  /// Evita abrir o mesmo módulo duas vezes com toque duplo (FR-005).
+  bool _opening = false;
+
+  @override
+  String get tabPath => ActivitiesDashboardPage.path;
+
+  @override
+  void onReturn() =>
+      unawaited(context.read<ActivitiesDashboardController>().refresh());
+
+  Future<void> _openModule(ModuleSummaryEntity module) async {
+    if (_opening) return;
+    _opening = true;
+    try {
+      await pushAndRefresh('${ActivitiesDashboardPage.path}/${module.id}');
+    } finally {
+      if (mounted) _opening = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +82,7 @@ class _DashboardBody extends StatelessWidget {
       ActivitiesDashboardStatus.loading => const SafeLoadingState(),
       ActivitiesDashboardStatus.loaded when dashboard != null => _Dashboard(
         dashboard: dashboard,
+        onOpen: _openModule,
       ),
       _ => const SizedBox.shrink(),
     };
@@ -57,9 +90,10 @@ class _DashboardBody extends StatelessWidget {
 }
 
 class _Dashboard extends StatelessWidget {
-  const _Dashboard({required this.dashboard});
+  const _Dashboard({required this.dashboard, required this.onOpen});
 
   final ActivitiesDashboardEntity dashboard;
+  final ValueChanged<ModuleSummaryEntity> onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +142,11 @@ class _Dashboard extends StatelessWidget {
     );
   }
 
+  /// Módulo indisponível não abre (CB-012).
   Widget _card(ModuleSummaryEntity module, {required bool compact}) =>
-      ModuleCard(module: module, compact: compact);
+      ModuleCard(
+        module: module,
+        compact: compact,
+        onTap: module.isAvailable ? () => onOpen(module) : null,
+      );
 }
