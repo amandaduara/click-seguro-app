@@ -209,10 +209,12 @@ estado e o "Tentar novamente".
 - **FR-006**: Ao voltar para o painel (de um módulo ou de outra aba), o progresso MUST ser
   atualizado sem ação da pessoa.
 - **FR-007**: Para quem tem conta, o progresso MUST vir do serviço.
-- **FR-008**: Para o visitante, o progresso MUST vir do registro de lições concluídas na sessão
-  atual do app, com a alternativa escolhida em cada uma; o registro MUST ficar só na memória (não
-  sobrevive ao fechar o app, RN-006) e MUST ser descartado ao entrar numa conta que já existia, ao
-  sair de uma conta ou ao iniciar uma nova sessão de visitante.
+- **FR-008**: Para o visitante, o progresso MUST vir do registro de lições respondidas na sessão
+  atual do app, com a alternativa mais recente de cada uma. Como no serviço, uma lição conta como
+  concluída ao ser respondida, certa ou errada. O registro MUST ficar só na memória (não sobrevive
+  ao fechar o app, RN-006) e MUST ser descartado sempre que a sessão deixar de ser de visitante,
+  exceto ao criar conta (FR-008a): ao entrar numa conta que já existia, ao sair do modo visitante
+  e, por consequência, ao sair de uma conta e voltar como visitante.
 - **FR-008a**: Ao criar uma conta vindo do modo visitante (sem ter fechado o app), o app MUST
   reenviar ao serviço, em nome da conta, cada resposta do registro do visitante, e então mostrar o
   progresso da conta. Cada resposta enviada com sucesso MUST sair do registro; as que falharem
@@ -271,6 +273,10 @@ estado e o "Tentar novamente".
 - **Formato dos dados**: os módulos e totais vêm do serviço como no contrato da API e como
   conferido em 2026-10-19 (visitante recebe 200 com progresso zerado). O app deriva o status; o
   serviço não manda um status pronto.
+- **"Concluída" = respondida**: conferido em 2026-10-19 com uma conta de teste, o serviço conta
+  uma lição como concluída assim que ela é respondida, mesmo errada; a pontuação usa a resposta
+  mais recente. O registro do visitante segue a mesma regra, para o painel do visitante e o da
+  conta (depois da transferência) mostrarem o mesmo número.
 - **Totais com módulos indisponíveis**: o serviço manda os totais gerais prontos; como módulos sem
   lições não somam lições, os totais já os excluem.
 - **Visitante**: os totais do serviço vêm zerados para ele; o app recalcula as concluídas a partir
