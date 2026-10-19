@@ -47,11 +47,6 @@ void main() {
     expect(module(completed: -1).completedCount, 0);
   });
 
-  test('progresso: 0 sem lições, fração com lições', () {
-    expect(module(lessons: 0).progress, 0);
-    expect(module(completed: 2).progress, closeTo(2 / 3, 0.0001));
-  });
-
   test('withCompletedCount devolve cópia com o novo número', () {
     final ModuleSummaryEntity original = module();
     final ModuleSummaryEntity copy = original.withCompletedCount(2);

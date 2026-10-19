@@ -34,8 +34,6 @@ class ModuleSummaryEntity {
   /// Sem lições, o módulo não abre (CB-012).
   bool get isAvailable => status != ModuleStatus.unavailable;
 
-  double get progress => lessonsCount == 0 ? 0 : completedCount / lessonsCount;
-
   /// Cópia com outro número de concluídas (painel do visitante, R3).
   ModuleSummaryEntity withCompletedCount(int value) => ModuleSummaryEntity(
     id: id,
@@ -45,27 +43,5 @@ class ModuleSummaryEntity {
     iconUrl: iconUrl,
     lessonsCount: lessonsCount,
     completedCount: value,
-  );
-
-  @override
-  bool operator ==(Object other) =>
-      other is ModuleSummaryEntity &&
-      other.id == id &&
-      other.title == title &&
-      other.description == description &&
-      other.order == order &&
-      other.iconUrl == iconUrl &&
-      other.lessonsCount == lessonsCount &&
-      other.completedCount == completedCount;
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    title,
-    description,
-    order,
-    iconUrl,
-    lessonsCount,
-    completedCount,
   );
 }

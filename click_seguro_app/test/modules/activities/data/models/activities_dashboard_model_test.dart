@@ -57,7 +57,6 @@ void main() {
 
     expect(module.lessonsCount, 0);
     expect(module.completedCount, 0);
-    expect(module.progress, 0);
   });
 
   test('módulo sem id ou sem título é descartado', () {
