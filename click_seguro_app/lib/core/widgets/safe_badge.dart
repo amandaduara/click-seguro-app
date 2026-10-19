@@ -63,12 +63,16 @@ class SafeBadge extends StatelessWidget {
             ),
             const SizedBox(width: 4),
           ],
-          DefaultTextStyle(
-            style: Theme.of(context).textTheme.bodySmall!.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
+          // Com letra grande, o texto quebra a linha em vez de estourar
+          // (specs/015-painel-atividades).
+          Flexible(
+            child: DefaultTextStyle(
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+              child: child,
             ),
-            child: child,
           ),
         ],
       ),
