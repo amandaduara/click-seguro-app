@@ -94,6 +94,7 @@ ou `title` → descartado. Lista ordenada por `order`.
 | Membro | Uso |
 |---|---|
 | `recordAnswer({moduleId, lessonId, selectedOptionId})` | B3; substitui a resposta da mesma lição |
+| (sem lista pública das respostas) | os testes verificam por `answeredCount` e `pendingTransfer`; nada além disso é exposto |
 | `answeredCount(String moduleId)` | painel do visitante |
 | `pendingTransfer` | respostas a reenviar depois do cadastro |
 | `removePending(GuestAnswer)` | depois de um envio com sucesso ou descartável |
@@ -112,7 +113,7 @@ Transições (escuta `sessionStatus`, R3):
 ### `ActivitiesRepositoryImpl.getDashboard()`
 
 ```text
-visitante: GET (sem token) → troca completedCount de cada módulo por answeredCount
+sem conta (visitante, ou sessão expirada/desconectada): GET (sem token) → troca completedCount de cada módulo por answeredCount
            → totalCompleted = soma; totalAvailable do serviço
 conta:     await syncGuestAnswers() (se houver pendentes) → GET (com token) → como veio
 ```
@@ -140,7 +141,6 @@ fica para a próxima carga. Nunca lança nem devolve falha.
 | `status` | `ActivitiesDashboardStatus { loading, loaded, empty, error }` |
 | `dashboard` | `ActivitiesDashboardEntity?` |
 | `failure` | `Failure?` (no `error`) |
-| `isGuest` | lido da sessão pela página, não pelo controller |
 | `load()` | `loading` → `loaded`/`empty`/`error` |
 | `refresh()` | sem `loading`; falha mantém o conteúdo; sem conteúdo → como `load()` |
 
@@ -151,7 +151,7 @@ fica para a próxima carga. Nunca lança nem devolve falha.
 | `notStarted` | `activities_status_not_started` | Não iniciado | Not started | `neutral` | `circle` |
 | `inProgress` | `activities_status_in_progress` | Em andamento | In progress | `primary` | `circleDashed` |
 | `completed` | `activities_status_completed` | Concluído | Completed | `success` | `circleCheck` |
-| `unavailable` | `activities_status_unavailable` | Em breve | Coming soon | `neutral` | `lock` |
+| `unavailable` | `activities_status_unavailable` | Indisponível | Unavailable | `neutral` | `lock` |
 
 ### Widgets
 

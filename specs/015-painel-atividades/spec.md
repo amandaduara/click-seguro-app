@@ -180,8 +180,9 @@ estado e o "Tentar novamente".
   mesma largura dos outros.
 - **Visitante cria a conta e o app é fechado antes de terminar o envio**: as respostas não
   enviadas se perdem (estavam só na memória), como qualquer progresso de visitante.
-- **Sessão expira** com o painel aberto: na próxima carga o painel passa a se comportar como o do
-  visitante, sem erro.
+- **Sessão expira** com o painel aberto: na próxima carga o painel mostra os módulos como para quem
+  não tem conta (sem o progresso da conta), sem erro; o aviso do visitante não aparece, porque a
+  pessoa não está no modo visitante (o aviso de sessão expirada da feature 005 cuida dela).
 - **Idioma em inglês**: os textos do app (status, progresso, mensagens) aparecem em inglês; títulos
   e descrições dos módulos vêm do serviço e não são traduzidos.
 - **Leitor de tela**: cada cartão é lido como um item só, com título, status e progresso, e anuncia

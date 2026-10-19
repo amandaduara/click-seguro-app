@@ -6,7 +6,7 @@
 
 | Método e caminho | Quando | Sucesso | Erros tratados |
 |---|---|---|---|
-| `GET /app/educational/modules` | toda carga do painel; sem token para o visitante | 200 `{modules[], totalLessonsCompleted, totalLessonsAvailable}` | padrão → estado de erro (ou mantém o conteúdo na recarga) |
+| `GET /app/educational/modules` | toda carga do painel; sem token sem conta (visitante, sessão expirada) | 200 `{modules[], totalLessonsCompleted, totalLessonsAvailable}` | padrão → estado de erro (ou mantém o conteúdo na recarga) |
 | `POST /app/educational/modules/{moduleId}/lessons/{lessonId}/answer` `{selectedOptionId}` | só na transferência, com token da conta recém-criada | 200 (resultado ignorado; a lição fica concluída) | 404 `EDUCATIONAL_*_NOT_FOUND` e 400 → descarta a resposta; demais → tenta na próxima carga |
 
 ## 2. Rotas
@@ -51,7 +51,7 @@ O barrel `activities.dart` continua exportando só o módulo, as rotas e as pág
 
 ```text
 AppTopBar: "Atividades" (saudação, sino e engrenagem como nas outras abas)
-[visitante] aviso: "Sem conta, seu progresso vale até fechar o app." [Entrar ou criar conta]
+[só visitante (isGuest); não na sessão expirada] aviso: "Sem conta, seu progresso vale até fechar o app." [Entrar ou criar conta]
 [se totalAvailable > 0] cartão "Seu progresso": "4 de 9 lições concluídas" + barra
 cartões dos módulos, na ordem do serviço:
   letra 100%  → duas colunas, descrição até 3 linhas

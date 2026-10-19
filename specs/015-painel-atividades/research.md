@@ -70,7 +70,7 @@ para o visitante); status no controller (regra de domínio fora do domínio).
   - qualquer outro caso → apaga tudo (FR-008).
 - Ao sair de uma conta (`authenticated` → outro estado) → apaga também as pendentes.
 
-O painel do visitante usa a lista de módulos do serviço (sem token) e troca `completedCount` de
+Sem conta (`!isAuthenticated`: visitante ou sessão expirada), o painel usa a lista de módulos do serviço (sem token) e troca `completedCount` de
 cada módulo por `answeredCount(moduleId)` (limitado a `lessonsCount`); o total concluído é a soma,
 e o total disponível é o do serviço.
 
