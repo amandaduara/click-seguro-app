@@ -8,8 +8,10 @@ import 'package:click_seguro_app/modules/activities/domain/entities/activities_d
 import 'package:click_seguro_app/modules/activities/domain/entities/module_summary_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/activities_dashboard_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/activities_dashboard_status.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/guest_progress_notice.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/module_card.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/overall_progress_card.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +31,22 @@ class ActivitiesDashboardPage extends StatelessWidget {
         child: Column(
           children: [
             AppTopBar(title: AppStrings.activitiesTitle.tr()),
+            // Só no modo visitante; não na sessão expirada (specs/015).
+            ValueListenableBuilder<UserSessionStatus>(
+              valueListenable:
+                  GetIt.instance<UserSessionService>().sessionStatus,
+              builder: (context, status, _) => status == UserSessionStatus.guest
+                  ? const Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.s5,
+                        0,
+                        AppSpacing.s5,
+                        AppSpacing.s3,
+                      ),
+                      child: GuestProgressNotice(),
+                    )
+                  : const SizedBox.shrink(),
+            ),
             Expanded(
               child: ChangeNotifierProvider<ActivitiesDashboardController>(
                 create: (_) =>

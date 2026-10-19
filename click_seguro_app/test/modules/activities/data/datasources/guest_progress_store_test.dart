@@ -58,4 +58,64 @@ void main() {
 
     expect(store.answeredCount('m1'), 0);
   });
+
+  group('cadastro (FR-008a)', () {
+    Future<void> signUp() => session.saveSession(
+      accessToken: 'tk',
+      refreshToken: 'rf',
+      email: 'nova@exemplo.com',
+      newAccount: true,
+    );
+
+    test('as respostas viram pendentes e o aviso sai uma vez', () async {
+      int signUps = 0;
+      store.onSignUp = () => signUps++;
+      store
+        ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1')
+        ..recordAnswer(moduleId: 'm1', lessonId: 'l2', selectedOptionId: 'o5');
+
+      await signUp();
+
+      expect(store.answeredCount('m1'), 0);
+      expect([for (final a in store.pendingTransfer) a.lessonId], ['l1', 'l2']);
+      expect(store.pendingTransfer.first.selectedOptionId, 'o1');
+      expect(signUps, 1);
+    });
+
+    test('removePending tira só aquela', () async {
+      store
+        ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1')
+        ..recordAnswer(moduleId: 'm1', lessonId: 'l2', selectedOptionId: 'o5');
+      await signUp();
+
+      store.removePending(store.pendingTransfer.first);
+
+      expect([for (final a in store.pendingTransfer) a.lessonId], ['l2']);
+    });
+
+    test('sair da conta apaga as pendentes', () async {
+      store.recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'o1',
+      );
+      await signUp();
+
+      await session.logout();
+
+      expect(store.pendingTransfer, isEmpty);
+    });
+
+    test('login não gera pendentes', () async {
+      store.recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'o1',
+      );
+
+      await signIn();
+
+      expect(store.pendingTransfer, isEmpty);
+    });
+  });
 }

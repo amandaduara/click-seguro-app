@@ -6,4 +6,8 @@ abstract class ActivitiesRepository {
   /// Módulos e progresso: da conta pelo serviço; sem conta, do registro da
   /// sessão (RN-006).
   Future<Either<Failure, ActivitiesDashboardEntity>> getDashboard();
+
+  /// Envia à conta recém-criada o progresso que o visitante fez na sessão
+  /// (FR-008a). Nunca falha para quem chama.
+  Future<void> syncGuestAnswers();
 }

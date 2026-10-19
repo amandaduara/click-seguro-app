@@ -19,6 +19,11 @@ class FakeActivitiesRepository implements ActivitiesRepository {
   Completer<void>? gate;
   int calls = 0;
 
+  int syncs = 0;
+
+  @override
+  Future<void> syncGuestAnswers() async => syncs++;
+
   @override
   Future<Either<Failure, ActivitiesDashboardEntity>> getDashboard() async {
     calls++;

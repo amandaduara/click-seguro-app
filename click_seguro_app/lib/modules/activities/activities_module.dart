@@ -23,11 +23,18 @@ class ActivitiesModule implements ModuleInterface {
         () => ActivitiesRemoteDataSourceImpl(injector<ApiClient>()),
       )
       ..registerLazySingleton<GuestProgressStore>(
-        () => GuestProgressStore(injector<UserSessionService>()),
+        // Ao criar conta, a transferência começa sem esperar o painel (R5).
+        () => GuestProgressStore(injector<UserSessionService>())
+          ..onSignUp = () =>
+              unawaited(injector<ActivitiesRepository>().syncGuestAnswers()),
         dispose: (store) => store.dispose(),
       )
       ..registerLazySingleton<ActivitiesRepository>(
-        () => ActivitiesRepositoryImpl(injector<ActivitiesRemoteDataSource>()),
+        () => ActivitiesRepositoryImpl(
+          injector<ActivitiesRemoteDataSource>(),
+          injector<GuestProgressStore>(),
+          injector<UserSessionService>(),
+        ),
       )
       ..registerLazySingleton(
         () => GetActivitiesDashboardUseCase(injector<ActivitiesRepository>()),

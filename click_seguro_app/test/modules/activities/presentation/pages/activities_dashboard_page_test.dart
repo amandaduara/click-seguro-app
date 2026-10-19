@@ -1,4 +1,7 @@
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
+import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
+import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/activities_dashboard_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/module_card.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -14,6 +17,7 @@ import '../../../../helpers/activities_dependencies.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../../../helpers/notifications_provider.dart';
 import '../../fakes/activities_fixtures.dart';
+import '../../fakes/fake_activities_remote_data_source.dart';
 import '../../fakes/fake_activities_repository.dart';
 
 void main() {
@@ -74,10 +78,16 @@ void main() {
     WidgetTester tester, {
     double textScale = 1.0,
     Locale locale = const Locale('pt', 'BR'),
+    bool realRepository = false,
   }) async {
     tester.platformDispatcher.textScaleFactorTestValue = textScale;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    registerActivitiesDependencies(GetIt.instance, repository: repository);
+    registerActivitiesDependencies(
+      GetIt.instance,
+      repository: realRepository
+          ? GetIt.instance<ActivitiesRepository>()
+          : repository,
+    );
     await pumpLocalized(
       tester,
       router: router,
@@ -323,6 +333,82 @@ void main() {
       expect(find.byType(SafeLoadingState), findsNothing);
       await tester.pumpAndSettle();
       expect(find.text('1 de 9 lições concluídas'), findsOneWidget);
+    });
+  });
+
+  group('visitante (US3)', () {
+    const String notice = 'Sem conta, seu progresso vale até fechar o app.';
+
+    testWidgets('aviso e "Entrar ou criar conta" → login', (tester) async {
+      await session.startGuestSession();
+      await open(tester);
+
+      expect(find.text(notice), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text(notice)).dy,
+        lessThan(tester.getTopLeft(card('Golpes Digitais')).dy),
+      );
+
+      await tester.tap(find.text('Entrar ou criar conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/login'), findsOneWidget);
+    });
+
+    testWidgets('com conta, sem aviso', (tester) async {
+      await open(tester);
+
+      expect(find.text(notice), findsNothing);
+    });
+
+    testWidgets('sessão expira: recarrega sem erro e sem aviso', (
+      tester,
+    ) async {
+      repository = FakeActivitiesRepository([
+        Right(dashboard()),
+        Right(dashboard(totalLessonsCompleted: 0)),
+      ]);
+      await open(tester);
+
+      await session.expire();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Golpes Digitais'));
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expect(find.text(notice), findsNothing);
+      expect(card('Golpes Digitais'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('respostas da sessão aparecem no painel', (tester) async {
+      await session.startGuestSession();
+      final store = GuestProgressStore(session);
+      addTearDown(store.dispose);
+      store
+        ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1')
+        ..recordAnswer(moduleId: 'm1', lessonId: 'l2', selectedOptionId: 'o2');
+      final remote = FakeActivitiesRemoteDataSource();
+      GetIt.instance.registerSingleton<ActivitiesRepository>(
+        ActivitiesRepositoryImpl(remote, store, session),
+      );
+      await open(tester, realRepository: true);
+
+      expect(
+        find.descendant(
+          of: card('Golpes Digitais'),
+          matching: find.text('2 de 3 lições'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: card('Golpes Digitais'),
+          matching: find.text('Em andamento'),
+        ),
+        findsOneWidget,
+      );
     });
   });
 

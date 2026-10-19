@@ -53,7 +53,11 @@ class AuthRepositoryImpl implements AuthRepository {
     // A conta existe; se a entrada automática falhar, a pessoa entra depois
     // com e-mail e senha (FR-009).
     try {
-      final signedIn = await _signIn(email: email, password: password);
+      final signedIn = await _signIn(
+        email: email,
+        password: password,
+        newAccount: true,
+      );
       return signedIn.mapLeft((_) => const AccountCreatedFailure());
     } on ApiException {
       return const Left(AccountCreatedFailure());
@@ -110,9 +114,13 @@ class AuthRepositoryImpl implements AuthRepository {
 
   /// login → `/users/me` com o token novo → papel de usuário do app? →
   /// salva a sessão. Lança [ApiException].
+  ///
+  /// [newAccount]: veio do cadastro (specs/015 R4: o `activities` transfere o
+  /// progresso do visitante só nesse caso).
   Future<Either<Failure, UserEntity>> _signIn({
     required String email,
     required String password,
+    bool newAccount = false,
   }) async {
     final tokens = await _remote.login(email: email, password: password);
     final user = (await _remote.getMe(tokens.accessToken)).toEntity();
@@ -125,6 +133,7 @@ class AuthRepositoryImpl implements AuthRepository {
       refreshToken: tokens.refreshToken,
       email: user.email,
       userName: user.name,
+      newAccount: newAccount,
     );
     return Right(user);
   }
