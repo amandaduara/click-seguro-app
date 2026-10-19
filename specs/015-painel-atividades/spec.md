@@ -16,6 +16,23 @@ RN-006, CB-012, RNF-002 a RNF-004 e RNF-006 da
 [feature 001](../001-sessao-persistente-visitante/spec.md) · "atividades relacionadas" da notícia
 da [feature 010](../010-detalhe-noticia/spec.md).
 
+## Clarifications
+
+### Session 2026-10-19
+
+- Q: Como os cartões dos módulos devem ficar organizados no painel? → A: Duas colunas com a letra
+  no tamanho normal (escala total de 100%: celular sem aumento e app em "Padrão"); com qualquer
+  aumento de letra, uma coluna. Em duas colunas, a descrição mostra até 3 linhas.
+- Q: O que o visitante deve ver no painel sobre o progresso dele não ficar guardado? → A: Um aviso
+  curto e fixo acima dos cartões ("Sem conta, seu progresso vale até fechar o app") com o botão
+  "Entrar ou criar conta", que leva à tela de entrar.
+- Q: Quando o visitante faz lições e depois entra numa conta, o que acontece com o progresso que
+  ele fez como visitante? → A: O progresso fica na sessão. Se o visitante **criar uma conta** sem
+  fechar o app (no fim de um módulo ou em qualquer lugar do app), ele é transferido para a conta
+  nova: o app reenvia ao serviço, uma a uma, as respostas da sessão. Ao **entrar numa conta que já
+  existe**, o progresso de visitante é descartado e vale o da conta. (Alternativa considerada e
+  descartada: liberar só 1 módulo para o visitante.)
+
 ## Contexto
 
 As atividades são a segunda metade do SafeNews, ao lado das notícias: módulos curtos de perguntas
@@ -93,19 +110,30 @@ desde que abriu o app; ao fechar o app, ele some. O painel avisa isso de forma c
 veria sempre zero, mesmo depois de responder, ou acharia que o progresso fica guardado.
 
 **Independent Test**: como visitante, registrar lições concluídas no progresso da sessão e conferir
-que o painel as mostra; trocar a sessão (entrar numa conta, sair, reabrir como visitante) e
-conferir que o progresso de visitante foi descartado.
+que o painel as mostra; criar uma conta e conferir que as respostas foram reenviadas ao serviço
+falso e que o painel passou a mostrar o progresso da conta; sair ou reabrir como visitante e
+conferir que o progresso de visitante não volta.
 
 **Acceptance Scenarios**:
 
 1. **Given** um visitante que ainda não respondeu nada, **When** abre o painel, **Then** vê os
-   módulos com "0 de N" e "Não iniciado", e um aviso curto de que o progresso sem conta vale só
-   até fechar o app.
-2. **Given** um visitante que concluiu lições nesta sessão, **When** volta ao painel, **Then** o
+   módulos com "0 de N" e "Não iniciado", e acima dos cartões um aviso curto de que o progresso
+   sem conta vale só até fechar o app, com o botão "Entrar ou criar conta".
+2. **Given** o aviso do visitante, **When** ele toca em "Entrar ou criar conta", **Then** vai para
+   a tela de entrar.
+3. **Given** um visitante que concluiu lições nesta sessão, **When** volta ao painel, **Then** o
    progresso geral, o de cada cartão e os status refletem essas lições.
-3. **Given** um visitante com progresso nesta sessão, **When** entra numa conta, **Then** o painel
-   passa a mostrar o progresso da conta (do serviço); o progresso de visitante é descartado.
-4. **Given** um visitante com progresso, **When** o app é fechado e aberto de novo como visitante,
+4. **Given** um visitante com progresso nesta sessão, **When** cria uma conta sem fechar o app,
+   **Then** as respostas que ele deu nesta sessão são enviadas ao serviço em nome da conta nova e
+   o painel passa a mostrar o progresso dela, já com essas lições; o registro de visitante é
+   esvaziado.
+5. **Given** um visitante com progresso nesta sessão, **When** entra numa conta que já existia,
+   **Then** nada é enviado: o painel mostra o progresso da conta e o registro de visitante é
+   descartado.
+6. **Given** o envio de uma das respostas falha (por exemplo, sem internet), **When** o painel
+   carrega de novo com a mesma conta, **Then** o app tenta enviar de novo as que faltaram; as que
+   já foram não são repetidas.
+7. **Given** um visitante com progresso, **When** o app é fechado e aberto de novo como visitante,
    **Then** o progresso volta a zero.
 
 ---
@@ -143,8 +171,15 @@ estado e o "Tentar novamente".
   mostrado (não há "0 de 0").
 - **Progresso do serviço inconsistente** (concluídas maior que o total): o cartão mostra no máximo
   o total e o status "Concluído".
-- **Descrição longa ou letra no nível máximo**: o cartão cresce em altura; nada é cortado sem
-  possibilidade de rolar.
+- **Descrição longa ou letra no nível máximo**: em uma coluna, o cartão cresce em altura e nada
+  é cortado sem possibilidade de rolar; em duas colunas (só com letra normal), a descrição para na
+  3ª linha com reticências.
+- **Mudança de tamanho de letra com o painel aberto** (B9): o painel troca entre duas e uma
+  coluna na hora.
+- **Número ímpar de módulos em duas colunas**: o último cartão fica sozinho à esquerda, com a
+  mesma largura dos outros.
+- **Visitante cria a conta e o app é fechado antes de terminar o envio**: as respostas não
+  enviadas se perdem (estavam só na memória), como qualquer progresso de visitante.
 - **Sessão expira** com o painel aberto: na próxima carga o painel passa a se comportar como o do
   visitante, sem erro.
 - **Idioma em inglês**: os textos do app (status, progresso, mensagens) aparecem em inglês; títulos
@@ -162,6 +197,10 @@ estado e o "Tentar novamente".
   (RF-023).
 - **FR-003**: O painel MUST mostrar um cartão por módulo, na ordem definida pelo serviço, com
   ícone, título, descrição, progresso do módulo ("X de Y lições") e status.
+- **FR-003a**: Com a escala total da letra em 100% (celular sem aumento e app no tamanho
+  "Padrão"), os cartões MUST ficar em duas colunas, com a descrição limitada a 3 linhas; com
+  qualquer aumento de letra (do celular ou do app), MUST ficar em uma coluna, com a descrição
+  inteira. O leitor de tela MUST ler a descrição inteira nos dois casos.
 - **FR-004**: O status de cada módulo MUST ser: **Não iniciado** (nenhuma lição concluída),
   **Em andamento** (parte concluída), **Concluído** (todas concluídas) ou **Indisponível** (o
   módulo não tem lições, CB-012). Cada status MUST ter rótulo escrito, além de cor ou ícone.
@@ -171,12 +210,20 @@ estado e o "Tentar novamente".
   atualizado sem ação da pessoa.
 - **FR-007**: Para quem tem conta, o progresso MUST vir do serviço.
 - **FR-008**: Para o visitante, o progresso MUST vir do registro de lições concluídas na sessão
-  atual do app; o registro MUST ficar só na memória (não sobrevive ao fechar o app) e MUST ser
-  descartado ao entrar numa conta, ao sair ou ao iniciar uma nova sessão de visitante (RN-006).
+  atual do app, com a alternativa escolhida em cada uma; o registro MUST ficar só na memória (não
+  sobrevive ao fechar o app, RN-006) e MUST ser descartado ao entrar numa conta que já existia, ao
+  sair de uma conta ou ao iniciar uma nova sessão de visitante.
+- **FR-008a**: Ao criar uma conta vindo do modo visitante (sem ter fechado o app), o app MUST
+  reenviar ao serviço, em nome da conta, cada resposta do registro do visitante, e então mostrar o
+  progresso da conta. Cada resposta enviada com sucesso MUST sair do registro; as que falharem
+  MUST ficar para nova tentativa na próxima carga do painel, enquanto a mesma conta estiver
+  conectada e o app aberto. O envio MUST NOT bloquear nem atrasar a entrada na conta, e falhas
+  MUST NOT mostrar erro à pessoa.
 - **FR-009**: O registro de progresso do visitante MUST permitir que a resposta das perguntas (B3)
   marque uma lição como concluída e que o painel e as telas de atividades leiam esse progresso.
-- **FR-010**: O painel do visitante MUST mostrar um aviso curto de que, sem conta, o progresso vale
-  só até fechar o app.
+- **FR-010**: O painel do visitante MUST mostrar, fixo acima dos cartões, um aviso curto de que,
+  sem conta, o progresso vale só até fechar o app, com o botão "Entrar ou criar conta" que leva à
+  tela de entrar. Quem tem conta MUST NOT ver o aviso.
 - **FR-011**: O painel MUST ter os estados de carregando, erro com "Tentar novamente" e "sem
   atividades". Uma recarga que falha com conteúdo já mostrado MUST manter o conteúdo.
 - **FR-012**: Ícone ausente ou que não carrega MUST dar lugar a um ícone padrão.
@@ -196,7 +243,8 @@ estado e o "Tentar novamente".
 - **Painel de atividades**: a lista de módulos e os totais gerais (lições concluídas e
   disponíveis).
 - **Progresso do visitante na sessão**: quais lições de quais módulos o visitante concluiu desde
-  que abriu o app; só em memória.
+  que abriu o app e a alternativa que ele escolheu em cada uma (para reenviar ao criar uma
+  conta); só em memória.
 
 ## Success Criteria *(mandatory)*
 
@@ -213,7 +261,10 @@ estado e o "Tentar novamente".
   a conexão voltar.
 - **SC-006**: Com a letra no nível máximo e o alto contraste ligado, todos os cartões ficam
   legíveis e tocáveis no aparelho.
-- **SC-007**: O progresso do visitante nunca aparece depois de fechar o app ou de trocar de sessão.
+- **SC-007**: O progresso do visitante nunca aparece depois de fechar o app, de sair de uma conta
+  ou de iniciar outra sessão de visitante.
+- **SC-008**: Com internet, 100% das lições feitas como visitante aparecem no progresso da conta
+  logo depois de criá-la, sem a pessoa responder de novo.
 
 ## Assumptions
 
@@ -224,9 +275,6 @@ estado e o "Tentar novamente".
   lições não somam lições, os totais já os excluem.
 - **Visitante**: os totais do serviço vêm zerados para ele; o app recalcula as concluídas a partir
   do registro da sessão e usa o número de lições de cada módulo vindo do serviço.
-- **Layout**: os cartões ficam em uma coluna (um por linha), mais fácil de ler e tocar para o
-  público idoso e com letra grande; "grade" no RF-023 é lida como a coleção de módulos, não como
-  várias colunas.
 - **Sem offline**: as atividades não estão entre o que precisa funcionar sem internet (RNF-002);
   sem conexão, vale o estado de erro.
 - **Tela do módulo**: a rota `/activities/:moduleId` já existe e continua com a tela provisória
@@ -235,5 +283,13 @@ estado e o "Tentar novamente".
   Configurações); não há quadro do Figma específico para o painel.
 - **Independência do Perfil**: o Perfil já lê esse mesmo serviço para as conquistas; o módulo de
   atividades terá a própria leitura, sem depender do Perfil (regra de módulos do projeto).
+- **Reenvio ao criar conta**: o serviço só registra respostas uma a uma (não há envio de progresso
+  em lote), por isso o app reenvia cada resposta guardada. Como a conta é nova, não há lição já
+  feita para conflitar; que uma resposta enviada pela conta nova conta como lição concluída será
+  conferido no plano, com uma conta de teste.
+- **RN-006 estendida**: a regra do produto diz que o progresso do visitante vale só para a sessão;
+  continua valendo (nada é guardado no aparelho), com a exceção da transferência ao criar conta na
+  mesma sessão. A mudança será anotada no tasks do produto ao fechar a feature.
 - **Fora desta feature**: perguntas (B2), correção e pontuação (B3), conclusão e aviso de login
-  (B4); a gravação das respostas do visitante no registro da sessão é feita pela B3.
+  (B4); a gravação das respostas do visitante no registro da sessão é feita pela B3. Esta feature
+  entrega o registro, a leitura pelo painel e o reenvio ao criar uma conta.

@@ -33,8 +33,9 @@
 
 - Nenhum marcador de clarificação: o formato do serviço foi conferido em 2026-10-19 e as regras
   vêm de RF-023, RN-006 e CB-012.
-- Decisões tomadas como suposição e que a usuária pode rever no `/speckit-clarify`: cartões em uma
-  coluna (não grade de várias colunas); aviso curto do visitante no painel; progresso do visitante
-  descartado em qualquer troca de sessão.
+- Clarificação de 2026-10-19 (3 perguntas): duas colunas com letra normal e uma coluna com letra
+  aumentada; aviso do visitante com botão "Entrar ou criar conta"; progresso do visitante
+  transferido só ao criar conta na mesma sessão (reenvio das respostas), a conferir no servidor
+  no plano; ao entrar numa conta existente, descartado.
 - A rota `/activities/:moduleId` e o "serviço" aparecem como rastreabilidade com as features
   anteriores, não como detalhe de implementação.
