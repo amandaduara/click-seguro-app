@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
@@ -79,6 +83,7 @@ void main() {
     double textScale = 1.0,
     Locale locale = const Locale('pt', 'BR'),
     bool realRepository = false,
+    bool settle = true,
   }) async {
     tester.platformDispatcher.textScaleFactorTestValue = textScale;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
@@ -93,6 +98,7 @@ void main() {
       router: router,
       providers: [fakeNotificationsProvider()],
       locale: locale,
+      settle: settle,
     );
   }
 
@@ -408,6 +414,88 @@ void main() {
           matching: find.text('Em andamento'),
         ),
         findsOneWidget,
+      );
+    });
+  });
+
+  group('estados (US4)', () {
+    testWidgets('carregando e, depois de 5 s, o aviso de servidor acordando', (
+      tester,
+    ) async {
+      repository = FakeActivitiesRepository()..gate = Completer<void>();
+      await open(tester, settle: false);
+
+      expect(find.byType(SafeLoadingState), findsOneWidget);
+      expect(find.textContaining('O serviço está acordando'), findsNothing);
+      await tester.pump(SlowRequestNotice.delay);
+      expect(find.textContaining('O serviço está acordando'), findsOneWidget);
+
+      repository.gate!.complete();
+      await tester.pumpAndSettle();
+      expect(card('Golpes Digitais'), findsOneWidget);
+    });
+
+    testWidgets('erro com "Tentar novamente", que recarrega', (tester) async {
+      repository = FakeActivitiesRepository([
+        const Left(ConnectionFailure()),
+        Right(dashboard()),
+      ]);
+      await open(tester);
+
+      expect(
+        find.text('Não foi possível carregar as atividades'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Tentar novamente'));
+      await tester.pumpAndSettle();
+
+      expect(card('Golpes Digitais'), findsOneWidget);
+    });
+
+    testWidgets('sem módulos: mensagem e sem progresso geral', (tester) async {
+      repository = FakeActivitiesRepository([
+        Right(dashboard(modules: [], totalLessonsAvailable: 0)),
+      ]);
+      await open(tester);
+
+      expect(find.textContaining('Ainda não há atividades'), findsOneWidget);
+      expect(
+        find.textContaining('Volte mais tarde para aprender'),
+        findsOneWidget,
+      );
+      expect(find.text('Seu progresso'), findsNothing);
+    });
+
+    testWidgets('visitante vê o aviso também no erro', (tester) async {
+      await session.startGuestSession();
+      repository = FakeActivitiesRepository([const Left(ServerFailure())]);
+      await open(tester);
+
+      expect(
+        find.text('Sem conta, seu progresso vale até fechar o app.'),
+        findsOneWidget,
+      );
+      expect(find.text('Tentar novamente'), findsOneWidget);
+    });
+
+    testWidgets('recarga que falha ao voltar mantém os cartões', (
+      tester,
+    ) async {
+      repository = FakeActivitiesRepository([
+        Right(dashboard()),
+        const Left(ConnectionFailure()),
+      ]);
+      await open(tester);
+
+      await tester.tap(find.text('Golpes Digitais'));
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expect(card('Golpes Digitais'), findsOneWidget);
+      expect(
+        find.text('Não foi possível carregar as atividades'),
+        findsNothing,
       );
     });
   });

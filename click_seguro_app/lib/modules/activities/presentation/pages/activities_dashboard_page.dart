@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/refresh_on_return.dart';
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_summary_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/activities_dashboard_controller.dart';
@@ -16,6 +19,7 @@ import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Aba Atividades: progresso geral e os módulos (B1, specs/015-painel-atividades).
@@ -97,12 +101,30 @@ class _DashboardBodyState extends State<_DashboardBody>
         .watch<ActivitiesDashboardController>();
     final ActivitiesDashboardEntity? dashboard = controller.dashboard;
     return switch (controller.status) {
-      ActivitiesDashboardStatus.loading => const SafeLoadingState(),
-      ActivitiesDashboardStatus.loaded when dashboard != null => _Dashboard(
-        dashboard: dashboard,
+      // O servidor gratuito leva até ~40 s para acordar (R7).
+      ActivitiesDashboardStatus.loading => Column(
+        children: [
+          SlowRequestNotice(
+            active: true,
+            message: AppStrings.activitiesSlow.tr(),
+          ),
+          const Expanded(child: SafeLoadingState()),
+        ],
+      ),
+      ActivitiesDashboardStatus.error => SafeErrorState(
+        message: AppStrings.activitiesErrorTitle.tr(),
+        onRetry: controller.load,
+      ),
+      ActivitiesDashboardStatus.empty => SafeEmptyState(
+        icon: LucideIcons.graduationCap,
+        message:
+            '${AppStrings.activitiesEmptyTitle.tr()}\n'
+            '${AppStrings.activitiesEmptyBody.tr()}',
+      ),
+      ActivitiesDashboardStatus.loaded => _Dashboard(
+        dashboard: dashboard!,
         onOpen: _openModule,
       ),
-      _ => const SizedBox.shrink(),
     };
   }
 }

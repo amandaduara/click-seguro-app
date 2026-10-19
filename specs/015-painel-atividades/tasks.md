@@ -165,11 +165,11 @@ ao criar conta, as respostas vão para ela (FR-008, FR-008a, FR-009, FR-010, FR-
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T035 [US4] Em `tact/presentation/pages/activities_dashboard_page_test.dart`, grupo "estados": com o fake preso num `Completer` → `SafeLoadingState`; depois de `SlowRequestNotice.delay` (5 s) → "O serviço está acordando…"; falha → "Não foi possível carregar as atividades" e "Tentar novamente", que recarrega e mostra os cartões; zero módulos → "Ainda não há atividades" e o texto, sem "Seu progresso"; recarga ao voltar que falha → cartões continuam e nenhum erro aparece
+- [X] T035 [US4] Em `tact/presentation/pages/activities_dashboard_page_test.dart`, grupo "estados": com o fake preso num `Completer` → `SafeLoadingState`; depois de `SlowRequestNotice.delay` (5 s) → "O serviço está acordando…"; falha → "Não foi possível carregar as atividades" e "Tentar novamente", que recarrega e mostra os cartões; zero módulos → "Ainda não há atividades" e o texto, sem "Seu progresso"; recarga ao voltar que falha → cartões continuam e nenhum erro aparece
 
 ### Implementação
 
-- [ ] T036 [US4] Na página: `loading` → `SafeLoadingState` + `SlowRequestNotice(active: true, message: activitiesSlow)`; `error` → `SafeErrorState` (título `activitiesErrorTitle`, ação `commonTryAgain` → `controller.load()`); `empty` → `SafeEmptyState` (`activitiesEmptyTitle`, `activitiesEmptyBody`, ícone `graduationCap`); o aviso do visitante continua acima nos três estados. Faz a T035 passar
+- [X] T036 [US4] Na página: `loading` → `SafeLoadingState` + `SlowRequestNotice(active: true, message: activitiesSlow)`; `error` → `SafeErrorState` (título `activitiesErrorTitle`, ação `commonTryAgain` → `controller.load()`); `empty` → `SafeEmptyState` (título e frase numa mensagem só, em duas linhas, porque o widget tem um texto só; ícone `graduationCap`); o aviso do visitante continua acima nos três estados. Faz a T035 passar
 
 **Checkpoint**: `flutter test` verde. Commit da US4.
 
