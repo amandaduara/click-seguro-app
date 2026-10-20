@@ -215,6 +215,37 @@ abstract class AppStrings {
   // --- help ---
   static const String helpTitle = 'help_title';
   static const String helpContactTitle = 'help_contact_title';
+  static const String helpTabOfficial = 'help_tab_official';
+  static const String helpTabPersonal = 'help_tab_personal';
+  static const String helpOfficialUnavailable = 'help_official_unavailable';
+  static const String helpPersonalEmpty = 'help_personal_empty';
+  static const String helpAddContact = 'help_add_contact';
+  static const String helpEditContact = 'help_edit_contact';
+  static const String helpName = 'help_name';
+  static const String helpPhone = 'help_phone';
+  static const String helpRelationship = 'help_relationship';
+  static const String helpPhoto = 'help_photo';
+  static const String helpChoosePhoto = 'help_choose_photo';
+  static const String helpGallery = 'help_gallery';
+  static const String helpCamera = 'help_camera';
+  static const String helpRemovePhoto = 'help_remove_photo';
+  static const String helpSaveContact = 'help_save_contact';
+  static const String helpDeleteContact = 'help_delete_contact';
+  static const String helpDeleteConfirm = 'help_delete_confirm';
+  static const String helpCancel = 'help_cancel';
+  static const String helpConfirm = 'help_confirm';
+  static const String helpPermissionDenied = 'help_permission_denied';
+  static const String helpUnderstood = 'help_understood';
+  static const String helpPhoneFallback = 'help_phone_fallback';
+  static const String helpCall = 'help_call';
+  static const String helpCopyNumber = 'help_copy_number';
+  static const String helpCopied = 'help_copied';
+  static const String helpNameRequired = 'help_name_required';
+  static const String helpPhoneInvalid = 'help_phone_invalid';
+  static const String helpContactMissing = 'help_contact_missing';
+  static const String helpSaveFailed = 'help_save_failed';
+  static const String helpDeleteFailed = 'help_delete_failed';
+  static const String helpPhotoInitials = 'help_photo_initials';
 
   // --- profile ---
   static const String profileTitle = 'profile_title';
