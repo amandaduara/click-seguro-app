@@ -107,10 +107,11 @@ class ApiClient {
   /// Renova o par de tokens (`{refreshToken}` → `{accessToken, refreshToken}`).
   static const String refreshPath = '/auth/app/refresh';
 
-  /// Rotas cujos corpos nunca vão para o log (senhas e tokens, FR-017).
+  /// Rotas cujos corpos nunca vão para o log (credenciais e conteúdo de IA).
   static const List<String> sensitivePathPrefixes = [
     '/auth/',
     '/users/me/change-password',
+    '/app/ai/',
   ];
 
   final Dio _dio;
