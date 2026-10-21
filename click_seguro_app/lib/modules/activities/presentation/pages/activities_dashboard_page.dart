@@ -91,7 +91,7 @@ class _DashboardBodyState extends State<_DashboardBody>
     try {
       await pushAndRefresh('${ActivitiesDashboardPage.path}/${module.id}');
     } finally {
-      if (mounted) _opening = false;
+      _opening = false;
     }
   }
 

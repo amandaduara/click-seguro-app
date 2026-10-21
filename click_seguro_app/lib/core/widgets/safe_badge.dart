@@ -48,9 +48,9 @@ class SafeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: tone == SafeBadgeTone.neutral
-            ? context.colors.textMutedForeground
-            : color.withOpacity(0.1),
+        // O neutro seguia uma regra própria (fundo opaco na cor do texto) e
+        // o rótulo sumia (revisão do PR #22).
+        color: color.withValues(alpha: 0.1),
         borderRadius: AppSpacing.radiusFull,
       ),
       child: Row(
@@ -64,7 +64,8 @@ class SafeBadge extends StatelessWidget {
             const SizedBox(width: 4),
           ],
           // Com letra grande, o texto quebra a linha em vez de estourar
-          // (specs/015-painel-atividades).
+          // (specs/015-painel-atividades). Por isso o selo precisa de largura
+          // limitada: não colocar direto numa Row sem Expanded/Flexible.
           Flexible(
             child: DefaultTextStyle(
               style: Theme.of(context).textTheme.bodySmall!.copyWith(

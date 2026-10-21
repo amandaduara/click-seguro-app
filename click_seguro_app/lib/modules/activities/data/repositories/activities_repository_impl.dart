@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/activities_remote_data_source.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
@@ -11,7 +13,10 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:fpdart/fpdart.dart';
 
 class ActivitiesRepositoryImpl implements ActivitiesRepository {
-  ActivitiesRepositoryImpl(this._remote, this._store, this._session);
+  /// Ao criar conta, a transferência começa sem esperar o painel (R5).
+  ActivitiesRepositoryImpl(this._remote, this._store, this._session) {
+    _store.onSignUp = () => unawaited(syncGuestAnswers());
+  }
 
   /// Conteúdo que mudou no serviço: reenviar não adianta (R5).
   static const Set<String> _goneCodes = {
@@ -47,6 +52,9 @@ class ActivitiesRepositoryImpl implements ActivitiesRepository {
 
   Future<void> _sendPending() async {
     for (final GuestAnswer answer in _store.pendingTransfer) {
+      // Saiu da conta no meio do envio: o registro foi esvaziado e o resto
+      // não pode ir para outra conta.
+      if (!_store.pendingTransfer.contains(answer)) return;
       try {
         await _remote.answerLesson(
           moduleId: answer.moduleId,

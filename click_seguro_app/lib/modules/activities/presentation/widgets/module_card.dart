@@ -54,51 +54,48 @@ class ModuleCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.s4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ModuleIcon(url: module.iconUrl),
-                  const SizedBox(height: AppSpacing.s3),
-                  Text(
-                    module.title,
-                    style: textTheme.titleMedium?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: colors.secondary,
-                    ),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.s4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ModuleIcon(url: module.iconUrl),
+                const SizedBox(height: AppSpacing.s3),
+                Text(
+                  module.title,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: colors.secondary,
                   ),
-                  if (module.description.isNotEmpty) ...[
-                    const SizedBox(height: AppSpacing.s1),
-                    Text(
-                      module.description,
-                      maxLines: compact ? compactDescriptionLines : null,
-                      overflow: compact ? TextOverflow.ellipsis : null,
-                      style: textTheme.bodyLarge?.copyWith(
-                        fontSize: 16,
-                        color: colors.textForeground,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: AppSpacing.s3),
+                ),
+                if (module.description.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.s1),
                   Text(
-                    progress,
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontSize: 14,
-                      color: colors.textMutedForeground,
+                    module.description,
+                    maxLines: compact ? compactDescriptionLines : null,
+                    overflow: compact ? TextOverflow.ellipsis : null,
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontSize: 16,
+                      color: colors.textForeground,
                     ),
-                  ),
-                  const SizedBox(height: AppSpacing.s2),
-                  SafeBadge(
-                    tone: module.status.badgeTone,
-                    icon: Icon(module.status.icon, size: 14),
-                    child: Text(status),
                   ),
                 ],
-              ),
+                const SizedBox(height: AppSpacing.s3),
+                Text(
+                  progress,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 14,
+                    color: colors.textMutedForeground,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                SafeBadge(
+                  tone: module.status.badgeTone,
+                  icon: Icon(module.status.icon, size: 14),
+                  child: Text(status),
+                ),
+              ],
             ),
           ),
         ),

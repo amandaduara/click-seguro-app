@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.2.0
+**Versão**: 2.3.0
 
 **Criado em**: 2026-09-07
 
@@ -266,9 +266,12 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   `score / totalScore`, considerando a resposta **mais recente** de cada lição. Para o
   visitante, o app calcula igual, em memória: concluído quando todas as lições foram
   respondidas, pontuação = acertos na resposta mais recente / total de lições.
-- **RN-006 (Progresso do visitante)**: O progresso do visitante vale só para a sessão atual.
-  Ao concluir um módulo como visitante, o app MUST exibir o aviso de login (RF-030) antes da
-  tela de conclusão.
+- **RN-006 (Progresso do visitante)**: O progresso do visitante vale só para a sessão atual
+  (fica só na memória do app). Se o visitante **criar uma conta** sem fechar o app, o progresso
+  da sessão MUST ser transferido para a conta nova; ao **entrar numa conta que já existe**, ele
+  é descartado. Uma lição conta como concluída ao ser respondida, certa ou errada (como no
+  serviço). Ao concluir um módulo como visitante, o app MUST exibir o aviso de login (RF-030)
+  antes da tela de conclusão.
 - **RN-007 (Contatos locais)**: Contatos pessoais pertencem ao aparelho, não à conta: sair da
   conta MUST NOT apagar os contatos.
 - **RN-008 (Conquistas)**: As conquistas do perfil são derivadas das estatísticas do perfil e
@@ -362,6 +365,10 @@ nova versão e registro no changelog.
 
 ## Changelog
 
+- **2.3.0 (2026-10-21)**: RN-006 estendida: o progresso do visitante na sessão é transferido para
+  a conta se ele a criar sem fechar o app (descartado ao entrar numa conta existente); lição
+  concluída = respondida, como no serviço. Decidido em `specs/015-painel-atividades`
+  (clarificações de 2026-10-19).
 - **2.2.0 (2026-10-07)**: novo RF-042 (idioma do app nas configurações, seguindo o aparelho por
   padrão; a leitura em voz alta usa o mesmo idioma). Decidido em `specs/007-servicos-plataforma-voz`.
 - **2.1.0 (2026-10-03)**: alinhada à API real ([openapi.json](openapi.json)). IDs mantidos,

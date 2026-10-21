@@ -201,6 +201,28 @@ void main() {
       expect([for (final a in remote.sent) a.lessonId], ['l1', 'l2']);
     });
 
+    test('o cadastro dispara o envio sem abrir o painel', () async {
+      await guestThenSignUp();
+      await pumpEventQueue();
+
+      expect([for (final a in remote.sent) a.lessonId], ['l1', 'l2']);
+      expect(remote.modulesCalls, 0);
+      expect(store.pendingTransfer, isEmpty);
+    });
+
+    test('sair da conta durante o envio para o resto', () async {
+      remote.answerGate = Completer<void>();
+      await guestThenSignUp();
+      await pumpEventQueue();
+      expect(remote.sent, hasLength(1));
+
+      await session.logout();
+      remote.answerGate!.complete();
+      await pumpEventQueue();
+
+      expect([for (final a in remote.sent) a.lessonId], ['l1']);
+    });
+
     test('falha no envio não vira falha do painel', () async {
       await guestThenSignUp();
       remote.answerErrors['l1'] = apiError(ApiErrorType.server);

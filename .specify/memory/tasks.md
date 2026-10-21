@@ -258,8 +258,9 @@ Módulos: `activities`, `help`, `profile`, `settings`.
 - [ ] **B4 Atividades: conclusão e aviso de login** (RF-029, RF-030, RN-005, RN-006)
   - `CompletionPage` (pontuação `score/totalScore` da API, ou do `GuestProgressStore` para
     visitante; compartilhar conquista via `ShareService`).
-  - `GuestProgressAlert` antes da conclusão, para visitante, com botões "Criar conta" e "Continuar
-    sem salvar".
+  - `GuestProgressAlert` antes da conclusão, para visitante, com botões "Criar conta" (o progresso
+    da sessão vai para a conta nova, RN-006 2.3.0) e "Continuar sem conta" (o progresso vale até
+    fechar o app).
   - Widget tests dos dois fluxos (cadastrado e visitante).
 - [ ] **B6 Central de ajuda** (RF-031 a RF-034, RN-007, RNF-008, CB-009, CB-010)
   - Definir a lista de contatos oficiais com a orientação do TCC (ex.: 190, 197, Procon, canais

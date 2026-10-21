@@ -118,6 +118,16 @@ descartada (não adianta repetir). Falhas nunca chegam à pessoa.
 **Rationale**: o serviço só aceita respostas uma a uma (R0); como a conta é nova, não há lição já
 feita para conflitar. Com poucos módulos (hoje 9 lições), o número de pedidos é pequeno.
 
+**Revisão do PR #22 (2026-10-21)**:
+- *Código preparado para a B3:* até a B3 gravar respostas (`recordAnswer`), o registro fica vazio
+  e a transferência não tem efeito no app; ela já fica pronta e testada aqui porque o registro é
+  desta feature, e a decisão de transferir foi tomada nas clarificações. Aceito conscientemente.
+- *Painel espera o envio:* com conta e respostas pendentes, o painel só carrega depois do envio
+  (até 9 pedidos hoje). Aceito: só acontece uma vez, logo depois do cadastro, e o envio já começa
+  no próprio cadastro.
+- A ligação "cadastro → envio" ficou no construtor do repositório (antes estava no módulo), e o
+  envio para se a pessoa sair da conta no meio dele.
+
 **Alternatives considered**: enviar no controller do painel (a transferência dependeria de a
 pessoa abrir a aba); enviar em paralelo (a ordem não importa, mas em sequência fica mais simples de
 testar e não sobrecarrega o servidor gratuito).

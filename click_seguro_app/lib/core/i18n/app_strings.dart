@@ -229,7 +229,6 @@ abstract class AppStrings {
   static const String activitiesEmptyBody = 'activities_empty_body';
   static const String activitiesErrorTitle = 'activities_error_title';
   static const String activitiesSlow = 'activities_slow';
-  static const String activitiesOpenModule = 'activities_open_module';
 
   // --- help ---
   static const String helpTitle = 'help_title';
