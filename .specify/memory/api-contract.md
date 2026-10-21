@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.9 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-14
+**Versão**: 1.1.0 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-20
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -151,6 +151,27 @@ bloco de atividade relacionada (RF-018).
 
 `category`: `{ id, name, slug, description?, isActive, createdAt }`. O filtro usa o `slug`.
 
+### Assistente de IA — v2 autorizada (módulo `assistant`)
+
+| Status | Método e caminho | Auth | Uso |
+|---|---|---|---|
+| 🧪 | `POST /app/ai/chat` `{message, history?}` → `{response}` | sim | conversa com até 20 turnos `user`/`model` |
+| 🧪 | `POST /app/ai/analyze` `{text, source?}` → `AIAnalysisResponseDto` | sim | análise de texto suspeito |
+| 🧪 | `POST /app/ai/analyze/image?source=...` multipart `image` → `AIAnalysisResponseDto` | sim | análise JPEG/PNG/WebP até 5 MB |
+| 🧪 | `GET /app/ai/history?page&limit&feature` → `{data[], meta}` | sim | metadados de análises e conversas |
+
+Os limites de request são: chat `message` 5–1.000 caracteres, `history` opcional até 20 turnos
+com `content` de 1–2.000; análise de texto 10–5.000; `source` opcional 1–50; histórico com
+`page > 0`, `limit ≤ 100` e `feature=ANALYZE|CHAT`. A imagem usa o campo multipart `image` e
+MIME coerente com a assinatura do arquivo. `AIAnalysisResponseDto` preserva categoria, scores
+anuláveis, dicas, cache, tipo de entrada, status e data; valores ausentes ou enums desconhecidos
+não significam `SAFE` nem score zero. `AIHistoryResponseDto` traz metadados, não mensagens nem
+respostas completas de chat. A interface mantém respostas completas somente em memória enquanto
+a tela está aberta; turnos acima de 2.000 caracteres são limitados ao montar o próximo contexto.
+
+Implementação cliente baseada no Swagger local; 🧪 permanece até validação contra o servidor.
+As operações exigem autenticação. Não há streaming, `conversationId` ou exclusão de histórico.
+
 ### Alertas — A6 (módulo `notifications`)
 
 **❌ A API não tem endpoints de notificação.** Decisão (2026-10-03): **alertas locais**. O
@@ -242,12 +263,16 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 | Endpoint | Motivo |
 |---|---|
 | `GET /app/official-contacts?type` | contatos oficiais ficam no asset na v1. Pode alimentar o asset ou uma sincronização na v2 |
-| `POST /app/ai/analyze`, `POST /app/ai/analyze/image`, `POST /app/ai/chat`, `GET /app/ai/history` | IA (análise de mensagem suspeita e chat) adiada para a v2 |
 | `DELETE /users/me/deactivate` | desativar conta: v2 |
 | `GET /users/me/news/liked`, `GET /users/me/news/read` | sem tela na v1 |
 | Tudo em `/cms/*`, `/auth/cms/*`, `/users/cms/*` | painel administrativo (outro projeto) |
 
 ## Changelog
+
+- **1.1.0 (2026-10-20)**: IA da v2 autorizada e integrada no cliente a partir do Swagger local:
+  chat, análise de texto/imagem e histórico autenticados. Endpoints ainda 🧪; nenhum request real
+  foi validado. Histórico não restaura diálogo, respostas completas ficam somente em memória e o
+  app não persiste localmente mensagens ou imagens.
 
 - **1.0.9 (2026-10-14)**: troca de senha conferida no servidor real (specs/013-configuracoes R0):
   401/409/400 como no contrato; depois da troca o `refreshToken` anterior é recusado (401
@@ -284,5 +309,6 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
   passos; curtir/salvar como alternância; feed com destaques/recomendados/recentes por cursor.
   Removidos veracidade (sem campo na API) e notificações remotas (viraram alertas locais).
   Atividades no modelo da API (pergunta única por lição, correção no servidor). Perfil sem
-  estatísticas na API (montadas no app). Contatos oficiais continuam locais; IA fora da v1.
+  estatísticas na API (montadas no app). Contatos oficiais continuam locais; IA permanece fora
+  da v1 e está descrita na seção da v2.
 - **0.1.0 (2026-09-26)**: rascunho derivado da especificação v2.0.0.

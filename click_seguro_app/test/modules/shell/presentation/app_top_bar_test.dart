@@ -44,6 +44,10 @@ void main() {
         path: '/notifications',
         builder: (_, _) => const Scaffold(body: Text('tela alertas')),
       ),
+      GoRoute(
+        path: '/assistant',
+        builder: (_, _) => const Scaffold(body: Text('tela assistente')),
+      ),
     ],
   );
 
@@ -268,7 +272,7 @@ void main() {
         providers: [fakeNotificationsProvider()],
       );
 
-      for (final label in ['Alertas', 'Configurações']) {
+      for (final label in ['Alertas', 'Assistente', 'Configurações']) {
         final size = tester.getSize(find.bySemanticsLabel(label));
         expect(size.width, greaterThanOrEqualTo(48), reason: label);
         expect(size.height, greaterThanOrEqualTo(48), reason: label);
@@ -278,6 +282,10 @@ void main() {
     testWidgets('fonte em 200% não estoura a barra', (tester) async {
       tester.platformDispatcher.textScaleFactorTestValue = 2;
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      tester.view.physicalSize = const Size(320, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       await signIn();
 
       await pumpLocalized(
@@ -287,6 +295,27 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
+      expect(find.text('Notícias seguras'), findsOneWidget);
+      for (final label in ['Alertas', 'Assistente', 'Configurações']) {
+        final button = find.bySemanticsLabel(label);
+        expect(button, findsOneWidget, reason: label);
+        final size = tester.getSize(button);
+        expect(size.width, greaterThanOrEqualTo(48), reason: label);
+        expect(size.height, greaterThanOrEqualTo(48), reason: label);
+      }
+    });
+
+    testWidgets('botão "Assistente" abre a rota', (tester) async {
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      await tester.tap(find.byTooltip('Assistente'));
+      await tester.pumpAndSettle();
+      expect(find.text('tela assistente'), findsOneWidget);
     });
   });
 }
