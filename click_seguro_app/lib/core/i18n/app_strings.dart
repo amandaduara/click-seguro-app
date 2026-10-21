@@ -211,6 +211,24 @@ abstract class AppStrings {
   // --- activities ---
   static const String activitiesTitle = 'activities_title';
   static const String activitiesModuleTitle = 'activities_module_title';
+  static const String activitiesOverallTitle = 'activities_overall_title';
+  static const String activitiesOverallCount = 'activities_overall_count';
+  static const String activitiesModuleCount = 'activities_module_count';
+  static const String activitiesModuleUnavailable =
+      'activities_module_unavailable';
+  static const String activitiesStatusNotStarted =
+      'activities_status_not_started';
+  static const String activitiesStatusInProgress =
+      'activities_status_in_progress';
+  static const String activitiesStatusCompleted = 'activities_status_completed';
+  static const String activitiesStatusUnavailable =
+      'activities_status_unavailable';
+  static const String activitiesGuestNotice = 'activities_guest_notice';
+  static const String activitiesGuestAction = 'activities_guest_action';
+  static const String activitiesEmptyTitle = 'activities_empty_title';
+  static const String activitiesEmptyBody = 'activities_empty_body';
+  static const String activitiesErrorTitle = 'activities_error_title';
+  static const String activitiesSlow = 'activities_slow';
 
   // --- help ---
   static const String helpTitle = 'help_title';

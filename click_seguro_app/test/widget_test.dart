@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/routing/app_router.dart';
 import 'package:click_seguro_app/main.dart';
 import 'package:click_seguro_app/modules/activities/activities.dart';
+import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/services/app_info_service.dart';
@@ -22,6 +23,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fakes/fake_app_info_service.dart';
 import 'fakes/fake_secure_storage_service.dart';
+import 'modules/activities/fakes/fake_activities_repository.dart';
 import 'modules/news/fakes/fake_news_repository.dart';
 import 'modules/notifications/fakes/fake_notifications_repository.dart';
 import 'modules/profile/fakes/fake_profile_repository.dart';
@@ -69,6 +71,10 @@ void main() {
         FakeAccountRepository(),
       );
       GetIt.instance.registerSingleton<AppInfoService>(FakeAppInfoService());
+      // Nem as atividades.
+      GetIt.instance.registerSingleton<ActivitiesRepository>(
+        FakeActivitiesRepository(),
+      );
       session = GetIt.instance<UserSessionService>();
       await session.restoreSession();
     });
@@ -111,7 +117,7 @@ void main() {
     }
 
     await tapTab('Atividades');
-    expect(find.byType(ActivitiesPage), findsOneWidget);
+    expect(find.byType(ActivitiesDashboardPage), findsOneWidget);
 
     await tapTab('Notícias');
     expect(find.byType(ReelsPage), findsOneWidget);

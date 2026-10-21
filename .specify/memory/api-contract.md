@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.0.9 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-14
+**Versão**: 1.0.10 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-19
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -178,12 +178,19 @@ próprio app gera os alertas a partir das notícias novas, sem backend:
 
 | Status | Método e caminho | Auth | Uso |
 |---|---|---|---|
-| 🧪 | `GET /app/educational/modules` → `{modules[], totalLessonsCompleted, totalLessonsAvailable}` | opcional | RF-023 |
-| 🧪 | `GET /app/educational/modules/{moduleId}` → `moduleDetail` | opcional | RF-024, RF-025 |
-| 🧪 | `POST /app/educational/modules/{moduleId}/lessons/{lessonId}/answer` `{selectedOptionId}` → `{isCorrect, correctOptionId, explanation?}` | opcional | RF-026, RF-028 |
+| ✅ | `GET /app/educational/modules` → `{modules[], totalLessonsCompleted, totalLessonsAvailable}` | opcional | RF-023 |
+| ✅ | `GET /app/educational/modules/{moduleId}` → `moduleDetail` | opcional | RF-024, RF-025 |
+| ✅ | `POST /app/educational/modules/{moduleId}/lessons/{lessonId}/answer` `{selectedOptionId}` → `{isCorrect, correctOptionId, explanation?}` | opcional | RF-026, RF-028 |
 
 Erros: 404 `EDUCATIONAL_MODULE_NOT_FOUND`, 404 `EDUCATIONAL_LESSON_NOT_FOUND`,
-400 `EDUCATIONAL_INVALID_OPTION`.
+400 `EDUCATIONAL_INVALID_OPTION`. ⚠️ Conferido em 2026-10-19: `selectedOptionId` que não é CUID dá
+400 `VALIDATION_ERROR` (`errors[{field: 'selectedOptionId'}]`), não `EDUCATIONAL_INVALID_OPTION`.
+
+**Conferido no servidor real (2026-10-19, specs/015-painel-atividades R0)**:
+- Uma lição conta como **concluída ao ser respondida**, certa ou errada (`completedCount` sobe com
+  resposta errada; `score` não).
+- `progress.totalScore` vem **0** até a primeira resposta da conta no módulo (depois, o número de
+  lições). A B4 não deve mostrar "0 de 0".
 
 `moduleSummary`: `{ id, title, description, order, iconUrl?, lessonsCount, completedCount,
 progressPercent }` (ordenados por `order`; progresso zerado sem token).
@@ -249,6 +256,10 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
+- **1.0.10 (2026-10-19)**: atividades conferidas no servidor real (specs/015-painel-atividades
+  R0): os três endpoints de atividades passam a ✅; visitante recebe 200 sem token com progresso
+  zerado; resposta errada conta como lição concluída; vale a resposta mais recente para o
+  `score`; `totalScore` 0 até a 1ª resposta; opção que não é CUID → 400 `VALIDATION_ERROR`.
 - **1.0.9 (2026-10-14)**: troca de senha conferida no servidor real (specs/013-configuracoes R0):
   401/409/400 como no contrato; depois da troca o `refreshToken` anterior é recusado (401
   `TOKEN_INVALID`) e o `accessToken` continua valendo até vencer. `PATCH /users/me

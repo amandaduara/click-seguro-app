@@ -19,6 +19,7 @@ import '../../modules/authentication/fakes/controller_factory.dart';
 import '../../modules/authentication/fakes/fake_auth_repository.dart';
 import '../../modules/authentication/fakes/forgot_password_controller_factory.dart';
 import '../../helpers/accessibility_provider.dart';
+import '../../helpers/activities_dependencies.dart';
 import '../../helpers/localized_app.dart';
 import '../../helpers/news_detail_dependencies.dart';
 import '../../helpers/profile_dependencies.dart';
@@ -38,6 +39,7 @@ void main() {
     registerNewsDetailDependencies(GetIt.instance);
     registerProfileDependencies(GetIt.instance);
     registerSettingsDependencies(GetIt.instance);
+    registerActivitiesDependencies(GetIt.instance);
     await session.startGuestSession();
     router = buildAppRouter(session);
   });
@@ -73,7 +75,7 @@ void main() {
   group('caminhos do plano do produto', () {
     const tabPaths = <String, Type>{
       '/home': NewsHomePage,
-      '/activities': ActivitiesPage,
+      '/activities': ActivitiesDashboardPage,
       '/reels': ReelsPage,
       '/reels?start=n1': ReelsPage,
       '/help': HelpPage,
