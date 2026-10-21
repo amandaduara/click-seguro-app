@@ -220,7 +220,14 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
 
 Módulos: `activities`, `help`, `profile`, `settings`.
 
-- [ ] **B1 Atividades: painel** (RF-023, CB-012)
+- [x] **B1 Atividades: painel** (RF-023, CB-012) (specs/015-painel-atividades)
+  - Entregue (2026-10-21): cartões em duas colunas com letra 100% e uma coluna com letra maior;
+    aviso do visitante com "Entrar ou criar conta"; uma lição conta como concluída ao ser
+    respondida, certa ou errada (como no servidor, contrato 1.0.10). **RN-006 estendida:** o
+    progresso do visitante continua só em memória, mas, se ele **criar uma conta** sem fechar o
+    app, as respostas são reenviadas à conta nova (`saveSession(newAccount: true)` →
+    `startedFromSignUp`); ao entrar numa conta existente, é descartado. **A B3 deve gravar cada
+    resposta do visitante com `GuestProgressStore.recordAnswer`** (módulo `activities`).
   - Endpoint: `GET /app/educational/modules` (o progresso já vem junto).
   - `ModuleSummaryEntity` (`completedCount`, `progressPercent`) e `ActivitiesDashboardEntity`
     (totais) + models, com teste.

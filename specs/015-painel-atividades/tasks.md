@@ -180,8 +180,8 @@ ao criar conta, as respostas vão para ela (FR-008, FR-008a, FR-009, FR-010, FR-
 - [X] T037 Contrato da API → **1.0.10** em `.specify/memory/api-contract.md`: endpoints de atividades de 🧪 para ✅ (conferidos em 2026-10-19, specs/015 R0); notas: resposta errada conta como concluída; `progress.totalScore` 0 até a 1ª resposta; `selectedOptionId` que não é CUID → 400 `VALIDATION_ERROR`; entrada no changelog
 - [X] T038 Revisão de código sem uso e de código só para teste (prática do projeto): procurar em `act/`, `app/lib/core/widgets/refresh_on_return.dart`, `user_session_service.dart` e `auth_repository_impl.dart` membros, parâmetros, chaves de i18n ou imports sem uso (ex.: `GuestProgressStore.recordAnswer` só é chamado pelos testes até a B3: manter e citar a B3 no comentário); remover o que sobrar e ajustar testes. **Feito:** removidos `ModuleSummaryEntity.progress` e `==`/`hashCode` (sem uso no app); `GuestProgressStore.recordAnswer` fica para a B3, com comentário
 - [X] T039 `flutter analyze` sem novos avisos em relação à linha de base da T001 e `flutter test` inteiro verde; anotar os números aqui. **Resultado (2026-10-19):** `flutter analyze` 28 issues, todos `info` (igual à linha de base); `flutter test` 1423 verdes (+79)
-- [ ] T040 Validação no aparelho: rodar os 12 passos do [quickstart](quickstart.md) (a usuária valida); anotar o que falhar como tarefa nova
-- [ ] T041 Fechar a feature: marcar a B1 em `.specify/memory/tasks.md`, anotando a transferência ao criar conta (RN-006 estendida) e que a B3 grava no `GuestProgressStore` (`recordAnswer`); marcar as tarefas deste arquivo; commit de docs
+- [X] T040 Validação no aparelho: rodar os 12 passos do [quickstart](quickstart.md) (a usuária valida); anotar o que falhar como tarefa nova. **Validado pela usuária no aparelho em 2026-10-21, sem falhas**
+- [X] T041 Fechar a feature: marcar a B1 em `.specify/memory/tasks.md`, anotando a transferência ao criar conta (RN-006 estendida) e que a B3 grava no `GuestProgressStore` (`recordAnswer`); marcar as tarefas deste arquivo; commit de docs
 
 ---
 
