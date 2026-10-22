@@ -383,4 +383,70 @@ void main() {
       expect(controller.canGoNext, isFalse);
     });
   });
+
+  group('erros ao responder (specs/018 US6)', () {
+    setUp(() => controller.load('m1'));
+
+    test('falha comum: mantém a escolha e não conclui', () async {
+      repository.answerResults = [const Left(ConnectionFailure())];
+      controller.select('l1-o2');
+
+      expect(await controller.confirm(), AnswerAttempt.failed);
+
+      expect(controller.selectedOptionId, 'l1-o2');
+      expect(controller.current!.isCompleted, isFalse);
+      expect(controller.currentResult, isNull);
+      expect(controller.canConfirm, isTrue);
+    });
+
+    test('recusada: recarrega o módulo e esquece os resultados', () async {
+      repository
+        ..answerResults = [
+          Right(AnswerResultModel.fromJson(answerJson()).toEntity()),
+          const Left(AnswerRejectedFailure()),
+        ]
+        ..moduleDetailResults = [
+          Right(module(answered: {'l1'})),
+        ];
+      controller.select('l1-o1');
+      await controller.confirm();
+      controller
+        ..goNext()
+        ..select('l2-o1');
+      final int loadsBefore = repository.moduleDetailCalls;
+
+      expect(await controller.confirm(), AnswerAttempt.rejected);
+
+      expect(repository.moduleDetailCalls, greaterThan(loadsBefore));
+      expect(controller.status, LessonStatus.loaded);
+      expect(controller.current!.id, 'l2');
+      expect(controller.resultFor('l1'), isNull);
+      expect(controller.selectedOptionId, isNull);
+    });
+
+    test('recusada e o módulo sumiu: "sem atividades" (achado C1)', () async {
+      repository
+        ..answerResults = [const Left(AnswerRejectedFailure())]
+        ..moduleDetailResults = [const Left(ModuleNotFoundFailure())];
+      controller.select('l1-o1');
+
+      await controller.confirm();
+
+      expect(controller.status, LessonStatus.empty);
+    });
+
+    test('dispose durante o envio: nada notificado depois', () async {
+      controller.select('l1-o1');
+      repository.answerGate = Completer<void>();
+      int notifications = 0;
+      final Future<AnswerAttempt> attempt = controller.confirm();
+      controller.addListener(() => notifications++);
+      controller.dispose();
+
+      repository.answerGate!.complete();
+      await attempt;
+
+      expect(notifications, 0);
+    });
+  });
 }

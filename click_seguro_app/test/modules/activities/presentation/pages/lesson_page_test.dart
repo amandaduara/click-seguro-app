@@ -625,6 +625,97 @@ void main() {
     );
   });
 
+  group('erros ao responder (specs/018 US6)', () {
+    Future<void> chooseSecond(WidgetTester tester) async {
+      await reveal(tester, find.text('Enviar'));
+      await tester.tap(find.text('Enviar'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('sem internet: mensagem e a escolha continua marcada', (
+      tester,
+    ) async {
+      repository.answerResults = [const Left(ConnectionFailure())];
+      await open(tester);
+      await chooseSecond(tester);
+
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Não foi possível enviar sua resposta. Tente de novo.'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<LessonOptionCard>(
+              find.ancestor(
+                of: find.text('Enviar'),
+                matching: find.byType(LessonOptionCard),
+              ),
+            )
+            .state,
+        LessonOptionState.selected,
+      );
+      expect(find.text('Não foi dessa vez'), findsNothing);
+    });
+
+    testWidgets('recusada: mensagem e o módulo recarregado', (tester) async {
+      repository.answerResults = [const Left(AnswerRejectedFailure())];
+      await open(tester);
+      final int loadsBefore = repository.moduleDetailCalls;
+      await chooseSecond(tester);
+
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Esta pergunta foi atualizada. Carregamos as atividades de novo.',
+        ),
+        findsOneWidget,
+      );
+      expect(repository.moduleDetailCalls, greaterThan(loadsBefore));
+      await tester.scrollUntilVisible(
+        find.text('Pergunta 1 de 3'),
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+    });
+
+    testWidgets('envio demorado: aviso de serviço acordando', (tester) async {
+      await open(tester);
+      await chooseSecond(tester);
+      repository.answerGate = Completer<void>();
+
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pump();
+      expect(find.textContaining('O serviço está acordando'), findsNothing);
+      await tester.pump(SlowRequestNotice.delay);
+      expect(find.textContaining('O serviço está acordando'), findsOneWidget);
+
+      repository.answerGate!.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('sair da tela no meio do envio: sem erro', (tester) async {
+      await open(tester);
+      await chooseSecond(tester);
+      repository.answerGate = Completer<void>();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pump();
+
+      router.go('/activities');
+      await tester.pumpAndSettle();
+      repository.answerGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
   group('pontuação (specs/018 US3)', () {
     testWidgets('só no painel, nunca na tela das perguntas', (tester) async {
       repository.moduleDetailResults = [

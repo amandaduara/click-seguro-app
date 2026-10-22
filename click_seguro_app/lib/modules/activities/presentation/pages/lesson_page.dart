@@ -123,8 +123,19 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   /// A leitura da pergunta para antes do envio (FR-017).
   Future<void> _confirm() async {
     unawaited(_readAloud.stop());
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final AnswerAttempt attempt = await _controller.confirm();
     if (!mounted) return;
+    final String? message = switch (attempt) {
+      AnswerAttempt.failed => AppStrings.activitiesAnswerFailed.tr(),
+      AnswerAttempt.rejected => AppStrings.activitiesAnswerRejected.tr(),
+      AnswerAttempt.answered || AnswerAttempt.ignored => null,
+    };
+    if (message != null) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    }
     if (attempt == AnswerAttempt.answered) await _showFeedback();
   }
 
@@ -209,6 +220,11 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
                   ),
                 ),
               ),
+              // O envio também pode esperar o servidor acordar (FR-014).
+              SlowRequestNotice(
+                active: controller.isSubmitting,
+                message: AppStrings.activitiesSlow.tr(),
+              ),
               ConfirmAnswerFooter(controller: controller, onConfirm: _confirm),
             ],
           ),
@@ -253,8 +269,8 @@ class _LessonBody extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final String? image = lesson.imageUrl;
     return ListView(
-      // Uma rolagem por pergunta: a próxima começa no topo, com o enunciado.
-      key: PageStorageKey(lesson.id),
+      // Cada pergunta que aparece começa no topo, com o enunciado.
+      key: ValueKey(lesson.id),
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s5,
         AppSpacing.s4,

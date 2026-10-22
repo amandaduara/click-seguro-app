@@ -7,6 +7,7 @@ import 'package:click_seguro_app/modules/activities/domain/usecases/answer_lesso
 import 'package:click_seguro_app/modules/activities/domain/usecases/get_module_detail_usecase.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
 import 'package:flutter/foundation.dart';
+import 'package:fpdart/fpdart.dart';
 
 /// O que aconteceu ao confirmar uma resposta (data-model de specs/018).
 enum AnswerAttempt { answered, failed, rejected, ignored }
@@ -130,18 +131,24 @@ class LessonController extends ChangeNotifier {
     );
     _isSubmitting = false;
     if (_disposed) return AnswerAttempt.ignored;
-    final AnswerAttempt attempt = result.fold((_) => AnswerAttempt.failed, (
-      outcome,
-    ) {
-      _answers[lesson.id] = _LessonAnswerState(
-        selectedOptionId: optionId,
-        result: outcome.result,
-      );
-      _markCompleted(lesson.id, outcome.score);
-      return AnswerAttempt.answered;
-    });
-    _notify();
-    return attempt;
+    switch (result) {
+      // A pergunta mudou no serviço: recarrega (R5 de specs/018).
+      case Left(value: AnswerRejectedFailure()):
+        await load(moduleId);
+        return AnswerAttempt.rejected;
+      // A escolha continua marcada para tentar de novo (FR-013).
+      case Left():
+        _notify();
+        return AnswerAttempt.failed;
+      case Right(value: final outcome):
+        _answers[lesson.id] = _LessonAnswerState(
+          selectedOptionId: optionId,
+          result: outcome.result,
+        );
+        _markCompleted(lesson.id, outcome.score);
+        _notify();
+        return AnswerAttempt.answered;
+    }
   }
 
   /// Respondida, certa ou errada, conta como concluída (RN-006). A lista é

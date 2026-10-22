@@ -115,7 +115,7 @@ fecha sem querer (FR-005 a FR-008, FR-018).
 - [X] T024 [US2] Criar `act/presentation/widgets/feedback_sheet.dart`: `enum FeedbackAction { next, finish }`; `Future<FeedbackAction?> showFeedbackSheet(BuildContext, {required LessonEntity lesson, required AnswerResultEntity result, required bool isLast, ModuleScoreEntity? score, Widget? listen})` com `showModalBottomSheet(isDismissible: false, enableDrag: false, isScrollControlled: true, useSafeArea: true)`; conteúdo rolável conforme o [contrato](contracts/lesson-answer.md#2-tela-de-perguntas) (pontuação e `listen` entram na US3/US5) e o botão de seguir (`SafeButton`), que ignora o segundo toque (o primeiro desativa o botão antes do `Navigator.pop`, para um toque duplo não fechar também a tela de perguntas). Faz a T020 passar
 - [X] T025 [US2] Em `lesson_page.dart`: estados das alternativas pela extensão; `_confirm()` com `answered` → `showFeedbackSheet`; `next` → `controller.goNext()`; `finish` → `context.pop()` (o painel recarrega pelo `RefreshOnReturnMixin` da B1); `null` → fica. Faz a T021 passar
 
-**Checkpoint**: testes da lição e do painel verdes. Commit da US2. **Nota (2026-10-22):** a T021 achou que, ao seguir para a próxima pergunta, a lista continuava rolada para baixo (o enunciado ficava fora da tela); a `ListView` da pergunta ganhou `PageStorageKey(lesson.id)`, e cada pergunta começa no topo.
+**Checkpoint**: testes da lição e do painel verdes. Commit da US2. **Nota (2026-10-22):** a T021 achou que, ao seguir para a próxima pergunta, a lista continuava rolada para baixo (o enunciado ficava fora da tela); a `ListView` da pergunta ganhou `ValueKey(lesson.id)`, e cada pergunta começa no topo (na US6 a `PageStorageKey` inicial foi trocada pela `ValueKey`, para não restaurar a rolagem antiga).
 
 ---
 
@@ -167,12 +167,12 @@ quebra (FR-013 a FR-015).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T032 [P] [US6] Em `lesson_controller_test.dart`, grupo "erros": `ConnectionFailure` → `failed`, escolha mantida, lição **não** concluída, `canConfirm` de novo; `AnswerRejectedFailure` → `rejected`, `getModuleDetail` chamado de novo, mapa de resultados vazio, índice na primeira não respondida; `AnswerRejectedFailure` seguida de `ModuleNotFoundFailure` no recarregar → `LessonStatus.empty` (US6 cenário 4, achado C1 da análise); `dispose` durante o envio → nenhuma notificação depois
-- [ ] T033 [US6] Em `lesson_page_test.dart`, grupo "erros": conexão → `SnackBar` "Não foi possível enviar sua resposta. Tente de novo." e a alternativa continua marcada; recusa → `SnackBar` "Esta pergunta foi atualizada…" e módulo recarregado; envio segurado pelo `answerGate` por mais de alguns segundos → `SlowRequestNotice` com `activitiesSlow` acima do rodapé; sair da página (pop) com o envio segurado e depois liberar → sem exceção
+- [X] T032 [P] [US6] Em `lesson_controller_test.dart`, grupo "erros": `ConnectionFailure` → `failed`, escolha mantida, lição **não** concluída, `canConfirm` de novo; `AnswerRejectedFailure` → `rejected`, `getModuleDetail` chamado de novo, mapa de resultados vazio, índice na primeira não respondida; `AnswerRejectedFailure` seguida de `ModuleNotFoundFailure` no recarregar → `LessonStatus.empty` (US6 cenário 4, achado C1 da análise); `dispose` durante o envio → nenhuma notificação depois
+- [X] T033 [US6] Em `lesson_page_test.dart`, grupo "erros": conexão → `SnackBar` "Não foi possível enviar sua resposta. Tente de novo." e a alternativa continua marcada; recusa → `SnackBar` "Esta pergunta foi atualizada…" e módulo recarregado; envio segurado pelo `answerGate` por mais de alguns segundos → `SlowRequestNotice` com `activitiesSlow` acima do rodapé; sair da página (pop) com o envio segurado e depois liberar → sem exceção
 
 ### Implementação
 
-- [ ] T034 [US6] Em `lesson_controller.dart`: `failed` e `rejected` (recarrega com `load(moduleId)` guardado do último `load`, esvaziando o mapa). Em `lesson_page.dart`: `SnackBar` por resultado (padrão de `change_password_page.dart`: `ScaffoldMessenger` guardado antes do `await`, `hideCurrentSnackBar` + `showSnackBar`) e `SlowRequestNotice(active: controller.isSubmitting, message: activitiesSlow)` acima do `ConfirmAnswerFooter`. Faz a T032 e a T033 passar
+- [X] T034 [US6] Em `lesson_controller.dart`: `failed` e `rejected` (recarrega com `load(moduleId)` guardado do último `load`, esvaziando o mapa). Em `lesson_page.dart`: `SnackBar` por resultado (padrão de `change_password_page.dart`: `ScaffoldMessenger` guardado antes do `await`, `hideCurrentSnackBar` + `showSnackBar`) e `SlowRequestNotice(active: controller.isSubmitting, message: activitiesSlow)` acima do `ConfirmAnswerFooter`. Faz a T032 e a T033 passar
 
 **Checkpoint**: testes verdes. Commit da US6.
 
