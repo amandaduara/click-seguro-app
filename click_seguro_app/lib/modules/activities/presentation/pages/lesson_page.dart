@@ -110,10 +110,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
         _controller.status != LessonStatus.loaded ||
         lesson == null ||
         _autoReadDone ||
-        !_readAloud.isAvailable ||
-        !GetIt.instance<AccessibilityPreferencesNotifier>()
-            .value
-            .autoReadAloud) {
+        !_autoReadEnabled) {
       return;
     }
     _autoReadDone = true;
@@ -145,28 +142,50 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     final LessonEntity? lesson = _controller.current;
     final AnswerResultEntity? result = _controller.currentResult;
     if (lesson == null || result == null) return;
-    final FeedbackAction? action = await showFeedbackSheet(
+    final String spoken = lesson.spokenFeedback(
+      result,
+      score: _controller.score,
+    );
+    final Future<FeedbackAction?> closed = showFeedbackSheet(
       context,
       lesson: lesson,
       result: result,
       isLast: _controller.isLastLesson,
       score: _controller.score,
+      listen: _listenButton(spoken),
     );
+    // Com a leitura automática, o feedback é lido uma vez ao aparecer.
+    if (_autoReadEnabled) unawaited(_readAloud.speak(spoken));
+    final FeedbackAction? action = await closed;
     if (!mounted) return;
     switch (action) {
+      // Trocar de pergunta já para a leitura e lê a nova (B2).
       case FeedbackAction.next:
         _controller.goNext();
       case FeedbackAction.finish:
         context.pop();
       case null:
-        break;
+        unawaited(_readAloud.stop());
     }
   }
 
-  void _toggleListen(LessonEntity lesson) => unawaited(
-    _readAloud.isSpeaking
-        ? _readAloud.stop()
-        : _readAloud.speak(lesson.spokenText),
+  bool get _autoReadEnabled =>
+      _readAloud.isAvailable &&
+      GetIt.instance<AccessibilityPreferencesNotifier>().value.autoReadAloud;
+
+  void _toggleListen(String text) => unawaited(
+    _readAloud.isSpeaking ? _readAloud.stop() : _readAloud.speak(text),
+  );
+
+  /// "Ouvir"/"Parar" de [text]; some sem voz no idioma do app.
+  Widget _listenButton(String text) => ListenableBuilder(
+    listenable: _readAloud,
+    builder: (context, _) => _readAloud.isAvailable
+        ? ListenButton(
+            isSpeaking: _readAloud.isSpeaking,
+            onPressed: () => _toggleListen(text),
+          )
+        : const SizedBox.shrink(),
   );
 
   @override
@@ -209,15 +228,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
                   selectedOptionId: controller.selectedOptionId,
                   result: controller.currentResult,
                   onSelect: controller.canSelect ? controller.select : null,
-                  listen: ListenableBuilder(
-                    listenable: _readAloud,
-                    builder: (context, _) => _readAloud.isAvailable
-                        ? ListenButton(
-                            isSpeaking: _readAloud.isSpeaking,
-                            onPressed: () => _toggleListen(lesson),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
+                  listen: _listenButton(lesson.spokenText),
                 ),
               ),
               // O envio também pode esperar o servidor acordar (FR-014).

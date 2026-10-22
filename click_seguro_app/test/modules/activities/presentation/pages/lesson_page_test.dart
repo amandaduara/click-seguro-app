@@ -10,6 +10,7 @@ import 'package:click_seguro_app/modules/activities/data/models/module_detail_mo
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/lesson_page.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/feedback_sheet.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
@@ -623,6 +624,97 @@ void main() {
         );
       },
     );
+  });
+
+  group('voz no feedback (specs/018 US5)', () {
+    const String spokenFeedbackL1 =
+        'Você acertou!\n'
+        'Resposta correta: Ignorar e denunciar.\n'
+        'Promessas de dinheiro em dobro são golpe.';
+
+    Finder inSheet(Finder finder) =>
+        find.descendant(of: find.byType(FeedbackSheet), matching: finder);
+
+    Future<void> answerFirst(WidgetTester tester) async {
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      await tester.tap(find.text('Ignorar e denunciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('confirmar para a leitura da pergunta', (tester) async {
+      await open(tester);
+      await reveal(tester, find.text('Ouvir'));
+      await tester.tap(find.text('Ouvir'));
+      await tester.pumpAndSettle();
+      final int stopsBefore = tts.stopCalls;
+
+      await answerFirst(tester);
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+    });
+
+    testWidgets('"Ouvir" no painel lê o feedback e vira "Parar"', (
+      tester,
+    ) async {
+      await open(tester);
+      await answerFirst(tester);
+
+      await tester.tap(inSheet(find.text('Ouvir')));
+      await tester.pumpAndSettle();
+
+      expect(tts.spoken.last.text, spokenFeedbackL1);
+      expect(inSheet(find.text('Parar')), findsOneWidget);
+    });
+
+    testWidgets('leitura automática: o feedback uma vez, a pergunta não de '
+        'novo; "Próxima pergunta" lê a 2', (tester) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+      expect(tts.spoken, hasLength(1));
+
+      await answerFirst(tester);
+
+      expect(tts.spoken, hasLength(2));
+      expect(tts.spoken.last.text, spokenFeedbackL1);
+
+      final int stopsBefore = tts.stopCalls;
+      await tester.tap(find.text('Próxima pergunta'));
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+      expect(tts.spoken, hasLength(3));
+      expect(tts.spoken.last.text, startsWith('E-mail do banco'));
+    });
+
+    testWidgets('fechar pelo voltar para a leitura do feedback', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+      await answerFirst(tester);
+      final int stopsBefore = tts.stopCalls;
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+      expect(tts.spoken, hasLength(2));
+    });
+
+    testWidgets('sem voz no idioma: sem "Ouvir" no painel e nada lido', (
+      tester,
+    ) async {
+      tts.availableLanguages = {};
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+      await answerFirst(tester);
+
+      expect(find.byType(FeedbackSheet), findsOneWidget);
+      expect(inSheet(find.text('Ouvir')), findsNothing);
+      expect(tts.spoken, isEmpty);
+    });
   });
 
   group('erros ao responder (specs/018 US6)', () {

@@ -187,12 +187,12 @@ fechar (FR-016, FR-017).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T035 [P] [US5] Em `tact/presentation/extensions/` (arquivo novo `answer_presentation_test.dart`): texto falado = resultado + "Resposta correta: …" + explicação + pontuação, nessa ordem; sem explicação ou sem pontuação → partes omitidas; correta ausente → sem a parte da correta
-- [ ] T036 [US5] Em `lesson_page_test.dart`, grupo "voz no feedback" (`FakeTextToSpeechService`): confirmar com leitura em andamento → `stopCalls` aumenta antes do envio; no painel, "Ouvir" lê o texto da T035 e vira "Parar"; leitura automática ligada → o texto do feedback é falado uma vez ao abrir o painel, e a pergunta **não** é lida de novo ao ser marcada concluída; "Próxima pergunta" → para o feedback e lê a pergunta 2; fechar pelo voltar → para; sem voz no idioma → sem "Ouvir" no painel e nada falado
+- [X] T035 [P] [US5] Em `tact/presentation/extensions/` (arquivo novo `answer_presentation_test.dart`): texto falado = resultado + "Resposta correta: …" + explicação + pontuação, nessa ordem; sem explicação ou sem pontuação → partes omitidas; correta ausente → sem a parte da correta
+- [X] T036 [US5] Em `lesson_page_test.dart`, grupo "voz no feedback" (`FakeTextToSpeechService`): confirmar com leitura em andamento → `stopCalls` aumenta antes do envio; no painel, "Ouvir" lê o texto da T035 e vira "Parar"; leitura automática ligada → o texto do feedback é falado uma vez ao abrir o painel, e a pergunta **não** é lida de novo ao ser marcada concluída; "Próxima pergunta" → para o feedback e lê a pergunta 2; fechar pelo voltar → para; sem voz no idioma → sem "Ouvir" no painel e nada falado
 
 ### Implementação
 
-- [ ] T037 [US5] Em `answer_presentation.dart`, `String spokenFeedback(...)` (chaves do data-model §4). Em `lesson_page.dart`: o `ListenButton` do painel com o `ReadAloudController` da página (em `ListenableBuilder`, como o da pergunta), leitura automática do feedback ao abrir (mesma condição do `_maybeAutoRead`: voz disponível e `autoReadAloud` ligado), `stop()` ao fechar com `null` e antes do `goNext`. Faz a T035 e a T036 passar
+- [X] T037 [US5] Em `answer_presentation.dart`, `String spokenFeedback(...)` (chaves do data-model §4). Em `lesson_page.dart`: o `ListenButton` do painel com o `ReadAloudController` da página (em `ListenableBuilder`, como o da pergunta), leitura automática do feedback ao abrir (mesma condição do `_maybeAutoRead`: voz disponível e `autoReadAloud` ligado), `stop()` ao fechar com `null` e antes do `goNext`. Faz a T035 e a T036 passar
 
 **Checkpoint**: testes verdes. Commit da US5.
 
