@@ -2,7 +2,12 @@
 
 ## Objetivo
 
-Oferecer orientação sobre segurança digital e permitir verificar textos ou imagens suspeitas usando os endpoints v1 de IA da API. Esta especificação autoriza o v2 antes adiado.
+Oferecer orientação sobre segurança digital e permitir verificar textos ou imagens suspeitas usando os endpoints v1 de IA da API.
+
+**Decisão de escopo — 2026-10-22:** usuário solicitante nesta sessão aprovou explicitamente
+a inclusão do Assistente na v1 ("pode aprovar"), após a pendência levantada no review da PR #21.
+Esta decisão substitui o adiamento de 2026-10-03 e inclui registro, rota e acesso pelo cabeçalho
+compartilhado. Requisitos globais RF-043 a RF-045, tarefa B10. Homologação real ainda pendente.
 
 ## Escopo funcional
 
@@ -16,7 +21,12 @@ Oferecer orientação sobre segurança digital e permitir verificar textos ou im
 
 Usar exclusivamente `POST /app/ai/chat`, `POST /app/ai/analyze`, `POST /app/ai/analyze/image` e `GET /app/ai/history`, sob o prefixo de API já configurado. Não criar endpoint, streaming, identificador de conversa ou exclusão de histórico.
 
-O resultado de análise preserva `type`, scores anuláveis, explicação, dicas, cache, tipo de entrada, status e data. Enum futuro/desconhecido deve permanecer desconhecido; nulos permanecem indisponíveis e nunca viram zero ou `SAFE`. A UI deve apresentar risco e confiança sem omitir a incerteza do serviço.
+O contrato retorna `type`, scores anuláveis, explicação, dicas, cache, tipo de entrada, status e
+data. A entity do cliente projeta apenas os campos usados pela interface; `cached` e `inputType`
+não são armazenados no domínio. Da paginação, são usados `data`, `page` e `hasNextPage`; os demais
+metadados podem ser ignorados pelo model. Enum futuro/desconhecido usado na UI deve permanecer
+desconhecido; nulos permanecem indisponíveis e nunca viram zero ou `SAFE`. A UI deve apresentar
+risco e confiança sem omitir a incerteza do serviço.
 
 ## Privacidade e limites
 

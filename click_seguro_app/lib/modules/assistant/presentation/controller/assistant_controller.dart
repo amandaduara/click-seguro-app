@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:math' show max;
 
 import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_entity.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_chat_turn.dart';
+import 'package:click_seguro_app/modules/assistant/domain/entities/assistant_constants.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_history_feature.dart';
 import 'package:click_seguro_app/modules/assistant/domain/failures/assistant_failures.dart';
 import 'package:click_seguro_app/modules/assistant/domain/usecases/analyze_image_usecase.dart';
@@ -13,13 +15,6 @@ import 'package:click_seguro_app/modules/assistant/presentation/controller/assis
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-
-class AssistantChatMessage {
-  const AssistantChatMessage({required this.role, required this.content});
-
-  final AiChatRole role;
-  final String content;
-}
 
 class AssistantController extends ChangeNotifier {
   AssistantController({
@@ -43,9 +38,8 @@ class AssistantController extends ChangeNotifier {
   AssistantTab _activeTab = AssistantTab.chat;
   AssistantTab get activeTab => _activeTab;
 
-  final List<AssistantChatMessage> _chatMessages = [];
-  List<AssistantChatMessage> get chatMessages =>
-      List.unmodifiable(_chatMessages);
+  final List<AiChatTurn> _chatMessages = [];
+  List<AiChatTurn> get chatMessages => List.unmodifiable(_chatMessages);
   bool _isSendingChat = false;
   bool get isSendingChat => _isSendingChat;
   Failure? _chatFailure;
@@ -59,6 +53,15 @@ class AssistantController extends ChangeNotifier {
   Failure? get analysisFailure => _analysisFailure;
   bool _isAnalyzing = false;
   bool get isAnalyzing => _isAnalyzing;
+
+  AssistantAnalysisMode _analysisMode = AssistantAnalysisMode.text;
+  AssistantAnalysisMode get analysisMode => _analysisMode;
+  String? _analysisSource;
+  String? get analysisSource => _analysisSource;
+  AssistantAnalysisMode? _lastAnalysisMode;
+  String? _lastAnalysisText;
+  String? _lastAnalysisSource;
+  int _analysisRequestId = 0;
 
   String? _selectedImagePath;
   String? get selectedImagePath => _selectedImagePath;
@@ -102,19 +105,11 @@ class AssistantController extends ChangeNotifier {
   Future<void> sendChatMessage(String message) async {
     if (_disposed || _isSendingChat || _pendingChatMessage != null) return;
     final history = _chatMessages
-        .take(_chatMessages.length)
-        .toList()
-        .reversed
-        .take(20)
-        .toList()
-        .reversed
-        .map((entry) => AiChatTurn(role: entry.role, content: entry.content))
+        .skip(max(0, _chatMessages.length - AssistantLimits.contextTurnMax))
         .toList();
     _pendingChatMessage = message;
     _pendingChatHistory = history;
-    _chatMessages.add(
-      AssistantChatMessage(role: AiChatRole.user, content: message),
-    );
+    _chatMessages.add(AiChatTurn(role: AiChatRole.user, content: message));
     _chatFailure = null;
     await _submitPendingChat();
   }
@@ -150,9 +145,7 @@ class AssistantController extends ChangeNotifier {
         }
       },
       (reply) {
-        _chatMessages.add(
-          AssistantChatMessage(role: AiChatRole.model, content: reply),
-        );
+        _chatMessages.add(AiChatTurn(role: AiChatRole.model, content: reply));
         _pendingChatMessage = null;
         _pendingChatHistory = const [];
         _chatFailure = null;
@@ -171,14 +164,40 @@ class AssistantController extends ChangeNotifier {
     _notify();
   }
 
+  Future<void> setAnalysisMode(AssistantAnalysisMode mode) async {
+    if (_disposed || mode == _analysisMode || _isAnalyzing || _isPickingImage) {
+      return;
+    }
+    _analysisMode = mode;
+    _analysis = null;
+    _analysisFailure = null;
+    _analysisRequestId++;
+    _lastAnalysisMode = null;
+    _lastAnalysisText = null;
+    _lastAnalysisSource = null;
+    if (mode == AssistantAnalysisMode.text) await _removeSelectedImage();
+    _notify();
+  }
+
+  void setAnalysisSource(String? source) {
+    if (_disposed || source == _analysisSource) return;
+    _analysisSource = source;
+    _notify();
+  }
+
   Future<void> analyzeText(String text, {String? source}) async {
     if (_disposed || _isAnalyzing || _isPickingImage) return;
+    _analysisMode = AssistantAnalysisMode.text;
+    _lastAnalysisMode = AssistantAnalysisMode.text;
+    _lastAnalysisText = text;
+    _lastAnalysisSource = source ?? _analysisSource;
+    final int requestId = ++_analysisRequestId;
     _isAnalyzing = true;
     _analysis = null;
     _analysisFailure = null;
     _notify();
-    final result = await _analyzeText(text, source: source);
-    if (_disposed) return;
+    final result = await _analyzeText(text, source: _lastAnalysisSource);
+    if (_disposed || requestId != _analysisRequestId) return;
     _isAnalyzing = false;
     _applyAnalysisResult(result);
   }
@@ -241,22 +260,48 @@ class AssistantController extends ChangeNotifier {
   Future<void> analyzeSelectedImage({String? source}) async {
     final path = _selectedImagePath;
     if (_disposed || _isAnalyzing || _isPickingImage || path == null) return;
+    _analysisMode = AssistantAnalysisMode.image;
+    _lastAnalysisMode = AssistantAnalysisMode.image;
+    _lastAnalysisText = null;
+    _lastAnalysisSource = source ?? _analysisSource;
+    final int requestId = ++_analysisRequestId;
     _isAnalyzing = true;
     _inFlightImagePath = path;
     _analysis = null;
     _analysisFailure = null;
     _notify();
-    final result = await _analyzeImage(path, source: source);
+    final result = await _analyzeImage(path, source: _lastAnalysisSource);
     final succeeded = result.isRight();
-    if (!_disposed) {
+    final bool staleRequest = requestId != _analysisRequestId;
+    if (!_disposed && !staleRequest) {
       _isAnalyzing = false;
       _applyAnalysisResult(result);
     }
     _inFlightImagePath = null;
-    if (succeeded || _disposed) {
+    if (succeeded || _disposed || staleRequest) {
       if (_selectedImagePath == path) _selectedImagePath = null;
       await _imageStorage.delete(path);
       if (!_disposed) _notify();
+    }
+  }
+
+  Future<void> retryAnalysis() async {
+    if (_disposed || _isAnalyzing) return;
+    switch (_lastAnalysisMode) {
+      case AssistantAnalysisMode.text:
+        final text = _lastAnalysisText;
+        if (text != null && _analysisMode == AssistantAnalysisMode.text) {
+          await analyzeText(text, source: _lastAnalysisSource);
+        }
+        return;
+      case AssistantAnalysisMode.image:
+        if (_analysisMode == AssistantAnalysisMode.image &&
+            _selectedImagePath != null) {
+          await analyzeSelectedImage(source: _lastAnalysisSource);
+        }
+        return;
+      case null:
+        break;
     }
   }
 
@@ -309,7 +354,7 @@ class AssistantController extends ChangeNotifier {
     _notify();
     final result = await _getAiHistory(
       page: page,
-      limit: 20,
+      limit: AssistantLimits.historyPageSize,
       feature: switch (_historyFilter) {
         AssistantHistoryFilter.all => null,
         AssistantHistoryFilter.analyses => AiHistoryFeature.analyze,

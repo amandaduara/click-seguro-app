@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.2.0
+**Versão**: 2.3.0
 
 **Criado em**: 2026-09-07
 
@@ -51,7 +51,6 @@ em voz alta.
   veracidade: a v1 classifica as notícias só por categoria (ver §8, Evoluções futuras).
 - Notificações push e notificações vindas do servidor (a v1 tem alertas gerados no próprio
   app a partir das notícias novas).
-- Recursos de IA da API (análise de mensagem ou imagem suspeita, chat com assistente).
 - Desativação de conta pelo app.
 - Rede social entre usuários (comentários, seguir, ranking público).
 - Produção de conteúdo dentro do app (notícias, módulos e lições vêm da API).
@@ -221,6 +220,23 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 
 ---
 
+### 3.10 Assistente de IA (B10)
+
+**Decisão de escopo — 2026-10-22:** o usuário solicitante nesta sessão
+aprovou explicitamente a inclusão do Assistente na v1 ao responder "pode aprovar" à
+pendência de aprovação registrada no review da PR #21. Esta decisão substitui a exclusão
+de IA de 2026-10-03; não representa homologação dos endpoints nem aprovação de merge.
+
+- **RF-043**: O usuário autenticado MUST poder conversar com o Assistente, com mensagens e
+  contexto limitados conforme `specs/016-assistente-ia/spec.md`; a conversa permanece em memória.
+- **RF-044**: O usuário autenticado MUST poder solicitar análise de texto ou imagem suspeita,
+  mediante envio explícito, com validação local dos limites e apresentação de risco, confiança,
+  explicação e dicas quando disponíveis. Nulos e valores desconhecidos MUST permanecer explícitos.
+- **RF-045**: O Assistente MUST oferecer histórico paginado de análises e metadados de chat,
+  com filtros; o histórico não restaura diálogos completos. Visitantes MUST receber o convite
+  padrão de conta, sem chamadas de IA. Mensagens e imagens MUST ficar fora dos logs e não
+  ser persistidas localmente pelo app.
+
 ## 4. Requisitos Não-Funcionais (RNFs)
 
 - **RNF-001 (Desempenho)**: O feed inicial MUST aparecer em até 2 s em 4G/Wi-Fi típico (cache ou
@@ -345,8 +361,6 @@ não serem perdidos:
 - Notificações push e notificações do servidor.
 - Outros tipos de exercício: verdadeiro/falso, checklist, cenário e ordenação (dependem da API).
 - Lições teóricas separadas das perguntas.
-- IA: análise de mensagem/imagem suspeita, chat com assistente e histórico (endpoints
-  `/app/ai/*` já existem na API).
 - Contatos oficiais sincronizados com `GET /app/official-contacts`.
 - Desativar conta (`DELETE /users/me/deactivate`).
 
@@ -358,10 +372,12 @@ Este documento descreve requisitos de **negócio e produto**. Se um requisito ex
 [constitution.md](constitution.md), o requisito MUST ser redesenhado. Mudanças de escopo exigem
 nova versão e registro no changelog.
 
-**Versão**: 2.1.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-03
+**Versão**: 2.3.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-22
 
 ## Changelog
 
+- **2.3.0 (2026-10-22)**: usuário solicitante nesta sessão aprova IA na v1;
+  adicionados RF-043 a RF-045 e removida a exclusão vigente em §1.3/§8. Homologação real pendente.
 - **2.2.0 (2026-10-07)**: novo RF-042 (idioma do app nas configurações, seguindo o aparelho por
   padrão; a leitura em voz alta usa o mesmo idioma). Decidido em `specs/007-servicos-plataforma-voz`.
 - **2.1.0 (2026-10-03)**: alinhada à API real ([openapi.json](openapi.json)). IDs mantidos,

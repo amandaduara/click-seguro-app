@@ -1,7 +1,11 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/errors/connection_failure.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/pages/assistant_page.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_analysis_card.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_entity.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:flutter/material.dart';
@@ -83,6 +87,8 @@ void main() {
     expect(find.text('Entre para conversar com a assistente'), findsOneWidget);
     await tester.tap(find.text('Entrar ou criar conta'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Entrar ou criar conta').last);
+    await tester.pumpAndSettle();
     expect(find.text('Tela de entrada'), findsOneWidget);
     expect(repository.totalCalls, 0);
     expect(imageStorage.pickedSources, isEmpty);
@@ -109,6 +115,63 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.chatCalls, hasLength(1));
     expect(find.text('Resposta segura'), findsOneWidget);
+  });
+
+  testWidgets('erro do chat permite tentar de novo sem duplicar a mensagem', (
+    tester,
+  ) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    repository.chatResults
+      ..clear()
+      ..add(const Left(ConnectionFailure()))
+      ..add(const Right('Resposta recuperada'));
+    await open(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-chat-input')),
+      'Mensagem suspeita para análise',
+    );
+    await tester.tap(find.byKey(const ValueKey('assistant-chat-send')));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Sem conexão com a internet. Verifique sua rede.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Tentar novamente'));
+    await tester.pumpAndSettle();
+    expect(repository.chatCalls, hasLength(2));
+    expect(
+      find.text('Mensagem suspeita para análise', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(find.text('Resposta recuperada'), findsOneWidget);
+  });
+
+  testWidgets('novo rascunho permanece no campo enquanto o chat responde', (
+    tester,
+  ) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    final gate = Completer<void>();
+    repository.chatGate = gate;
+    await open(tester);
+    final input = find.byKey(const ValueKey('assistant-chat-input'));
+    await tester.enterText(input, 'Primeira mensagem enviada');
+    await tester.tap(find.byKey(const ValueKey('assistant-chat-send')));
+    await tester.pump();
+    await tester.enterText(input, 'Rascunho da próxima mensagem');
+    gate.complete();
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(input).controller!.text,
+      'Rascunho da próxima mensagem',
+    );
   });
 
   testWidgets('verificação de texto só chama API após toque em analisar', (
@@ -153,6 +216,55 @@ void main() {
     await tester.tap(find.text('Conversas'));
     await tester.pumpAndSettle();
     expect(repository.historyCalls.last.feature?.name, 'chat');
+  });
+
+  testWidgets('erro do histórico na página permite nova tentativa', (
+    tester,
+  ) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    repository.historyResults
+      ..clear()
+      ..add(const Left(ConnectionFailure()))
+      ..add(Right(historyPage()));
+    await open(tester);
+    await tester.tap(find.text('Histórico'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Sem conexão com a internet. Verifique sua rede.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Tentar novamente'));
+    await tester.pumpAndSettle();
+    expect(repository.historyCalls, hasLength(2));
+    expect(find.text('Seu histórico aparecerá aqui.'), findsOneWidget);
+  });
+
+  testWidgets('página envia imagem após seleção e mostra resultado', (
+    tester,
+  ) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    imageStorage.nextResult = const PickedImage('/tmp/assistant-test.png');
+    await open(tester);
+    await tester.tap(find.text('Verificar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Imagem'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Escolher da galeria'));
+    await tester.pumpAndSettle();
+    expect(repository.imageCalls, isEmpty);
+    await tester.tap(find.text('Analisar mensagem'));
+    await tester.pumpAndSettle();
+    expect(repository.imageCalls, hasLength(1));
+    expect(imageStorage.deletedPaths, ['/tmp/assistant-test.png']);
+    expect(find.text('Phishing'), findsOneWidget);
   });
 
   testWidgets(

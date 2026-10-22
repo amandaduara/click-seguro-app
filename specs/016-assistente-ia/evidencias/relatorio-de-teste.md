@@ -1,5 +1,19 @@
 # Verificação do assistente — 2026-10-20
 
+## Revalidação do review — 2026-10-22
+
+- 67 testes direcionados de Assistente, barra, SafeBadge e proteção dos logs passaram;
+  40 regressões de rotas, shell e Sobre passaram. Comandos completos em `../tasks.md`.
+- Análise estática sem erros ou warnings, com 27 infos fora da feature; formatação e diff válidos.
+- APK debug recompilado e instalado com `adb install -r` no Pixel_4, preservando os dados.
+- Em sessão visitante já existente, o Início apresentou as três ações ao lado do título
+  com fonte padrão ([captura](review-barra-padrao.png)). Tocar no Assistente abriu o
+  `AccountRequiredSheet` padrão ([captura](review-convite-padrao.png)).
+- Fonte do sistema temporariamente em 200%: as ações passaram para a segunda linha,
+  sem estouro do cabeçalho ([captura](review-barra-fonte-200.png)). Escala restaurada a 1.0.
+- Operações reais de IA autenticadas e permissões/seletor de imagem reais continuam pendentes;
+  a revalidação manual acima usou a sessão visitante, sem enviar conteúdo à IA.
+
 ## Resultado
 
 APK debug compilado e instalado no Pixel_4, preservando os dados. Uma corrida no

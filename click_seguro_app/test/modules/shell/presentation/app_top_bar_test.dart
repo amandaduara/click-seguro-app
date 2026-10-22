@@ -264,7 +264,7 @@ void main() {
       expect(find.text('Notícias seguras'), findsOneWidget);
     });
 
-    testWidgets('os dois botões medem pelo menos 48×48', (tester) async {
+    testWidgets('os três botões medem pelo menos 48×48', (tester) async {
       await signIn();
       await pumpLocalized(
         tester,
@@ -317,5 +317,44 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('tela assistente'), findsOneWidget);
     });
+
+    testWidgets('visitante toca no Assistente e vê o convite padrão', (
+      tester,
+    ) async {
+      await session.startGuestSession();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      await tester.tap(find.byTooltip('Assistente'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Entre na sua conta'), findsOneWidget);
+      expect(find.text('tela assistente'), findsNothing);
+    });
+
+    for (final width in [320.0, 360.0, 412.0]) {
+      testWidgets('fonte padrão mantém ações ao lado do título em $width dp', (
+        tester,
+      ) async {
+        tester.view.physicalSize = Size(width, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await signIn();
+        await pumpLocalized(
+          tester,
+          router: buildRouter(),
+          providers: [fakeNotificationsProvider()],
+        );
+
+        final title = tester.getRect(find.text('Notícias seguras'));
+        final assistant = tester.getRect(find.bySemanticsLabel('Assistente'));
+        expect(assistant.left, greaterThan(title.right));
+        expect(tester.takeException(), isNull);
+      });
+    }
   });
 }

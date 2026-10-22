@@ -425,7 +425,6 @@ abstract class AppStrings {
   static const String assistantTabVerify = 'assistant_tab_verify';
   static const String assistantTabHistory = 'assistant_tab_history';
   static const String assistantGuestTitle = 'assistant_guest_title';
-  static const String assistantGuestBody = 'assistant_guest_body';
   static const String assistantGuestAction = 'assistant_guest_action';
   static const String assistantGreeting = 'assistant_greeting';
   static const String assistantChatIntro = 'assistant_chat_intro';
@@ -434,7 +433,6 @@ abstract class AppStrings {
   static const String assistantSuggestionBank = 'assistant_suggestion_bank';
   static const String assistantChatPlaceholder = 'assistant_chat_placeholder';
   static const String assistantChatSend = 'assistant_chat_send';
-  static const String assistantChatSending = 'assistant_chat_sending';
   static const String assistantChatRetry = 'assistant_chat_retry';
   static const String assistantNewConversation = 'assistant_new_conversation';
   static const String assistantNewConversationTitle =
@@ -445,12 +443,10 @@ abstract class AppStrings {
       'assistant_new_conversation_confirm';
   static const String assistantCancel = 'assistant_cancel';
   static const String assistantCharacters = 'assistant_characters';
-  static const String assistantYou = 'assistant_you';
   static const String assistantVerifyingTitle = 'assistant_verifying_title';
   static const String assistantVerifyText = 'assistant_verify_text';
   static const String assistantVerifyImage = 'assistant_verify_image';
   static const String assistantSource = 'assistant_source';
-  static const String assistantSourceNone = 'assistant_source_none';
   static const String assistantSourceWhatsapp = 'assistant_source_whatsapp';
   static const String assistantSourceSms = 'assistant_source_sms';
   static const String assistantSourceEmail = 'assistant_source_email';
@@ -492,7 +488,6 @@ abstract class AppStrings {
   static const String assistantHistoryEmptyFilter =
       'assistant_history_empty_filter';
   static const String assistantHistoryLoadMore = 'assistant_history_load_more';
-  static const String assistantHistoryDate = 'assistant_history_date';
   static const String assistantInvalidInput = 'assistant_invalid_input';
   static const String assistantInvalidImage = 'assistant_invalid_image';
   static const String assistantProviderFailed = 'assistant_provider_failed';

@@ -14,11 +14,7 @@ class AiHistoryModel {
             AiAnalysisModel.fromJson(item as Map<String, dynamic>).entity,
         ],
         page: (meta['page'] as num).toInt(),
-        limit: (meta['limit'] as num).toInt(),
-        total: (meta['total'] as num).toInt(),
-        totalPages: (meta['totalPages'] as num).toInt(),
         hasNextPage: meta['hasNextPage'] as bool,
-        hasPreviousPage: meta['hasPreviousPage'] as bool,
       ),
     );
   }

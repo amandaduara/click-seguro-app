@@ -14,8 +14,6 @@ class AiAnalysisModel {
         confidence: (json['confidence'] as num?)?.toDouble(),
         explanation: json['explanation'] as String?,
         tips: (json['tips'] as List).cast<String>(),
-        cached: json['cached'] as bool,
-        inputType: _inputType(json['inputType'] as String),
         source: json['source'] as String?,
         status: _status(json['status'] as String),
         createdAt: DateTime.parse(json['createdAt'] as String),
@@ -40,12 +38,6 @@ class AiAnalysisModel {
     'SAFE' => AiThreatType.safe,
     'UNCERTAIN' => AiThreatType.uncertain,
     _ => AiThreatType.unknown,
-  };
-
-  static AiInputType _inputType(String value) => switch (value) {
-    'TEXT' => AiInputType.text,
-    'IMAGE' => AiInputType.image,
-    _ => AiInputType.unknown,
   };
 
   static AiAnalysisStatus _status(String value) => switch (value) {

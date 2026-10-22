@@ -1,11 +1,14 @@
 import 'dart:io';
 
+import 'package:click_seguro_app/core/constants/app_identity.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_card.dart';
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_chat_turn.dart';
+import 'package:click_seguro_app/modules/assistant/domain/entities/assistant_constants.dart';
 import 'package:click_seguro_app/modules/assistant/domain/failures/assistant_failures.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/controller/assistant_controller.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/controller/assistant_controller_status.dart';
@@ -13,6 +16,7 @@ import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistan
 import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_history_tab.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -50,39 +54,11 @@ class _AssistantGuestView extends StatelessWidget {
     children: [
       const _AssistantHeader(),
       Expanded(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.s5),
-            child: SafeCard(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const _AssistantShield(size: 64),
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    AppStrings.assistantGuestTitle.tr(),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: context.colors.secondary,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(
-                    AppStrings.assistantGuestBody.tr(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: context.colors.textMutedForeground),
-                  ),
-                  const SizedBox(height: AppSpacing.s5),
-                  SafeButton(
-                    label: AppStrings.assistantGuestAction.tr(),
-                    icon: const Icon(LucideIcons.logIn),
-                    onPressed: () => context.go('/login'),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        child: SafeEmptyState(
+          icon: LucideIcons.shieldCheck,
+          message: AppStrings.assistantGuestTitle.tr(),
+          actionLabel: AppStrings.assistantGuestAction.tr(),
+          onAction: () => requireAccount(context),
         ),
       ),
       const _PrivacyNote(),
@@ -102,10 +78,6 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
   final TextEditingController _analysisInput = TextEditingController();
   final ScrollController _chatScroll = ScrollController();
   AssistantController? _controller;
-  bool _imageMode = false;
-  String? _source;
-  String? _lastText;
-  String? _lastTextSource;
 
   @override
   void didChangeDependencies() {
@@ -303,11 +275,13 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
 
   Future<void> _submitChat() async {
     final text = _chatInput.text;
-    await context.read<AssistantController>().sendChatMessage(text);
-    if (!mounted) return;
-    if (context.read<AssistantController>().chatFailure
-        is! AssistantInvalidInputFailure) {
+    if (text.trim().length >= AssistantLimits.chatMessageMin &&
+        text.trim().length <= AssistantLimits.chatMessageMax) {
+      final pending = context.read<AssistantController>().sendChatMessage(text);
       _chatInput.clear();
+      await pending;
+    } else {
+      await context.read<AssistantController>().sendChatMessage(text);
     }
   }
 
@@ -343,36 +317,20 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
   }
 
   Widget _verifyArea(AssistantController controller) => _VerifyArea(
-    imageMode: _imageMode,
-    source: _source,
+    imageMode: controller.analysisMode == AssistantAnalysisMode.image,
+    source: controller.analysisSource,
     textController: _analysisInput,
     controller: controller,
-    onModeChanged: (imageMode) async {
-      if (_imageMode && !imageMode) await controller.removeSelectedImage();
-      if (mounted) setState(() => _imageMode = imageMode);
-    },
-    onSourceChanged: (source) => setState(() => _source = source),
+    onModeChanged: (imageMode) => controller.setAnalysisMode(
+      imageMode ? AssistantAnalysisMode.image : AssistantAnalysisMode.text,
+    ),
+    onSourceChanged: controller.setAnalysisSource,
     onAnalyzeText: _runTextAnalysis,
-    onRetry: () {
-      if (_imageMode && controller.selectedImagePath != null) {
-        controller.analyzeSelectedImage(source: _source);
-      } else if (_lastText != null) {
-        context.read<AssistantController>().analyzeText(
-          _lastText!,
-          source: _lastTextSource,
-        );
-      }
-    },
+    onRetry: controller.retryAnalysis,
   );
 
-  Future<void> _runTextAnalysis() async {
-    _lastText = _analysisInput.text;
-    _lastTextSource = _source;
-    await context.read<AssistantController>().analyzeText(
-      _analysisInput.text,
-      source: _source,
-    );
-  }
+  Future<void> _runTextAnalysis() =>
+      context.read<AssistantController>().analyzeText(_analysisInput.text);
 }
 
 class _AssistantHeader extends StatelessWidget {
@@ -413,7 +371,7 @@ class _AssistantHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'SafeNews',
+                AppIdentity.name,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: context.colors.primary,
@@ -559,7 +517,7 @@ class _SuggestionChip extends StatelessWidget {
 
 class _ChatBubble extends StatelessWidget {
   const _ChatBubble({required this.message});
-  final AssistantChatMessage message;
+  final AiChatTurn message;
 
   @override
   Widget build(BuildContext context) {
@@ -595,7 +553,7 @@ class _ChatBubble extends StatelessWidget {
                         const _AssistantShield(size: 32),
                         const SizedBox(width: AppSpacing.s2),
                         Text(
-                          'SafeNews',
+                          AppIdentity.name,
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: context.colors.secondary,
@@ -655,7 +613,7 @@ class _ChatComposer extends StatelessWidget {
                   controller: textController,
                   minLines: 1,
                   maxLines: 4,
-                  maxLength: 1000,
+                  maxLength: AssistantLimits.chatMessageMax,
                   maxLengthEnforcement: MaxLengthEnforcement.enforced,
                   textInputAction: TextInputAction.newline,
                   style: TextStyle(color: context.colors.textForeground),
@@ -699,7 +657,7 @@ class _ChatComposer extends StatelessWidget {
               AppStrings.assistantCharacters.tr(
                 namedArgs: {
                   'count': '${textController.text.length}',
-                  'limit': '1000',
+                  'limit': '${AssistantLimits.chatMessageMax}',
                 },
               ),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -766,7 +724,9 @@ class _VerifyArea extends StatelessWidget {
             child: ChoiceChip(
               label: Text(AppStrings.assistantVerifyText.tr()),
               selected: !imageMode,
-              onSelected: (_) => onModeChanged(false),
+              onSelected: controller.isAnalyzing || controller.isPickingImage
+                  ? null
+                  : (_) => onModeChanged(false),
             ),
           ),
           ConstrainedBox(
@@ -774,7 +734,9 @@ class _VerifyArea extends StatelessWidget {
             child: ChoiceChip(
               label: Text(AppStrings.assistantVerifyImage.tr()),
               selected: imageMode,
-              onSelected: (_) => onModeChanged(true),
+              onSelected: controller.isAnalyzing || controller.isPickingImage
+                  ? null
+                  : (_) => onModeChanged(true),
             ),
           ),
         ],
@@ -798,10 +760,13 @@ class _VerifyArea extends StatelessWidget {
         runSpacing: AppSpacing.s2,
         children: [
           for (final (value, key) in <(String?, String)>[
-            ('WHATSAPP', AppStrings.assistantSourceWhatsapp),
-            ('SMS', AppStrings.assistantSourceSms),
-            ('EMAIL', AppStrings.assistantSourceEmail),
-            ('OTHER', AppStrings.assistantSourceOther),
+            (
+              AssistantAnalysisSources.whatsapp,
+              AppStrings.assistantSourceWhatsapp,
+            ),
+            (AssistantAnalysisSources.sms, AppStrings.assistantSourceSms),
+            (AssistantAnalysisSources.email, AppStrings.assistantSourceEmail),
+            (AssistantAnalysisSources.other, AppStrings.assistantSourceOther),
           ])
             ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 48),
@@ -831,8 +796,10 @@ class _VerifyArea extends StatelessWidget {
             label: AppStrings.assistantAnalyze.tr(),
             loading: controller.isAnalyzing,
             disabled:
-                textController.text.trim().length < 10 ||
-                textController.text.trim().length > 5000,
+                textController.text.trim().length <
+                    AssistantLimits.analysisTextMin ||
+                textController.text.trim().length >
+                    AssistantLimits.analysisTextMax,
             icon: const Icon(LucideIcons.scanSearch),
             onPressed: onAnalyzeText,
           ),
@@ -881,7 +848,7 @@ class _TextAnalysisField extends StatelessWidget {
           controller: controller,
           minLines: 5,
           maxLines: 9,
-          maxLength: 5000,
+          maxLength: AssistantLimits.analysisTextMax,
           maxLengthEnforcement: MaxLengthEnforcement.enforced,
           style: TextStyle(color: context.colors.textForeground),
           decoration: InputDecoration(
@@ -897,7 +864,7 @@ class _TextAnalysisField extends StatelessWidget {
               AppStrings.assistantCharacters.tr(
                 namedArgs: {
                   'count': '${controller.text.length}',
-                  'limit': '5000',
+                  'limit': '${AssistantLimits.analysisTextMax}',
                 },
               ),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(

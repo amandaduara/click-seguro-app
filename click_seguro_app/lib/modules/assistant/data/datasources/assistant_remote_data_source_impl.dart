@@ -4,6 +4,7 @@ import 'package:click_seguro_app/modules/assistant/data/models/ai_analysis_model
 import 'package:click_seguro_app/modules/assistant/data/models/ai_history_model.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_chat_turn.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_history_feature.dart';
+import 'package:click_seguro_app/modules/assistant/domain/entities/assistant_constants.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 
 import 'assistant_remote_data_source.dart';
@@ -16,8 +17,6 @@ class AssistantRemoteDataSourceImpl implements AssistantRemoteDataSource {
   static const analyzeImagePath = '/app/ai/analyze/image';
   static const historyPath = '/app/ai/history';
   static const imageField = 'image';
-  static const maxImageBytes = 5 * 1024 * 1024;
-  static const invalidImageCode = 'INVALID_IMAGE_FORMAT';
 
   final ApiClient _apiClient;
 
@@ -49,7 +48,9 @@ class AssistantRemoteDataSourceImpl implements AssistantRemoteDataSource {
   @override
   Future<AiAnalysisModel> analyzeImage(String path, String? source) async {
     final (mimeType, length) = await _imageInfo(path);
-    if (length > maxImageBytes) throw _invalidImage('Arquivo excede 5 MB');
+    if (length > AssistantLimits.imageBytesMax) {
+      throw _invalidImage('Arquivo excede 5 MB');
+    }
     final uri = Uri(
       path: analyzeImagePath,
       queryParameters: {'source': ?source},
@@ -122,7 +123,7 @@ class AssistantRemoteDataSourceImpl implements AssistantRemoteDataSource {
   ApiException _invalidImage(String message) => ApiException(
     type: ApiErrorType.client,
     statusCode: 400,
-    errorCode: invalidImageCode,
+    errorCode: AssistantImageErrorCodes.invalidFormat,
     message: message,
   );
 }

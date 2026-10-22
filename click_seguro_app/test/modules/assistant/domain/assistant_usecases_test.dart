@@ -71,21 +71,11 @@ final _analysis = AiAnalysisEntity(
   confidence: null,
   explanation: null,
   tips: [],
-  cached: false,
-  inputType: AiInputType.text,
   source: null,
   status: AiAnalysisStatus.success,
   createdAt: DateTime.utc(2026),
 );
-const _history = AiHistoryPageEntity(
-  items: [],
-  page: 1,
-  limit: 20,
-  total: 0,
-  totalPages: 0,
-  hasNextPage: false,
-  hasPreviousPage: false,
-);
+const _history = AiHistoryPageEntity(items: [], page: 1, hasNextPage: false);
 
 void main() {
   test(

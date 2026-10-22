@@ -56,7 +56,7 @@ void main() {
     });
   });
 
-  test('análise de texto preserva nulos, enums e metadados', () async {
+  test('análise de texto preserva nulos, enums e metadados usados', () async {
     adapter.body = aiAnalysisJson(
       type: null,
       riskScore: null,

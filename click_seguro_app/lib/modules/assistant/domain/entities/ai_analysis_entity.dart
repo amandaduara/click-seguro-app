@@ -11,8 +11,6 @@ enum AiThreatType {
 
 enum AiAnalysisFeature { analyze, chat, unknown }
 
-enum AiInputType { text, image, unknown }
-
 enum AiAnalysisStatus { success, error, rateLimited, unknown }
 
 class AiAnalysisEntity {
@@ -24,8 +22,6 @@ class AiAnalysisEntity {
     required this.confidence,
     required this.explanation,
     required this.tips,
-    required this.cached,
-    required this.inputType,
     required this.source,
     required this.status,
     required this.createdAt,
@@ -38,8 +34,6 @@ class AiAnalysisEntity {
   final double? confidence;
   final String? explanation;
   final List<String> tips;
-  final bool cached;
-  final AiInputType inputType;
   final String? source;
   final AiAnalysisStatus status;
   final DateTime createdAt;

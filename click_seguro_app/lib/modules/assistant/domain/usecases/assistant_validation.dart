@@ -1,4 +1,5 @@
 import '../failures/assistant_failures.dart';
+import '../entities/assistant_constants.dart';
 
 AssistantInvalidInputFailure? validateBoundedText(
   String value, {
@@ -9,6 +10,8 @@ AssistantInvalidInputFailure? validateBoundedText(
     : null;
 
 AssistantInvalidInputFailure? validateSource(String? source) =>
-    source != null && (source.trim().isEmpty || source.trim().length > 50)
+    source != null &&
+        (source.trim().length < AssistantLimits.sourceMin ||
+            source.trim().length > AssistantLimits.sourceMax)
     ? const AssistantInvalidInputFailure()
     : null;

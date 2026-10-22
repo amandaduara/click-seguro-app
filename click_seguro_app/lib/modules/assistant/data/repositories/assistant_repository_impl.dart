@@ -4,6 +4,7 @@ import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_e
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_chat_turn.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_history_feature.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_history_page_entity.dart';
+import 'package:click_seguro_app/modules/assistant/domain/entities/assistant_constants.dart';
 import 'package:click_seguro_app/modules/assistant/domain/failures/assistant_failures.dart';
 import 'package:click_seguro_app/modules/assistant/domain/repositories/assistant_repository.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
@@ -15,7 +16,6 @@ class AssistantRepositoryImpl implements AssistantRepository {
 
   static const providerFailedCode = 'AI_PROVIDER_FAILED';
   static const parseFailedCode = 'AI_PARSE_FAILED';
-  static const invalidImageCode = 'INVALID_IMAGE_FORMAT';
 
   final AssistantRemoteDataSource _remote;
 
@@ -56,7 +56,8 @@ class AssistantRepositoryImpl implements AssistantRepository {
       return Left(switch (error.errorCode) {
         providerFailedCode => const AssistantProviderFailure(),
         parseFailedCode => const AssistantParseFailure(),
-        invalidImageCode => const AssistantInvalidImageFailure(),
+        AssistantImageErrorCodes.invalidFormat =>
+          const AssistantInvalidImageFailure(),
         _ when error.type == ApiErrorType.invalidResponse =>
           const AssistantParseFailure(),
         _ => error.toFailure(),

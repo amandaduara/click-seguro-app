@@ -46,6 +46,10 @@ class _AppTopBarState extends State<AppTopBar> {
     if (await requireAccount(context) && mounted) await _open('/notifications');
   }
 
+  Future<void> _openAssistant() async {
+    if (await requireAccount(context) && mounted) await _open('/assistant');
+  }
+
   String _greeting() {
     final String? name = _session.userName;
     return _session.isAuthenticated && name != null && name.isNotEmpty
@@ -63,8 +67,8 @@ class _AppTopBarState extends State<AppTopBar> {
         AppSpacing.s5,
         AppSpacing.s3,
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
+      child: Builder(
+        builder: (context) {
           final title = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -102,19 +106,25 @@ class _AppTopBarState extends State<AppTopBar> {
               NotificationBellButton(onPressed: _openNotifications),
               Padding(
                 padding: const EdgeInsets.only(left: AppSpacing.s2),
-                child: _AssistantButton(onPressed: () => _open('/assistant')),
+                child: _CircleActionButton(
+                  label: AppStrings.assistantTitle.tr(),
+                  icon: LucideIcons.messageCircle,
+                  onPressed: _openAssistant,
+                ),
               ),
               // Também para o visitante, que ajusta acessibilidade e idioma
               // (specs/014, R6).
               Padding(
                 padding: const EdgeInsets.only(left: AppSpacing.s2),
-                child: _SettingsButton(onPressed: () => _open('/settings')),
+                child: _CircleActionButton(
+                  label: AppStrings.shellSettings.tr(),
+                  icon: LucideIcons.settings,
+                  onPressed: () => _open('/settings'),
+                ),
               ),
             ],
           );
-          final compact =
-              constraints.maxWidth < 400 ||
-              MediaQuery.textScalerOf(context).scale(24) > 30;
+          final compact = MediaQuery.textScalerOf(context).scale(24) > 30;
           if (compact) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -138,14 +148,19 @@ class _AppTopBarState extends State<AppTopBar> {
   }
 }
 
-class _AssistantButton extends StatelessWidget {
-  const _AssistantButton({required this.onPressed});
+class _CircleActionButton extends StatelessWidget {
+  const _CircleActionButton({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+  });
 
+  final String label;
+  final IconData icon;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    final String label = AppStrings.assistantTitle.tr();
     return Tooltip(
       message: label,
       child: Semantics(
@@ -160,43 +175,7 @@ class _AssistantButton extends StatelessWidget {
             onTap: onPressed,
             child: SizedBox.square(
               dimension: 48,
-              child: Icon(
-                LucideIcons.messageCircle,
-                size: 20,
-                color: context.colors.secondary,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SettingsButton extends StatelessWidget {
-  const _SettingsButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: AppStrings.shellSettings.tr(),
-      excludeSemantics: true,
-      child: Material(
-        color: context.colors.input,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onPressed,
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Icon(
-              LucideIcons.settings,
-              size: 20,
-              color: context.colors.secondary,
+              child: Icon(icon, size: 20, color: context.colors.secondary),
             ),
           ),
         ),

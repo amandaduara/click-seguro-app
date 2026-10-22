@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_entity.dart';
+import 'package:click_seguro_app/modules/assistant/domain/entities/assistant_constants.dart';
 import 'package:click_seguro_app/modules/assistant/domain/repositories/assistant_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -14,7 +15,12 @@ class AnalyzeTextUseCase {
     String? source,
   }) {
     final invalid =
-        validateBoundedText(text, min: 10, max: 5000) ?? validateSource(source);
+        validateBoundedText(
+          text,
+          min: AssistantLimits.analysisTextMin,
+          max: AssistantLimits.analysisTextMax,
+        ) ??
+        validateSource(source);
     if (invalid != null) return Future.value(Left(invalid));
     return _repository.analyzeText(text.trim(), source: source?.trim());
   }

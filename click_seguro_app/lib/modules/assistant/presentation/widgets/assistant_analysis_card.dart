@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_badge.dart';
 import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_entity.dart';
+import 'package:click_seguro_app/modules/assistant/presentation/extensions/ai_threat_type_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -12,19 +13,6 @@ class AssistantAnalysisCard extends StatelessWidget {
   const AssistantAnalysisCard({super.key, required this.analysis});
 
   final AiAnalysisEntity analysis;
-
-  String get _typeKey => switch (analysis.threatType) {
-    AiThreatType.phishing => AppStrings.assistantThreatPhishing,
-    AiThreatType.fakeNews => AppStrings.assistantThreatFakeNews,
-    AiThreatType.financialScam => AppStrings.assistantThreatFinancialScam,
-    AiThreatType.socialEngineering =>
-      AppStrings.assistantThreatSocialEngineering,
-    AiThreatType.spam => AppStrings.assistantThreatSpam,
-    AiThreatType.safe => AppStrings.assistantThreatSafe,
-    AiThreatType.uncertain => AppStrings.assistantThreatUncertain,
-    AiThreatType.unknown => AppStrings.assistantUnknown,
-    null => AppStrings.assistantUnavailable,
-  };
 
   @override
   Widget build(BuildContext context) {
@@ -72,17 +60,21 @@ class AssistantAnalysisCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.s3),
-          _ThreatBadge(
-            label: _typeKey.tr(),
-            color: switch (tone) {
-              SafeBadgeTone.success => colors.success,
-              SafeBadgeTone.warning => colors.warning,
-              SafeBadgeTone.destructive => colors.destructive,
-              _ => colors.textMutedForeground,
-            },
-            icon: tone == SafeBadgeTone.success
-                ? LucideIcons.shieldCheck
-                : LucideIcons.circleAlert,
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: SafeBadge(
+              tone: tone,
+              icon: Icon(
+                tone == SafeBadgeTone.success
+                    ? LucideIcons.shieldCheck
+                    : LucideIcons.circleAlert,
+              ),
+              child: Text(
+                analysis.threatType.labelKey.tr(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
           const SizedBox(height: AppSpacing.s3),
           _Metric(
@@ -145,47 +137,6 @@ class AssistantAnalysisCard extends StatelessWidget {
   String _percentage(double? value) => value == null
       ? AppStrings.assistantUnavailable.tr()
       : '${value.round()}%';
-}
-
-class _ThreatBadge extends StatelessWidget {
-  const _ThreatBadge({
-    required this.label,
-    required this.color,
-    required this.icon,
-  });
-
-  final String label;
-  final Color color;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.s3,
-      vertical: AppSpacing.s2,
-    ),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.1),
-      borderRadius: AppSpacing.radiusFull,
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Icon(icon, size: 16, color: color),
-        ),
-        const SizedBox(width: AppSpacing.s2),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(color: color, fontWeight: FontWeight.w700),
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 class _Metric extends StatelessWidget {

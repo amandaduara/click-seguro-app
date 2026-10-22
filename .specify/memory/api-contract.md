@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.1.0 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-20
+**Versão**: 1.1.1 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-22
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -151,7 +151,10 @@ bloco de atividade relacionada (RF-018).
 
 `category`: `{ id, name, slug, description?, isActive, createdAt }`. O filtro usa o `slug`.
 
-### Assistente de IA — v2 autorizada (módulo `assistant`)
+### Assistente de IA — v1 aprovada (módulo `assistant`, PR #21)
+
+Inclusão na v1 aprovada em 2026-10-22 pelo usuário solicitante nesta sessão, após o review
+de 2026-10-21. A aprovação de escopo não altera o status 🧪: requests reais seguem pendentes.
 
 | Status | Método e caminho | Auth | Uso |
 |---|---|---|---|
@@ -269,7 +272,10 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
-- **1.1.0 (2026-10-20)**: IA da v2 autorizada e integrada no cliente a partir do Swagger local:
+- **1.1.1 (2026-10-22)**: usuário solicitante nesta sessão aprova inclusão do Assistente na v1
+  (RF-043 a RF-045, B10). Revogado o adiamento de IA de 2026-10-03; endpoints continuam 🧪.
+- **1.1.0 (2026-10-20, proposta da PR #21)**: integração de IA no cliente a partir do Swagger local,
+  com aprovação de escopo ainda pendente conforme o review de 2026-10-21:
   chat, análise de texto/imagem e histórico autenticados. Endpoints ainda 🧪; nenhum request real
   foi validado. Histórico não restaura diálogo, respostas completas ficam somente em memória e o
   app não persiste localmente mensagens ou imagens.
@@ -309,6 +315,5 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
   passos; curtir/salvar como alternância; feed com destaques/recomendados/recentes por cursor.
   Removidos veracidade (sem campo na API) e notificações remotas (viraram alertas locais).
   Atividades no modelo da API (pergunta única por lição, correção no servidor). Perfil sem
-  estatísticas na API (montadas no app). Contatos oficiais continuam locais; IA permanece fora
-  da v1 e está descrita na seção da v2.
+  estatísticas na API (montadas no app). Contatos oficiais continuam locais; IA fora da v1.
 - **0.1.0 (2026-09-26)**: rascunho derivado da especificação v2.0.0.

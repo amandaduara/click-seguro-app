@@ -9,6 +9,7 @@ import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_entity.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/controller/assistant_controller.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/controller/assistant_controller_status.dart';
+import 'package:click_seguro_app/modules/assistant/presentation/extensions/ai_threat_type_presentation_extension.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_analysis_card.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -210,7 +211,7 @@ class _HistoryItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool chat = analysis.feature == AiAnalysisFeature.chat;
-    final String date = _formatDate(analysis.createdAt);
+    final String date = _formatDate(context, analysis.createdAt);
     if (chat) {
       return SafeCard(
         padded: false,
@@ -233,7 +234,7 @@ class _HistoryItem extends StatelessWidget {
       child: ExpansionTile(
         leading: const _IconTile(icon: LucideIcons.shieldCheck),
         title: Text(
-          _category(analysis.threatType).tr(),
+          analysis.threatType.labelKey.tr(),
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
@@ -251,25 +252,8 @@ class _HistoryItem extends StatelessWidget {
     );
   }
 
-  String _category(AiThreatType? type) => switch (type) {
-    AiThreatType.phishing => AppStrings.assistantThreatPhishing,
-    AiThreatType.fakeNews => AppStrings.assistantThreatFakeNews,
-    AiThreatType.financialScam => AppStrings.assistantThreatFinancialScam,
-    AiThreatType.socialEngineering =>
-      AppStrings.assistantThreatSocialEngineering,
-    AiThreatType.spam => AppStrings.assistantThreatSpam,
-    AiThreatType.safe => AppStrings.assistantThreatSafe,
-    AiThreatType.uncertain => AppStrings.assistantThreatUncertain,
-    AiThreatType.unknown => AppStrings.assistantUnknown,
-    null => AppStrings.assistantUnavailable,
-  };
-
-  String _formatDate(DateTime date) {
-    final local = date.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    return '$day/$month/${local.year}';
-  }
+  String _formatDate(BuildContext context, DateTime date) =>
+      DateFormat.yMd(context.locale.toString()).format(date.toLocal());
 }
 
 class _IconTile extends StatelessWidget {

@@ -74,7 +74,6 @@ AiAnalysisEntity analysisEntity({
   double? riskScore = 90,
   double? confidence = 85,
   AiAnalysisStatus status = AiAnalysisStatus.success,
-  AiInputType inputType = AiInputType.text,
   String id = 'analysis-1',
 }) => AiAnalysisEntity(
   id: id,
@@ -84,8 +83,6 @@ AiAnalysisEntity analysisEntity({
   confidence: confidence,
   explanation: 'O endereço não corresponde ao serviço informado.',
   tips: const ['Não abra o link', 'Confirme por um canal oficial'],
-  cached: false,
-  inputType: inputType,
   source: 'WHATSAPP',
   status: status,
   createdAt: DateTime.utc(2026, 10, 20),
@@ -94,19 +91,8 @@ AiAnalysisEntity analysisEntity({
 AiHistoryPageEntity historyPage({
   List<AiAnalysisEntity> items = const [],
   int page = 1,
-  int limit = 20,
-  int total = 0,
-  int totalPages = 1,
   bool hasNextPage = false,
-}) => AiHistoryPageEntity(
-  items: items,
-  page: page,
-  limit: limit,
-  total: total,
-  totalPages: totalPages,
-  hasNextPage: hasNextPage,
-  hasPreviousPage: page > 1,
-);
+}) => AiHistoryPageEntity(items: items, page: page, hasNextPage: hasNextPage);
 
 final _analysis = Right<Failure, AiAnalysisEntity>(analysisEntity());
 final _history = Right<Failure, AiHistoryPageEntity>(historyPage());

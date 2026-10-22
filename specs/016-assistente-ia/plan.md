@@ -8,6 +8,17 @@
 
 ## Riscos e decisões
 
+- Em 2026-10-22, o usuário solicitante nesta sessão aprovou explicitamente IA na v1,
+  incluindo as mudanças em `main.dart` (registro), `app_router.dart` (composição de rota)
+  e `AppTopBar` (ação protegida por `requireAccount`). Referências: RF-043 a RF-045 e B10.
+- O cabeçalho mantém ações na mesma linha com fonte padrão em telas de celular. A separação
+  em duas linhas ocorre apenas com fonte ampliada. Assistente e Configurações compartilham o
+  mesmo botão circular parametrizado; Alertas preserva o contador próprio.
+- Modo de verificação, origem e entrada do retry pertencem ao controller. Trocar de modo limpa
+  resultado/falha anteriores; um retry repete somente a operação que falhou no modo atual.
+- Limites, origens e código de imagem inválida são constantes únicas no domínio. O datasource
+  continua verificando o arquivo antes da rede e usa o mesmo código no mapper do repository.
+- `core/constants/app_identity.dart` centraliza o nome usado pelo Assistente e por Sobre.
 - Histórico não restaura conversa: o contrato não disponibiliza mensagens/respostas completas.
 - Risco e confiança podem ser nulos e enums podem evoluir; apresentação precisa ter estados “indisponível/desconhecido”.
 - `ApiClient.postMultipart` não aceita query; a rota de imagem inclui `source` na URI construída pelo datasource, sem alterar o cliente comum.

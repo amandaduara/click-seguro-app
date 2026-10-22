@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/assistant/data/repositories/assistant_repository_impl.dart';
+import 'package:click_seguro_app/modules/assistant/domain/entities/assistant_constants.dart';
 import 'package:click_seguro_app/modules/assistant/domain/failures/assistant_failures.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -49,7 +50,7 @@ void main() {
         )).getLeft().toNullable(),
         isA<AssistantParseFailure>(),
       );
-      remote.error = apiError(code: AssistantRepositoryImpl.invalidImageCode);
+      remote.error = apiError(code: AssistantImageErrorCodes.invalidFormat);
       expect(
         (await repository.analyzeImage(
           '/tmp/image.png',
