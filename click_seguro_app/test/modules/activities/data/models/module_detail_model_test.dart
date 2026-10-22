@@ -11,7 +11,6 @@ void main() {
   test('JSON do serviço → módulo com as lições e alternativas', () {
     final module = parse(moduleDetailJson(answered: {'l1'}));
 
-    expect(module.id, 'm1');
     expect(module.title, 'Golpes Digitais');
     expect([for (final l in module.lessons) l.id], ['l1', 'l2', 'l3']);
     final first = module.lessons.first;

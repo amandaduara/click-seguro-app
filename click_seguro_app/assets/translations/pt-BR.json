@@ -290,7 +290,7 @@
   "settings_accessibility_high_contrast_sub": "Cores mais fortes para ler melhor",
   "settings_accessibility_section_voice": "Leitura em voz alta",
   "settings_accessibility_auto_read": "Ler automaticamente",
-  "settings_accessibility_auto_read_sub": "Ao abrir uma notícia, o app começa a ler sozinho",
+  "settings_accessibility_auto_read_sub": "Ao abrir uma notícia ou uma pergunta das atividades, o app começa a ler sozinho",
   "settings_accessibility_speed": "Velocidade da voz",
   "settings_accessibility_speed_slow": "Lenta",
   "settings_accessibility_speed_normal": "Normal",

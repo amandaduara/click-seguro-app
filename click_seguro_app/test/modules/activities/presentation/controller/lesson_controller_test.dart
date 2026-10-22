@@ -88,7 +88,6 @@ void main() {
 
     await controller.load('m1');
     expect(controller.status, LessonStatus.error);
-    expect(controller.failure, isA<ConnectionFailure>());
 
     final Future<void> retry = controller.load('m1');
     expect(controller.status, LessonStatus.loading);

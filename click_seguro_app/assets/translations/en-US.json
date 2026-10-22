@@ -290,7 +290,7 @@
   "settings_accessibility_high_contrast_sub": "Stronger colors for easier reading",
   "settings_accessibility_section_voice": "Read aloud",
   "settings_accessibility_auto_read": "Read automatically",
-  "settings_accessibility_auto_read_sub": "When you open a news story, the app starts reading on its own",
+  "settings_accessibility_auto_read_sub": "When you open a news story or an activity question, the app starts reading on its own",
   "settings_accessibility_speed": "Voice speed",
   "settings_accessibility_speed_slow": "Slow",
   "settings_accessibility_speed_normal": "Normal",

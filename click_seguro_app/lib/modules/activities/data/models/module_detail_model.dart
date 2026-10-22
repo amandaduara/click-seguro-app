@@ -5,28 +5,25 @@ import 'package:click_seguro_app/modules/activities/domain/entities/module_detai
 /// B2 usa: `explanation`, `progress`, `description` e `iconUrl` são
 /// ignorados (R2 de specs/017-perguntas-atividades).
 class ModuleDetailModel {
-  const ModuleDetailModel(this._entity);
+  const ModuleDetailModel({required this.title, required this.lessons});
 
-  factory ModuleDetailModel.fromJson(Map<String, dynamic> json) {
-    final List<LessonEntity> lessons = [
-      for (final Object? item in json['lessons'] as List? ?? const [])
-        ?_lessonFromJson(item as Map<String, dynamic>),
-    ]..sort((a, b) => a.order.compareTo(b.order));
-    return ModuleDetailModel(
-      ModuleDetailEntity(
-        id: json['id'] as String,
+  factory ModuleDetailModel.fromJson(Map<String, dynamic> json) =>
+      ModuleDetailModel(
         title: json['title'] as String,
-        lessons: lessons,
-      ),
-    );
-  }
+        lessons: [
+          for (final Object? item in json['lessons'] as List? ?? const [])
+            ?_lessonFromJson(item as Map<String, dynamic>),
+        ]..sort((a, b) => a.order.compareTo(b.order)),
+      );
+
+  final String title;
+  final List<LessonEntity> lessons;
+
+  ModuleDetailEntity toEntity() =>
+      ModuleDetailEntity(title: title, lessons: lessons);
 
   /// Uma lição precisa de duas alternativas ou mais (CB-012).
   static const int minOptions = 2;
-
-  final ModuleDetailEntity _entity;
-
-  ModuleDetailEntity toEntity() => _entity;
 
   /// `null` quando a lição não pode ser mostrada: sem `id`, sem enunciado ou
   /// com menos de [minOptions] alternativas válidas.

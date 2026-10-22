@@ -58,7 +58,6 @@ class ActivitiesRepositoryImpl implements ActivitiesRepository {
       // Sem conta, o serviço manda tudo como não respondido: vale o registro.
       return Right(
         ModuleDetailEntity(
-          id: module.id,
           title: module.title,
           lessons: [
             for (final lesson in module.lessons)

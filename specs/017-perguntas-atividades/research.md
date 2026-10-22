@@ -40,6 +40,10 @@ ficam na ordem recebida (RF-027).
 **Alternatives considered**: `ModuleProgressEntity` já agora, como diz o `tasks.md` (seria código
 morto até a B3/B4).
 
+**Revisão da branch (2026-10-22)**: saiu também o `id` do `ModuleDetailEntity` (a tela usa o da
+rota). Ficam o `LessonOptionEntity.id`, que a B3 usa para responder, e o `LessonEntity.order`,
+usado para ordenar no model (mesmo padrão do `ModuleSummaryEntity`).
+
 ## R3. "Respondida" para conta e para visitante
 
 **Decision**: com conta, `LessonEntity.isCompleted` vem do serviço. Sem conta (visitante ou sessão
@@ -86,6 +90,13 @@ a B2 não usa e mais strings da notícia); copiar o botão no `activities` (dupl
 quando a lição atual está carregada, a voz está pronta, a preferência `autoReadAloud` está ligada e
 aquela lição ainda não foi lida sozinha, lê e marca. O controle "já lida sozinha" é por índice
 (`Set<int>` na página); trocar de pergunta para a leitura anterior e permite a automática da nova.
+
+**Revisão da branch (2026-10-22)**: a revisão achou um defeito no `ReadAloudController.stop()`
+(`common`): ele avisava "parado" antes de mandar o motor parar, e a leitura automática da pergunta
+nova (que começa nesse aviso) era cancelada pelo próprio parar. Agora o motor recebe o "parar"
+primeiro; o detalhe da notícia também se beneficia. A cadeia de condições da leitura automática
+continua parecida com a da notícia (duas páginas); levar um "ler uma vez por chave" para o
+controller fica como melhoria futura.
 
 ## R7. Estados
 

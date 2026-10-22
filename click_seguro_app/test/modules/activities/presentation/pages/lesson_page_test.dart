@@ -307,6 +307,8 @@ void main() {
         expect(tts.stopCalls, greaterThan(stopsBefore));
         expect(tts.spoken, hasLength(2));
         expect(tts.spoken.last.text, startsWith('E-mail do banco'));
+        // A nova pergunta continua sendo lida: o parar não a cancela.
+        expect(find.text('Parar'), findsOneWidget);
 
         await tester.tap(find.text('Anterior'));
         await tester.pumpAndSettle();

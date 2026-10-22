@@ -1,4 +1,3 @@
-import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
@@ -19,9 +18,6 @@ class LessonController extends ChangeNotifier {
 
   ModuleDetailEntity? _module;
   ModuleDetailEntity? get module => _module;
-
-  Failure? _failure;
-  Failure? get failure => _failure;
 
   int _currentIndex = 0;
   int get currentIndex => _currentIndex;
@@ -59,13 +55,11 @@ class LessonController extends ChangeNotifier {
   /// Carrega e começa na primeira pergunta ainda não respondida (FR-004).
   Future<void> load(String moduleId) async {
     _status = LessonStatus.loading;
-    _failure = null;
     _notify();
     final result = await _getModuleDetail(moduleId);
     if (_disposed) return;
     result.fold(
       (failure) {
-        _failure = failure;
         _status = failure is ModuleNotFoundFailure
             ? LessonStatus.empty
             : LessonStatus.error;
