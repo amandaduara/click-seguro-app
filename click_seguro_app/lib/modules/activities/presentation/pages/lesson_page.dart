@@ -1,13 +1,19 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
+import 'package:click_seguro_app/modules/activities/presentation/extensions/lesson_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_progress_indicator.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -28,8 +34,83 @@ class LessonPage extends StatelessWidget {
   }
 }
 
-class _LessonScaffold extends StatelessWidget {
+/// Também cuida da voz: "Ouvir", leitura automática uma vez por pergunta e
+/// parar ao trocar de pergunta ou sair (R5, R6), como no detalhe da notícia.
+class _LessonScaffold extends StatefulWidget {
   const _LessonScaffold();
+
+  @override
+  State<_LessonScaffold> createState() => _LessonScaffoldState();
+}
+
+class _LessonScaffoldState extends State<_LessonScaffold> {
+  late final LessonController _controller;
+  late final ReadAloudController _readAloud;
+  Locale? _locale;
+  int? _shownIndex;
+
+  /// Perguntas já lidas sozinhas: voltar a uma delas não lê de novo.
+  final Set<int> _autoRead = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = context.read<LessonController>();
+    _readAloud = GetIt.instance<ReadAloudController>();
+    _controller.addListener(_onLessonChanged);
+    _readAloud.addListener(_maybeAutoRead);
+  }
+
+  /// O idioma da voz é o do app: prepara de novo se ele mudar.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final Locale locale = context.locale;
+    if (locale == _locale) return;
+    _locale = locale;
+    unawaited(_readAloud.prepare(locale));
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onLessonChanged);
+    _readAloud.removeListener(_maybeAutoRead);
+    _readAloud.dispose();
+    super.dispose();
+  }
+
+  void _onLessonChanged() {
+    if (_controller.status != LessonStatus.loaded) return;
+    final int index = _controller.currentIndex;
+    if (_shownIndex != null && index != _shownIndex) {
+      unawaited(_readAloud.stop());
+    }
+    _shownIndex = index;
+    _maybeAutoRead();
+  }
+
+  void _maybeAutoRead() {
+    final LessonEntity? lesson = _controller.current;
+    final int index = _controller.currentIndex;
+    if (!mounted ||
+        _controller.status != LessonStatus.loaded ||
+        lesson == null ||
+        _autoRead.contains(index) ||
+        !_readAloud.isAvailable ||
+        !GetIt.instance<AccessibilityPreferencesNotifier>()
+            .value
+            .autoReadAloud) {
+      return;
+    }
+    _autoRead.add(index);
+    unawaited(_readAloud.speak(lesson.spokenText));
+  }
+
+  void _toggleListen(LessonEntity lesson) => unawaited(
+    _readAloud.isSpeaking
+        ? _readAloud.stop()
+        : _readAloud.speak(lesson.spokenText),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +132,15 @@ class _LessonScaffold extends StatelessWidget {
                   lesson: lesson,
                   lessons: controller.module!.lessons,
                   currentIndex: controller.currentIndex,
+                  listen: ListenableBuilder(
+                    listenable: _readAloud,
+                    builder: (context, _) => _readAloud.isAvailable
+                        ? ListenButton(
+                            isSpeaking: _readAloud.isSpeaking,
+                            onPressed: () => _toggleListen(lesson),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                 ),
               ),
               _NavigationBar(controller: controller),
@@ -68,6 +158,7 @@ class _LessonBody extends StatelessWidget {
     required this.lesson,
     required this.lessons,
     required this.currentIndex,
+    required this.listen,
   });
 
   /// Altura máxima da imagem: o enunciado aparece sem rolar muito.
@@ -76,6 +167,9 @@ class _LessonBody extends StatelessWidget {
   final LessonEntity lesson;
   final List<LessonEntity> lessons;
   final int currentIndex;
+
+  /// "Ouvir"/"Parar" (some sem voz no idioma do app).
+  final Widget listen;
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +218,8 @@ class _LessonBody extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: AppSpacing.s3),
             child: LessonOptionCard(number: index + 1, text: option.text),
           ),
+        const SizedBox(height: AppSpacing.s2),
+        listen,
       ],
     );
   }

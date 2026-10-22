@@ -127,11 +127,11 @@ na primeira não respondida (FR-001 a FR-004, FR-013 a FR-017).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T022 [US3] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "ouvir": "Ouvir" lê "<enunciado>. Alternativa 1: <texto>. Alternativa 2: …" (`FakeTextToSpeechService.spoken.last.text`) com a velocidade das preferências; vira "Parar"; "Parar" chama `stop`; sem voz no idioma (`availableLanguages: {}`) → sem "Ouvir" e nada lido; leitura automática ligada → lê a primeira pergunta sozinha uma vez (recompor a página não lê de novo); "Anterior"/"Próxima" param a leitura e a automática lê a nova uma vez; voltar para uma pergunta já lida sozinha não lê de novo; sair da tela chama `stop` se estava lendo
+- [X] T022 [US3] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "ouvir": "Ouvir" lê "<enunciado>. Alternativa 1: <texto>. Alternativa 2: …" (`FakeTextToSpeechService.spoken.last.text`) com a velocidade das preferências; vira "Parar"; "Parar" chama `stop`; sem voz no idioma (`availableLanguages: {}`) → sem "Ouvir" e nada lido; leitura automática ligada → lê a primeira pergunta sozinha uma vez (recompor a página não lê de novo); "Anterior"/"Próxima" param a leitura e a automática lê a nova uma vez; voltar para uma pergunta já lida sozinha não lê de novo; sair da tela chama `stop` se estava lendo
 
 ### Implementação
 
-- [ ] T023 [US3] Na `LessonPage` (estado): `ReadAloudController` do `GetIt` (`prepare(context.locale)` no `didChangeDependencies`, `dispose` ao sair), texto lido montado num getter da lição na camada de apresentação (`act/presentation/extensions/lesson_presentation.dart`: `spokenText` com `activitiesLessonOptionSpoken`), `ListenButton` abaixo das alternativas (só com `isAvailable`), `_maybeAutoRead` como na notícia com `Set<int>` dos índices já lidos sozinhos, e `stop()` antes de trocar de pergunta. Faz a T022 passar
+- [X] T023 [US3] Na `LessonPage` (estado): `ReadAloudController` do `GetIt` (`prepare(context.locale)` no `didChangeDependencies`, `dispose` ao sair), texto lido montado num getter da lição na camada de apresentação (`act/presentation/extensions/lesson_presentation.dart`: `spokenText` com `activitiesLessonOptionSpoken`), `ListenButton` abaixo das alternativas (só com `isAvailable`), `_maybeAutoRead` como na notícia com `Set<int>` dos índices já lidos sozinhos, e `stop()` antes de trocar de pergunta. Faz a T022 passar
 
 **Checkpoint**: arquivos de teste da lição verdes. Commit da US3.
 

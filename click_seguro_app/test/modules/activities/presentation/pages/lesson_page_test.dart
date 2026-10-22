@@ -3,6 +3,7 @@ import 'package:click_seguro_app/modules/activities/data/models/module_detail_mo
 import 'package:click_seguro_app/modules/activities/presentation/pages/lesson_page.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -223,6 +224,99 @@ void main() {
 
       expect(find.text('Pergunta 1 de 3'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('ouvir (US3)', () {
+    const String spokenL1 =
+        'Promessa de dinheiro em dobro pelo PIX. O que fazer?\n\n'
+        'Alternativa 1: Ignorar e denunciar.\n'
+        'Alternativa 2: Enviar.\n'
+        'Alternativa 3: Pedir prova.\n'
+        'Alternativa 4: Repassar.';
+
+    Future<void> tapListen(WidgetTester tester) async {
+      await reveal(tester, find.text('Ouvir'));
+      await tester.tap(find.text('Ouvir'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Ouvir" lê o enunciado e as alternativas, e vira "Parar"', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(
+        readingSpeed: ReadingSpeed.slow,
+      );
+      await open(tester);
+
+      await tapListen(tester);
+
+      expect(tts.spoken.single.text, spokenL1);
+      expect(tts.spoken.single.speed, ReadingSpeed.slow);
+      expect(find.text('Parar'), findsOneWidget);
+
+      await tester.tap(find.text('Parar'));
+      await tester.pumpAndSettle();
+      expect(tts.stopCalls, greaterThanOrEqualTo(1));
+      expect(find.text('Ouvir'), findsOneWidget);
+    });
+
+    testWidgets('sem voz no idioma: sem "Ouvir" e nada lido sozinho', (
+      tester,
+    ) async {
+      tts.availableLanguages = {};
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+
+      expect(find.text('Ouvir'), findsNothing);
+      expect(tts.spoken, isEmpty);
+    });
+
+    testWidgets('leitura automática: lê a pergunta sozinha uma vez', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+
+      expect(tts.spoken.single.text, spokenL1);
+
+      preferences.value = preferences.value.copyWith(
+        readingSpeed: ReadingSpeed.fast,
+      );
+      await tester.pumpAndSettle();
+      expect(tts.spoken, hasLength(1));
+    });
+
+    testWidgets(
+      'trocar de pergunta para e lê a nova uma vez; voltar não repete',
+      (tester) async {
+        useModule(answered: {'l1', 'l2', 'l3'});
+        preferences.value = preferences.value.copyWith(autoReadAloud: true);
+        await open(tester);
+        final int stopsBefore = tts.stopCalls;
+
+        await tester.tap(find.text('Próxima'));
+        await tester.pumpAndSettle();
+
+        expect(tts.stopCalls, greaterThan(stopsBefore));
+        expect(tts.spoken, hasLength(2));
+        expect(tts.spoken.last.text, startsWith('E-mail do banco'));
+
+        await tester.tap(find.text('Anterior'));
+        await tester.pumpAndSettle();
+        expect(tts.spoken, hasLength(2));
+      },
+    );
+
+    testWidgets('sair da tela para a leitura', (tester) async {
+      await open(tester);
+      await tapListen(tester);
+      final int stopsBefore = tts.stopCalls;
+
+      router.go('/activities');
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
     });
   });
 }
