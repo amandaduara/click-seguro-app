@@ -16,6 +16,24 @@ RF-026, RF-027, RF-028, RF-040, RN-005, RN-006 (2.3.0), RNF-003, RNF-004 e RNF-0
 [feature 017](../017-perguntas-atividades/spec.md) · leitura em voz alta das features
 [007](../007-servicos-plataforma-voz/spec.md) e [014](../014-acessibilidade/spec.md).
 
+## Clarifications
+
+### Session 2026-10-22
+
+- Q: A pessoa pode responder de novo uma pergunta que já respondeu, inclusive depois de ver a
+  resposta certa no feedback? → A: Sim, livre. Qualquer pergunta já respondida pode ser respondida
+  de novo e a nova resposta vale na pontuação (o app ensina, não avalia; o serviço já considera a
+  mais recente).
+- Q: Onde a pontuação do módulo deve aparecer enquanto a pessoa responde as perguntas? → A: Só no
+  painel de feedback, depois de cada resposta ("Você está com X de Y acertos"). Não fica fixa na
+  tela das perguntas; o total final é da tela de conclusão (B4).
+- Q: Como o painel de feedback deve se comportar quando a pessoa toca fora dele ou arrasta para
+  baixo? → A: Não fecha. Só fecha pelo botão "Próxima pergunta" (ou o do fim do módulo) ou pelo
+  voltar do aparelho; fechado pelo voltar, a pessoa fica na pergunta com o resultado visível.
+- Q: Com a leitura automática ligada, o que deve ser lido sozinho quando o painel de feedback
+  aparece? → A: Tudo: o resultado, a alternativa correta, a explicação e a pontuação. O botão
+  "Ouvir" do painel lê o mesmo conteúdo.
+
 ## Contexto
 
 A B2 entregou o caminho pelas perguntas, mas as alternativas ainda são só para ler e "Próxima"
@@ -88,10 +106,12 @@ painel, o destaque da correta (e da escolhida, no erro), a explicação e o bot�
 5. **Given** o painel aberto na última pergunta do módulo, **When** a pessoa toca no botão do
    painel, **Then** segue para o fim do módulo (que a B4 vai entregar; até lá, volta ao painel de
    atividades com o progresso atualizado).
-6. **Given** o painel aberto, **When** a pessoa o fecha sem seguir (gesto ou voltar do aparelho),
-   **Then** continua na mesma pergunta, que agora aparece como respondida, com o resultado
+6. **Given** o painel aberto, **When** a pessoa toca fora dele ou o arrasta para baixo, **Then**
+   ele continua aberto (evita fechar sem querer antes de ler a explicação).
+7. **Given** o painel aberto, **When** a pessoa usa o voltar do aparelho, **Then** o painel fecha
+   e ela continua na mesma pergunta, que agora aparece como respondida, com o resultado
    visível nas alternativas, e "Próxima" fica ativo.
-7. **Given** a pessoa respondeu (certo ou errado), **When** olha o indicador de progresso do
+8. **Given** a pessoa respondeu (certo ou errado), **When** olha o indicador de progresso do
    módulo, **Then** a pergunta aparece como concluída (uma lição conta como concluída ao ser
    respondida, certa ou errada, RN-006).
 
@@ -115,16 +135,17 @@ módulo em andamento.
 **Acceptance Scenarios**:
 
 1. **Given** uma pessoa com conta, **When** ela responde uma pergunta, **Then** o app busca de novo
-   o progresso do módulo no serviço e passa a mostrar a pontuação que o serviço calculou
-   ("X de Y acertos").
+   o progresso do módulo no serviço e o painel de feedback mostra a pontuação que o serviço
+   calculou ("Você está com X de Y acertos").
 2. **Given** um visitante, **When** ele responde uma pergunta, **Then** a resposta (alternativa
    escolhida e se acertou) fica gravada no registro da sessão, substituindo uma resposta anterior
    à mesma lição, e a pontuação mostrada é acertos na resposta mais recente / total de lições
    (RN-005).
 3. **Given** a pessoa respondeu perguntas de um módulo, **When** volta ao painel de atividades,
    **Then** o módulo aparece com as lições concluídas e o status atualizados.
-4. **Given** ainda não há nenhuma resposta no módulo (o serviço devolve total 0), **When** a tela
-   mostra a pontuação, **Then** não aparece "0 de 0".
+4. **Given** a tela das perguntas aberta, **When** a pessoa ainda não confirmou nenhuma resposta
+   nesta visita, **Then** nenhuma pontuação aparece (ela só aparece no painel de feedback) e, em
+   nenhum momento, aparece "0 de 0".
 5. **Given** a resposta foi corrigida mas a nova busca do progresso falhou, **When** o painel de
    feedback aparece, **Then** o resultado e a explicação aparecem normalmente e a pontuação
    continua a última conhecida, sem mensagem de erro.
@@ -158,11 +179,11 @@ confirmar e conferir que o resultado novo aparece e a pontuação reflete a resp
 
 ### User Story 5 - Ouvir o resultado e a explicação (Priority: P3)
 
-No painel de feedback, a pessoa pode ouvir o resultado, a alternativa correta e a explicação. Com
-a leitura automática ligada, isso é lido sozinho quando o painel aparece.
+No painel de feedback, a pessoa pode ouvir o resultado, a alternativa correta, a explicação e a
+pontuação. Com a leitura automática ligada, tudo isso é lido sozinho quando o painel aparece.
 
 **Why this priority**: RF-040 pede leitura automática do conteúdo; a explicação costuma ser o
-texto mais longo da atividade. Depende do painel existir.
+texto mais longo da atividade e é a parte que ensina. Depende do painel existir.
 
 **Independent Test**: com o leitor de voz falso, abrir o painel e tocar em "Ouvir"; com a leitura
 automática ligada, confirmar uma resposta e conferir que a leitura do feedback começou sozinha.
@@ -170,9 +191,10 @@ automática ligada, confirmar uma resposta e conferir que a leitura do feedback 
 **Acceptance Scenarios**:
 
 1. **Given** o painel de feedback aberto, **When** a pessoa toca em "Ouvir", **Then** o app lê o
-   resultado, a alternativa correta e a explicação, na velocidade da Acessibilidade.
-2. **Given** a leitura automática ligada, **When** o painel aparece, **Then** a leitura do
-   feedback começa sozinha, uma vez, depois de parar a leitura da pergunta que estiver em
+   resultado, a alternativa correta, a explicação (quando houver) e a pontuação, nessa ordem, na
+   velocidade da Acessibilidade.
+2. **Given** a leitura automática ligada, **When** o painel aparece, **Then** a leitura desse
+   mesmo conteúdo começa sozinha, uma vez, depois de parar a leitura da pergunta que estiver em
    andamento.
 3. **Given** a leitura do feedback em andamento, **When** a pessoa segue para a próxima pergunta
    ou fecha o painel, **Then** a leitura do feedback para (e a próxima pergunta é lida sozinha,
@@ -218,8 +240,9 @@ que a lição não existe, conferir cada reação.
 - **Visitante**: responde como quem tem conta; o serviço corrige sem salvar e o app grava no
   registro da sessão (RN-006). Se ele criar conta sem fechar o app, as respostas vão para a conta
   nova (comportamento da B1, que esta feature só alimenta).
-- **Sessão expira** durante o envio: a resposta segue como sem conta (o serviço corrige); a
-  pessoa vê o feedback normalmente.
+- **Sessão expira** durante o envio: vale o aviso de sessão expirada que o app já mostra; o envio
+  conta como falha (FR-013), a alternativa continua marcada e a pessoa pode confirmar de novo,
+  agora sem conta.
 - **Letra no nível máximo / alto contraste** (B9): alternativas marcadas, correta e errada
   continuam distinguíveis por ícone e texto, não só por cor; o painel rola se a explicação for
   longa; o rodapé fixo não cobre a última alternativa.
@@ -253,27 +276,31 @@ que a lição não existe, conferir cada reação.
   indicador de progresso do módulo e liberar "Próxima" (RN-006; clarificação de 2026-10-21 da B2).
 - **FR-007**: O painel MUST oferecer seguir para a próxima pergunta; na última pergunta, seguir
   para o fim do módulo (até a B4, voltar ao painel de atividades).
-- **FR-008**: Fechar o painel sem seguir MUST manter a pessoa na mesma pergunta, com o resultado
-  visível nas alternativas.
+- **FR-008**: O painel MUST NOT fechar com toque fora dele nem ao ser arrastado; fecha só pelo
+  botão de seguir ou pelo voltar do aparelho. Fechado pelo voltar, a pessoa MUST continuar na
+  mesma pergunta, com o resultado visível nas alternativas (clarificação de 2026-10-22).
 - **FR-009**: Para quem tem conta, depois de cada resposta corrigida o app MUST buscar de novo o
   progresso do módulo no serviço e usar a pontuação dele (RF-028, RN-005). Falha nessa busca MUST
   NOT esconder o resultado já recebido.
 - **FR-010**: Para o visitante, cada resposta corrigida MUST ser gravada no registro da sessão
   (alternativa escolhida e se acertou), substituindo a anterior da mesma lição; a pontuação é
   acertos na resposta mais recente / total de lições do módulo (RN-005, RN-006).
-- **FR-011**: A tela MUST mostrar a pontuação atual do módulo depois que houver ao menos uma
-  resposta, e MUST NOT mostrar "0 de 0".
-- **FR-012**: A pessoa MUST poder responder de novo uma pergunta já respondida; a resposta nova
-  substitui a anterior na pontuação (RN-005).
+- **FR-011**: O painel de feedback MUST mostrar a pontuação atual do módulo depois de cada
+  resposta ("Você está com X de Y acertos"); a tela das perguntas MUST NOT mostrar pontuação fixa,
+  e nenhuma tela MUST mostrar "0 de 0" (clarificação de 2026-10-22).
+- **FR-012**: A pessoa MUST poder responder de novo qualquer pergunta já respondida, certa ou
+  errada, inclusive depois de ver a correta no feedback; a resposta nova substitui a anterior na
+  pontuação (RN-005; clarificação de 2026-10-22).
 - **FR-013**: Sem internet ou erro do serviço ao enviar, a tela MUST mostrar uma mensagem, manter a
   alternativa marcada e permitir tentar de novo, sem marcar a lição como respondida.
 - **FR-014**: Envio demorado MUST mostrar que está enviando e, depois de alguns segundos, o aviso
   de serviço acordando (como na carga do módulo).
 - **FR-015**: Alternativa recusada pelo serviço, ou lição/módulo que não existe mais, MUST
   recarregar o módulo com uma mensagem de que a pergunta foi atualizada.
-- **FR-016**: O painel de feedback MUST oferecer "Ouvir" (resultado, correta e explicação) na
-  velocidade da Acessibilidade, e, com a leitura automática ligada, ler sozinho uma vez ao
-  aparecer (RF-040). Sem voz no idioma do app, nada disso aparece nem acontece.
+- **FR-016**: O painel de feedback MUST oferecer "Ouvir", que lê o resultado, a correta, a
+  explicação (quando houver) e a pontuação, nessa ordem, na velocidade da Acessibilidade; com a
+  leitura automática ligada, o mesmo conteúdo MUST ser lido sozinho uma vez ao aparecer o painel
+  (RF-040; clarificação de 2026-10-22). Sem voz no idioma do app, nada disso aparece nem acontece.
 - **FR-017**: A leitura em andamento (da pergunta ou do feedback) MUST parar ao confirmar, ao
   seguir para outra pergunta, ao fechar o painel e ao sair da tela.
 - **FR-018**: A explicação MUST NOT aparecer antes da correção (mantém o FR-016 da B2).
