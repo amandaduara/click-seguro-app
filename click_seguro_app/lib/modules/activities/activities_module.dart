@@ -6,7 +6,9 @@ import 'package:click_seguro_app/modules/activities/data/datasources/guest_progr
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
 import 'package:click_seguro_app/modules/activities/domain/usecases/get_activities_dashboard_usecase.dart';
+import 'package:click_seguro_app/modules/activities/domain/usecases/get_module_detail_usecase.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/activities_dashboard_controller.dart';
+import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/common.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -35,6 +37,14 @@ class ActivitiesModule implements ModuleInterface {
       )
       ..registerLazySingleton(
         () => GetActivitiesDashboardUseCase(injector<ActivitiesRepository>()),
+      )
+      ..registerLazySingleton(
+        () => GetModuleDetailUseCase(injector<ActivitiesRepository>()),
+      )
+      ..registerFactory(
+        () => LessonController(
+          getModuleDetail: injector<GetModuleDetailUseCase>(),
+        ),
       )
       ..registerFactory(
         () => ActivitiesDashboardController(

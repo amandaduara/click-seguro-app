@@ -4,6 +4,8 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -230,6 +232,71 @@ void main() {
       final result = await repository.getDashboard();
 
       expect(result.isRight(), isTrue);
+    });
+  });
+
+  group('detalhe do módulo (specs/017)', () {
+    Future<ModuleDetailEntity> detailOrFail() async =>
+        (await repository.getModuleDetail(
+          'm1',
+        )).getOrElse((failure) => throw StateError('falhou: $failure'));
+
+    test('conta: concluídas do serviço', () async {
+      await signIn();
+      remote.moduleDetail = moduleDetailJson(answered: {'l2'});
+
+      final module = await detailOrFail();
+
+      expect(
+        [for (final l in module.lessons) l.isCompleted],
+        [false, true, false],
+      );
+    });
+
+    test('visitante: concluídas do registro da sessão', () async {
+      await session.startGuestSession();
+      store.recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'o1',
+      );
+
+      final module = await detailOrFail();
+
+      expect(
+        [for (final l in module.lessons) l.isCompleted],
+        [true, false, false],
+      );
+    });
+
+    test('sessão expirada: como sem conta', () async {
+      await signIn();
+      remote.moduleDetail = moduleDetailJson(answered: {'l1'});
+      await session.expire();
+
+      final module = await detailOrFail();
+
+      expect(module.lessons.first.isCompleted, isFalse);
+    });
+
+    test('404 do módulo → ModuleNotFoundFailure', () async {
+      remote.moduleDetailError = apiError(
+        ApiErrorType.client,
+        statusCode: 404,
+        errorCode: 'EDUCATIONAL_MODULE_NOT_FOUND',
+      );
+
+      final result = await repository.getModuleDetail('m9');
+
+      expect(result.getLeft().toNullable(), isA<ModuleNotFoundFailure>());
+    });
+
+    test('sem internet → ConnectionFailure', () async {
+      remote.moduleDetailError = apiError(ApiErrorType.connection);
+
+      final result = await repository.getModuleDetail('m1');
+
+      expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
     });
   });
 }

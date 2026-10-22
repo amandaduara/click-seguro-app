@@ -82,7 +82,7 @@ void main() {
       '/profile': ProfilePage,
     };
     const overlayPaths = <String, Type>{
-      '/activities/m1': ActivityModulePage,
+      '/activities/m1': LessonPage,
       '/help/contact/new': HelpContactPage,
       '/help/contact/c1': HelpContactPage,
       '/profile/edit': ProfileEditPage,

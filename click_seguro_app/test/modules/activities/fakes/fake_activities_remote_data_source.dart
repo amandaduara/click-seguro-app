@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:click_seguro_app/modules/activities/data/datasources/activities_remote_data_source.dart';
 import 'package:click_seguro_app/modules/activities/data/models/activities_dashboard_model.dart';
+import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/guest_answer.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 
@@ -26,6 +27,18 @@ class FakeActivitiesRemoteDataSource implements ActivitiesRemoteDataSource {
   /// Ordem das chamadas ("answer"/"modules"), para conferir que a
   /// transferência vem antes da leitura.
   final List<String> calls = [];
+
+  Map<String, dynamic> moduleDetail = moduleDetailJson();
+  ApiException? moduleDetailError;
+  int moduleDetailCalls = 0;
+
+  @override
+  Future<ModuleDetailModel> getModuleDetail(String moduleId) async {
+    moduleDetailCalls++;
+    final ApiException? error = moduleDetailError;
+    if (error != null) throw error;
+    return ModuleDetailModel.fromJson(moduleDetail);
+  }
 
   @override
   Future<ActivitiesDashboardModel> getModules() async {

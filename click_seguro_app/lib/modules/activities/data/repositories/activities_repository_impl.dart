@@ -5,7 +5,9 @@ import 'package:click_seguro_app/modules/activities/data/datasources/activities_
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/guest_answer.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_summary_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_failure_mapper.dart';
@@ -24,6 +26,7 @@ class ActivitiesRepositoryImpl implements ActivitiesRepository {
     'EDUCATIONAL_LESSON_NOT_FOUND',
   };
   static const int _badRequest = 400;
+  static const String _moduleNotFoundCode = 'EDUCATIONAL_MODULE_NOT_FOUND';
 
   final ActivitiesRemoteDataSource _remote;
   final GuestProgressStore _store;
@@ -42,6 +45,33 @@ class ActivitiesRepositoryImpl implements ActivitiesRepository {
       return Right(authenticated ? dashboard : _withSessionProgress(dashboard));
     } on ApiException catch (e) {
       return Left(e.toFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, ModuleDetailEntity>> getModuleDetail(
+    String moduleId,
+  ) async {
+    try {
+      final module = (await _remote.getModuleDetail(moduleId)).toEntity();
+      if (_session.isAuthenticated) return Right(module);
+      // Sem conta, o serviço manda tudo como não respondido: vale o registro.
+      return Right(
+        ModuleDetailEntity(
+          id: module.id,
+          title: module.title,
+          lessons: [
+            for (final lesson in module.lessons)
+              lesson.withCompleted(_store.isAnswered(lesson.id)),
+          ],
+        ),
+      );
+    } on ApiException catch (e) {
+      return Left(
+        e.errorCode == _moduleNotFoundCode
+            ? const ModuleNotFoundFailure()
+            : e.toFailure(),
+      );
     }
   }
 
