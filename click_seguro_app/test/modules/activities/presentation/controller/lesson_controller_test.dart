@@ -278,8 +278,7 @@ void main() {
       expect(controller.canSelect, isTrue);
 
       controller.goPrevious();
-      expect(controller.resultFor('l1')?.isCorrect, isTrue);
-      expect(controller.currentResult, isNotNull);
+      expect(controller.currentResult?.isCorrect, isTrue);
     });
 
     test('isLastLesson só na última', () async {
@@ -420,8 +419,9 @@ void main() {
       expect(repository.moduleDetailCalls, greaterThan(loadsBefore));
       expect(controller.status, LessonStatus.loaded);
       expect(controller.current!.id, 'l2');
-      expect(controller.resultFor('l1'), isNull);
       expect(controller.selectedOptionId, isNull);
+      controller.goPrevious();
+      expect(controller.currentResult, isNull);
     });
 
     test('recusada e o módulo sumiu: "sem atividades" (achado C1)', () async {
@@ -433,6 +433,28 @@ void main() {
       await controller.confirm();
 
       expect(controller.status, LessonStatus.empty);
+    });
+
+    test('durante o envio não navega (revisão da branch)', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l2'})),
+      ]);
+      await controller.load('m1');
+      controller
+        ..goPrevious()
+        ..select('l2-o1');
+      repository.answerGate = Completer<void>();
+      final Future<AnswerAttempt> attempt = controller.confirm();
+
+      expect(controller.canGoPrevious, isFalse);
+      expect(controller.canGoNext, isFalse);
+      controller.goPrevious();
+      expect(controller.current!.id, 'l2');
+
+      repository.answerGate!.complete();
+      await attempt;
+      expect(controller.canGoPrevious, isTrue);
+      expect(controller.canGoNext, isTrue);
     });
 
     test('dispose durante o envio: nada notificado depois', () async {

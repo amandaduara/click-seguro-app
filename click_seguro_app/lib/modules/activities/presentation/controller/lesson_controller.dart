@@ -40,14 +40,19 @@ class LessonController extends ChangeNotifier {
     return lessons.isEmpty ? null : lessons[_currentIndex];
   }
 
-  bool get canGoPrevious => _currentIndex > 0;
+  /// Durante o envio a pergunta não troca: o resultado é dela (revisão da
+  /// branch de specs/018).
+  bool get canGoPrevious => !_isSubmitting && _currentIndex > 0;
 
   /// Só depois de responder a atual, e nunca além da última (clarificação de
-  /// 2026-10-21). A B3 é quem marca a resposta.
+  /// 2026-10-21).
   bool get canGoNext {
     final LessonEntity? lesson = current;
     final int total = _module?.lessons.length ?? 0;
-    return lesson != null && lesson.isCompleted && _currentIndex < total - 1;
+    return !_isSubmitting &&
+        lesson != null &&
+        lesson.isCompleted &&
+        _currentIndex < total - 1;
   }
 
   void goPrevious() {
@@ -80,8 +85,6 @@ class LessonController extends ChangeNotifier {
 
   /// O resultado recebido nesta visita para a pergunta atual.
   AnswerResultEntity? get currentResult => _currentAnswer?.result;
-
-  AnswerResultEntity? resultFor(String lessonId) => _answers[lessonId]?.result;
 
   /// A última pontuação conhecida do módulo (do serviço com conta, do
   /// registro sem conta); `null` enquanto não há (FR-011).
