@@ -28,6 +28,28 @@ class LessonController extends ChangeNotifier {
 
   LessonEntity? get current => _module?.lessons[_currentIndex];
 
+  bool get canGoPrevious => _currentIndex > 0;
+
+  /// Só depois de responder a atual, e nunca além da última (clarificação de
+  /// 2026-10-21). A B3 é quem marca a resposta.
+  bool get canGoNext {
+    final LessonEntity? lesson = current;
+    final int total = _module?.lessons.length ?? 0;
+    return lesson != null && lesson.isCompleted && _currentIndex < total - 1;
+  }
+
+  void goPrevious() {
+    if (!canGoPrevious) return;
+    _currentIndex--;
+    _notify();
+  }
+
+  void goNext() {
+    if (!canGoNext) return;
+    _currentIndex++;
+    _notify();
+  }
+
   bool _disposed = false;
 
   /// Carrega e começa na primeira pergunta ainda não respondida (FR-004).

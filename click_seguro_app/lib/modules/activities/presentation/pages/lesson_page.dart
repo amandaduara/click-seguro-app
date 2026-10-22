@@ -1,11 +1,13 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_progress_indicator.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -42,10 +44,17 @@ class _LessonScaffold extends StatelessWidget {
       body: SafeArea(
         child: switch (controller.status) {
           LessonStatus.loading => const SafeLoadingState(),
-          LessonStatus.loaded when lesson != null => _LessonBody(
-            lesson: lesson,
-            position: controller.currentIndex + 1,
-            total: controller.module!.lessons.length,
+          LessonStatus.loaded when lesson != null => Column(
+            children: [
+              Expanded(
+                child: _LessonBody(
+                  lesson: lesson,
+                  lessons: controller.module!.lessons,
+                  currentIndex: controller.currentIndex,
+                ),
+              ),
+              _NavigationBar(controller: controller),
+            ],
           ),
           _ => const SizedBox.shrink(),
         },
@@ -57,16 +66,16 @@ class _LessonScaffold extends StatelessWidget {
 class _LessonBody extends StatelessWidget {
   const _LessonBody({
     required this.lesson,
-    required this.position,
-    required this.total,
+    required this.lessons,
+    required this.currentIndex,
   });
 
   /// Altura máxima da imagem: o enunciado aparece sem rolar muito.
   static const double maxImageHeight = 220;
 
   final LessonEntity lesson;
-  final int position;
-  final int total;
+  final List<LessonEntity> lessons;
+  final int currentIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -81,14 +90,7 @@ class _LessonBody extends StatelessWidget {
         AppSpacing.s6,
       ),
       children: [
-        Text(
-          AppStrings.activitiesLessonPosition.tr(args: ['$position', '$total']),
-          style: textTheme.bodyLarge?.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: colors.textMutedForeground,
-          ),
-        ),
+        LessonProgressIndicator(lessons: lessons, currentIndex: currentIndex),
         const SizedBox(height: AppSpacing.s4),
         if (image != null)
           ExcludeSemantics(
@@ -123,6 +125,48 @@ class _LessonBody extends StatelessWidget {
             child: LessonOptionCard(number: index + 1, text: option.text),
           ),
       ],
+    );
+  }
+}
+
+/// Rodapé fixo: "Anterior" e "Próxima", desativados quando não podem
+/// (FR-005).
+class _NavigationBar extends StatelessWidget {
+  const _NavigationBar({required this.controller});
+
+  final LessonController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.card,
+        border: Border(top: BorderSide(color: colors.border)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s4),
+        child: Row(
+          children: [
+            Expanded(
+              child: SafeButton(
+                label: AppStrings.activitiesLessonPrevious.tr(),
+                tone: SafeButtonTone.secondary,
+                onPressed: controller.canGoPrevious
+                    ? controller.goPrevious
+                    : null,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s3),
+            Expanded(
+              child: SafeButton(
+                label: AppStrings.activitiesLessonNext.tr(),
+                onPressed: controller.canGoNext ? controller.goNext : null,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

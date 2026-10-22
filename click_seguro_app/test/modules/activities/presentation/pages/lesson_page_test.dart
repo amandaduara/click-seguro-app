@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/lesson_page.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../../../fakes/fake_text_to_speech_service.dart';
@@ -169,6 +171,58 @@ void main() {
       await open(tester, locale: const Locale('en', 'US'));
 
       expect(find.text('Question 1 of 3'), findsOneWidget);
+    });
+  });
+
+  group('navegação (US2)', () {
+    SafeButton button(WidgetTester tester, String label) =>
+        tester.widget<SafeButton>(find.widgetWithText(SafeButton, label));
+
+    testWidgets('anterior e próxima mudam a posição', (tester) async {
+      useModule(answered: {'l1', 'l2', 'l3'});
+      await open(tester);
+
+      await tester.tap(find.text('Próxima'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
+
+      await tester.tap(find.text('Anterior'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+    });
+
+    testWidgets('"Próxima" desativado sem resposta; "Anterior" na primeira', (
+      tester,
+    ) async {
+      await open(tester);
+
+      expect(button(tester, 'Próxima').onPressed, isNull);
+      expect(button(tester, 'Anterior').onPressed, isNull);
+    });
+
+    testWidgets('marcas: respondidas com check; leitura de tela resumida', (
+      tester,
+    ) async {
+      useModule(answered: {'l1'});
+      await open(tester);
+
+      expect(find.byIcon(LucideIcons.check), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('Pergunta 2 de 3, 1 concluídas'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('sessão expira com a tela aberta: mesma pergunta, sem erro', (
+      tester,
+    ) async {
+      await open(tester);
+
+      await session.expire();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 }

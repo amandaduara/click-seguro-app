@@ -107,12 +107,12 @@ na primeira não respondida (FR-001 a FR-004, FR-013 a FR-017).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T019 [P] [US2] Em `tact/presentation/controller/lesson_controller_test.dart`, grupo "navegação": com as três respondidas, `goNext` até 2 e `goPrevious` até 0; `canGoPrevious` falso em 0; `canGoNext` falso na última; com só `l1` respondida, em 0 `canGoNext` verdadeiro e em 1 falso (`goNext` não muda o índice); `goPrevious` em 0 não muda; três `goNext` seguidos com as três respondidas → índice 2 (não passa do fim)
-- [ ] T020 [US2] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "navegação": "Próxima"/"Anterior" mudam a posição; "Próxima" desativado (sem `onPressed` e semântica `isEnabled` falso) numa pergunta não respondida; "Anterior" desativado na primeira; marcas: respondidas com `LucideIcons.check`, atual destacada; semântica do indicador "Pergunta 2 de 3, 1 concluídas"; sessão expira com a página aberta (`session.expire()`) → a mesma pergunta continua na tela, sem erro
+- [X] T019 [P] [US2] Em `tact/presentation/controller/lesson_controller_test.dart`, grupo "navegação": com as três respondidas, `goNext` até 2 e `goPrevious` até 0; `canGoPrevious` falso em 0; `canGoNext` falso na última; com só `l1` respondida, em 0 `canGoNext` verdadeiro e em 1 falso (`goNext` não muda o índice); `goPrevious` em 0 não muda; três `goNext` seguidos com as três respondidas → índice 2 (não passa do fim)
+- [X] T020 [US2] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "navegação": "Próxima"/"Anterior" mudam a posição; "Próxima" desativado (sem `onPressed` e semântica `isEnabled` falso) numa pergunta não respondida; "Anterior" desativado na primeira; marcas: respondidas com `LucideIcons.check`, atual destacada; semântica do indicador "Pergunta 2 de 3, 1 concluídas"; sessão expira com a página aberta (`session.expire()`) → a mesma pergunta continua na tela, sem erro
 
 ### Implementação
 
-- [ ] T021 [US2] Em `lesson_controller.dart`: `canGoPrevious`, `canGoNext`, `goPrevious()`, `goNext()` (ignoram quando não podem). Criar `act/presentation/widgets/lesson_progress_indicator.dart` (`Wrap` de marcas 28×28: concluída com check em `colors.success`, atual com borda `colors.primary`, demais vazias; `Semantics(label: activitiesLessonProgressSemantics)` com `ExcludeSemantics` nas marcas) e, na página, o rodapé fixo com dois `SafeButton` (`activitiesLessonPrevious`, `activitiesLessonNext`, `onPressed` nulo quando não pode). Faz a T019 e a T020 passar
+- [X] T021 [US2] Em `lesson_controller.dart`: `canGoPrevious`, `canGoNext`, `goPrevious()`, `goNext()` (ignoram quando não podem). Criar `act/presentation/widgets/lesson_progress_indicator.dart` (`Wrap` de marcas 28×28: concluída com check em `colors.success`, atual com borda `colors.primary`, demais vazias; `Semantics(label: activitiesLessonProgressSemantics)` com `ExcludeSemantics` nas marcas) e, na página, o rodapé fixo com dois `SafeButton` (`activitiesLessonPrevious`, `activitiesLessonNext`, `onPressed` nulo quando não pode). Faz a T019 e a T020 passar
 
 **Checkpoint**: arquivos de teste da lição verdes. Commit da US2.
 

@@ -105,4 +105,54 @@ void main() {
 
     await expectLater(loading, completes);
   });
+
+  group('navegação (US2)', () {
+    test('com tudo respondido: vai e volta pelos limites', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l2', 'l3'})),
+      ]);
+      await controller.load('m1');
+
+      expect(controller.canGoPrevious, isFalse);
+      controller.goNext();
+      controller.goNext();
+      expect(controller.currentIndex, 2);
+      expect(controller.canGoNext, isFalse);
+      controller.goPrevious();
+      controller.goPrevious();
+      expect(controller.currentIndex, 0);
+      controller.goPrevious();
+      expect(controller.currentIndex, 0);
+    });
+
+    test('só avança com a atual respondida', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l3'})),
+      ]);
+      await controller.load('m1');
+      controller.goPrevious();
+      expect(controller.currentIndex, 0);
+
+      expect(controller.canGoNext, isTrue);
+      controller.goNext();
+      expect(controller.currentIndex, 1);
+      expect(controller.canGoNext, isFalse);
+      controller.goNext();
+      expect(controller.currentIndex, 1);
+    });
+
+    test('três "Próxima" seguidos param na última', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l2', 'l3'})),
+      ]);
+      await controller.load('m1');
+
+      controller
+        ..goNext()
+        ..goNext()
+        ..goNext();
+
+      expect(controller.currentIndex, 2);
+    });
+  });
 }
