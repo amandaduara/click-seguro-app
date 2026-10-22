@@ -118,4 +118,17 @@ void main() {
       expect(store.pendingTransfer, isEmpty);
     });
   });
+
+  test('isAnswered por lição (specs/017 R3)', () async {
+    expect(store.isAnswered('l1'), isFalse);
+
+    store.recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1');
+
+    expect(store.isAnswered('l1'), isTrue);
+    expect(store.isAnswered('l2'), isFalse);
+
+    await session.logout();
+
+    expect(store.isAnswered('l1'), isFalse);
+  });
 }

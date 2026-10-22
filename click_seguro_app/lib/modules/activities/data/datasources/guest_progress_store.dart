@@ -48,6 +48,9 @@ class GuestProgressStore {
   int answeredCount(String moduleId) =>
       _answers.values.where((answer) => answer.moduleId == moduleId).length;
 
+  /// A lição foi respondida nesta sessão (specs/017 R3).
+  bool isAnswered(String lessonId) => _answers.containsKey(lessonId);
+
   /// Tira uma resposta já enviada (ou que não adianta reenviar).
   void removePending(GuestAnswer answer) => _pending.remove(answer);
 

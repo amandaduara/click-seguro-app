@@ -239,7 +239,13 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `ActivitiesDashboardController` com teste.
   - Extension de status (rótulo, cor, ícone) com teste.
   - `ModuleCardWidget` e `ActivitiesDashboardPage`, com widget test.
-- [ ] **B2 Atividades: navegação pelas perguntas** (RF-024, RF-040, CB-012)
+- [x] **B2 Atividades: navegação pelas perguntas** (RF-024, RF-040, CB-012) (specs/017-perguntas-atividades)
+  - Entregue (2026-10-22): abre na primeira pergunta não respondida; "Anterior" livre e "Próxima"
+    só com a atual respondida (**a B3 precisa marcar a lição como respondida para liberar o
+    avanço**); leitura automática a cada pergunta que aparece; botão "Ouvir" compartilhado em
+    `core/widgets/listen_button.dart` (o detalhe da notícia também usa). `explanation` e o
+    `progress` do módulo (pontuação) **não** entraram nas entidades: a B3/B4 acrescentam quando
+    usarem. Corrigido no `common`: `ReadAloudController.stop()` para o motor antes de avisar.
   - Endpoint: `GET /app/educational/modules/{moduleId}`.
   - `ModuleDetailEntity`, `LessonEntity` (pergunta, imagem, opções, concluída) e
     `ModuleProgressEntity` + models, com teste (lição com < 2 opções descartada).

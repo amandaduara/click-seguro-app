@@ -107,4 +107,56 @@ void main() {
       ),
     );
   });
+
+  group('getModuleDetail', () {
+    test('com conta: GET do módulo com o token', () async {
+      await session.saveSession(
+        accessToken: 'tk',
+        refreshToken: 'rf',
+        email: 'maria@exemplo.com',
+      );
+      adapter.body = moduleDetailJson();
+
+      final model = await dataSource.getModuleDetail('m1');
+
+      final request = adapter.lastRequest!;
+      expect(request.method, 'GET');
+      expect(request.path, '/app/educational/modules/m1');
+      expect(request.headers['Authorization'], 'Bearer tk');
+      expect(model.toEntity().lessons, hasLength(3));
+    });
+
+    test('visitante: sem token', () async {
+      await session.startGuestSession();
+      adapter.body = moduleDetailJson();
+
+      await dataSource.getModuleDetail('m1');
+
+      expect(
+        adapter.lastRequest!.headers.containsKey('Authorization'),
+        isFalse,
+      );
+    });
+
+    test('404 sobe com o código', () async {
+      adapter
+        ..statusCode = 404
+        ..body = {
+          'statusCode': 404,
+          'code': 'EDUCATIONAL_MODULE_NOT_FOUND',
+          'message': 'Module not found',
+        };
+
+      await expectLater(
+        dataSource.getModuleDetail('m9'),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.errorCode,
+            'errorCode',
+            'EDUCATIONAL_MODULE_NOT_FOUND',
+          ),
+        ),
+      );
+    });
+  });
 }
