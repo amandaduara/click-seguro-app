@@ -147,12 +147,12 @@ atividades atualizado (FR-009 a FR-011).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T029 [P] [US4] Em `lesson_controller_test.dart`, grupo "responder de novo": `answerAgain()` apaga `currentResult` e a escolha, mantém a lição concluída e `canGoNext`; depois, `select`/`confirm` enviam de novo e o novo resultado substitui o anterior; lição concluída antes da visita (`isCompleted` do serviço) → sem escolha, `canSelect` verdadeiro, `canGoNext` verdadeiro
-- [ ] T030 [US4] Em `lesson_page_test.dart`, grupo "responder de novo": depois do feedback fechado pelo voltar, o rodapé mostra "Responder de novo" no lugar de "Confirmar resposta"; tocar → alternativas sem marcação e tocáveis; escolher e confirmar → novo painel; módulo com `l1` concluída pelo serviço → "Confirmar resposta" e alternativas tocáveis
+- [X] T029 [P] [US4] Em `lesson_controller_test.dart`, grupo "responder de novo": `answerAgain()` apaga `currentResult` e a escolha, mantém a lição concluída e `canGoNext`; depois, `select`/`confirm` enviam de novo e o novo resultado substitui o anterior; lição concluída antes da visita (`isCompleted` do serviço) → sem escolha, `canSelect` verdadeiro, `canGoNext` verdadeiro
+- [X] T030 [US4] Em `lesson_page_test.dart`, grupo "responder de novo": depois do feedback fechado pelo voltar, o rodapé mostra "Responder de novo" no lugar de "Confirmar resposta"; tocar → alternativas sem marcação e tocáveis; escolher e confirmar → novo painel; módulo com `l1` concluída pelo serviço → "Confirmar resposta" e alternativas tocáveis
 
 ### Implementação
 
-- [ ] T031 [US4] Em `lesson_controller.dart`: `answerAgain()`. Em `confirm_answer_footer.dart`: com `currentResult`, o botão vira "Responder de novo" (`SafeButtonTone.secondary`) chamando `answerAgain`. Faz a T029 e a T030 passar
+- [X] T031 [US4] Em `lesson_controller.dart`: `answerAgain()`. Em `confirm_answer_footer.dart`: com `currentResult`, o botão vira "Responder de novo" (`SafeButtonTone.secondary`) chamando `answerAgain`. Faz a T029 e a T030 passar
 
 **Checkpoint**: testes verdes. Commit da US4.
 

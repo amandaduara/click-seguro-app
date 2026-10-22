@@ -104,6 +104,15 @@ class LessonController extends ChangeNotifier {
     _notify();
   }
 
+  /// Apaga o resultado da pergunta atual para responder outra vez; ela
+  /// continua concluída (clarificação Q1 de specs/018).
+  void answerAgain() {
+    final LessonEntity? lesson = current;
+    if (lesson == null || _isSubmitting || currentResult == null) return;
+    _answers.remove(lesson.id);
+    _notify();
+  }
+
   /// Envia a escolha uma vez; toques durante o envio são ignorados.
   Future<AnswerAttempt> confirm() async {
     final LessonEntity? lesson = current;

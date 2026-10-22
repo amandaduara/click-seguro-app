@@ -6,8 +6,9 @@ import 'package:click_seguro_app/modules/activities/presentation/controller/less
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
-/// Rodapé fixo das perguntas (RF-026): "Confirmar resposta" e, abaixo,
-/// "Anterior"/"Próxima", desativados quando não podem (FR-005 da B2).
+/// Rodapé fixo das perguntas (RF-026): "Confirmar resposta" (ou, com o
+/// resultado na tela, "Responder de novo") e, abaixo, "Anterior"/"Próxima",
+/// desativados quando não podem (FR-005 da B2).
 class ConfirmAnswerFooter extends StatelessWidget {
   const ConfirmAnswerFooter({
     super.key,
@@ -32,11 +33,18 @@ class ConfirmAnswerFooter extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SafeButton(
-              label: AppStrings.activitiesAnswerConfirm.tr(),
-              loading: controller.isSubmitting,
-              onPressed: controller.canConfirm ? onConfirm : null,
-            ),
+            if (controller.currentResult != null)
+              SafeButton(
+                label: AppStrings.activitiesAnswerAgain.tr(),
+                tone: SafeButtonTone.secondary,
+                onPressed: controller.answerAgain,
+              )
+            else
+              SafeButton(
+                label: AppStrings.activitiesAnswerConfirm.tr(),
+                loading: controller.isSubmitting,
+                onPressed: controller.canConfirm ? onConfirm : null,
+              ),
             const SizedBox(height: AppSpacing.s3),
             Row(
               children: [

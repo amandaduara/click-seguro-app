@@ -569,6 +569,62 @@ void main() {
     });
   });
 
+  group('responder de novo (specs/018 US4)', () {
+    Future<void> choose(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Responder de novo" limpa e permite outra resposta', (
+      tester,
+    ) async {
+      await open(tester);
+      await choose(tester, 'Enviar');
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Confirmar resposta'), findsNothing);
+      await tester.tap(find.text('Responder de novo'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widgetList<LessonOptionCard>(find.byType(LessonOptionCard))
+            .every((c) => c.state == LessonOptionState.idle && c.onTap != null),
+        isTrue,
+      );
+      await choose(tester, 'Ignorar e denunciar');
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Você acertou!'), findsOneWidget);
+      expect(repository.answerCalls, hasLength(2));
+    });
+
+    testWidgets(
+      'respondida pelo serviço: alternativas tocáveis e "Confirmar"',
+      (tester) async {
+        useModule(answered: {'l1', 'l2', 'l3'});
+        await open(tester);
+
+        expect(find.text('Confirmar resposta'), findsOneWidget);
+        expect(find.text('Responder de novo'), findsNothing);
+        await choose(tester, 'Enviar');
+        expect(
+          tester
+              .widget<SafeButton>(
+                find.widgetWithText(SafeButton, 'Confirmar resposta'),
+              )
+              .onPressed,
+          isNotNull,
+        );
+      },
+    );
+  });
+
   group('pontuação (specs/018 US3)', () {
     testWidgets('só no painel, nunca na tela das perguntas', (tester) async {
       repository.moduleDetailResults = [

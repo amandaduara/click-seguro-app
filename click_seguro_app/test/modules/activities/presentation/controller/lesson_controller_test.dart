@@ -332,6 +332,45 @@ void main() {
       expect(controller.score?.score, 1);
     });
 
+    test(
+      'responder de novo: limpa, continua concluída e envia outra vez',
+      () async {
+        await answerCurrent('l1-o2');
+
+        controller.answerAgain();
+
+        expect(controller.currentResult, isNull);
+        expect(controller.selectedOptionId, isNull);
+        expect(controller.current!.isCompleted, isTrue);
+        expect(controller.canGoNext, isTrue);
+        expect(controller.canSelect, isTrue);
+
+        repository.answerResults = [
+          Right(AnswerResultModel.fromJson(answerJson()).toEntity()),
+        ];
+        await answerCurrent('l1-o1');
+
+        expect(repository.answerCalls, hasLength(2));
+        expect(controller.currentResult?.isCorrect, isTrue);
+      },
+    );
+
+    test(
+      'respondida antes da visita: escolhe de novo, "Próxima" ativo',
+      () async {
+        controller = build([
+          Right(module(answered: {'l1', 'l2', 'l3'})),
+        ]);
+        await controller.load('m1');
+
+        expect(controller.current!.isCompleted, isTrue);
+        expect(controller.currentResult, isNull);
+        expect(controller.selectedOptionId, isNull);
+        expect(controller.canSelect, isTrue);
+        expect(controller.canGoNext, isTrue);
+      },
+    );
+
     test('na última, responder não libera "Próxima"', () async {
       controller = build([
         Right(module(answered: {'l1', 'l2'})),
