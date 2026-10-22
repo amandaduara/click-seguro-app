@@ -102,6 +102,7 @@ lib/
     ├── domain/usecases/get_module_detail_usecase.dart   # NOVO
     └── presentation/
         ├── controller/lesson_controller.dart · lesson_status.dart       # NOVOS
+        ├── extensions/lesson_presentation.dart         # NOVO: texto lido em voz alta (US3)
         ├── pages/lesson_page.dart                      # NOVO; activity_module_page.dart REMOVIDO
         ├── widgets/lesson_progress_indicator.dart · lesson_option_card.dart  # NOVOS
         └── routes/activities_routes.dart               # :moduleId → LessonPage

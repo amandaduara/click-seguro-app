@@ -207,8 +207,8 @@ e com um módulo sem lições, conferir cada estado.
 
 ### Key Entities
 
-- **Módulo com lições**: identificador, título, descrição, lições (na ordem) e progresso do módulo
-  (lições concluídas, pontuação e se está concluído; a pontuação é usada na B3/B4).
+- **Módulo com lições**: identificador, título e lições (na ordem). Descrição e pontuação do módulo
+  vêm do serviço, mas só serão usadas pela B3/B4 (não fazem parte desta feature).
 - **Lição (pergunta)**: identificador, ordem, enunciado, imagem (opcional), alternativas (cada uma
   com identificador e texto) e se a pessoa já respondeu.
 

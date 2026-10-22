@@ -107,8 +107,8 @@ na primeira não respondida (FR-001 a FR-004, FR-013 a FR-017).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T019 [P] [US2] Em `tact/presentation/controller/lesson_controller_test.dart`, grupo "navegação": com as três respondidas, `goNext` até 2 e `goPrevious` até 0; `canGoPrevious` falso em 0; `canGoNext` falso na última; com só `l1` respondida, em 0 `canGoNext` verdadeiro e em 1 falso (`goNext` não muda o índice); `goPrevious` em 0 não muda
-- [ ] T020 [US2] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "navegação": "Próxima"/"Anterior" mudam a posição; "Próxima" desativado (sem `onPressed` e semântica `isEnabled` falso) numa pergunta não respondida; "Anterior" desativado na primeira; marcas: respondidas com `LucideIcons.check`, atual destacada; semântica do indicador "Pergunta 2 de 3, 1 concluídas"
+- [ ] T019 [P] [US2] Em `tact/presentation/controller/lesson_controller_test.dart`, grupo "navegação": com as três respondidas, `goNext` até 2 e `goPrevious` até 0; `canGoPrevious` falso em 0; `canGoNext` falso na última; com só `l1` respondida, em 0 `canGoNext` verdadeiro e em 1 falso (`goNext` não muda o índice); `goPrevious` em 0 não muda; três `goNext` seguidos com as três respondidas → índice 2 (não passa do fim)
+- [ ] T020 [US2] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "navegação": "Próxima"/"Anterior" mudam a posição; "Próxima" desativado (sem `onPressed` e semântica `isEnabled` falso) numa pergunta não respondida; "Anterior" desativado na primeira; marcas: respondidas com `LucideIcons.check`, atual destacada; semântica do indicador "Pergunta 2 de 3, 1 concluídas"; sessão expira com a página aberta (`session.expire()`) → a mesma pergunta continua na tela, sem erro
 
 ### Implementação
 
