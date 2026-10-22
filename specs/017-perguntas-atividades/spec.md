@@ -21,6 +21,9 @@ da [feature 015](../015-painel-atividades/spec.md) · leitura em voz alta da
 
 ### Session 2026-10-21
 
+- Q: Com a leitura automática ligada, voltar ou avançar para uma pergunta já lida deve ler de
+  novo? → A: Sim (relato da validação no aparelho em 2026-10-22). Cada vez que uma pergunta aparece
+  na tela, ela é lida sozinha; enquanto continua na tela, não repete.
 - Q: A pessoa pode avançar para a próxima pergunta sem responder a atual? → A: Não. "Próxima"
   avança só até a primeira pergunta ainda não respondida; voltar é livre para qualquer pergunta
   anterior. A B3 libera o avanço quando a pessoa confirma a resposta.
@@ -111,7 +114,8 @@ pergunta e conferir que a leitura começou sozinha.
    e depois cada alternativa, na ordem em que aparecem, e o botão passa a "Parar".
 2. **Given** a leitura em andamento, **When** a pessoa toca em "Parar", **Then** a leitura para.
 3. **Given** a leitura automática ligada, **When** a pessoa abre o módulo ou passa para outra
-   pergunta, **Then** a leitura dessa pergunta começa sozinha, uma vez por pergunta.
+   pergunta (inclusive uma já lida antes), **Then** a leitura dessa pergunta começa sozinha, uma
+   vez enquanto ela estiver na tela.
 4. **Given** a leitura em andamento, **When** a pessoa passa para outra pergunta ou sai da tela,
    **Then** a leitura anterior para.
 5. **Given** o aparelho sem voz disponível no idioma do app, **When** a pergunta aparece, **Then** o
@@ -189,7 +193,7 @@ e com um módulo sem lições, conferir cada estado.
 - **FR-008**: A tela MUST oferecer "Ouvir", que lê o enunciado e em seguida as alternativas
   numeradas, na velocidade da Acessibilidade, e vira "Parar" durante a leitura (RF-024).
 - **FR-009**: Com a leitura automática ligada (B9), a leitura MUST começar sozinha ao aparecer cada
-  pergunta, uma vez por pergunta (RF-040).
+  pergunta, cada vez que ela aparece na tela, sem repetir enquanto ela continua na tela (RF-040).
 - **FR-010**: Trocar de pergunta ou sair da tela MUST parar a leitura em andamento.
 - **FR-011**: Sem voz no idioma do app, "Ouvir" MUST NOT aparecer e a leitura automática MUST NOT
   acontecer, sem mensagem de erro.
@@ -221,7 +225,8 @@ e com um módulo sem lições, conferir cada estado.
 - **SC-002**: A pessoa chega da última à primeira pergunta (e vice-versa) só com "Anterior" e
   "Próxima", e a posição mostrada está sempre certa.
 - **SC-003**: Com a leitura automática ligada, 100% das perguntas abertas começam a ser lidas sem
-  toque, e nenhuma é lida duas vezes sozinha.
+  toque, inclusive ao voltar a uma pergunta, e nenhuma é lida duas vezes sozinha enquanto continua
+  na tela.
 - **SC-004**: Nenhuma lição sem alternativas suficientes trava ou aparece na tela.
 - **SC-005**: Com a letra no nível máximo e o alto contraste, enunciado, alternativas e botões ficam
   legíveis e tocáveis no aparelho.

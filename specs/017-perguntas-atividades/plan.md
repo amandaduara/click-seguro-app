@@ -24,7 +24,7 @@ Trocar a tela provisória do módulo (`/activities/:moduleId`) pela tela das per
 - **Voz** ([R5](research.md#r5-leitura-em-voz-alta-botão-compartilhado),
   [R6](research.md#r6-leitura-automática)): "Ouvir" com o `ReadAloudController` do `common`; botão
   extraído do `ReadAloudBar` da notícia para `core/widgets/listen_button.dart`; leitura automática
-  uma vez por pergunta.
+  a cada vez que a pergunta aparece na tela.
 - **Tela** ([R7](research.md#r7-estados), [R8](research.md#r8-layout)): posição e marcas, imagem,
   enunciado, alternativas numeradas, rodapé com Anterior/Próxima; carregando, erro e "sem
   atividades".
@@ -131,7 +131,7 @@ test/helpers/activities_dependencies.dart (+ controller da lição) · test/core
 2. **US1 (ver as perguntas)**: controller (carga, início na não respondida), página com posição,
    imagem, enunciado e alternativas; rota.
 3. **US2 (navegar)**: anterior/próxima com a regra da clarificação; marcas de progresso.
-4. **US3 (ouvir)**: "Ouvir"/"Parar", leitura automática uma vez por pergunta, parar ao trocar e ao
+4. **US3 (ouvir)**: "Ouvir"/"Parar", leitura automática a cada pergunta que aparece, parar ao trocar e ao
    sair, sem voz.
 5. **US4 (estados)**: carregando com aviso, erro, "sem atividades".
 6. **Polimento**: `/revisar-pr` na própria branch antes do PR, analyze, suíte, quickstart no

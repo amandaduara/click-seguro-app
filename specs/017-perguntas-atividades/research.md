@@ -98,6 +98,11 @@ primeiro; o detalhe da notícia também se beneficia. A cadeia de condições da
 continua parecida com a da notícia (duas páginas); levar um "ler uma vez por chave" para o
 controller fica como melhoria futura.
 
+**Validação no aparelho (2026-10-22)**: a regra inicial ("cada pergunta é lida sozinha uma vez
+por visita") atrapalhou: ao voltar e avançar de novo, a pergunta não era lida. Agora a leitura
+automática acontece cada vez que uma pergunta aparece na tela (`_autoReadDone` volta a `false` a
+cada troca), sem repetir enquanto ela continua na tela.
+
 ## R7. Estados
 
 **Decision**: `LessonStatus { loading, loaded, empty, error }`; `empty` = módulo sem lições
@@ -124,5 +129,5 @@ controller).
 - Controller: início na primeira não respondida; anterior/próxima; próxima bloqueada sem resposta;
   limites; estados.
 - Página: conteúdo, posição, marcas, navegação, imagem que falha, "Ouvir"/"Parar" com leitor de voz
-  falso (texto lido), leitura automática uma vez por pergunta, sem voz, estados, letra 2×, inglês.
+  falso (texto lido), leitura automática a cada vez que a pergunta aparece, sem voz, estados, letra 2×, inglês.
 - `ListenButton` e a notícia: os testes do detalhe da notícia continuam verdes.

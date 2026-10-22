@@ -55,8 +55,10 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   Locale? _locale;
   int? _shownIndex;
 
-  /// Perguntas já lidas sozinhas: voltar a uma delas não lê de novo.
-  final Set<int> _autoRead = {};
+  /// A pergunta na tela já foi lida sozinha. Volta a `false` a cada troca de
+  /// pergunta: voltar ou avançar para uma pergunta lê de novo (relato do
+  /// aparelho, 2026-10-22); a mesma pergunta na tela não repete.
+  bool _autoReadDone = false;
 
   @override
   void initState() {
@@ -89,6 +91,9 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     if (_controller.status != LessonStatus.loaded) return;
     final int index = _controller.currentIndex;
     if (_shownIndex != null && index != _shownIndex) {
+      // Antes do parar: o aviso de "parado" já pode ler a pergunta nova.
+      _shownIndex = index;
+      _autoReadDone = false;
       unawaited(_readAloud.stop());
     }
     _shownIndex = index;
@@ -97,18 +102,17 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
 
   void _maybeAutoRead() {
     final LessonEntity? lesson = _controller.current;
-    final int index = _controller.currentIndex;
     if (!mounted ||
         _controller.status != LessonStatus.loaded ||
         lesson == null ||
-        _autoRead.contains(index) ||
+        _autoReadDone ||
         !_readAloud.isAvailable ||
         !GetIt.instance<AccessibilityPreferencesNotifier>()
             .value
             .autoReadAloud) {
       return;
     }
-    _autoRead.add(index);
+    _autoReadDone = true;
     unawaited(_readAloud.speak(lesson.spokenText));
   }
 

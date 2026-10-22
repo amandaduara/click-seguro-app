@@ -120,14 +120,14 @@ na primeira não respondida (FR-001 a FR-004, FR-013 a FR-017).
 
 ## Phase 5: User Story 3 - Ouvir a pergunta e as alternativas (Priority: P2)
 
-**Goal**: "Ouvir"/"Parar", leitura automática uma vez por pergunta, parar ao trocar e ao sair
+**Goal**: "Ouvir"/"Parar", leitura automática a cada pergunta que aparece, parar ao trocar e ao sair
 (FR-008 a FR-011).
 
 **Independent Test**: passos 5–7 do [quickstart](quickstart.md).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [X] T022 [US3] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "ouvir": "Ouvir" lê "<enunciado>. Alternativa 1: <texto>. Alternativa 2: …" (`FakeTextToSpeechService.spoken.last.text`) com a velocidade das preferências; vira "Parar"; "Parar" chama `stop`; sem voz no idioma (`availableLanguages: {}`) → sem "Ouvir" e nada lido; leitura automática ligada → lê a primeira pergunta sozinha uma vez (recompor a página não lê de novo); "Anterior"/"Próxima" param a leitura e a automática lê a nova uma vez; voltar para uma pergunta já lida sozinha não lê de novo; sair da tela chama `stop` se estava lendo
+- [X] T022 [US3] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "ouvir": "Ouvir" lê "<enunciado>. Alternativa 1: <texto>. Alternativa 2: …" (`FakeTextToSpeechService.spoken.last.text`) com a velocidade das preferências; vira "Parar"; "Parar" chama `stop`; sem voz no idioma (`availableLanguages: {}`) → sem "Ouvir" e nada lido; leitura automática ligada → lê a primeira pergunta sozinha uma vez (recompor a página não lê de novo); "Anterior"/"Próxima" param a leitura e a automática lê a nova uma vez; voltar para uma pergunta já lida sozinha **lê de novo** (mudado na validação no aparelho, 2026-10-22: antes não lia); sair da tela chama `stop` se estava lendo
 
 ### Implementação
 

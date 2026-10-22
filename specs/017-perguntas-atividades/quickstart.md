@@ -32,8 +32,8 @@ respondido pelo serviço) para conferir a navegação; como visitante, confira a
 3. "Próxima" desativado numa pergunta não respondida; ativo numa respondida (exceto na última).
 4. "Anterior" até a primeira; volta a "Próxima" até a primeira não respondida.
 5. "Ouvir": lê o enunciado e as alternativas; vira "Parar"; "Parar" interrompe.
-6. Acessibilidade › "Ler automaticamente" ligado: cada pergunta começa a ser lida sozinha, uma vez;
-   trocar de pergunta para a anterior e lê a nova.
+6. Acessibilidade › "Ler automaticamente" ligado: cada pergunta que aparece é lida sozinha,
+   inclusive ao voltar e avançar de novo; trocar de pergunta no meio de uma leitura lê a nova.
 7. Acessibilidade › "Lenta": a leitura fica lenta.
 8. Modo avião ao abrir um módulo: erro com "Tentar novamente".
 9. Letra "Muito grande" + alto contraste: tudo legível, rolável e tocável.

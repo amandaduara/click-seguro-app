@@ -293,28 +293,66 @@ void main() {
       expect(tts.spoken, hasLength(1));
     });
 
+    testWidgets('trocar de pergunta para a leitura e lê a nova', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2', 'l3'});
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+      final int stopsBefore = tts.stopCalls;
+
+      await tester.tap(find.text('Próxima'));
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+      expect(tts.spoken, hasLength(2));
+      expect(tts.spoken.last.text, startsWith('E-mail do banco'));
+      // A nova pergunta continua sendo lida: o parar não a cancela.
+      expect(find.text('Parar'), findsOneWidget);
+
+      await tester.tap(find.text('Anterior'));
+      await tester.pumpAndSettle();
+      expect(tts.spoken, hasLength(3));
+      expect(tts.spoken.last.text, startsWith('Promessa de dinheiro'));
+    });
+
     testWidgets(
-      'trocar de pergunta para e lê a nova uma vez; voltar não repete',
+      'voltar e avançar de novo lê a pergunta outra vez (relato do aparelho)',
       (tester) async {
-        useModule(answered: {'l1', 'l2', 'l3'});
+        // Abre na 3 (1 e 2 respondidas), volta à 2 e avança de novo à 3.
+        useModule(answered: {'l1', 'l2'});
         preferences.value = preferences.value.copyWith(autoReadAloud: true);
         await open(tester);
-        final int stopsBefore = tts.stopCalls;
-
-        await tester.tap(find.text('Próxima'));
-        await tester.pumpAndSettle();
-
-        expect(tts.stopCalls, greaterThan(stopsBefore));
-        expect(tts.spoken, hasLength(2));
-        expect(tts.spoken.last.text, startsWith('E-mail do banco'));
-        // A nova pergunta continua sendo lida: o parar não a cancela.
-        expect(find.text('Parar'), findsOneWidget);
+        expect(tts.spoken.single.text, startsWith('Técnico pede'));
 
         await tester.tap(find.text('Anterior'));
         await tester.pumpAndSettle();
-        expect(tts.spoken, hasLength(2));
+        await tester.tap(find.text('Próxima'));
+        await tester.pumpAndSettle();
+
+        expect(
+          [for (final s in tts.spoken) s.text.substring(0, 6)],
+          ['Técnic', 'E-mail', 'Técnic'],
+        );
+        expect(find.text('Parar'), findsOneWidget);
       },
     );
+
+    testWidgets('a mesma pergunta na tela não é lida de novo sozinha', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+
+      tts.finishSpeaking();
+      await tester.pumpAndSettle();
+      preferences.value = preferences.value.copyWith(
+        readingSpeed: ReadingSpeed.fast,
+      );
+      await tester.pumpAndSettle();
+
+      expect(tts.spoken, hasLength(1));
+    });
 
     testWidgets('sair da tela para a leitura', (tester) async {
       await open(tester);
