@@ -60,6 +60,20 @@ void main() {
     );
   });
 
+  testWidgets('correta e errada: ícone e texto, não só cor', (tester) async {
+    await pump(tester, state: LessonOptionState.correct, tappable: false);
+    expect(find.byIcon(LucideIcons.circleCheck), findsOneWidget);
+    expect(find.text('correta'), findsOneWidget);
+
+    await pump(tester, state: LessonOptionState.wrong, tappable: false);
+    expect(find.byIcon(LucideIcons.circleX), findsOneWidget);
+    expect(find.text('sua resposta, errada'), findsOneWidget);
+    expect(
+      tester.getSemantics(find.byType(LessonOptionCard)),
+      isSemantics(label: '1\nIgnorar e denunciar\nsua resposta, errada'),
+    );
+  });
+
   testWidgets('toque escolhe; sem onTap não reage', (tester) async {
     await pump(tester);
     await tester.tap(find.text('Ignorar e denunciar'));

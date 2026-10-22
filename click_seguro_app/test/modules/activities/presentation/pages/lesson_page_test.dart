@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
+import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/lesson_page.dart';
@@ -455,6 +456,113 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.answerCalls, hasLength(1));
+    });
+  });
+
+  group('feedback (specs/018 US2)', () {
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    LessonOptionCard card(WidgetTester tester, String text) =>
+        tester.widget<LessonOptionCard>(
+          find.ancestor(
+            of: find.text(text),
+            matching: find.byType(LessonOptionCard),
+          ),
+        );
+
+    testWidgets('a explicação só aparece depois de confirmar (FR-018)', (
+      tester,
+    ) async {
+      await open(tester);
+      expect(
+        find.text('Promessas de dinheiro em dobro são golpe.'),
+        findsNothing,
+      );
+
+      await answer(tester, 'Ignorar e denunciar');
+
+      expect(
+        find.text('Promessas de dinheiro em dobro são golpe.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('errada: painel; fechado pelo voltar, resultado nas '
+        'alternativas e "Próxima" ativo', (tester) async {
+      repository.answerResults = [
+        Right(
+          AnswerResultModel.fromJson(answerJson(isCorrect: false)).toEntity(),
+        ),
+      ];
+      await open(tester);
+
+      await answer(tester, 'Enviar');
+      expect(find.text('Não foi dessa vez'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Não foi dessa vez'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text('Pergunta 1 de 3'),
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.check), findsOneWidget);
+      expect(card(tester, 'Enviar').state, LessonOptionState.wrong);
+      expect(card(tester, 'Enviar').onTap, isNull);
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      expect(
+        card(tester, 'Ignorar e denunciar').state,
+        LessonOptionState.correct,
+      );
+      expect(
+        tester
+            .widget<SafeButton>(find.widgetWithText(SafeButton, 'Próxima'))
+            .onPressed,
+        isNotNull,
+      );
+    });
+
+    testWidgets('certa: "Você acertou!"; "Próxima pergunta" vai à 2', (
+      tester,
+    ) async {
+      await open(tester);
+
+      await answer(tester, 'Ignorar e denunciar');
+      expect(find.text('Você acertou!'), findsOneWidget);
+
+      await tester.tap(find.text('Próxima pergunta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Você acertou!'), findsNothing);
+      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
+      expect(
+        tester
+            .widgetList<LessonOptionCard>(find.byType(LessonOptionCard))
+            .every((c) => c.state == LessonOptionState.idle),
+        isTrue,
+      );
+    });
+
+    testWidgets('na última, "Voltar às atividades" volta ao painel', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Voltar às atividades'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities'), findsOneWidget);
     });
   });
 

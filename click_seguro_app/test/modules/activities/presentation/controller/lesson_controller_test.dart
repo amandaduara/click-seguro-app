@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
@@ -232,6 +233,76 @@ void main() {
       repository.answerGate!.complete();
 
       await expectLater(attempt, completes);
+    });
+  });
+
+  group('resultado (specs/018 US2)', () {
+    Future<void> answerCurrent(String option) async {
+      controller.select(option);
+      await controller.confirm();
+    }
+
+    setUp(() => controller.load('m1'));
+
+    test('guarda o resultado e marca a lição como concluída', () async {
+      final List<String> optionsBefore = [
+        for (final o in controller.current!.options) o.id,
+      ];
+      repository.answerResults = [
+        Right(
+          AnswerResultModel.fromJson(answerJson(isCorrect: false)).toEntity(),
+        ),
+      ];
+
+      await answerCurrent('l1-o2');
+
+      expect(controller.currentResult?.isCorrect, isFalse);
+      expect(controller.currentResult?.correctOptionId, 'l1-o1');
+      expect(controller.current!.isCompleted, isTrue);
+      expect([
+        for (final o in controller.current!.options) o.id,
+      ], optionsBefore);
+      expect(controller.selectedOptionId, 'l1-o2');
+      expect(controller.canSelect, isFalse);
+      expect(controller.canConfirm, isFalse);
+      expect(controller.canGoNext, isTrue);
+    });
+
+    test('próxima sem escolha; voltar mostra o resultado de novo', () async {
+      await answerCurrent('l1-o1');
+
+      controller.goNext();
+      expect(controller.current!.id, 'l2');
+      expect(controller.selectedOptionId, isNull);
+      expect(controller.currentResult, isNull);
+      expect(controller.canSelect, isTrue);
+
+      controller.goPrevious();
+      expect(controller.resultFor('l1')?.isCorrect, isTrue);
+      expect(controller.currentResult, isNotNull);
+    });
+
+    test('isLastLesson só na última', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l2'})),
+      ]);
+      await controller.load('m1');
+
+      expect(controller.isLastLesson, isTrue);
+      controller.goPrevious();
+      expect(controller.isLastLesson, isFalse);
+    });
+
+    test('na última, responder não libera "Próxima"', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l2'})),
+      ]);
+      await controller.load('m1');
+
+      await answerCurrent('l3-o1');
+
+      expect(controller.current!.isCompleted, isTrue);
+      expect(controller.canGoNext, isFalse);
     });
   });
 }

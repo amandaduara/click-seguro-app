@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
@@ -75,7 +76,19 @@ class LessonController extends ChangeNotifier {
   bool _isSubmitting = false;
   bool get isSubmitting => _isSubmitting;
 
-  bool get canSelect => current != null && !_isSubmitting;
+  /// O resultado recebido nesta visita para a pergunta atual.
+  AnswerResultEntity? get currentResult => _currentAnswer?.result;
+
+  AnswerResultEntity? resultFor(String lessonId) => _answers[lessonId]?.result;
+
+  bool get isLastLesson {
+    final int total = _module?.lessons.length ?? 0;
+    return total > 0 && _currentIndex == total - 1;
+  }
+
+  /// Não troca a escolha durante o envio nem depois da correção.
+  bool get canSelect =>
+      current != null && !_isSubmitting && currentResult == null;
 
   bool get canConfirm => canSelect && selectedOptionId != null;
 
@@ -103,12 +116,33 @@ class LessonController extends ChangeNotifier {
     );
     _isSubmitting = false;
     if (_disposed) return AnswerAttempt.ignored;
-    final AnswerAttempt attempt = result.fold(
-      (_) => AnswerAttempt.failed,
-      (_) => AnswerAttempt.answered,
-    );
+    final AnswerAttempt attempt = result.fold((_) => AnswerAttempt.failed, (
+      outcome,
+    ) {
+      _answers[lesson.id] = _LessonAnswerState(
+        selectedOptionId: optionId,
+        result: outcome.result,
+      );
+      _markCompleted(lesson.id);
+      return AnswerAttempt.answered;
+    });
     _notify();
     return attempt;
+  }
+
+  /// Respondida, certa ou errada, conta como concluída (RN-006). A lista é
+  /// a mesma, na mesma ordem: as alternativas não mudam de lugar (R3).
+  void _markCompleted(String lessonId) {
+    final ModuleDetailEntity? module = _module;
+    if (module == null) return;
+    _module = ModuleDetailEntity(
+      title: module.title,
+      lessons: [
+        for (final LessonEntity lesson in module.lessons)
+          lesson.id == lessonId ? lesson.withCompleted(true) : lesson,
+      ],
+      score: module.score,
+    );
   }
 
   bool _disposed = false;
@@ -148,9 +182,11 @@ class LessonController extends ChangeNotifier {
   }
 }
 
-/// A pergunta nesta visita: a alternativa marcada.
+/// A pergunta nesta visita: a alternativa marcada e, depois da correção, o
+/// resultado.
 class _LessonAnswerState {
-  const _LessonAnswerState({required this.selectedOptionId});
+  const _LessonAnswerState({required this.selectedOptionId, this.result});
 
   final String selectedOptionId;
+  final AnswerResultEntity? result;
 }

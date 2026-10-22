@@ -8,11 +8,14 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
+import 'package:click_seguro_app/modules/activities/presentation/extensions/answer_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/lesson_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/confirm_answer_footer.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/feedback_sheet.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_progress_indicator.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
@@ -20,6 +23,7 @@ import 'package:click_seguro_app/modules/common/presentation/controller/read_alo
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
@@ -119,7 +123,32 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   /// A leitura da pergunta para antes do envio (FR-017).
   Future<void> _confirm() async {
     unawaited(_readAloud.stop());
-    await _controller.confirm();
+    final AnswerAttempt attempt = await _controller.confirm();
+    if (!mounted) return;
+    if (attempt == AnswerAttempt.answered) await _showFeedback();
+  }
+
+  /// Painel de feedback; seguir vai à próxima pergunta ou, na última, de
+  /// volta às atividades (até a B4 trazer a conclusão).
+  Future<void> _showFeedback() async {
+    final LessonEntity? lesson = _controller.current;
+    final AnswerResultEntity? result = _controller.currentResult;
+    if (lesson == null || result == null) return;
+    final FeedbackAction? action = await showFeedbackSheet(
+      context,
+      lesson: lesson,
+      result: result,
+      isLast: _controller.isLastLesson,
+    );
+    if (!mounted) return;
+    switch (action) {
+      case FeedbackAction.next:
+        _controller.goNext();
+      case FeedbackAction.finish:
+        context.pop();
+      case null:
+        break;
+    }
   }
 
   void _toggleListen(LessonEntity lesson) => unawaited(
@@ -166,6 +195,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
                   lessons: controller.module!.lessons,
                   currentIndex: controller.currentIndex,
                   selectedOptionId: controller.selectedOptionId,
+                  result: controller.currentResult,
                   onSelect: controller.canSelect ? controller.select : null,
                   listen: ListenableBuilder(
                     listenable: _readAloud,
@@ -194,6 +224,7 @@ class _LessonBody extends StatelessWidget {
     required this.lessons,
     required this.currentIndex,
     required this.selectedOptionId,
+    required this.result,
     required this.onSelect,
     required this.listen,
   });
@@ -206,7 +237,10 @@ class _LessonBody extends StatelessWidget {
   final int currentIndex;
   final String? selectedOptionId;
 
-  /// `null` quando não pode escolher (enviando).
+  /// A correção desta pergunta nesta visita: mostra a correta e a errada.
+  final AnswerResultEntity? result;
+
+  /// `null` quando não pode escolher (enviando ou já corrigida).
   final ValueChanged<String>? onSelect;
 
   /// "Ouvir"/"Parar" (some sem voz no idioma do app).
@@ -218,6 +252,8 @@ class _LessonBody extends StatelessWidget {
     final TextTheme textTheme = Theme.of(context).textTheme;
     final String? image = lesson.imageUrl;
     return ListView(
+      // Uma rolagem por pergunta: a próxima começa no topo, com o enunciado.
+      key: PageStorageKey(lesson.id),
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s5,
         AppSpacing.s4,
@@ -265,9 +301,11 @@ class _LessonBody extends StatelessWidget {
             child: LessonOptionCard(
               number: index + 1,
               text: option.text,
-              state: option.id == selectedOptionId
-                  ? LessonOptionState.selected
-                  : LessonOptionState.idle,
+              state: lesson.optionState(
+                option,
+                selectedOptionId: selectedOptionId,
+                result: result,
+              ),
               onTap: onSelect == null ? null : () => onSelect!(option.id),
             ),
           ),
