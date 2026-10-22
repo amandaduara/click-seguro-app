@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/activities/domain/usecases/answer_lesson_usecase.dart';
 import 'package:click_seguro_app/modules/activities/domain/usecases/get_module_detail_usecase.dart';
@@ -81,6 +82,10 @@ class LessonController extends ChangeNotifier {
 
   AnswerResultEntity? resultFor(String lessonId) => _answers[lessonId]?.result;
 
+  /// A última pontuação conhecida do módulo (do serviço com conta, do
+  /// registro sem conta); `null` enquanto não há (FR-011).
+  ModuleScoreEntity? get score => _module?.score;
+
   bool get isLastLesson {
     final int total = _module?.lessons.length ?? 0;
     return total > 0 && _currentIndex == total - 1;
@@ -123,7 +128,7 @@ class LessonController extends ChangeNotifier {
         selectedOptionId: optionId,
         result: outcome.result,
       );
-      _markCompleted(lesson.id);
+      _markCompleted(lesson.id, outcome.score);
       return AnswerAttempt.answered;
     });
     _notify();
@@ -131,8 +136,9 @@ class LessonController extends ChangeNotifier {
   }
 
   /// Respondida, certa ou errada, conta como concluída (RN-006). A lista é
-  /// a mesma, na mesma ordem: as alternativas não mudam de lugar (R3).
-  void _markCompleted(String lessonId) {
+  /// a mesma, na mesma ordem: as alternativas não mudam de lugar (R3). A
+  /// pontuação que não veio mantém a anterior (FR-009).
+  void _markCompleted(String lessonId, ModuleScoreEntity? score) {
     final ModuleDetailEntity? module = _module;
     if (module == null) return;
     _module = ModuleDetailEntity(
@@ -141,7 +147,7 @@ class LessonController extends ChangeNotifier {
         for (final LessonEntity lesson in module.lessons)
           lesson.id == lessonId ? lesson.withCompleted(true) : lesson,
       ],
-      score: module.score,
+      score: score ?? module.score,
     );
   }
 

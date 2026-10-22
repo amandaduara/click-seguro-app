@@ -139,6 +139,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       lesson: lesson,
       result: result,
       isLast: _controller.isLastLesson,
+      score: _controller.score,
     );
     if (!mounted) return;
     switch (action) {

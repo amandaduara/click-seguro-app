@@ -121,6 +121,16 @@ void main() {
     expect(actions, [null]);
   });
 
+  testWidgets('pontuação só quando há', (tester) async {
+    await openSheet(tester, score: const ModuleScoreEntity(score: 1, total: 3));
+    expect(find.text('Você está com 1 de 3 acertos'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    await openSheet(tester);
+    expect(find.textContaining('acertos'), findsNothing);
+  });
+
   testWidgets('"Próxima pergunta" devolve next', (tester) async {
     await openSheet(tester);
 

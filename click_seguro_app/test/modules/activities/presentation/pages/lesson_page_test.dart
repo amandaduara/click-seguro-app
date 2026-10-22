@@ -4,8 +4,10 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
+import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
+import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/lesson_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
@@ -25,6 +27,7 @@ import '../../../../fakes/fake_text_to_speech_service.dart';
 import '../../../../helpers/activities_dependencies.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/activities_fixtures.dart';
+import '../../fakes/fake_activities_remote_data_source.dart';
 import '../../fakes/fake_activities_repository.dart';
 
 void main() {
@@ -563,6 +566,65 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('page:/activities'), findsOneWidget);
+    });
+  });
+
+  group('pontuação (specs/018 US3)', () {
+    testWidgets('só no painel, nunca na tela das perguntas', (tester) async {
+      repository.moduleDetailResults = [
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(score: 1, totalScore: 3),
+          ).toEntity(),
+        ),
+      ];
+      await open(tester);
+      expect(find.textContaining('acertos'), findsNothing);
+
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      await tester.tap(find.text('Ignorar e denunciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+      expect(find.text('Você está com 1 de 3 acertos'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.textContaining('acertos'), findsNothing);
+    });
+
+    testWidgets('visitante: registro da sessão e "1 de 3" no painel', (
+      tester,
+    ) async {
+      await session.logout();
+      await session.startGuestSession();
+      final FakeActivitiesRemoteDataSource remote =
+          FakeActivitiesRemoteDataSource();
+      final GuestProgressStore store = GuestProgressStore(session);
+      addTearDown(store.dispose);
+      await GetIt.instance.reset();
+      GetIt.instance
+        ..registerSingleton<UserSessionService>(session)
+        ..registerSingleton(preferences)
+        ..registerFactory(
+          () => ReadAloudController(tts, preferences: preferences),
+        );
+      registerActivitiesDependencies(
+        GetIt.instance,
+        repository: ActivitiesRepositoryImpl(remote, store, session),
+      );
+      await open(tester);
+
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      await tester.tap(find.text('Ignorar e denunciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Você está com 1 de 3 acertos'), findsOneWidget);
+      expect(store.correctCount('m1'), 1);
+      // O que a tela de atividades da B1 lê na volta (SC-007).
+      expect(store.answeredCount('m1'), 1);
     });
   });
 

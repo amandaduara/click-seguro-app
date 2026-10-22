@@ -128,12 +128,12 @@ atividades atualizado (FR-009 a FR-011).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T026 [P] [US3] Em `lesson_controller_test.dart`, grupo "pontuação": `score` do `load` (do módulo); depois de `confirm()` com `AnswerOutcome.score` (2, 3) → `score` (2, 3); com `score` `null` no resultado → mantém o anterior
-- [ ] T027 [US3] Em `feedback_sheet_test.dart`: com `score` (1, 3) → "Você está com 1 de 3 acertos"; sem `score` → nenhuma pontuação. Em `lesson_page_test.dart`, grupo "pontuação": nenhuma pontuação na tela das perguntas antes ou depois de responder (só no painel); visitante com o `ActivitiesRepositoryImpl` real sobre o datasource falso: responder `l1` certa → painel "1 de 3" e o `GuestProgressStore` com `correctCount('m1') == 1` e `answeredCount('m1') == 1` (o número que a tela de atividades da B1 lê na volta, SC-007; o recarregar na volta já é testado na B1)
+- [X] T026 [P] [US3] Em `lesson_controller_test.dart`, grupo "pontuação": `score` do `load` (do módulo); depois de `confirm()` com `AnswerOutcome.score` (2, 3) → `score` (2, 3); com `score` `null` no resultado → mantém o anterior
+- [X] T027 [US3] Em `feedback_sheet_test.dart`: com `score` (1, 3) → "Você está com 1 de 3 acertos"; sem `score` → nenhuma pontuação. Em `lesson_page_test.dart`, grupo "pontuação": nenhuma pontuação na tela das perguntas antes ou depois de responder (só no painel); visitante com o `ActivitiesRepositoryImpl` real sobre o datasource falso: responder `l1` certa → painel "1 de 3" e o `GuestProgressStore` com `correctCount('m1') == 1` e `answeredCount('m1') == 1` (o número que a tela de atividades da B1 lê na volta, SC-007; o recarregar na volta já é testado na B1)
 
 ### Implementação
 
-- [ ] T028 [US3] Em `lesson_controller.dart`: `score` inicial do módulo carregado; no sucesso, `score = outcome.score ?? score`. Em `feedback_sheet.dart`, a linha `activitiesFeedbackScore` quando há `score`; a página passa `controller.score`. Faz a T026 e a T027 passar
+- [X] T028 [US3] Em `lesson_controller.dart`: `score` inicial do módulo carregado; no sucesso, `score = outcome.score ?? score`. Em `feedback_sheet.dart`, a linha `activitiesFeedbackScore` quando há `score`; a página passa `controller.score`. Faz a T026 e a T027 passar
 
 **Checkpoint**: testes verdes. Commit da US3.
 

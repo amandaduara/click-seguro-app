@@ -293,6 +293,45 @@ void main() {
       expect(controller.isLastLesson, isFalse);
     });
 
+    test('pontuação: do módulo, depois a da resposta', () async {
+      controller = build([
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(score: 1, totalScore: 3),
+          ).toEntity(),
+        ),
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(score: 2, totalScore: 3),
+          ).toEntity(),
+        ),
+      ]);
+      await controller.load('m1');
+      expect(controller.score?.score, 1);
+
+      await answerCurrent('l1-o1');
+
+      expect(controller.score?.score, 2);
+      expect(controller.score?.total, 3);
+    });
+
+    test('pontuação que não veio mantém a anterior', () async {
+      controller = build([
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(score: 1, totalScore: 3),
+          ).toEntity(),
+        ),
+        const Left(ConnectionFailure()),
+      ]);
+      await controller.load('m1');
+
+      await answerCurrent('l1-o1');
+
+      expect(controller.currentResult, isNotNull);
+      expect(controller.score?.score, 1);
+    });
+
     test('na última, responder não libera "Próxima"', () async {
       controller = build([
         Right(module(answered: {'l1', 'l2'})),
