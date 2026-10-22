@@ -27,7 +27,7 @@ flutter run --dart-define=API_URL=https://clickseguro-api.onrender.com/api/v1
 
 1. Tocar numa alternativa: fica marcada; "Confirmar resposta" ativa. Tocar em outra: a marcação
    muda.
-2. Confirmar a **errada**: o painel sobe com "Não foi dessa vez", a correta e a explicação; nas
+2. Confirmar a **errada**: em cerca de 2 s (servidor acordado, SC-001) o painel sobe com "Não foi dessa vez", a correta e a explicação; nas
    alternativas, a escolhida aparece como errada e a correta como correta.
 3. Tocar fora do painel e tentar arrastar: ele não fecha. Voltar do aparelho: fecha; a pergunta
    mostra o resultado; "Próxima" ativa; o rodapé mostra "Responder de novo".

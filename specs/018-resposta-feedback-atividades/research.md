@@ -68,6 +68,9 @@ alternativas pularem de lugar na frente da pessoa (viola RF-027 e confunde o pú
 - **Sem conta** (visitante ou sessão expirada): o repositório troca pela conta do registro:
   `score = store.correctCount(moduleId)`, `total = número de lições válidas do módulo`;
   nenhuma resposta → `null`. É a mesma regra "sem conta = registro" do `getModuleDetail` da B2.
+  O total do visitante são as lições **válidas** (as que ele consegue responder, CB-012); o
+  `totalScore` do serviço conta todas. Os dois só diferem se o serviço mandar uma lição com menos
+  de duas alternativas, e aí o visitante não teria como chegar ao total do serviço.
 - Falha nessa busca → `score: null` no resultado; a tela mostra a última pontuação conhecida (ou
   nenhuma) e **não** mostra erro (FR-009).
 
