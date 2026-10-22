@@ -254,22 +254,18 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `GuestProgressAlert` antes da conclusão, para visitante, com botões "Criar conta" e "Continuar
     sem salvar".
   - Widget tests dos dois fluxos (cadastrado e visitante).
-- [ ] **B6 Central de ajuda** (RF-031 a RF-034, RN-007, RNF-008, CB-009, CB-010)
-  - [ ] Definir a lista de contatos oficiais com a orientação do TCC (ex.: 190, 197, Procon, canais
-    de bancos) em `assets/data/official_contacts.json`.
-  - [x] `ContactEntity` (oficial/pessoal) + models, com teste.
-  - [x] `OfficialContactsLocalDataSource` (asset) e `PersonalContactsLocalDataSource`
+- [ ] **B6 Central de ajuda** (RF-031 a RF-034, RN-007, RNF-008, CB-009, CB-010) — aberta por RF-031
+  - RF-031 ainda depende da orientação do TCC para a lista obrigatória de contatos oficiais de
+    polícia, bancos e Procon em `assets/data/official_contacts.json`; essa pendência mantém B6 aberta.
+  - `ContactEntity` (oficial/pessoal) + models, com teste.
+  - `OfficialContactsLocalDataSource` (asset) e `PersonalContactsLocalDataSource`
     (`LocalCacheService` + `ImageStorageService`), com teste.
-  - [x] `HelpRepositoryImpl` com teste.
-  - [x] Usecases get oficiais/pessoais, salvar e remover (apaga a foto junto), com teste.
-  - [x] `HelpController` e `ContactFormController` (validação de nome/telefone), com teste.
-  - [x] `HelpPage` (abas "Oficiais" e "Meus contatos", ligar; sem telefonia → número com copiar) e
+  - `HelpRepositoryImpl` com teste.
+  - Usecases get oficiais/pessoais, salvar e remover (apaga a foto junto), com teste.
+  - `HelpController` e `ContactFormController` (validação de nome/telefone), com teste.
+  - `HelpPage` (abas "Oficiais" e "Meus contatos", ligar; sem telefonia → número com copiar) e
     `ContactFormPage` (foto circular de galeria/câmera; permissão negada → salva com iniciais;
     remover com confirmação), com widget test.
-  - Progresso (2026-10-20): implementação técnica entregue; 69 testes direcionados validados
-    (B6, rotas e shell). `flutter analyze --no-pub --no-fatal-infos` sem erros ou warnings;
-    28 infos preexistentes fora da B6. O asset oficial está vazio (`[]`), aguardando a lista
-    definida com a orientação do TCC; a B6 permanece aberta por esse item.
 - [x] **B7 Perfil** (RF-035, RF-036, RN-008) (specs/012-perfil)
   - Endpoints: `GET`/`PATCH /users/me`, `POST`/`DELETE /users/me/avatar` (multipart, F0.2),
     para os números `GET /users/me/news/read`, `/saved` e `/liked` (`limit=1` → `meta.total`) e

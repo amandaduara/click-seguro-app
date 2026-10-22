@@ -1,6 +1,8 @@
 import 'package:click_seguro_app/core/routing/navigator_keys.dart';
+import 'package:click_seguro_app/core/errors/cache_failure.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dart';
 import 'package:click_seguro_app/modules/help/presentation/pages/help_contact_page.dart';
 import 'package:click_seguro_app/modules/help/presentation/routes/help_routes.dart';
@@ -16,11 +18,13 @@ import '../../../../helpers/help_dependencies.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../../../helpers/notifications_provider.dart';
 import '../../fakes/fake_help_repository.dart';
-import '../../fakes/help_fakes.dart';
+import '../../../../fakes/fake_external_launcher_service.dart';
+import '../../../../fakes/fake_image_storage_service.dart';
 
 void main() {
   late FakeHelpRepository repository;
   late FakeExternalLauncherService launcher;
+  late FakeImageStorageService images;
   late GoRouter router;
 
   setUp(() async {
@@ -29,10 +33,12 @@ void main() {
     await session.startGuestSession();
     repository = FakeHelpRepository();
     launcher = FakeExternalLauncherService();
+    images = FakeImageStorageService();
     registerHelpDependencies(
       GetIt.instance,
       repository: repository,
       launcher: launcher,
+      images: images,
     );
     router = GoRouter(
       navigatorKey: rootNavigatorKey,
@@ -82,6 +88,10 @@ void main() {
     await tester.tap(find.byTooltip('Editar contato'));
     await tester.pumpAndSettle();
     expect(find.text('Editar contato'), findsWidgets);
+    expect(
+      tester.widget<TextField>(find.byType(TextField).first).controller?.text,
+      'Ana',
+    );
     Future<void> revealRemoveButton() => tester.scrollUntilVisible(
       find.text('Remover contato'),
       250,
@@ -157,5 +167,72 @@ void main() {
     await tester.tap(find.text('Copiar número'));
     await tester.pumpAndSettle();
     expect(copied, '190');
+  });
+
+  testWidgets('erro na lista pode ser repetido e recuperar', (tester) async {
+    repository.readFailure = const CacheFailure();
+    await open(tester);
+    expect(
+      find.text('Falha ao acessar o armazenamento local.'),
+      findsOneWidget,
+    );
+
+    repository
+      ..readFailure = null
+      ..official = [];
+    await tester.tap(find.text('Tentar novamente'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('A lista de contatos oficiais ainda não está disponível.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('formulário mostra erro de validação e permissão negada', (
+    tester,
+  ) async {
+    await open(tester);
+    await tester.tap(find.text('Meus contatos'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Adicionar contato'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Salvar contato'));
+    await tester.pumpAndSettle();
+    expect(find.text('Informe o nome do contato.'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).at(0), 'Ana');
+    await tester.enterText(find.byType(TextField).at(1), '12');
+    await tester.tap(find.text('Salvar contato'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Informe um telefone válido com 3 a 15 dígitos.'),
+      findsOneWidget,
+    );
+
+    images.nextResult = const PickImagePermissionDenied();
+    await tester.tap(find.text('Escolher foto'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Abrir galeria'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('O acesso à câmera ou às fotos foi negado.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('edição trata falha de carga e contato ausente', (tester) async {
+    repository.readFailure = const CacheFailure();
+    await open(tester);
+    router.go('/help/contact/p1');
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Falha ao acessar o armazenamento local.'),
+      findsOneWidget,
+    );
+
+    repository.readFailure = null;
+    await tester.tap(find.text('Tentar novamente'));
+    await tester.pumpAndSettle();
+    expect(find.text('Este contato não está mais disponível.'), findsOneWidget);
   });
 }

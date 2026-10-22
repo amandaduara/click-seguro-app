@@ -1,34 +1,25 @@
 import 'dart:convert';
 
 import 'package:click_seguro_app/modules/help/data/datasources/official_contacts_local_data_source.dart';
-import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('lê contatos oficiais de asset bundle injetável', () async {
-    final bundle = _TestAssetBundle(
-      '[{"id":"police","name":"Polícia","phone":"190","type":"official"}]',
-    );
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    final contacts = await OfficialContactsLocalDataSource(
-      bundle: bundle,
-    ).read();
+  test('mapeia o asset oficial real e valida contatos configurados', () async {
+    final json = jsonDecode(
+      await rootBundle.loadString(OfficialContactsLocalDataSource.assetPath),
+    ) as List<dynamic>;
+    final contacts = await OfficialContactsLocalDataSource().read();
 
-    expect(bundle.loadedPath, OfficialContactsLocalDataSource.assetPath);
-    expect(contacts.single.toEntity().type, ContactType.official);
+    expect(contacts, hasLength(json.length));
+    expect(contacts.map((contact) => contact.id).toSet(), hasLength(json.length));
+    for (final contact in contacts) {
+      expect(contact.id, isNotEmpty);
+      expect(contact.name, isNotEmpty);
+      expect(contact.phone, isNotEmpty);
+      expect(contact.type.name, 'official');
+    }
   });
-}
-
-class _TestAssetBundle extends CachingAssetBundle {
-  _TestAssetBundle(this.json);
-
-  final String json;
-  String? loadedPath;
-
-  @override
-  Future<ByteData> load(String key) async {
-    loadedPath = key;
-    return ByteData.sublistView(Uint8List.fromList(utf8.encode(json)));
-  }
 }

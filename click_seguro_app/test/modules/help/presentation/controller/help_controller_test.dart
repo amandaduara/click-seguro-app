@@ -1,4 +1,3 @@
-import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
 import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/get_official_contacts_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/get_personal_contacts_usecase.dart';
@@ -6,6 +5,7 @@ import 'package:click_seguro_app/modules/help/presentation/controller/help_contr
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../fakes/fake_help_repository.dart';
+import '../../../../fakes/fake_external_launcher_service.dart';
 
 void main() {
   test('carrega as listas e expõe falha para repetir', () async {
@@ -13,39 +13,37 @@ void main() {
     final controller = HelpController(
       getOfficialContacts: GetOfficialContactsUseCase(repository),
       getPersonalContacts: GetPersonalContactsUseCase(repository),
-      launcher: _Launcher(),
+      launcher: FakeExternalLauncherService(),
     );
 
     await controller.load();
 
-    expect(controller.officialContacts, [official]);
+    expect(controller.officialContacts.single.id, official.id);
     expect(controller.isLoading, isFalse);
     controller.dispose();
   });
 
-  test('se chamada não abre discador, expõe número para fallback', () async {
+  test('se chamada não abre discador, informa indisponibilidade', () async {
     final controller = HelpController(
       getOfficialContacts: GetOfficialContactsUseCase(FakeHelpRepository()),
       getPersonalContacts: GetPersonalContactsUseCase(FakeHelpRepository()),
-      launcher: _Launcher(canCallResult: false),
+      launcher: FakeExternalLauncherService()..canCallResult = false,
     );
 
     final opened = await controller.call(official);
 
     expect(opened, isFalse);
-    expect(controller.fallbackPhone, '190');
     controller.dispose();
   });
 
-  test('se chamada do discador retorna false, usa o mesmo fallback', () async {
+  test('se discador não abre, a chamada retorna false', () async {
     final controller = HelpController(
       getOfficialContacts: GetOfficialContactsUseCase(FakeHelpRepository()),
       getPersonalContacts: GetPersonalContactsUseCase(FakeHelpRepository()),
-      launcher: _Launcher(callResult: false),
+      launcher: FakeExternalLauncherService()..openResult = false,
     );
 
     expect(await controller.call(official), isFalse);
-    expect(controller.fallbackPhone, '190');
     controller.dispose();
   });
 }
@@ -56,15 +54,3 @@ const official = ContactEntity(
   phone: '190',
   type: ContactType.official,
 );
-
-class _Launcher implements ExternalLauncherService {
-  _Launcher({this.canCallResult = true, this.callResult = true});
-  final bool canCallResult;
-  final bool callResult;
-  @override
-  Future<bool> canCall() async => canCallResult;
-  @override
-  Future<bool> call(String phoneNumber) async => callResult;
-  @override
-  Future<bool> openUrl(String url) async => false;
-}

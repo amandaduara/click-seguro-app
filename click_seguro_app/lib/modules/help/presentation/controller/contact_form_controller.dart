@@ -11,24 +11,28 @@ import 'package:flutter/foundation.dart';
 
 class ContactFormController extends ChangeNotifier {
   ContactFormController({
-    required this.getPersonalContacts,
-    required this.savePersonalContact,
-    required this.deletePersonalContact,
-    required this.images,
+    required GetPersonalContactsUseCase getPersonalContacts,
+    required SavePersonalContactUseCase savePersonalContact,
+    required DeletePersonalContactUseCase deletePersonalContact,
+    required ImageStorageService images,
     String? contactId,
-  }) : contactId = contactId,
-       id = contactId ?? _newId();
+  }) : _contactId = contactId,
+       _getPersonalContacts = getPersonalContacts,
+       _savePersonalContact = savePersonalContact,
+       _deletePersonalContact = deletePersonalContact,
+       _images = images,
+       _id = contactId ?? _newId();
 
   static int _idSequence = 0;
   static String _newId() =>
       'contact_${DateTime.now().microsecondsSinceEpoch}_${_idSequence++}';
 
-  final String? contactId;
-  final String id;
-  final GetPersonalContactsUseCase getPersonalContacts;
-  final SavePersonalContactUseCase savePersonalContact;
-  final DeletePersonalContactUseCase deletePersonalContact;
-  final ImageStorageService images;
+  final String? _contactId;
+  final String _id;
+  final GetPersonalContactsUseCase _getPersonalContacts;
+  final SavePersonalContactUseCase _savePersonalContact;
+  final DeletePersonalContactUseCase _deletePersonalContact;
+  final ImageStorageService _images;
   bool _disposed = false;
   bool _loading = false;
   bool _saving = false;
@@ -47,7 +51,7 @@ class ContactFormController extends ChangeNotifier {
   Failure? _saveFailure;
   Failure? _deleteFailure;
 
-  bool get isEditing => contactId != null;
+  bool get isEditing => _contactId != null;
   bool get isLoading => _loading;
   bool get isSaving => _saving;
   bool get isDeleting => _deleting;
@@ -69,12 +73,12 @@ class ContactFormController extends ChangeNotifier {
     _loadFailure = null;
     _notFound = false;
     _notify();
-    final result = await getPersonalContacts();
+    final result = await _getPersonalContacts();
     if (_disposed) return;
     result.match((failure) => _loadFailure = failure, (contacts) {
       ContactEntity? contact;
       for (final item in contacts) {
-        if (item.id == contactId) {
+        if (item.id == _contactId) {
           contact = item;
           break;
         }
@@ -117,7 +121,7 @@ class ContactFormController extends ChangeNotifier {
     _photoLoading = true;
     _permissionDenied = false;
     _notify();
-    final result = await images.pickImage(source);
+    final result = await _images.pickImage(source);
     if (_disposed) {
       if (result is PickedImage) await _deleteImage(result.path);
       return;
@@ -171,9 +175,9 @@ class ContactFormController extends ChangeNotifier {
     _validationError = null;
     _saveFailure = null;
     _notify();
-    final result = await savePersonalContact(
+    final result = await _savePersonalContact(
       ContactEntity(
-        id: id,
+        id: _id,
         name: _name,
         phone: _phone,
         type: ContactType.personal,
@@ -208,12 +212,12 @@ class ContactFormController extends ChangeNotifier {
         _notFound) {
       return false;
     }
-    final id = contactId;
+    final id = _contactId;
     if (id == null) return false;
     _deleting = true;
     _deleteFailure = null;
     _notify();
-    final result = await deletePersonalContact(id);
+    final result = await _deletePersonalContact(id);
     if (_disposed) return false;
     result.match((failure) => _deleteFailure = failure, (_) {});
     _deleting = false;
@@ -226,9 +230,7 @@ class ContactFormController extends ChangeNotifier {
   }
 
   Future<void> _deleteImage(String path) async {
-    try {
-      await images.delete(path);
-    } catch (_) {}
+    await _images.delete(path);
   }
 
   @override

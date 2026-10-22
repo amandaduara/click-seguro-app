@@ -1,3 +1,5 @@
+import 'package:click_seguro_app/core/utils/phone_number.dart';
+
 enum ContactValidationError { name, phone }
 
 /// Validação pura compartilhável entre o usecase e o futuro formulário.
@@ -13,11 +15,10 @@ class ContactValidation {
   /// Retorna telefone sem máscara ou null se a entrada não for aceita.
   static String? normalizePhone(String phone) {
     final value = phone.trim();
-    if (value.isEmpty || !RegExp(r'^\+?[0-9\s().-]+$').hasMatch(value)) {
-      return null;
-    }
-    final digits = value.replaceAll(RegExp(r'\D'), '');
-    if (digits.length < 3 || digits.length > 15) return null;
-    return value.startsWith('+') ? '+$digits' : digits;
+    if (!RegExp(r'^\+?[0-9\s().-]+$').hasMatch(value)) return null;
+    final normalized = normalizePhoneNumber(value);
+    if (normalized == null) return null;
+    final digits = normalized.replaceAll(RegExp(r'\D'), '');
+    return digits.length >= 3 && digits.length <= 15 ? normalized : null;
   }
 }

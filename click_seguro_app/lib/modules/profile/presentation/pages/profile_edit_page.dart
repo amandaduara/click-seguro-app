@@ -6,6 +6,7 @@ import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
+import 'package:click_seguro_app/core/widgets/person_avatar.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/avatar_update_outcome.dart';
@@ -16,7 +17,6 @@ import 'package:click_seguro_app/modules/profile/presentation/controller/edit_pr
 import 'package:click_seguro_app/modules/profile/presentation/extensions/phone_format.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/guest_invite.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/photo_sheet.dart';
-import 'package:click_seguro_app/modules/profile/presentation/widgets/profile_avatar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -273,10 +273,10 @@ class _PhotoButton extends StatelessWidget {
               dimension: _size,
               child: Stack(
                 children: [
-                  ProfileAvatar(
+                  PersonAvatar(
                     initials: initials,
                     imageUrl: controller.avatarUrl,
-                    localPath: controller.localPhotoPath,
+                    photoPath: controller.localPhotoPath,
                     size: _size,
                   ),
                   if (uploading)

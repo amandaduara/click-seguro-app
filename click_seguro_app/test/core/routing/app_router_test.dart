@@ -83,8 +83,8 @@ void main() {
     };
     const overlayPaths = <String, Type>{
       '/activities/m1': ActivityModulePage,
-      '/help/contact/new': HelpContactPage,
-      '/help/contact/c1': HelpContactPage,
+      '/help/contact/new': ContactFormPage,
+      '/help/contact/c1': ContactFormPage,
       '/profile/edit': ProfileEditPage,
       '/news/n1': NewsDetailPage,
       '/news/saved': UserNewsListPage,
@@ -132,7 +132,7 @@ void main() {
     ) async {
       await open(tester, '/help/contact/new');
 
-      final page = tester.widget<HelpContactPage>(find.byType(HelpContactPage));
+      final page = tester.widget<ContactFormPage>(find.byType(ContactFormPage));
       expect(page.contactId, isNull);
     });
   });

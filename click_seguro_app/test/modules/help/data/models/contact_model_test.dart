@@ -25,7 +25,12 @@ void main() {
       'relationship': 'Irmã',
       'photoPath': '/app/images/ana.jpg',
     });
-    expect(restored, contact);
+    expect(restored.id, contact.id);
+    expect(restored.name, contact.name);
+    expect(restored.phone, contact.phone);
+    expect(restored.type, contact.type);
+    expect(restored.relationship, contact.relationship);
+    expect(restored.photoPath, contact.photoPath);
   });
 
   test('campos opcionais ausentes assumem contato oficial', () {

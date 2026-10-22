@@ -7,7 +7,8 @@ import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dart';
 import 'package:click_seguro_app/modules/help/presentation/controller/help_controller.dart';
-import 'package:click_seguro_app/modules/help/presentation/widgets/contact_avatar.dart';
+import 'package:click_seguro_app/modules/help/presentation/routes/help_routes.dart';
+import 'package:click_seguro_app/core/widgets/person_avatar.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -127,10 +128,9 @@ class _HelpPageContent extends StatelessWidget {
     HelpController controller, {
     String? contactId,
   }) async {
-    final path = contactId == null
-        ? '/help/contact/new'
-        : '/help/contact/$contactId';
-    final saved = await context.push<bool>(path);
+    final saved = await context.push<bool>(
+      helpContactPath(contactId: contactId),
+    );
     if (saved == true && context.mounted) await controller.refresh();
   }
 
@@ -140,7 +140,7 @@ class _HelpPageContent extends StatelessWidget {
     ContactEntity contact,
   ) async {
     if (await controller.call(contact) || !context.mounted) return;
-    final phone = controller.fallbackPhone ?? contact.phone;
+    final phone = contact.phone;
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -167,7 +167,6 @@ class _HelpPageContent extends StatelessWidget {
                   SnackBar(content: Text(AppStrings.helpCopied.tr())),
                 );
               }
-              controller.clearFallbackPhone();
             },
             icon: const Icon(Icons.copy),
             label: Text(AppStrings.helpCopyNumber.tr()),
@@ -195,9 +194,9 @@ class _ContactCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            ContactAvatar(
+            PersonAvatar(
               name: contact.name,
-              radius: 28,
+              size: 56,
               photoPath: contact.photoPath,
             ),
             const SizedBox(width: AppSpacing.s3),

@@ -214,7 +214,6 @@ abstract class AppStrings {
 
   // --- help ---
   static const String helpTitle = 'help_title';
-  static const String helpContactTitle = 'help_contact_title';
   static const String helpTabOfficial = 'help_tab_official';
   static const String helpTabPersonal = 'help_tab_personal';
   static const String helpOfficialUnavailable = 'help_official_unavailable';
@@ -243,9 +242,6 @@ abstract class AppStrings {
   static const String helpNameRequired = 'help_name_required';
   static const String helpPhoneInvalid = 'help_phone_invalid';
   static const String helpContactMissing = 'help_contact_missing';
-  static const String helpSaveFailed = 'help_save_failed';
-  static const String helpDeleteFailed = 'help_delete_failed';
-  static const String helpPhotoInitials = 'help_photo_initials';
 
   // --- profile ---
   static const String profileTitle = 'profile_title';

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/local_cache_service.dart';
 import 'package:click_seguro_app/modules/help/data/models/contact_model.dart';
@@ -61,17 +59,9 @@ class PersonalContactsLocalDataSource {
       'contacts': [for (final contact in contacts) contact.toJson()],
     };
     await _cache.writeJson(cacheKey, record);
-    final persisted = await _cache.readJson(cacheKey);
-    if (jsonEncode(persisted) != jsonEncode(record)) {
-      throw StateError('Personal contacts cache write was not persisted');
-    }
   }
 
   Future<void> _deleteImage(String path) async {
-    try {
-      await _images.delete(path);
-    } catch (_) {
-      // Cache is authoritative; image cleanup is best effort after persistence.
-    }
+    await _images.delete(path);
   }
 }

@@ -7,7 +7,9 @@ import 'package:click_seguro_app/modules/help/presentation/controller/help_contr
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 
-import 'fakes/help_fakes.dart';
+import '../../fakes/fake_external_launcher_service.dart';
+import '../../fakes/fake_image_storage_service.dart';
+import '../../fakes/fake_local_cache_service.dart';
 
 void main() {
   final injector = GetIt.instance;

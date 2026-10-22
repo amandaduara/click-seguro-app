@@ -21,14 +21,12 @@ class HelpController extends ChangeNotifier {
   bool _isLoading = false;
   Failure? _officialFailure;
   Failure? _personalFailure;
-  String? _fallbackPhone;
   List<ContactEntity> _officialContacts = [];
   List<ContactEntity> _personalContacts = [];
 
   bool get isLoading => _isLoading;
   Failure? get officialFailure => _officialFailure;
   Failure? get personalFailure => _personalFailure;
-  String? get fallbackPhone => _fallbackPhone;
   List<ContactEntity> get officialContacts =>
       List.unmodifiable(_officialContacts);
   List<ContactEntity> get personalContacts =>
@@ -62,23 +60,7 @@ class HelpController extends ChangeNotifier {
   Future<void> refresh() => load();
 
   Future<bool> call(ContactEntity contact) async {
-    _fallbackPhone = null;
-    var opened = false;
-    try {
-      opened = await _launcher.canCall() && await _launcher.call(contact.phone);
-    } catch (_) {
-      opened = false;
-    }
-    if (!opened && !_disposed) {
-      _fallbackPhone = contact.phone;
-      _notify();
-    }
-    return opened;
-  }
-
-  void clearFallbackPhone() {
-    _fallbackPhone = null;
-    _notify();
+    return await _launcher.canCall() && await _launcher.call(contact.phone);
   }
 
   void _notify() {

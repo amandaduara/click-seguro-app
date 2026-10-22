@@ -12,6 +12,7 @@ import 'package:click_seguro_app/modules/help/presentation/controller/contact_fo
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../fakes/fake_help_repository.dart';
+import '../../../../fakes/fake_image_storage_service.dart';
 
 void main() {
   test('salva campos normalizados e mantém id estável na edição', () async {
@@ -72,18 +73,20 @@ void main() {
   test(
     'trocar foto temporária apaga a anterior; cancelar apaga atual',
     () async {
-      final images = _Images([
-        const PickedImage('/temp/one.jpg'),
-        const PickedImage('/temp/two.jpg'),
-      ]);
+      final images = FakeImageStorageService(
+        nextResults: [
+          const PickedImage('/temp/one.jpg'),
+          const PickedImage('/temp/two.jpg'),
+        ],
+      );
       final controller = _controller(FakeHelpRepository(), images: images);
       await controller.pickPhoto(PhotoSource.gallery);
       await controller.pickPhoto(PhotoSource.camera);
 
-      expect(images.deleted, ['/temp/one.jpg']);
+      expect(images.deletedPaths, ['/temp/one.jpg']);
       controller.dispose();
       await Future<void>.delayed(Duration.zero);
-      expect(images.deleted, ['/temp/one.jpg', '/temp/two.jpg']);
+      expect(images.deletedPaths, ['/temp/one.jpg', '/temp/two.jpg']);
     },
   );
 
@@ -91,7 +94,9 @@ void main() {
     'dispose durante save não apaga foto se a persistência conclui',
     () async {
       final repository = FakeHelpRepository();
-      final images = _Images([const PickedImage('/temp/saved.jpg')]);
+      final images = FakeImageStorageService(
+        nextResults: [const PickedImage('/temp/saved.jpg')],
+      );
       final controller = _controller(repository, images: images);
       controller
         ..setName('Ana')
@@ -116,12 +121,13 @@ void main() {
       );
 
       expect(await saving, isTrue);
-      expect(images.deleted, isEmpty);
+      expect(images.deletedPaths, isEmpty);
     },
   );
 
   test('permissão negada não bloqueia salvamento sem foto', () async {
-    final images = _Images([const PickImagePermissionDenied()]);
+    final images = FakeImageStorageService()
+      ..nextResult = const PickImagePermissionDenied();
     final controller = _controller(FakeHelpRepository(), images: images);
     controller
       ..setName('Ana')
@@ -145,22 +151,11 @@ const person = ContactEntity(
 ContactFormController _controller(
   FakeHelpRepository repository, {
   String? contactId,
-  _Images? images,
+  FakeImageStorageService? images,
 }) => ContactFormController(
   contactId: contactId,
   getPersonalContacts: GetPersonalContactsUseCase(repository),
   savePersonalContact: SavePersonalContactUseCase(repository),
   deletePersonalContact: DeletePersonalContactUseCase(repository),
-  images: images ?? _Images([]),
+  images: images ?? FakeImageStorageService(),
 );
-
-class _Images implements ImageStorageService {
-  _Images(this.results);
-  final List<PickImageResult> results;
-  final List<String> deleted = [];
-  @override
-  Future<void> delete(String path) async => deleted.add(path);
-  @override
-  Future<PickImageResult> pickImage(PhotoSource source) async =>
-      results.removeAt(0);
-}

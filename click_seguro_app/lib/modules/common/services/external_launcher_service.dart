@@ -1,4 +1,7 @@
 import 'package:url_launcher/url_launcher.dart';
+import 'package:click_seguro_app/core/utils/phone_number.dart';
+
+export 'package:click_seguro_app/core/utils/phone_number.dart' show normalizePhoneNumber;
 
 const Set<String> _webSchemes = {'http', 'https'};
 const String _phoneScheme = 'tel';
@@ -8,15 +11,6 @@ const String _phoneScheme = 'tel';
 bool isOpenableWebUrl(String url) {
   final Uri? uri = Uri.tryParse(url.trim());
   return uri != null && _webSchemes.contains(uri.scheme) && uri.host.isNotEmpty;
-}
-
-/// Só os dígitos e o "+" inicial: "(11) 9 1234-5678" → "11912345678".
-/// Sem dígitos → null.
-String? normalizePhoneNumber(String raw) {
-  final String trimmed = raw.trim();
-  final String digits = trimmed.replaceAll(RegExp(r'\D'), '');
-  if (digits.isEmpty) return null;
-  return trimmed.startsWith('+') ? '+$digits' : digits;
 }
 
 /// Abrir a notícia original no navegador e ligar pelo discador (RF-017,

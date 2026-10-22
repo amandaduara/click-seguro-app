@@ -3,7 +3,8 @@ import 'package:click_seguro_app/modules/help/data/models/contact_model.dart';
 import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../fakes/help_fakes.dart';
+import '../../../fakes/fake_image_storage_service.dart';
+import '../../../fakes/fake_local_cache_service.dart';
 
 ContactModel contact({
   String id = 'a',
@@ -61,13 +62,13 @@ void main() {
       final images = FakeImageStorageService();
       final source = PersonalContactsLocalDataSource(cache, images);
       await source.save(contact(photoPath: '/old.jpg'));
-      cache.failWrite = true;
+      cache.throwOnWrite = true;
 
       await expectLater(
         source.save(contact(name: 'Não persistido', photoPath: '/new.jpg')),
         throwsA(isA<StateError>()),
       );
-      cache.failWrite = false;
+      cache.throwOnWrite = false;
 
       expect((await source.read()).single.name, 'Ana');
       expect(images.deletedPaths, isEmpty);
@@ -91,12 +92,12 @@ void main() {
     final images = FakeImageStorageService();
     final source = PersonalContactsLocalDataSource(cache, images);
     await source.save(contact(photoPath: '/ana.jpg'));
-    cache.failWrite = true;
+    cache.throwOnWrite = true;
 
     await expectLater(source.delete('a'), throwsA(isA<StateError>()));
 
     expect(images.deletedPaths, isEmpty);
-    cache.failWrite = false;
+    cache.throwOnWrite = false;
     expect((await source.read()).single.id, 'a');
   });
 }

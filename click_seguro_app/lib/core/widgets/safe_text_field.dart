@@ -16,6 +16,7 @@ class SafeTextField extends StatefulWidget {
     this.rightIcon,
     this.placeholder,
     this.controller,
+    this.initialValue,
     this.obscureText = false,
     this.enabled = true,
     this.onChanged,
@@ -35,6 +36,7 @@ class SafeTextField extends StatefulWidget {
   final Widget? rightIcon;
   final String? placeholder;
   final TextEditingController? controller;
+  final String? initialValue;
   final bool obscureText;
   final bool enabled;
   final ValueChanged<String>? onChanged;
@@ -57,6 +59,7 @@ class SafeTextField extends StatefulWidget {
 }
 
 class _SafeTextFieldState extends State<SafeTextField> {
+  TextEditingController? _internalController;
   FocusNode? _ownFocusNode;
   FocusNode get _focusNode =>
       widget.focusNode ?? (_ownFocusNode ??= FocusNode());
@@ -65,7 +68,38 @@ class _SafeTextFieldState extends State<SafeTextField> {
   @override
   void initState() {
     super.initState();
+    if (widget.controller == null) {
+      _internalController = TextEditingController(text: widget.initialValue);
+    }
     _focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(covariant SafeTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextValue = widget.initialValue;
+    if (oldWidget.controller != null && widget.controller == null) {
+      final previous = oldWidget.controller!.value;
+      _internalController = TextEditingController.fromValue(
+        nextValue == null || nextValue == previous.text
+            ? previous
+            : TextEditingValue(
+                text: nextValue,
+                selection: TextSelection.collapsed(offset: nextValue.length),
+              ),
+      );
+    } else if (oldWidget.controller == null && widget.controller != null) {
+      _internalController?.dispose();
+      _internalController = null;
+    } else if (widget.controller == null &&
+        oldWidget.initialValue != nextValue &&
+        _internalController?.text != nextValue) {
+      final controller = _internalController ??= TextEditingController();
+      controller.value = TextEditingValue(
+        text: nextValue ?? '',
+        selection: TextSelection.collapsed(offset: nextValue?.length ?? 0),
+      );
+    }
   }
 
   void _onFocusChange() {
@@ -76,6 +110,7 @@ class _SafeTextFieldState extends State<SafeTextField> {
   void dispose() {
     _focusNode.removeListener(_onFocusChange);
     _ownFocusNode?.dispose();
+    _internalController?.dispose();
     super.dispose();
   }
 
@@ -134,7 +169,9 @@ class _SafeTextFieldState extends State<SafeTextField> {
                         label: widget.semanticsLabel,
                         textField: true,
                         child: TextField(
-                          controller: widget.controller,
+                          controller:
+                              widget.controller ??
+                              (_internalController ??= TextEditingController()),
                           focusNode: _focusNode,
                           obscureText: widget.obscureText,
                           onChanged: widget.onChanged,
