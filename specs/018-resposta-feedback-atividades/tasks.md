@@ -200,7 +200,7 @@ fechar (FR-016, FR-017).
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T038 Em `lesson_page_test.dart`, conferir o fluxo inteiro com letra 2× e alto contraste num celular 1080×2340, dpr 3 (alternativas com resultado, rodapé com duas linhas e o painel sem estouro) e em inglês ("Confirm answer", "You got it right!", "Next question")
+- [X] T038 Em `lesson_page_test.dart`, conferir o fluxo inteiro com letra 2× e alto contraste num celular 1080×2340, dpr 3 (alternativas com resultado, rodapé com duas linhas e o painel sem estouro) e em inglês ("Confirm answer", "You got it right!", "Next question")
 - [ ] T039 Rodar `/revisar-pr` sobre a branch (antes de abrir o PR: revisar o diff `develop...018-resposta-feedback-atividades` com o mesmo roteiro da skill) e corrigir os achados Alta/Média, anotando aqui o que ficou aceito
 - [ ] T040 `flutter analyze` sem novos avisos em relação à linha de base da T001 e `flutter test` inteiro verde; anotar os números aqui
 - [ ] T041 Validação no aparelho: os 12 passos do [quickstart](quickstart.md) (a usuária valida); anotar o que falhar como tarefa nova

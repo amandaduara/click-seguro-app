@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
@@ -624,6 +625,67 @@ void main() {
         );
       },
     );
+  });
+
+  group('polimento (specs/018 T038)', () {
+    testWidgets('celular, letra 2× e alto contraste: responder sem estouro', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2340)
+        ..devicePixelRatio = 3;
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      repository.answerResults = [
+        Right(
+          AnswerResultModel.fromJson(
+            answerJson(
+              isCorrect: false,
+              explanation: 'Uma explicação bem comprida. ' * 20,
+            ),
+          ).toEntity(),
+        ),
+      ];
+      await pumpLocalized(
+        tester,
+        router: router,
+        theme: AppTheme.highContrastTheme,
+      );
+
+      await reveal(tester, find.text('Enviar'));
+      await tester.tap(find.text('Enviar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.scrollUntilVisible(
+        find.text('Próxima pergunta'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await reveal(tester, find.text('sua resposta, errada'));
+      expect(find.text('Responder de novo'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('em inglês', (tester) async {
+      await open(tester, locale: const Locale('en', 'US'));
+
+      expect(find.text('Confirm answer'), findsOneWidget);
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      await tester.tap(find.text('Ignorar e denunciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm answer'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('You got it right!'), findsOneWidget);
+      expect(find.text('Correct answer: Ignorar e denunciar'), findsOneWidget);
+      expect(find.text('Next question'), findsOneWidget);
+    });
   });
 
   group('voz no feedback (specs/018 US5)', () {
