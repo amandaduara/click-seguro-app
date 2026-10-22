@@ -7,6 +7,7 @@ import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/lesson_page.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
@@ -308,6 +309,7 @@ void main() {
       expect(tts.spoken, hasLength(2));
       expect(tts.spoken.last.text, startsWith('E-mail do banco'));
       // A nova pergunta continua sendo lida: o parar não a cancela.
+      await reveal(tester, find.text('Parar'));
       expect(find.text('Parar'), findsOneWidget);
 
       await tester.tap(find.text('Anterior'));
@@ -334,6 +336,7 @@ void main() {
           [for (final s in tts.spoken) s.text.substring(0, 6)],
           ['Técnic', 'E-mail', 'Técnic'],
         );
+        await reveal(tester, find.text('Parar'));
         expect(find.text('Parar'), findsOneWidget);
       },
     );
@@ -363,6 +366,95 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tts.stopCalls, greaterThan(stopsBefore));
+    });
+  });
+
+  group('responder (specs/018 US1)', () {
+    SafeButton confirmButton(WidgetTester tester) => tester.widget<SafeButton>(
+      find.widgetWithText(SafeButton, 'Confirmar resposta'),
+    );
+
+    Future<void> choose(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Confirmar resposta" desativado sem escolha', (tester) async {
+      await open(tester);
+
+      expect(confirmButton(tester).onPressed, isNull);
+    });
+
+    testWidgets('escolher ativa; trocar muda; confirmar envia uma vez', (
+      tester,
+    ) async {
+      await open(tester);
+
+      await choose(tester, 'Enviar');
+      expect(confirmButton(tester).onPressed, isNotNull);
+      await choose(tester, 'Pedir prova');
+
+      repository.answerGate = Completer<void>();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pump();
+      expect(confirmButton(tester).loading, isTrue);
+      await tester.tap(find.text('Confirmar resposta'), warnIfMissed: false);
+      await tester.pump();
+      repository.answerGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(repository.answerCalls, hasLength(1));
+      expect(repository.answerCalls.single.selectedOptionId, 'l1-o3');
+    });
+
+    testWidgets('durante o envio as alternativas não trocam', (tester) async {
+      await open(tester);
+      await choose(tester, 'Enviar');
+      repository.answerGate = Completer<void>();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pump();
+
+      await tester.tap(find.text('Repassar'), warnIfMissed: false);
+      await tester.pump();
+      repository.answerGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(repository.answerCalls.single.selectedOptionId, 'l1-o2');
+    });
+
+    testWidgets('as alternativas ficam na ordem do serviço (RF-027)', (
+      tester,
+    ) async {
+      await open(tester);
+      await choose(tester, 'Repassar');
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      final List<String> texts = [
+        for (final card in tester.widgetList<LessonOptionCard>(
+          find.byType(LessonOptionCard, skipOffstage: false),
+        ))
+          card.text,
+      ];
+      expect(texts, [
+        'Ignorar e denunciar',
+        'Enviar',
+        'Pedir prova',
+        'Repassar',
+      ]);
+    });
+
+    testWidgets('visitante também responde', (tester) async {
+      await session.logout();
+      await session.startGuestSession();
+      await open(tester);
+
+      await choose(tester, 'Enviar');
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(repository.answerCalls, hasLength(1));
     });
   });
 

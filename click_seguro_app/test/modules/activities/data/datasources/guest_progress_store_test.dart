@@ -26,9 +26,24 @@ void main() {
 
   test('grava e conta por módulo', () {
     store
-      ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1')
-      ..recordAnswer(moduleId: 'm1', lessonId: 'l2', selectedOptionId: 'o5')
-      ..recordAnswer(moduleId: 'm2', lessonId: 'l4', selectedOptionId: 'o9');
+      ..recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'o1',
+        isCorrect: true,
+      )
+      ..recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l2',
+        selectedOptionId: 'o5',
+        isCorrect: true,
+      )
+      ..recordAnswer(
+        moduleId: 'm2',
+        lessonId: 'l4',
+        selectedOptionId: 'o9',
+        isCorrect: true,
+      );
 
     expect(store.answeredCount('m1'), 2);
     expect(store.answeredCount('m2'), 1);
@@ -37,14 +52,29 @@ void main() {
 
   test('a mesma lição de novo substitui a resposta e conta uma vez', () {
     store
-      ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1')
-      ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o2');
+      ..recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'o1',
+        isCorrect: true,
+      )
+      ..recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'o2',
+        isCorrect: true,
+      );
 
     expect(store.answeredCount('m1'), 1);
   });
 
   test('sair do modo visitante apaga', () async {
-    store.recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1');
+    store.recordAnswer(
+      moduleId: 'm1',
+      lessonId: 'l1',
+      selectedOptionId: 'o1',
+      isCorrect: true,
+    );
 
     await session.logout();
 
@@ -52,7 +82,12 @@ void main() {
   });
 
   test('entrar numa conta que já existia apaga', () async {
-    store.recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1');
+    store.recordAnswer(
+      moduleId: 'm1',
+      lessonId: 'l1',
+      selectedOptionId: 'o1',
+      isCorrect: true,
+    );
 
     await signIn();
 
@@ -71,8 +106,18 @@ void main() {
       int signUps = 0;
       store.onSignUp = () => signUps++;
       store
-        ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1')
-        ..recordAnswer(moduleId: 'm1', lessonId: 'l2', selectedOptionId: 'o5');
+        ..recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l1',
+          selectedOptionId: 'o1',
+          isCorrect: true,
+        )
+        ..recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l2',
+          selectedOptionId: 'o5',
+          isCorrect: true,
+        );
 
       await signUp();
 
@@ -84,8 +129,18 @@ void main() {
 
     test('removePending tira só aquela', () async {
       store
-        ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1')
-        ..recordAnswer(moduleId: 'm1', lessonId: 'l2', selectedOptionId: 'o5');
+        ..recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l1',
+          selectedOptionId: 'o1',
+          isCorrect: true,
+        )
+        ..recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l2',
+          selectedOptionId: 'o5',
+          isCorrect: true,
+        );
       await signUp();
 
       store.removePending(store.pendingTransfer.first);
@@ -98,6 +153,7 @@ void main() {
         moduleId: 'm1',
         lessonId: 'l1',
         selectedOptionId: 'o1',
+        isCorrect: true,
       );
       await signUp();
 
@@ -111,6 +167,7 @@ void main() {
         moduleId: 'm1',
         lessonId: 'l1',
         selectedOptionId: 'o1',
+        isCorrect: true,
       );
 
       await signIn();
@@ -119,10 +176,81 @@ void main() {
     });
   });
 
+  group('acertos (specs/018 R4)', () {
+    test('correctCount conta só as certas do módulo', () {
+      store
+        ..recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l1',
+          selectedOptionId: 'o1',
+          isCorrect: true,
+        )
+        ..recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l2',
+          selectedOptionId: 'o5',
+          isCorrect: false,
+        )
+        ..recordAnswer(
+          moduleId: 'm2',
+          lessonId: 'l4',
+          selectedOptionId: 'o9',
+          isCorrect: true,
+        );
+
+      expect(store.correctCount('m1'), 1);
+      expect(store.correctCount('m2'), 1);
+      expect(store.correctCount('m3'), 0);
+    });
+
+    test('vale a resposta mais recente da lição', () {
+      store.recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'o1',
+        isCorrect: true,
+      );
+      expect(store.correctCount('m1'), 1);
+
+      store.recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'o2',
+        isCorrect: false,
+      );
+
+      expect(store.correctCount('m1'), 0);
+      expect(store.answeredCount('m1'), 1);
+    });
+
+    test('a transferência leva a alternativa escolhida', () async {
+      store.recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'o2',
+        isCorrect: false,
+      );
+
+      await session.saveSession(
+        accessToken: 'tk',
+        refreshToken: 'rf',
+        email: 'nova@exemplo.com',
+        newAccount: true,
+      );
+
+      expect(store.pendingTransfer.single.selectedOptionId, 'o2');
+    });
+  });
+
   test('isAnswered por lição (specs/017 R3)', () async {
     expect(store.isAnswered('l1'), isFalse);
 
-    store.recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1');
+    store.recordAnswer(
+      moduleId: 'm1',
+      lessonId: 'l1',
+      selectedOptionId: 'o1',
+      isCorrect: true,
+    );
 
     expect(store.isAnswered('l1'), isTrue);
     expect(store.isAnswered('l2'), isFalse);

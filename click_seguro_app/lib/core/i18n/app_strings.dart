@@ -236,6 +236,21 @@ abstract class AppStrings {
   static const String activitiesLessonNext = 'activities_lesson_next';
   static const String activitiesLessonOptionSpoken =
       'activities_lesson_option_spoken';
+  static const String activitiesAnswerConfirm = 'activities_answer_confirm';
+  static const String activitiesAnswerAgain = 'activities_answer_again';
+  static const String activitiesAnswerFailed = 'activities_answer_failed';
+  static const String activitiesAnswerRejected = 'activities_answer_rejected';
+  static const String activitiesFeedbackCorrect = 'activities_feedback_correct';
+  static const String activitiesFeedbackWrong = 'activities_feedback_wrong';
+  static const String activitiesFeedbackCorrectOption =
+      'activities_feedback_correct_option';
+  static const String activitiesFeedbackExplanation =
+      'activities_feedback_explanation';
+  static const String activitiesFeedbackScore = 'activities_feedback_score';
+  static const String activitiesFeedbackNext = 'activities_feedback_next';
+  static const String activitiesFeedbackFinish = 'activities_feedback_finish';
+  static const String activitiesOptionCorrect = 'activities_option_correct';
+  static const String activitiesOptionWrong = 'activities_option_wrong';
 
   // --- help ---
   static const String helpTitle = 'help_title';

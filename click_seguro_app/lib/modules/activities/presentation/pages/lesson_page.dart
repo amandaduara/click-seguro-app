@@ -4,7 +4,6 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/listen_button.dart';
-import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
@@ -13,6 +12,7 @@ import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entit
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/lesson_presentation.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/confirm_answer_footer.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_progress_indicator.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
@@ -116,6 +116,12 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     unawaited(_readAloud.speak(lesson.spokenText));
   }
 
+  /// A leitura da pergunta para antes do envio (FR-017).
+  Future<void> _confirm() async {
+    unawaited(_readAloud.stop());
+    await _controller.confirm();
+  }
+
   void _toggleListen(LessonEntity lesson) => unawaited(
     _readAloud.isSpeaking
         ? _readAloud.stop()
@@ -159,6 +165,8 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
                   lesson: lesson,
                   lessons: controller.module!.lessons,
                   currentIndex: controller.currentIndex,
+                  selectedOptionId: controller.selectedOptionId,
+                  onSelect: controller.canSelect ? controller.select : null,
                   listen: ListenableBuilder(
                     listenable: _readAloud,
                     builder: (context, _) => _readAloud.isAvailable
@@ -170,7 +178,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
                   ),
                 ),
               ),
-              _NavigationBar(controller: controller),
+              ConfirmAnswerFooter(controller: controller, onConfirm: _confirm),
             ],
           ),
           _ => const SizedBox.shrink(),
@@ -185,6 +193,8 @@ class _LessonBody extends StatelessWidget {
     required this.lesson,
     required this.lessons,
     required this.currentIndex,
+    required this.selectedOptionId,
+    required this.onSelect,
     required this.listen,
   });
 
@@ -194,6 +204,10 @@ class _LessonBody extends StatelessWidget {
   final LessonEntity lesson;
   final List<LessonEntity> lessons;
   final int currentIndex;
+  final String? selectedOptionId;
+
+  /// `null` quando não pode escolher (enviando).
+  final ValueChanged<String>? onSelect;
 
   /// "Ouvir"/"Parar" (some sem voz no idioma do app).
   final Widget listen;
@@ -248,53 +262,18 @@ class _LessonBody extends StatelessWidget {
         for (final (index, option) in lesson.options.indexed)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s3),
-            child: LessonOptionCard(number: index + 1, text: option.text),
+            child: LessonOptionCard(
+              number: index + 1,
+              text: option.text,
+              state: option.id == selectedOptionId
+                  ? LessonOptionState.selected
+                  : LessonOptionState.idle,
+              onTap: onSelect == null ? null : () => onSelect!(option.id),
+            ),
           ),
         const SizedBox(height: AppSpacing.s2),
         listen,
       ],
-    );
-  }
-}
-
-/// Rodapé fixo: "Anterior" e "Próxima", desativados quando não podem
-/// (FR-005).
-class _NavigationBar extends StatelessWidget {
-  const _NavigationBar({required this.controller});
-
-  final LessonController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppPalette colors = context.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.card,
-        border: Border(top: BorderSide(color: colors.border)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: Row(
-          children: [
-            Expanded(
-              child: SafeButton(
-                label: AppStrings.activitiesLessonPrevious.tr(),
-                tone: SafeButtonTone.secondary,
-                onPressed: controller.canGoPrevious
-                    ? controller.goPrevious
-                    : null,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s3),
-            Expanded(
-              child: SafeButton(
-                label: AppStrings.activitiesLessonNext.tr(),
-                onPressed: controller.canGoNext ? controller.goNext : null,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

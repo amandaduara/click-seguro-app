@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
+import 'package:click_seguro_app/modules/activities/domain/usecases/answer_lesson_usecase.dart';
 import 'package:click_seguro_app/modules/activities/domain/usecases/get_module_detail_usecase.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
@@ -28,6 +29,7 @@ void main() {
     repository = FakeActivitiesRepository()..moduleDetailResults = results;
     return LessonController(
       getModuleDetail: GetModuleDetailUseCase(repository),
+      answerLesson: AnswerLessonUseCase(repository),
     );
   }
 
@@ -152,6 +154,84 @@ void main() {
         ..goNext();
 
       expect(controller.currentIndex, 2);
+    });
+  });
+
+  group('escolher e confirmar (specs/018 US1)', () {
+    setUp(() => controller.load('m1'));
+
+    test('sem escolha no início: não confirma', () {
+      expect(controller.selectedOptionId, isNull);
+      expect(controller.canSelect, isTrue);
+      expect(controller.canConfirm, isFalse);
+    });
+
+    test('escolher marca; escolher outra troca', () {
+      controller.select('l1-o2');
+      expect(controller.selectedOptionId, 'l1-o2');
+      expect(controller.canConfirm, isTrue);
+
+      controller.select('l1-o3');
+      expect(controller.selectedOptionId, 'l1-o3');
+    });
+
+    test('confirmar envia a escolhida, com envio em andamento', () async {
+      controller.select('l1-o3');
+      repository.answerGate = Completer<void>();
+
+      final Future<AnswerAttempt> attempt = controller.confirm();
+      expect(controller.isSubmitting, isTrue);
+      expect(controller.canConfirm, isFalse);
+      repository.answerGate!.complete();
+
+      expect(await attempt, AnswerAttempt.answered);
+      expect(controller.isSubmitting, isFalse);
+      expect(repository.answerCalls.single, (
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'l1-o3',
+      ));
+    });
+
+    test('dois toques seguidos: um envio só', () async {
+      controller.select('l1-o2');
+      repository.answerGate = Completer<void>();
+
+      final Future<AnswerAttempt> first = controller.confirm();
+      final AnswerAttempt second = await controller.confirm();
+      repository.answerGate!.complete();
+      await first;
+
+      expect(second, AnswerAttempt.ignored);
+      expect(repository.answerCalls, hasLength(1));
+    });
+
+    test('durante o envio, escolher não muda nada', () async {
+      controller.select('l1-o2');
+      repository.answerGate = Completer<void>();
+      final Future<AnswerAttempt> attempt = controller.confirm();
+
+      controller.select('l1-o4');
+
+      expect(controller.selectedOptionId, 'l1-o2');
+      repository.answerGate!.complete();
+      await attempt;
+    });
+
+    test('sem escolha: confirmar é ignorado', () async {
+      expect(await controller.confirm(), AnswerAttempt.ignored);
+      expect(repository.answerCalls, isEmpty);
+    });
+
+    test('dispose durante o envio não lança', () async {
+      controller.select('l1-o2');
+      repository.answerGate = Completer<void>();
+      final Future<AnswerAttempt> attempt = controller.confirm();
+
+      controller.dispose();
+      repository.answerGate!.complete();
+
+      await expectLater(attempt, completes);
     });
   });
 }
