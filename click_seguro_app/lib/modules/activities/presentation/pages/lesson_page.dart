@@ -5,7 +5,10 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
@@ -17,6 +20,7 @@ import 'package:click_seguro_app/modules/common/presentation/controller/read_alo
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Perguntas de um módulo, uma por vez (B2, specs/017-perguntas-atividades).
@@ -29,7 +33,7 @@ class LessonPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<LessonController>(
       create: (_) => GetIt.instance<LessonController>()..load(moduleId),
-      child: const _LessonScaffold(),
+      child: _LessonScaffold(moduleId: moduleId),
     );
   }
 }
@@ -37,7 +41,9 @@ class LessonPage extends StatelessWidget {
 /// Também cuida da voz: "Ouvir", leitura automática uma vez por pergunta e
 /// parar ao trocar de pergunta ou sair (R5, R6), como no detalhe da notícia.
 class _LessonScaffold extends StatefulWidget {
-  const _LessonScaffold();
+  const _LessonScaffold({required this.moduleId});
+
+  final String moduleId;
 
   @override
   State<_LessonScaffold> createState() => _LessonScaffoldState();
@@ -124,7 +130,24 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       ),
       body: SafeArea(
         child: switch (controller.status) {
-          LessonStatus.loading => const SafeLoadingState(),
+          // O servidor gratuito leva até ~40 s para acordar.
+          LessonStatus.loading => Column(
+            children: [
+              SlowRequestNotice(
+                active: true,
+                message: AppStrings.activitiesSlow.tr(),
+              ),
+              const Expanded(child: SafeLoadingState()),
+            ],
+          ),
+          LessonStatus.error => SafeErrorState(
+            message: AppStrings.activitiesErrorTitle.tr(),
+            onRetry: () => controller.load(widget.moduleId),
+          ),
+          LessonStatus.empty => SafeEmptyState(
+            icon: LucideIcons.graduationCap,
+            message: AppStrings.activitiesModuleUnavailable.tr(),
+          ),
           LessonStatus.loaded when lesson != null => Column(
             children: [
               Expanded(

@@ -26,7 +26,11 @@ class LessonController extends ChangeNotifier {
   int _currentIndex = 0;
   int get currentIndex => _currentIndex;
 
-  LessonEntity? get current => _module?.lessons[_currentIndex];
+  /// `null` antes da carga e num módulo sem lições válidas.
+  LessonEntity? get current {
+    final List<LessonEntity> lessons = _module?.lessons ?? const [];
+    return lessons.isEmpty ? null : lessons[_currentIndex];
+  }
 
   bool get canGoPrevious => _currentIndex > 0;
 

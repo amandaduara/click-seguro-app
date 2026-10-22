@@ -1,5 +1,11 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
+import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/lesson_page.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
@@ -317,6 +323,74 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tts.stopCalls, greaterThan(stopsBefore));
+    });
+  });
+
+  group('estados (US4)', () {
+    testWidgets('carregando e, depois de 5 s, o aviso de serviço acordando', (
+      tester,
+    ) async {
+      repository.moduleDetailGate = Completer<void>();
+      await pumpLocalized(tester, router: router, settle: false);
+
+      expect(find.byType(SafeLoadingState), findsOneWidget);
+      expect(find.textContaining('O serviço está acordando'), findsNothing);
+      await tester.pump(SlowRequestNotice.delay);
+      expect(find.textContaining('O serviço está acordando'), findsOneWidget);
+
+      repository.moduleDetailGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+    });
+
+    testWidgets('erro com "Tentar novamente", que recarrega', (tester) async {
+      repository.moduleDetailResults = [
+        const Left(ConnectionFailure()),
+        Right(ModuleDetailModel.fromJson(moduleDetailJson()).toEntity()),
+      ];
+      await open(tester);
+
+      expect(
+        find.text('Não foi possível carregar as atividades'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Tentar novamente'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+    });
+
+    testWidgets('módulo que não existe: "sem atividades"', (tester) async {
+      repository.moduleDetailResults = [const Left(ModuleNotFoundFailure())];
+      await open(tester);
+
+      expect(find.text('Este módulo ainda não tem atividades'), findsOneWidget);
+    });
+
+    testWidgets('módulo sem lições válidas: "sem atividades"', (tester) async {
+      useModule(
+        lessons: [
+          lessonJson(options: const ['Só uma']),
+        ],
+      );
+      await open(tester);
+
+      expect(find.text('Este módulo ainda não tem atividades'), findsOneWidget);
+    });
+
+    testWidgets('lição com uma alternativa fica de fora da contagem', (
+      tester,
+    ) async {
+      useModule(
+        lessons: [
+          lessonJson(options: const ['Só uma']),
+          lessonJson(id: 'l2', order: 2),
+          lessonJson(id: 'l3', order: 3),
+        ],
+      );
+      await open(tester);
+
+      expect(find.text('Pergunta 1 de 2'), findsOneWidget);
     });
   });
 }

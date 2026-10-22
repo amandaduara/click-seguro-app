@@ -145,11 +145,11 @@ na primeira não respondida (FR-001 a FR-004, FR-013 a FR-017).
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T024 [US4] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "estados": carregando com `SafeLoadingState` e, depois de `SlowRequestNotice.delay`, "O serviço está acordando"; falha → "Não foi possível carregar as atividades" e "Tentar novamente", que recarrega; `ModuleNotFoundFailure` ou módulo sem lições válidas → "Este módulo ainda não tem atividades" (`SafeEmptyState`); módulo com uma lição de 1 alternativa e duas válidas → "Pergunta 1 de 2"
+- [X] T024 [US4] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "estados": carregando com `SafeLoadingState` e, depois de `SlowRequestNotice.delay`, "O serviço está acordando"; falha → "Não foi possível carregar as atividades" e "Tentar novamente", que recarrega; `ModuleNotFoundFailure` ou módulo sem lições válidas → "Este módulo ainda não tem atividades" (`SafeEmptyState`); módulo com uma lição de 1 alternativa e duas válidas → "Pergunta 1 de 2"
 
 ### Implementação
 
-- [ ] T025 [US4] Na `LessonPage`: `loading` → `SlowRequestNotice(active: true, message: activitiesSlow)` + `SafeLoadingState`; `error` → `SafeErrorState(message: activitiesErrorTitle, onRetry: load)`; `empty` → `SafeEmptyState(icon: graduationCap, message: activitiesModuleUnavailable)`. Faz a T024 passar
+- [X] T025 [US4] Na `LessonPage`: `loading` → `SlowRequestNotice(active: true, message: activitiesSlow)` + `SafeLoadingState`; `error` → `SafeErrorState(message: activitiesErrorTitle, onRetry: load)`; `empty` → `SafeEmptyState(icon: graduationCap, message: activitiesModuleUnavailable)`. Faz a T024 passar. O teste pegou um bug: `LessonController.current` lia a posição 0 de uma lista vazia; agora devolve `null` sem lições
 
 **Checkpoint**: `flutter test` verde. Commit da US4.
 
