@@ -159,8 +159,8 @@ na primeira não respondida (FR-001 a FR-004, FR-013 a FR-017).
 
 - [X] T026 Rodar `/revisar-pr` sobre a branch (antes de abrir o PR: revisar o diff `develop...017-perguntas-atividades` com o mesmo roteiro da skill) e corrigir os achados Alta/Média, anotando aqui o que ficou aceito. **Feito (2026-10-22):** 1 Alta (leitura automática cancelada ao trocar de pergunta: `ReadAloudController.stop()` agora para o motor antes de avisar, com teste no controller e na página), 3 Médias (subtítulo da leitura automática cita as perguntas; `LessonController.failure` e `ModuleDetailEntity.id` sem uso removidos) e 2 Baixas (model no padrão dos outros; sem espaço duplo quando a imagem falta ou falha). Aceitos e registrados no research: `LessonOptionEntity.id`/`order` (B3) e a cadeia de condições parecida com a da notícia
 - [X] T027 `flutter analyze` sem novos avisos em relação à linha de base da T001 e `flutter test` inteiro verde; anotar os números aqui. **Resultado (2026-10-22):** `flutter analyze` 27 issues, todos `info` (igual à linha de base); `flutter test` 1477 verdes (+50)
-- [ ] T028 Validação no aparelho: os 12 passos do [quickstart](quickstart.md) (a usuária valida); anotar o que falhar como tarefa nova
-- [ ] T029 Fechar a feature: marcar a B2 em `.specify/memory/tasks.md` (anotando que `explanation` e `progress` ficaram para a B3/B4, e que a B3 libera o "Próxima" ao responder); marcar as tarefas deste arquivo; commit de docs
+- [X] T028 Validação no aparelho: os 12 passos do [quickstart](quickstart.md) (a usuária valida); anotar o que falhar como tarefa nova. **Validado pela usuária no aparelho em 2026-10-22** com a conta de teste `teste.claude.20261022@exemplo.com`; a validação pediu uma mudança na leitura automática (ler de novo ao voltar a uma pergunta), feita em `2484ae1`
+- [X] T029 Fechar a feature: marcar a B2 em `.specify/memory/tasks.md` (anotando que `explanation` e `progress` ficaram para a B3/B4, e que a B3 libera o "Próxima" ao responder); marcar as tarefas deste arquivo; commit de docs
 
 ---
 
