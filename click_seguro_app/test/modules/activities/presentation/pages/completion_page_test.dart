@@ -1,7 +1,11 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/constants/app_identity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +13,7 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../../fakes/fake_share_service.dart';
 import '../../../../fakes/fake_text_to_speech_service.dart';
 import '../../../../helpers/localized_app.dart';
 
@@ -16,6 +21,7 @@ void main() {
   late FakeTextToSpeechService tts;
   late AccessibilityPreferencesNotifier preferences;
   late List<CompletionAction?> actions;
+  late FakeShareService share;
 
   const ModuleCompletion twoOfThree = ModuleCompletion(
     title: 'Golpes Digitais',
@@ -26,7 +32,9 @@ void main() {
     tts = FakeTextToSpeechService();
     preferences = AccessibilityPreferencesNotifier();
     actions = [];
+    share = FakeShareService();
     GetIt.instance
+      ..registerSingleton<ShareService>(share)
       ..registerSingleton(preferences)
       ..registerFactory(
         () => ReadAloudController(tts, preferences: preferences),
@@ -217,6 +225,69 @@ void main() {
 
       expect(find.text('Ouvir'), findsNothing);
       expect(tts.spoken, isEmpty);
+    });
+  });
+
+  group('compartilhar (US3)', () {
+    testWidgets('abre o menu com o texto pronto e o título como assunto', (
+      tester,
+    ) async {
+      await open(tester);
+
+      await tapButton(tester, 'Compartilhar');
+
+      expect(
+        share.shared.single.text,
+        'Concluí o módulo Golpes Digitais no ${AppIdentity.name} e acertei 2 '
+        'de 3 perguntas! Aprenda a se proteger de golpes também.',
+      );
+      expect(share.shared.single.subject, 'Golpes Digitais');
+    });
+
+    testWidgets('sem pontuação: texto sem números', (tester) async {
+      await open(
+        tester,
+        completion: const ModuleCompletion(title: 'Golpes Digitais'),
+      );
+
+      await tapButton(tester, 'Compartilhar');
+
+      expect(share.shared.single.text, isNot(contains('acertei')));
+    });
+
+    testWidgets('cancelar ou falhar: nenhuma mensagem, segue na conclusão', (
+      tester,
+    ) async {
+      for (final outcome in [ShareOutcome.cancelled, ShareOutcome.failed]) {
+        share.outcome = outcome;
+        await open(tester);
+
+        await tapButton(tester, 'Compartilhar');
+
+        expect(find.byType(SnackBar), findsNothing);
+        expect(find.text('Módulo concluído!'), findsOneWidget);
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+      }
+    });
+
+    testWidgets('dois toques rápidos: um compartilhamento', (tester) async {
+      await open(tester);
+      await tester.scrollUntilVisible(
+        find.text('Compartilhar'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.text('Compartilhar'));
+      await tester.pumpAndSettle();
+
+      share.gate = Completer<void>();
+      await tester.tap(find.text('Compartilhar'));
+      await tester.tap(find.text('Compartilhar'));
+      share.gate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(share.shared, hasLength(1));
     });
   });
 }

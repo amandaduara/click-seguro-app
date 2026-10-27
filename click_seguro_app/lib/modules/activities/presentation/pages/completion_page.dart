@@ -9,6 +9,7 @@ import 'package:click_seguro_app/modules/activities/domain/entities/module_score
 import 'package:click_seguro_app/modules/activities/presentation/extensions/completion_presentation.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -47,6 +48,9 @@ class _CompletionPageState extends State<CompletionPage> {
 
   /// A leitura automática acontece uma vez, quando a voz fica pronta.
   bool _autoReadDone = false;
+
+  /// Menu do aparelho abrindo: um toque por vez.
+  bool _sharing = false;
 
   @override
   void initState() {
@@ -89,6 +93,20 @@ class _CompletionPageState extends State<CompletionPage> {
     }
     _autoReadDone = true;
     unawaited(_readAloud.speak(completion.spokenText));
+  }
+
+  /// Cancelar ou falhar não mostra aviso, como na notícia (FR-006).
+  Future<void> _share(ModuleCompletion completion) async {
+    if (_sharing) return;
+    _sharing = true;
+    try {
+      await GetIt.instance<ShareService>().shareText(
+        completion.shareText,
+        subject: completion.title,
+      );
+    } finally {
+      _sharing = false;
+    }
   }
 
   void _toggleListen(String text) => unawaited(
@@ -160,6 +178,13 @@ class _CompletionPageState extends State<CompletionPage> {
             SafeButton(
               label: AppStrings.activitiesFeedbackFinish.tr(),
               onPressed: () => context.pop(CompletionAction.finish),
+            ),
+            const SizedBox(height: AppSpacing.s3),
+            SafeButton(
+              label: AppStrings.activitiesCompletionShare.tr(),
+              tone: SafeButtonTone.secondary,
+              icon: const Icon(LucideIcons.share2),
+              onPressed: () => _share(completion),
             ),
             const SizedBox(height: AppSpacing.s3),
             SafeButton(

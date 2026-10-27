@@ -118,13 +118,13 @@ leva a Atividades ao entrar; continuar ou voltar segue para a conclusão (FR-007
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T019 [US3] Em `tact/presentation/pages/completion_page_test.dart`, grupo "compartilhar" (`FakeShareService` no `GetIt` como `ShareService`): toque → `shared.single.text` igual ao `shareText` e `subject` = título; sem pontuação → texto sem números; `outcome = failed` ou `dismissed` → nenhuma mensagem na tela; dois toques rápidos → um `shareText`
+- [X] T019 [US3] Em `tact/presentation/pages/completion_page_test.dart`, grupo "compartilhar" (`FakeShareService` no `GetIt` como `ShareService`): toque → `shared.single.text` igual ao `shareText` e `subject` = título; sem pontuação → texto sem números; `outcome = failed` ou `dismissed` → nenhuma mensagem na tela; dois toques rápidos → um `shareText`
 
 ### Implementação
 
-- [ ] T020 [US3] Em `act/presentation/pages/completion_page.dart`: botão "Compartilhar" (`SafeButtonTone.secondary`, ícone `LucideIcons.share2`) chamando `GetIt.instance<ShareService>().shareText(shareText, subject: title)` com a trava `_sharing` (padrão do detalhe da notícia, [R6](research.md#r6-compartilhar)). Faz a T019 passar
+- [X] T020 [US3] Em `act/presentation/pages/completion_page.dart`: botão "Compartilhar" (`SafeButtonTone.secondary`, ícone `LucideIcons.share2`) chamando `GetIt.instance<ShareService>().shareText(shareText, subject: title)` com a trava `_sharing` (padrão do detalhe da notícia, [R6](research.md#r6-compartilhar)). Faz a T019 passar
 
-**Checkpoint**: testes verdes. Commit da US3.
+**Checkpoint**: testes verdes. Commit da US3. **Nota:** o `FakeShareService` (`app/test/fakes/`) ganhou um `gate` opcional para provar o toque duplo; sem ele, nada muda para os testes da notícia.
 
 ---
 
