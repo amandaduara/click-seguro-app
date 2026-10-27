@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dart';
+import 'package:click_seguro_app/modules/help/domain/failures/contact_validation_failure.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/delete_personal_contact_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/get_personal_contacts_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/save_personal_contact_usecase.dart';
@@ -21,7 +22,9 @@ class ContactFormController extends ChangeNotifier {
        _savePersonalContact = savePersonalContact,
        _deletePersonalContact = deletePersonalContact,
        _images = images,
-       _id = contactId ?? _newId();
+       _id = contactId ?? _newId(),
+       // Editando, o formulário só aparece com o contato carregado.
+       _loading = contactId != null;
 
   static int _idSequence = 0;
   static String _newId() =>
@@ -34,13 +37,12 @@ class ContactFormController extends ChangeNotifier {
   final DeletePersonalContactUseCase _deletePersonalContact;
   final ImageStorageService _images;
   bool _disposed = false;
-  bool _loading = false;
+  bool _loading;
   bool _saving = false;
   bool _deleting = false;
   bool _photoLoading = false;
   bool _permissionDenied = false;
   bool _notFound = false;
-  bool _saveInFlight = false;
   String _name = '';
   String _phone = '';
   String _relationship = '';
@@ -68,7 +70,7 @@ class ContactFormController extends ChangeNotifier {
   Failure? get deleteFailure => _deleteFailure;
 
   Future<void> load() async {
-    if (!isEditing || _loading) return;
+    if (!isEditing) return;
     _loading = true;
     _loadFailure = null;
     _notFound = false;
@@ -158,20 +160,7 @@ class ContactFormController extends ChangeNotifier {
         _loadFailure != null) {
       return false;
     }
-    final nameError = ContactValidation.validateName(_name);
-    if (nameError != null) {
-      _validationError = nameError;
-      _notify();
-      return false;
-    }
-    final phoneError = ContactValidation.validatePhone(_phone);
-    if (phoneError != null) {
-      _validationError = phoneError;
-      _notify();
-      return false;
-    }
     _saving = true;
-    _saveInFlight = true;
     _validationError = null;
     _saveFailure = null;
     _notify();
@@ -189,13 +178,18 @@ class ContactFormController extends ChangeNotifier {
     if (result.isRight()) {
       _temporaryPhotoPath = null;
     } else {
-      result.match((failure) => _saveFailure = failure, (_) {});
+      // Nome ou telefone inválido: o usecase valida, o campo mostra o erro.
+      result.match(
+        (failure) => failure is ContactValidationFailure
+            ? _validationError = failure.error
+            : _saveFailure = failure,
+        (_) {},
+      );
       if (_disposed && temporaryPhoto != null) {
         _temporaryPhotoPath = null;
         await _deleteImage(temporaryPhoto);
       }
     }
-    _saveInFlight = false;
     if (_disposed) return result.isRight();
     _saving = false;
     _notify();
@@ -237,7 +231,7 @@ class ContactFormController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     final temporary = _temporaryPhotoPath;
-    if (!_saveInFlight) {
+    if (!_saving) {
       _temporaryPhotoPath = null;
       if (temporary != null) unawaited(_deleteImage(temporary));
     }

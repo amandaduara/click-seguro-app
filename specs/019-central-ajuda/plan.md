@@ -2,9 +2,9 @@
 
 **Branch**: `015-central-ajuda` | **Date**: 2026-10-22 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `/specs/017-central-ajuda/spec.md`
+**Input**: Feature specification from `/specs/019-central-ajuda/spec.md`
 
-O diretório `017-central-ajuda` usa o próximo número livre porque `016` documenta o Assistente. A branch histórica `015-central-ajuda` permanece para preservar o PR20.
+O diretório `019-central-ajuda` usa o próximo número livre (`016` é o Assistente, `017` e `018` são as perguntas e a resposta das atividades). A branch histórica `015-central-ajuda` permanece para preservar o PR20.
 
 ## Summary
 

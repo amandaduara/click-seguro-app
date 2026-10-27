@@ -65,7 +65,7 @@ void main() {
     'activities_title',
     'activities_module_title',
     'help_title',
-    'help_contact_title',
+    'help_add_contact',
     'profile_title',
     'profile_edit_title',
     'settings_title',

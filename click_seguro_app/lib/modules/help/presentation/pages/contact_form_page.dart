@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/photo_sheet.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
@@ -39,7 +40,12 @@ class _ContactFormContent extends StatefulWidget {
 
 class _ContactFormContentState extends State<_ContactFormContent> {
   late final ContactFormController _controller;
-  bool _loadingDialog = false;
+  bool _sheetOpen = false;
+
+  /// Criados quando o formulário aparece, já com o contato carregado.
+  TextEditingController? _nameField;
+  TextEditingController? _phoneField;
+  TextEditingController? _relationshipField;
 
   @override
   void initState() {
@@ -52,8 +58,14 @@ class _ContactFormContentState extends State<_ContactFormContent> {
     }
   }
 
-  Future<void> _loadContact() async {
-    await _controller.load();
+  Future<void> _loadContact() => _controller.load();
+
+  @override
+  void dispose() {
+    _nameField?.dispose();
+    _phoneField?.dispose();
+    _relationshipField?.dispose();
+    super.dispose();
   }
 
   @override
@@ -96,6 +108,7 @@ class _ContactFormContentState extends State<_ContactFormContent> {
         children: [
           Center(
             child: Semantics(
+              button: true,
               label: AppStrings.helpPhoto.tr(),
               child: InkWell(
                 onTap: _showPhotoOptions,
@@ -104,7 +117,6 @@ class _ContactFormContentState extends State<_ContactFormContent> {
                   name: controller.name,
                   size: 104,
                   photoPath: controller.photoPath,
-                  semanticLabel: AppStrings.helpPhoto.tr(),
                 ),
               ),
             ),
@@ -120,7 +132,9 @@ class _ContactFormContentState extends State<_ContactFormContent> {
           const SizedBox(height: AppSpacing.s4),
           SafeTextField(
             label: AppStrings.helpName.tr(),
-            initialValue: controller.name,
+            controller: _nameField ??= TextEditingController(
+              text: controller.name,
+            ),
             error: controller.validationError == ContactValidationError.name
                 ? AppStrings.helpNameRequired.tr()
                 : null,
@@ -130,7 +144,9 @@ class _ContactFormContentState extends State<_ContactFormContent> {
           const SizedBox(height: AppSpacing.s4),
           SafeTextField(
             label: AppStrings.helpPhone.tr(),
-            initialValue: controller.phone,
+            controller: _phoneField ??= TextEditingController(
+              text: controller.phone,
+            ),
             keyboardType: TextInputType.phone,
             error: controller.validationError == ContactValidationError.phone
                 ? AppStrings.helpPhoneInvalid.tr()
@@ -141,7 +157,9 @@ class _ContactFormContentState extends State<_ContactFormContent> {
           const SizedBox(height: AppSpacing.s4),
           SafeTextField(
             label: AppStrings.helpRelationship.tr(),
-            initialValue: controller.relationship,
+            controller: _relationshipField ??= TextEditingController(
+              text: controller.relationship,
+            ),
             textInputAction: TextInputAction.done,
             onChanged: _controller.setRelationship,
           ),
@@ -209,61 +227,21 @@ class _ContactFormContentState extends State<_ContactFormContent> {
   }
 
   Future<void> _showPhotoOptions() async {
-    if (_loadingDialog) return;
-    _loadingDialog = true;
-    final source = await showModalBottomSheet<PhotoSource?>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.s5),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.photo_library_outlined),
-                  title: Text(AppStrings.helpGallery.tr()),
-                  onTap: () => Navigator.pop(sheetContext, PhotoSource.gallery),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.camera_alt_outlined),
-                  title: Text(AppStrings.helpCamera.tr()),
-                  onTap: () => Navigator.pop(sheetContext, PhotoSource.camera),
-                ),
-                if (_controller.photoPath != null)
-                  ListTile(
-                    leading: const Icon(Icons.delete_outline),
-                    title: Text(AppStrings.helpRemovePhoto.tr()),
-                    onTap: () async {
-                      Navigator.pop(sheetContext);
-                      await _controller.removePhoto();
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    if (_sheetOpen) return;
+    _sheetOpen = true;
+    final PhotoAction? action = await showPhotoSheet(
+      context,
+      hasPhoto: _controller.photoPath != null,
     );
-    _loadingDialog = false;
-    if (source == null || !mounted) return;
-    await _controller.pickPhoto(source);
+    _sheetOpen = false;
+    if (action == null || !mounted) return;
+    if (action == PhotoAction.remove) return _controller.removePhoto();
+    await _controller.pickPhoto(
+      action == PhotoAction.camera ? PhotoSource.camera : PhotoSource.gallery,
+    );
+    // Sem permissão o contato continua podendo ser salvo sem foto (CB-010).
     if (_controller.permissionDenied && mounted) {
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          content: SingleChildScrollView(
-            child: Text(AppStrings.helpPermissionDenied.tr()),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(AppStrings.helpUnderstood.tr()),
-            ),
-          ],
-        ),
-      );
+      await showPhotoPermissionSheet(context);
     }
   }
 }

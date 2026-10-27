@@ -4,7 +4,7 @@ import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dart';
-import 'package:click_seguro_app/modules/help/presentation/pages/help_contact_page.dart';
+import 'package:click_seguro_app/modules/help/presentation/pages/contact_form_page.dart';
 import 'package:click_seguro_app/modules/help/presentation/routes/help_routes.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_top_bar.dart';
 import 'package:flutter/material.dart';
@@ -212,12 +212,9 @@ void main() {
     images.nextResult = const PickImagePermissionDenied();
     await tester.tap(find.text('Escolher foto'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Abrir galeria'));
+    await tester.tap(find.text('Galeria'));
     await tester.pumpAndSettle();
-    expect(
-      find.textContaining('O acesso à câmera ou às fotos foi negado.'),
-      findsOneWidget,
-    );
+    expect(find.text('Sem acesso às fotos'), findsOneWidget);
   });
 
   testWidgets('edição trata falha de carga e contato ausente', (tester) async {

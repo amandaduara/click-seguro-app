@@ -1,8 +1,6 @@
 import 'package:url_launcher/url_launcher.dart';
 import 'package:click_seguro_app/core/utils/phone_number.dart';
 
-export 'package:click_seguro_app/core/utils/phone_number.dart' show normalizePhoneNumber;
-
 const Set<String> _webSchemes = {'http', 'https'};
 const String _phoneScheme = 'tel';
 

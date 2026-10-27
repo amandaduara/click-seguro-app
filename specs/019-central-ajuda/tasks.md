@@ -4,7 +4,7 @@ description: "Tarefas da central de ajuda"
 
 # Tasks: Central de ajuda
 
-**Input**: Documentos de design em `/specs/017-central-ajuda/`
+**Input**: Documentos de design em `/specs/019-central-ajuda/`
 
 **Prerequisites**: `plan.md`, `spec.md`
 
@@ -28,7 +28,7 @@ description: "Tarefas da central de ajuda"
 
 - [x] T009 Remover APIs e traduções sem uso, releitura redundante de cache e wrappers de rota.
 - [x] T010 Manter os artefatos de especificação coerentes com o comportamento entregue.
-- [ ] T011 Definir os contatos oficiais de polícia, bancos e Procon e suas fontes conforme a orientação do TCC (RF-031).
+- [ ] T011 Definir os contatos oficiais de polícia, bancos, Procon e canais anti-golpe e suas fontes conforme a orientação do TCC (RF-031).
 
 ## Dependency Note
 

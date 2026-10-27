@@ -8,7 +8,7 @@
 
 **Input**: Central de ajuda com contatos oficiais e pessoais, discagem, cadastro, edição, exclusão e foto local de contatos de confiança.
 
-**ID documental**: `017` é o próximo número livre (a feature `016` documenta o Assistente); a branch histórica `015-central-ajuda` foi mantida para preservar o PR20.
+**ID documental**: `019` é o próximo número livre (`016` é o Assistente, `017` e `018` são as perguntas e a resposta das atividades); a branch histórica `015-central-ajuda` foi mantida para preservar o PR20.
 
 ## User Scenarios & Testing
 

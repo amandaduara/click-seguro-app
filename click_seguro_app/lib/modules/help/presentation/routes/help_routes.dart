@@ -1,5 +1,5 @@
 import 'package:click_seguro_app/core/routing/navigator_keys.dart';
-import 'package:click_seguro_app/modules/help/presentation/pages/help_contact_page.dart';
+import 'package:click_seguro_app/modules/help/presentation/pages/contact_form_page.dart';
 import 'package:click_seguro_app/modules/help/presentation/pages/help_page.dart';
 import 'package:go_router/go_router.dart';
 

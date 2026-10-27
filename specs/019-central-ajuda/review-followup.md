@@ -1,10 +1,10 @@
 # Revisão B6 — PR20
 
-Branch histórica `015-central-ajuda` preservada para o PR20. A documentação da feature usa `017-central-ajuda`, próximo número livre porque `016` está ocupado pelo Assistente.
+Branch histórica `015-central-ajuda` preservada para o PR20. A documentação da feature usa `019-central-ajuda` (renumerada de `017` em 2026-10-27, que colidia com `017-perguntas-atividades`), próximo número livre porque `016` está ocupado pelo Assistente.
 
 | # | Item revisado | Resultado |
 |---:|---|---|
-| 1 | Especificação, plano e tarefas Spec Kit | Criados em `specs/017-central-ajuda`; alinhados à implementação. |
+| 1 | Especificação, plano e tarefas Spec Kit | Criados em `specs/019-central-ajuda`; alinhados à implementação. |
 | 2 | Lista oficial / RF-031 | Pendente de orientação e fontes. Asset vazio; B6 e T011 continuam abertas. |
 | 3 | Chaves sem uso | Removidas helpSaveFailed, helpDeleteFailed e helpPhotoInitials dos AppStrings e JSONs. |
 | 4 | Avatar e iniciais compartilhados | `PersonAvatar` e função de iniciais compartilhada por Help/Profile; escala do texto preservada. |

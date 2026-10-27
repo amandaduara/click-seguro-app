@@ -2,15 +2,12 @@ import 'package:click_seguro_app/core/utils/phone_number.dart';
 
 enum ContactValidationError { name, phone }
 
-/// Validação pura compartilhável entre o usecase e o futuro formulário.
+/// Validação pura do contato, usada pelo usecase de salvar.
 class ContactValidation {
   const ContactValidation._();
 
   static ContactValidationError? validateName(String name) =>
       name.trim().isEmpty ? ContactValidationError.name : null;
-
-  static ContactValidationError? validatePhone(String phone) =>
-      normalizePhone(phone) == null ? ContactValidationError.phone : null;
 
   /// Retorna telefone sem máscara ou null se a entrada não for aceita.
   static String? normalizePhone(String phone) {

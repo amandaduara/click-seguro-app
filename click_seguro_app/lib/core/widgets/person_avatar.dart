@@ -5,6 +5,8 @@ import 'package:click_seguro_app/core/utils/person_initials.dart';
 import 'package:flutter/material.dart';
 
 /// Foto circular com iniciais de fallback para pessoas do perfil e contatos.
+/// Decorativa para o leitor de tela: o nome sempre aparece em texto ao lado
+/// (ou no rótulo do botão que a envolve).
 class PersonAvatar extends StatelessWidget {
   const PersonAvatar({
     super.key,
@@ -13,7 +15,6 @@ class PersonAvatar extends StatelessWidget {
     this.photoPath,
     this.imageUrl,
     this.size = 96,
-    this.semanticLabel,
   });
 
   final String? name;
@@ -21,11 +22,9 @@ class PersonAvatar extends StatelessWidget {
   final String? photoPath;
   final String? imageUrl;
   final double size;
-  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    final label = semanticLabel ?? name;
     final computedInitials = personInitials(name ?? '');
     final letters =
         initials ?? (computedInitials.isEmpty ? '?' : computedInitials);
@@ -58,9 +57,7 @@ class PersonAvatar extends StatelessWidget {
             errorBuilder: (_, _, _) => fallback,
           )
         : fallback;
-    return Semantics(
-      label: label,
-      image: true,
+    return ExcludeSemantics(
       child: ClipOval(
         child: SizedBox.square(
           dimension: size,
