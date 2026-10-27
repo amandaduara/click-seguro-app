@@ -76,6 +76,14 @@ abstract class AppStrings {
   static const String commonListen = 'common_listen';
   static const String commonStop = 'common_stop';
   static const String commonLoading = 'common_loading';
+  static const String commonPhotoGallery = 'common_photo_gallery';
+  static const String commonPhotoCamera = 'common_photo_camera';
+  static const String commonPhotoRemove = 'common_photo_remove';
+  static const String commonPhotoPermissionTitle =
+      'common_photo_permission_title';
+  static const String commonPhotoPermissionBody =
+      'common_photo_permission_body';
+  static const String commonPhotoPermissionOk = 'common_photo_permission_ok';
   static const String commonEmpty = 'common_empty';
   static const String commonOfflineBanner = 'common_offline_banner';
   static const String commonComingSoon = 'common_coming_soon';
@@ -239,7 +247,29 @@ abstract class AppStrings {
 
   // --- help ---
   static const String helpTitle = 'help_title';
-  static const String helpContactTitle = 'help_contact_title';
+  static const String helpTabOfficial = 'help_tab_official';
+  static const String helpTabPersonal = 'help_tab_personal';
+  static const String helpOfficialUnavailable = 'help_official_unavailable';
+  static const String helpPersonalEmpty = 'help_personal_empty';
+  static const String helpAddContact = 'help_add_contact';
+  static const String helpEditContact = 'help_edit_contact';
+  static const String helpName = 'help_name';
+  static const String helpPhone = 'help_phone';
+  static const String helpRelationship = 'help_relationship';
+  static const String helpPhoto = 'help_photo';
+  static const String helpChoosePhoto = 'help_choose_photo';
+  static const String helpSaveContact = 'help_save_contact';
+  static const String helpDeleteContact = 'help_delete_contact';
+  static const String helpDeleteConfirm = 'help_delete_confirm';
+  static const String helpCancel = 'help_cancel';
+  static const String helpConfirm = 'help_confirm';
+  static const String helpPhoneFallback = 'help_phone_fallback';
+  static const String helpCall = 'help_call';
+  static const String helpCopyNumber = 'help_copy_number';
+  static const String helpCopied = 'help_copied';
+  static const String helpNameRequired = 'help_name_required';
+  static const String helpPhoneInvalid = 'help_phone_invalid';
+  static const String helpContactMissing = 'help_contact_missing';
 
   // --- profile ---
   static const String profileTitle = 'profile_title';
@@ -311,9 +341,6 @@ abstract class AppStrings {
       'profile_edit_discard_confirm';
   static const String profileEditDiscardCancel = 'profile_edit_discard_cancel';
   static const String profilePhotoChange = 'profile_photo_change';
-  static const String profilePhotoGallery = 'profile_photo_gallery';
-  static const String profilePhotoCamera = 'profile_photo_camera';
-  static const String profilePhotoRemove = 'profile_photo_remove';
   static const String profilePhotoRemoveConfirmTitle =
       'profile_photo_remove_confirm_title';
   static const String profilePhotoRemoveConfirm =
@@ -322,11 +349,6 @@ abstract class AppStrings {
   static const String profilePhotoUploading = 'profile_photo_uploading';
   static const String profilePhotoFailed = 'profile_photo_failed';
   static const String profilePhotoInvalid = 'profile_photo_invalid';
-  static const String profilePhotoPermissionTitle =
-      'profile_photo_permission_title';
-  static const String profilePhotoPermissionBody =
-      'profile_photo_permission_body';
-  static const String profilePhotoPermissionOk = 'profile_photo_permission_ok';
 
   // --- settings ---
   static const String settingsTitle = 'settings_title';

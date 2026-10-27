@@ -268,9 +268,9 @@ Módulos: `activities`, `help`, `profile`, `settings`.
     da sessão vai para a conta nova, RN-006 2.3.0) e "Continuar sem conta" (o progresso vale até
     fechar o app).
   - Widget tests dos dois fluxos (cadastrado e visitante).
-- [ ] **B6 Central de ajuda** (RF-031 a RF-034, RN-007, RNF-008, CB-009, CB-010)
-  - Definir a lista de contatos oficiais com a orientação do TCC (ex.: 190, 197, Procon, canais
-    de bancos) em `assets/data/official_contacts.json`.
+- [ ] **B6 Central de ajuda** (RF-031 a RF-034, RN-007, RNF-008, CB-009, CB-010) (specs/019-central-ajuda)
+  - Pendente: RF-031 depende da orientação do TCC para a lista de contatos oficiais (polícia,
+    bancos, Procon e canais anti-golpe) em `assets/data/official_contacts.json`.
   - `ContactEntity` (oficial/pessoal) + models, com teste.
   - `OfficialContactsLocalDataSource` (asset) e `PersonalContactsLocalDataSource`
     (`LocalCacheService` + `ImageStorageService`), com teste.
