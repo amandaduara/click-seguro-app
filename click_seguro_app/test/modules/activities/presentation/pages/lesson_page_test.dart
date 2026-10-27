@@ -40,6 +40,9 @@ void main() {
   late AccessibilityPreferencesNotifier preferences;
   late GoRouter router;
 
+  /// Parâmetros com que a tela de login foi aberta (specs/020 US2).
+  Map<String, String>? loginQuery;
+
   void useModule({
     Set<String> answered = const {},
     List<Map<String, dynamic>>? lessons,
@@ -68,9 +71,17 @@ void main() {
         () => ReadAloudController(tts, preferences: preferences),
       );
     registerActivitiesDependencies(GetIt.instance, repository: repository);
+    loginQuery = null;
     router = GoRouter(
       initialLocation: '/activities/m1',
       routes: [
+        GoRoute(
+          path: '/login',
+          builder: (_, state) {
+            loginQuery = state.uri.queryParameters;
+            return const Scaffold(body: Text('page:/login'));
+          },
+        ),
         GoRoute(
           path: '/activities',
           builder: (_, _) => const Scaffold(body: Text('page:/activities')),
@@ -705,6 +716,90 @@ void main() {
 
       expect(find.text('Próxima pergunta'), findsOneWidget);
       expect(find.text('Ver resultado'), findsNothing);
+    });
+  });
+
+  group('visitante (specs/020 US2)', () {
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    /// Visitante com a 1 e a 2 respondidas, na 3, que acaba de responder e
+    /// toca em "Ver resultado".
+    Future<void> finishAsGuest(WidgetTester tester) async {
+      await session.logout();
+      await session.startGuestSession();
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('aviso antes da conclusão; continuar → conclusão', (
+      tester,
+    ) async {
+      await finishAsGuest(tester);
+
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
+      expect(find.text('Módulo concluído!'), findsNothing);
+
+      await tester.tap(find.text('Continuar sem conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+
+    testWidgets('voltar no aviso → conclusão', (tester) async {
+      await finishAsGuest(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+
+    testWidgets('"Criar conta" abre o login em cadastro, voltando para '
+        'Atividades (achado A1)', (tester) async {
+      await finishAsGuest(tester);
+
+      await tester.tap(find.text('Criar conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/login'), findsOneWidget);
+      expect(loginQuery?['mode'], 'register');
+      expect(loginQuery?['next'], '/activities');
+    });
+
+    testWidgets('voltar do login sem entrar → conclusão como visitante', (
+      tester,
+    ) async {
+      await finishAsGuest(tester);
+      await tester.tap(find.text('Criar conta'));
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+
+    testWidgets('sessão que expira antes de "Ver resultado" → aviso '
+        '(achado C1)', (tester) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+
+      await session.expire();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
     });
   });
 

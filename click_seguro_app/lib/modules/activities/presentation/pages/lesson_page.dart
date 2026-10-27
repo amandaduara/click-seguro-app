@@ -18,10 +18,12 @@ import 'package:click_seguro_app/modules/activities/presentation/extensions/answ
 import 'package:click_seguro_app/modules/activities/presentation/extensions/lesson_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/confirm_answer_footer.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/feedback_sheet.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/guest_progress_alert.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_progress_indicator.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -174,11 +176,22 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     }
   }
 
-  /// Fim do módulo (specs/020): a conclusão; de lá, refazer recarrega o
-  /// módulo e voltar sai das perguntas.
+  /// Fim do módulo (specs/020): sem conta, o aviso antes (RN-006); depois a
+  /// conclusão, de onde refazer recarrega o módulo e voltar sai das
+  /// perguntas.
   Future<void> _finishModule() async {
     final ModuleDetailEntity? module = _controller.module;
     if (module == null) return;
+    if (!GetIt.instance<UserSessionService>().isAuthenticated) {
+      final GuestAlertAction? choice = await showGuestProgressAlert(context);
+      if (!mounted) return;
+      if (choice == GuestAlertAction.createAccount) {
+        // Entrando, o login vai para Atividades e esta tela sai da pilha;
+        // voltando sem entrar, segue para a conclusão como visitante.
+        await context.push<void>('/login?mode=register&next=/activities');
+        if (!mounted) return;
+      }
+    }
     final CompletionAction? action = await context.push<CompletionAction>(
       '/activities/${widget.moduleId}/done',
       extra: ModuleCompletion(title: module.title, score: _controller.score),

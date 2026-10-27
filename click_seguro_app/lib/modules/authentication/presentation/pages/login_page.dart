@@ -21,7 +21,13 @@ import 'package:provider/provider.dart';
 
 /// Login, cadastro e visitante (wireframe: LoginScreen).
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.initialMode = AuthMode.login, this.next});
+
+  /// Modo ao abrir; o aviso das atividades abre em cadastro (specs/020).
+  final AuthMode initialMode;
+
+  /// Para onde ir ao entrar; sem ele, o Início.
+  final String? next;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -44,7 +50,12 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _controller = context.read<AuthenticationController>();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _controller.reset());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _controller.reset();
+      if (widget.initialMode == AuthMode.register) {
+        _controller.setMode(AuthMode.register);
+      }
+    });
     _controller.addListener(_onControllerChanged);
     // Ao sair de um campo, o erro dele (se houver) passa a aparecer.
     for (final (focus, field) in [
@@ -73,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
   void _onControllerChanged() {
     if (!_controller.authenticated || !mounted) return;
     _controller.reset();
-    context.go('/home');
+    context.go(widget.next ?? '/home');
   }
 
   void _submit() {
