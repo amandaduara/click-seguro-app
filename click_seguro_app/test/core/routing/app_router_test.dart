@@ -121,6 +121,16 @@ void main() {
       });
     });
 
+    testWidgets('/activities/m1/done sem dados volta, sem erro (specs/020)', (
+      tester,
+    ) async {
+      await open(tester, '/activities/m1/done');
+
+      expect(find.byType(CompletionPage), findsNothing);
+      expect(find.byType(NotFoundPage), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('subtelas de configurações têm o próprio título', (
       tester,
     ) async {

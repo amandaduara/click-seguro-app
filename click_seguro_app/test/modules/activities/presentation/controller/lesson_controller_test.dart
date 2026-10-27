@@ -471,4 +471,36 @@ void main() {
       expect(notifications, 0);
     });
   });
+
+  group('módulo concluído (specs/020)', () {
+    test('falso antes da carga e sem lições', () async {
+      expect(controller.isModuleCompleted, isFalse);
+
+      controller = build([Right(module(lessons: const []))]);
+      await controller.load('m1');
+      expect(controller.isModuleCompleted, isFalse);
+    });
+
+    test('só com todas respondidas', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l2'})),
+      ]);
+      await controller.load('m1');
+      expect(controller.isModuleCompleted, isFalse);
+
+      controller.select('l3-o1');
+      await controller.confirm();
+
+      expect(controller.isModuleCompleted, isTrue);
+    });
+
+    test('todas respondidas pelo serviço', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l2', 'l3'})),
+      ]);
+      await controller.load('m1');
+
+      expect(controller.isModuleCompleted, isTrue);
+    });
+  });
 }

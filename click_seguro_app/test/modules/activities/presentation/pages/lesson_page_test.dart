@@ -10,6 +10,7 @@ import 'package:click_seguro_app/modules/activities/data/models/answer_result_mo
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
+import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/lesson_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/feedback_sheet.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
@@ -78,6 +79,14 @@ void main() {
               path: ':moduleId',
               builder: (_, state) =>
                   LessonPage(moduleId: state.pathParameters['moduleId']!),
+              routes: [
+                GoRoute(
+                  path: 'done',
+                  builder: (_, state) => CompletionPage(
+                    completion: state.extra as ModuleCompletion?,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -556,19 +565,6 @@ void main() {
         isTrue,
       );
     });
-
-    testWidgets('na última, "Voltar às atividades" volta ao painel', (
-      tester,
-    ) async {
-      useModule(answered: {'l1', 'l2'});
-      await open(tester);
-
-      await answer(tester, 'Ignorar');
-      await tester.tap(find.text('Voltar às atividades'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('page:/activities'), findsOneWidget);
-    });
   });
 
   group('responder de novo (specs/018 US4)', () {
@@ -625,6 +621,91 @@ void main() {
         );
       },
     );
+  });
+
+  group('conclusão (specs/020 US1)', () {
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('com conta: "Ver resultado" → conclusão, sem aviso', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2'});
+      repository.moduleDetailResults = [
+        ...repository.moduleDetailResults,
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(
+              answered: {'l1', 'l2', 'l3'},
+              score: 2,
+              totalScore: 3,
+            ),
+          ).toEntity(),
+        ),
+      ];
+      await open(tester);
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
+
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Guarde seu progresso'), findsNothing);
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+      expect(find.text('Você acertou 2 de 3'), findsOneWidget);
+    });
+
+    Future<void> reachCompletion(WidgetTester tester) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Voltar às atividades" → painel de atividades', (
+      tester,
+    ) async {
+      await reachCompletion(tester);
+
+      await tester.scrollUntilVisible(
+        find.text('Voltar às atividades'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Voltar às atividades'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities'), findsOneWidget);
+    });
+
+    testWidgets('voltar do aparelho na conclusão → painel de atividades', (
+      tester,
+    ) async {
+      await reachCompletion(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities'), findsOneWidget);
+    });
+
+    testWidgets('sem todas respondidas, a 2ª pergunta segue para a próxima', (
+      tester,
+    ) async {
+      useModule(answered: {'l1'});
+      await open(tester);
+
+      await answer(tester, 'Ignorar');
+
+      expect(find.text('Próxima pergunta'), findsOneWidget);
+      expect(find.text('Ver resultado'), findsNothing);
+    });
   });
 
   group('polimento (specs/018 T038)', () {

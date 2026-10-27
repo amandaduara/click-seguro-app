@@ -259,6 +259,26 @@ abstract class AppStrings {
   static const String activitiesFeedbackFinish = 'activities_feedback_finish';
   static const String activitiesOptionCorrect = 'activities_option_correct';
   static const String activitiesOptionWrong = 'activities_option_wrong';
+  static const String activitiesFeedbackResult = 'activities_feedback_result';
+  static const String activitiesCompletionTitle = 'activities_completion_title';
+  static const String activitiesCompletionScore = 'activities_completion_score';
+  static const String activitiesCompletionPerfect =
+      'activities_completion_perfect';
+  static const String activitiesCompletionGood = 'activities_completion_good';
+  static const String activitiesCompletionRetry = 'activities_completion_retry';
+  static const String activitiesCompletionShare = 'activities_completion_share';
+  static const String activitiesCompletionRedo = 'activities_completion_redo';
+  static const String activitiesCompletionShareText =
+      'activities_completion_share_text';
+  static const String activitiesCompletionShareTextNoScore =
+      'activities_completion_share_text_no_score';
+  static const String activitiesGuestAlertTitle =
+      'activities_guest_alert_title';
+  static const String activitiesGuestAlertBody = 'activities_guest_alert_body';
+  static const String activitiesGuestAlertCreate =
+      'activities_guest_alert_create';
+  static const String activitiesGuestAlertContinue =
+      'activities_guest_alert_continue';
 
   // --- help ---
   static const String helpTitle = 'help_title';

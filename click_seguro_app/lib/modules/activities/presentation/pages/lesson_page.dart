@@ -10,8 +10,10 @@ import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
+import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/answer_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/lesson_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/confirm_answer_footer.dart';
@@ -151,6 +153,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       lesson: lesson,
       result: result,
       isLast: _controller.isLastLesson,
+      completed: _controller.isModuleCompleted,
       score: _controller.score,
       listen: _listenButton(spoken),
     );
@@ -164,8 +167,28 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
         _controller.goNext();
       case FeedbackAction.finish:
         context.pop();
+      case FeedbackAction.result:
+        await _finishModule();
       case null:
         unawaited(_readAloud.stop());
+    }
+  }
+
+  /// Fim do módulo (specs/020): a conclusão; de lá, refazer recarrega o
+  /// módulo e voltar sai das perguntas.
+  Future<void> _finishModule() async {
+    final ModuleDetailEntity? module = _controller.module;
+    if (module == null) return;
+    final CompletionAction? action = await context.push<CompletionAction>(
+      '/activities/${widget.moduleId}/done',
+      extra: ModuleCompletion(title: module.title, score: _controller.score),
+    );
+    if (!mounted) return;
+    switch (action) {
+      case CompletionAction.redo:
+        unawaited(_controller.load(widget.moduleId));
+      case CompletionAction.finish || null:
+        context.pop();
     }
   }
 

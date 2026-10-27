@@ -11,7 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// O que a pessoa escolheu no painel; `null` quando fechou pelo voltar.
-enum FeedbackAction { next, finish }
+/// `result` só na última pergunta com o módulo concluído (specs/020 R1).
+enum FeedbackAction { next, finish, result }
 
 /// Painel de feedback (RF-026). Não fecha com toque fora nem arrastando, para
 /// não sumir antes de a pessoa ler a explicação (clarificação Q3 de
@@ -21,6 +22,7 @@ Future<FeedbackAction?> showFeedbackSheet(
   required LessonEntity lesson,
   required AnswerResultEntity result,
   required bool isLast,
+  bool completed = false,
   ModuleScoreEntity? score,
   Widget? listen,
 }) => showModalBottomSheet<FeedbackAction>(
@@ -34,6 +36,7 @@ Future<FeedbackAction?> showFeedbackSheet(
     lesson: lesson,
     result: result,
     isLast: isLast,
+    completed: completed,
     score: score,
     listen: listen,
   ),
@@ -45,6 +48,7 @@ class FeedbackSheet extends StatefulWidget {
     required this.lesson,
     required this.result,
     required this.isLast,
+    this.completed = false,
     this.score,
     this.listen,
   });
@@ -52,6 +56,9 @@ class FeedbackSheet extends StatefulWidget {
   final LessonEntity lesson;
   final AnswerResultEntity result;
   final bool isLast;
+
+  /// Todas as perguntas respondidas: na última, "Ver resultado".
+  final bool completed;
   final ModuleScoreEntity? score;
 
   /// "Ouvir"/"Parar" do feedback (some sem voz no idioma do app).
@@ -81,9 +88,17 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
     final LessonOptionEntity? correct = widget.lesson.correctOption(result);
     final String? explanation = result.explanation;
     final ModuleScoreEntity? score = widget.score;
-    final FeedbackAction action = widget.isLast
-        ? FeedbackAction.finish
-        : FeedbackAction.next;
+    final (FeedbackAction action, String label) = switch (widget) {
+      FeedbackSheet(isLast: false) => (
+        FeedbackAction.next,
+        AppStrings.activitiesFeedbackNext,
+      ),
+      FeedbackSheet(completed: true) => (
+        FeedbackAction.result,
+        AppStrings.activitiesFeedbackResult,
+      ),
+      _ => (FeedbackAction.finish, AppStrings.activitiesFeedbackFinish),
+    };
     return ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.85,
@@ -183,11 +198,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
             ],
             const SizedBox(height: AppSpacing.s5),
             SafeButton(
-              label:
-                  (widget.isLast
-                          ? AppStrings.activitiesFeedbackFinish
-                          : AppStrings.activitiesFeedbackNext)
-                      .tr(),
+              label: label.tr(),
               onPressed: _closing ? null : () => _close(action),
             ),
           ],

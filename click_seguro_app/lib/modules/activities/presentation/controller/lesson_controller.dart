@@ -90,6 +90,13 @@ class LessonController extends ChangeNotifier {
   /// registro sem conta); `null` enquanto não há (FR-011).
   ModuleScoreEntity? get score => _module?.score;
 
+  /// Todas as perguntas válidas respondidas: o fim do módulo (R1 de
+  /// specs/020; RN-005).
+  bool get isModuleCompleted {
+    final List<LessonEntity> lessons = _module?.lessons ?? const [];
+    return lessons.isNotEmpty && lessons.every((lesson) => lesson.isCompleted);
+  }
+
   bool get isLastLesson {
     final int total = _module?.lessons.length ?? 0;
     return total > 0 && _currentIndex == total - 1;
