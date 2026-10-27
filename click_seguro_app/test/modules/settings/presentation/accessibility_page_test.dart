@@ -319,7 +319,9 @@ void main() {
 
       expect(find.text('Leitura em voz alta'), findsOneWidget);
       expect(
-        find.text('Ao abrir uma notícia, o app começa a ler sozinho'),
+        find.text(
+          'Ao abrir uma notícia ou uma pergunta das atividades, o app começa a ler sozinho',
+        ),
         findsOneWidget,
       );
       expect(toggled(tester, autoRead), Tristate.isFalse);

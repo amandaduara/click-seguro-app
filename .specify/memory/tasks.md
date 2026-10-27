@@ -220,7 +220,14 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
 
 Módulos: `activities`, `help`, `profile`, `settings`.
 
-- [ ] **B1 Atividades: painel** (RF-023, CB-012)
+- [x] **B1 Atividades: painel** (RF-023, CB-012) (specs/015-painel-atividades)
+  - Entregue (2026-10-21): cartões em duas colunas com letra 100% e uma coluna com letra maior;
+    aviso do visitante com "Entrar ou criar conta"; uma lição conta como concluída ao ser
+    respondida, certa ou errada (como no servidor, contrato 1.0.10). **RN-006 estendida:** o
+    progresso do visitante continua só em memória, mas, se ele **criar uma conta** sem fechar o
+    app, as respostas são reenviadas à conta nova (`saveSession(newAccount: true)` →
+    `startedFromSignUp`); ao entrar numa conta existente, é descartado. **A B3 deve gravar cada
+    resposta do visitante com `GuestProgressStore.recordAnswer`** (módulo `activities`).
   - Endpoint: `GET /app/educational/modules` (o progresso já vem junto).
   - `ModuleSummaryEntity` (`completedCount`, `progressPercent`) e `ActivitiesDashboardEntity`
     (totais) + models, com teste.
@@ -232,7 +239,13 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `ActivitiesDashboardController` com teste.
   - Extension de status (rótulo, cor, ícone) com teste.
   - `ModuleCardWidget` e `ActivitiesDashboardPage`, com widget test.
-- [ ] **B2 Atividades: navegação pelas perguntas** (RF-024, RF-040, CB-012)
+- [x] **B2 Atividades: navegação pelas perguntas** (RF-024, RF-040, CB-012) (specs/017-perguntas-atividades)
+  - Entregue (2026-10-22): abre na primeira pergunta não respondida; "Anterior" livre e "Próxima"
+    só com a atual respondida (**a B3 precisa marcar a lição como respondida para liberar o
+    avanço**); leitura automática a cada pergunta que aparece; botão "Ouvir" compartilhado em
+    `core/widgets/listen_button.dart` (o detalhe da notícia também usa). `explanation` e o
+    `progress` do módulo (pontuação) **não** entraram nas entidades: a B3/B4 acrescentam quando
+    usarem. Corrigido no `common`: `ReadAloudController.stop()` para o motor antes de avisar.
   - Endpoint: `GET /app/educational/modules/{moduleId}`.
   - `ModuleDetailEntity`, `LessonEntity` (pergunta, imagem, opções, concluída) e
     `ModuleProgressEntity` + models, com teste (lição com < 2 opções descartada).
@@ -251,8 +264,9 @@ Módulos: `activities`, `help`, `profile`, `settings`.
 - [ ] **B4 Atividades: conclusão e aviso de login** (RF-029, RF-030, RN-005, RN-006)
   - `CompletionPage` (pontuação `score/totalScore` da API, ou do `GuestProgressStore` para
     visitante; compartilhar conquista via `ShareService`).
-  - `GuestProgressAlert` antes da conclusão, para visitante, com botões "Criar conta" e "Continuar
-    sem salvar".
+  - `GuestProgressAlert` antes da conclusão, para visitante, com botões "Criar conta" (o progresso
+    da sessão vai para a conta nova, RN-006 2.3.0) e "Continuar sem conta" (o progresso vale até
+    fechar o app).
   - Widget tests dos dois fluxos (cadastrado e visitante).
 - [ ] **B6 Central de ajuda** (RF-031 a RF-034, RN-007, RNF-008, CB-009, CB-010) — aberta por RF-031
   - RF-031 ainda depende da orientação do TCC para a lista obrigatória de contatos oficiais de

@@ -42,6 +42,13 @@ class UserSessionService {
   /// (R6 de specs/012-perfil).
   ValueListenable<int> get profileVersion => _profileVersion;
 
+  bool _startedFromSignUp = false;
+
+  /// A sessão conectada nasceu de um cadastro (não de um login): o
+  /// `activities` transfere o progresso do visitante só nesse caso (R4 de
+  /// specs/015-painel-atividades). Só em memória.
+  bool get startedFromSignUp => _startedFromSignUp;
+
   bool get isAuthenticated =>
       sessionStatus.value == UserSessionStatus.authenticated;
 
@@ -74,18 +81,20 @@ class UserSessionService {
     email = record['email'] as String?;
     userName = record['userName'] as String?;
     endReason = null;
+    _startedFromSignUp = false;
     sessionStatus.value = record['status'] == _statusGuest
         ? UserSessionStatus.guest
         : UserSessionStatus.authenticated;
   }
 
   /// Inicia (ou troca) a sessão conectada. Chamado pelo repository de
-  /// autenticação após login ou cadastro.
+  /// autenticação após login ou cadastro ([newAccount]).
   Future<void> saveSession({
     required String accessToken,
     required String refreshToken,
     required String email,
     String? userName,
+    bool newAccount = false,
   }) async {
     for (final (name, value) in [
       ('accessToken', accessToken),
@@ -100,6 +109,8 @@ class UserSessionService {
     this.email = email;
     this.userName = userName;
     endReason = null;
+    // Antes da notificação: quem ouve já lê o valor certo.
+    _startedFromSignUp = newAccount;
     sessionStatus.value = UserSessionStatus.authenticated;
 
     await _persistAuthenticated();
@@ -176,6 +187,7 @@ class UserSessionService {
   }
 
   void _clearIdentity() {
+    _startedFromSignUp = false;
     accessToken = null;
     refreshToken = null;
     email = null;

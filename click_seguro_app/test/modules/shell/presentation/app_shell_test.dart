@@ -13,6 +13,7 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../fakes/fake_secure_storage_service.dart';
+import '../../../helpers/activities_dependencies.dart';
 import '../../../helpers/localized_app.dart';
 import '../../../helpers/news_detail_dependencies.dart';
 import '../../../helpers/feed_provider.dart';
@@ -30,6 +31,7 @@ void main() {
     GetIt.instance.registerSingleton<UserSessionService>(session);
     registerHelpDependencies(GetIt.instance);
     registerNewsDetailDependencies(GetIt.instance);
+    registerActivitiesDependencies(GetIt.instance);
     await session.startGuestSession();
     router = buildAppRouter(session);
   });
@@ -88,7 +90,7 @@ void main() {
     await openHome(tester);
 
     await tapTab(tester, 'Atividades');
-    expect(find.byType(ActivitiesPage), findsOneWidget);
+    expect(find.byType(ActivitiesDashboardPage), findsOneWidget);
     expect(
       tester.getSemantics(navItem('Atividades')),
       isSemantics(isSelected: true),
