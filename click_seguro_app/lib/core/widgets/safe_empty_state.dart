@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -27,34 +28,50 @@ class SafeEmptyState extends StatelessWidget {
     final String? label = actionLabel;
     final VoidCallback? action = onAction;
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 40, color: context.colors.textMutedForeground),
-            const SizedBox(height: AppSpacing.s3),
-            Text(
-              message ?? AppStrings.commonEmpty.tr(),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontSize: 16,
-                color: context.colors.textMutedForeground,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final double artSize = constraints.hasBoundedHeight
+              ? (constraints.maxHeight * .3).clamp(64, 112)
+              : 112;
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.s6),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SafeStateIllustration(
+                    isError: false,
+                    icon: icon,
+                    size: artSize,
+                  ),
+                  const SizedBox(height: AppSpacing.s3),
+                  Text(
+                    message ?? AppStrings.commonEmpty.tr(),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontSize: 16,
+                      color: context.colors.textMutedForeground,
+                    ),
+                  ),
+                  if (label != null && action != null) ...[
+                    const SizedBox(height: AppSpacing.s5),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 48,
+                      ),
+                      child: SafeButton(
+                        label: label,
+                        size: SafeButtonSize.compact,
+                        onPressed: action,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            if (label != null && action != null) ...[
-              const SizedBox(height: AppSpacing.s5),
-              ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                child: SafeButton(
-                  label: label,
-                  size: SafeButtonSize.compact,
-                  onPressed: action,
-                ),
-              ),
-            ],
-          ],
-        ),
+          );
+        },
       ),
     );
   }

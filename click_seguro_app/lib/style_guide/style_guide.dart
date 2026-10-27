@@ -32,7 +32,7 @@ class StyleGuideApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'SafeNews Style Guide',
+      title: 'Click Seguro Style Guide',
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
@@ -166,7 +166,7 @@ class _StyleguideWebScreenState extends State<StyleguideWebScreen> {
                 Row(
                   children: [
                     const Text(
-                      'SafeNews',
+                      'Click Seguro',
                       style: TextStyle(
                         color: DSColors.primary,
                         fontSize: 24,
@@ -272,7 +272,7 @@ class _StyleguideWebScreenState extends State<StyleguideWebScreen> {
                 ),
                 const Divider(color: Colors.white12),
                 const Text(
-                  'SafeNews Design System\nSistema de Design Modular',
+                  'Click Seguro Design System\nSistema de Design Modular',
                   style: TextStyle(color: Colors.white30, fontSize: 11),
                 ),
               ],
@@ -358,7 +358,7 @@ class _StyleguideWebScreenState extends State<StyleguideWebScreen> {
     return _buildComponentDocumentation(
       componentName: 'DSColors',
       description:
-          'A paleta de cores centraliza a identidade do SafeNews, assegurando conformidade estética em todos os fluxos.',
+          'A paleta de cores centraliza a identidade do Click Seguro, assegurando conformidade estética em todos os fluxos.',
       previewWidget: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [

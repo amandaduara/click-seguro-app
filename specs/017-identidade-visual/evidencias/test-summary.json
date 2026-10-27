@@ -1,0 +1,675 @@
+{
+  "date": "2026-10-27",
+  "method": "flutter_tester, assertions enabled, separate process per file; changed files rerun after updates",
+  "sdk": "Flutter 3.47.6 / Dart 3.13.5",
+  "files": 133,
+  "passed": 1397,
+  "failed": 0,
+  "results": [
+    {
+      "file": "test/accessibility_app_test.dart",
+      "passed": 5,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/core/routing/app_router_test.dart",
+      "passed": 28,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/core/theme/app_palette_test.dart",
+      "passed": 12,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/core/widgets/app_logo_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/core/widgets/coming_soon_view_test.dart",
+      "passed": 1,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/core/widgets/locale_rebuilder_test.dart",
+      "passed": 1,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/core/widgets/safe_badge_test.dart",
+      "passed": 2,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/core/widgets/safe_button_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/core/widgets/safe_states_test.dart",
+      "passed": 10,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/core/widgets/slow_request_notice_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/assistant/assistant_module_test.dart",
+      "passed": 1,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/assistant/data/datasources/assistant_remote_data_source_impl_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/assistant/data/repositories/assistant_repository_impl_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/assistant/domain/assistant_usecases_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/assistant/presentation/controller/assistant_controller_test.dart",
+      "passed": 13,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/assistant/presentation/pages/assistant_page_test.dart",
+      "passed": 9,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/data/datasources/auth_remote_data_source_impl_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/data/models/auth_tokens_model_test.dart",
+      "passed": 2,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/data/models/user_model_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/data/repositories/auth_repository_impl_test.dart",
+      "passed": 16,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/domain/usecases/enter_as_guest_usecase_test.dart",
+      "passed": 1,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/domain/usecases/evaluate_password_usecase_test.dart",
+      "passed": 2,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/domain/usecases/login_usecase_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/domain/usecases/password_reset_usecases_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/domain/usecases/register_usecase_test.dart",
+      "passed": 2,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/domain/usecases/validate_auth_form_usecase_test.dart",
+      "passed": 2,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/domain/validators/credentials_validator_test.dart",
+      "passed": 19,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/presentation/controller/authentication_controller_test.dart",
+      "passed": 18,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/presentation/controller/forgot_password_controller_test.dart",
+      "passed": 7,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/presentation/extensions/auth_presentation_extension_test.dart",
+      "passed": 2,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/presentation/i18n_keys_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/presentation/pages/accessibility_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/presentation/pages/forgot_password_page_test.dart",
+      "passed": 5,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/presentation/pages/login_page_test.dart",
+      "passed": 14,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/authentication/presentation/widgets/auth_header_test.dart",
+      "passed": 2,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/accessibility/accessibility_preferences_test.dart",
+      "passed": 7,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/api_client/api_client_test.dart",
+      "passed": 39,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/api_client/api_failure_mapper_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/api_client/redacting_log_interceptor_test.dart",
+      "passed": 9,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/common_module_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/config/environment_config_test.dart",
+      "passed": 1,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/presentation/controller/read_aloud_controller_test.dart",
+      "passed": 18,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/services/app_info_service_test.dart",
+      "passed": 2,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/services/external_launcher_service_test.dart",
+      "passed": 12,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/services/image_storage_service_test.dart",
+      "passed": 10,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/services/local_cache_service_test.dart",
+      "passed": 4,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/services/secure_storage_service_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/services/session_validation_service_test.dart",
+      "passed": 9,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/services/share_service_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/services/text_to_speech_service_test.dart",
+      "passed": 18,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/services/user_session_service_test.dart",
+      "passed": 39,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/common/validators/password_policy_test.dart",
+      "passed": 11,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/data/datasources/news_local_data_source_impl_test.dart",
+      "passed": 15,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/data/datasources/news_remote_data_source_impl_test.dart",
+      "passed": 21,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/data/models/news_detail_model_test.dart",
+      "passed": 12,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/data/models/news_models_test.dart",
+      "passed": 10,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/data/models/reel_models_test.dart",
+      "passed": 8,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/data/repositories/news_repository_impl_test.dart",
+      "passed": 42,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/domain/news_domain_test.dart",
+      "passed": 21,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/news_module_test.dart",
+      "passed": 4,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/controller/feed_controller_test.dart",
+      "passed": 29,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/controller/news_detail_controller_test.dart",
+      "passed": 29,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/controller/reels_controller_test.dart",
+      "passed": 28,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/controller/user_news_list_controller_test.dart",
+      "passed": 17,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/extensions/news_detail_presentation_extension_test.dart",
+      "passed": 12,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/extensions/news_presentation_extension_test.dart",
+      "passed": 12,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/extensions/reel_presentation_extension_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/pages/news_detail_page_test.dart",
+      "passed": 50,
+      "round": "follow-up"
+    },
+    {
+      "file": "test/modules/news/presentation/pages/news_home_page_test.dart",
+      "passed": 22,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/pages/reels_page_test.dart",
+      "passed": 20,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/pages/user_news_list_page_test.dart",
+      "passed": 22,
+      "round": "follow-up"
+    },
+    {
+      "file": "test/modules/news/presentation/routes/news_routes_test.dart",
+      "passed": 4,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/widgets/category_filter_bar_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/widgets/feed_search_field_test.dart",
+      "passed": 2,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/widgets/news_card_test.dart",
+      "passed": 8,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/news/presentation/widgets/related_activity_card_test.dart",
+      "passed": 5,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/data/datasources/alerts_local_data_source_impl_test.dart",
+      "passed": 13,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/data/datasources/alerts_remote_data_source_impl_test.dart",
+      "passed": 15,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/data/models/alert_model_test.dart",
+      "passed": 17,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/data/repositories/notifications_repository_impl_test.dart",
+      "passed": 15,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/domain/check_new_alerts_usecase_test.dart",
+      "passed": 16,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/domain/notifications_domain_test.dart",
+      "passed": 19,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/notifications_module_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/presentation/controller/alerts_lifecycle_trigger_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/presentation/controller/notifications_controller_test.dart",
+      "passed": 29,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/presentation/extensions/alert_presentation_extension_test.dart",
+      "passed": 7,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/presentation/extensions/alerts_grouping_test.dart",
+      "passed": 8,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/presentation/pages/notifications_page_test.dart",
+      "passed": 34,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/notifications/presentation/widgets/notification_bell_button_test.dart",
+      "passed": 8,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/onboarding/presentation/controller/onboarding_controller_test.dart",
+      "passed": 7,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/onboarding/presentation/i18n_keys_test.dart",
+      "passed": 4,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/onboarding/presentation/pages/onboarding_page_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/data/datasources/profile_remote_data_source_impl_test.dart",
+      "passed": 11,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/data/models/profile_models_test.dart",
+      "passed": 12,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/data/repositories/profile_repository_impl_test.dart",
+      "passed": 13,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/domain/achievements_calculator_test.dart",
+      "passed": 12,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/domain/usecases/avatar_usecases_test.dart",
+      "passed": 7,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/domain/usecases/update_profile_usecase_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/domain/validators/profile_form_validator_test.dart",
+      "passed": 18,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/presentation/controller/edit_profile_controller_test.dart",
+      "passed": 17,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/presentation/controller/profile_controller_test.dart",
+      "passed": 13,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/presentation/extensions/achievement_presentation_extension_test.dart",
+      "passed": 8,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/presentation/pages/achievements_page_test.dart",
+      "passed": 5,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/presentation/pages/profile_edit_page_test.dart",
+      "passed": 22,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/profile/presentation/pages/profile_page_test.dart",
+      "passed": 13,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/data/accessibility_preferences_model_test.dart",
+      "passed": 5,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/data/accessibility_repository_impl_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/data/account_remote_data_source_impl_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/data/account_repository_impl_test.dart",
+      "passed": 9,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/data/language_repository_impl_test.dart",
+      "passed": 7,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/domain/accessibility_usecases_test.dart",
+      "passed": 2,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/domain/change_password_usecase_test.dart",
+      "passed": 4,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/domain/settings_usecases_test.dart",
+      "passed": 5,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/presentation/accessibility_controller_test.dart",
+      "passed": 7,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/presentation/accessibility_page_test.dart",
+      "passed": 16,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/presentation/change_password_controller_test.dart",
+      "passed": 14,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/presentation/change_password_page_test.dart",
+      "passed": 12,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/presentation/extensions/accessibility_presentation_test.dart",
+      "passed": 4,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/presentation/privacy_and_about_pages_test.dart",
+      "passed": 4,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/presentation/settings_controller_test.dart",
+      "passed": 12,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/presentation/settings_page_test.dart",
+      "passed": 19,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/presentation/widgets/settings_option_tile_test.dart",
+      "passed": 4,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/presentation/widgets/settings_switch_tile_test.dart",
+      "passed": 4,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/settings/settings_module_test.dart",
+      "passed": 3,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/shell/i18n_keys_test.dart",
+      "passed": 6,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/shell/presentation/app_shell_test.dart",
+      "passed": 8,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/shell/presentation/app_top_bar_test.dart",
+      "passed": 21,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/shell/presentation/require_account_test.dart",
+      "passed": 8,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/shell/presentation/session_expired_listener_test.dart",
+      "passed": 5,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/splash/domain/usecases/validate_stored_session_usecase_test.dart",
+      "passed": 7,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/splash/presentation/controller/splash_controller_test.dart",
+      "passed": 11,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/modules/splash/presentation/pages/splash_page_test.dart",
+      "passed": 5,
+      "round": "full-suite"
+    },
+    {
+      "file": "test/widget_test.dart",
+      "passed": 1,
+      "round": "follow-up"
+    }
+  ]
+}

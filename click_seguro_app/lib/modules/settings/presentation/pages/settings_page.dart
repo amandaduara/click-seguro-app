@@ -220,7 +220,7 @@ class _ReadingSection extends StatelessWidget {
   }
 }
 
-/// "Sobre": Privacidade e Sobre o SafeNews com a versão, com ou sem conta.
+/// "Sobre": Privacidade e Sobre o Click Seguro com a versão, com ou sem conta.
 class _AboutSection extends StatelessWidget {
   const _AboutSection({required this.version});
 

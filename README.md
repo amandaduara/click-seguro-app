@@ -2,6 +2,16 @@
 
 > Código-fonte do aplicativo mobile desenvolvido como projeto de Conclusão de Curso (TCC) para o curso de Análise e Desenvolvimento de Sistemas na FATEC.
 
+Identidade visual oficial: **Click Seguro**. A prioridade máxima registrada em
+27/10/2026 é aplicar a logo oficial, unificar o nome e ilustrar estados de erro e
+vazio. Implementação e validação em [specs/017-identidade-visual/tasks.md](specs/017-identidade-visual/tasks.md).
+
+A fonte da logo fica em `click_seguro_app/assets/branding/click_seguro_logo.svg`.
+Para gerar novamente PNGs, ícones e imagens de abertura, execute
+`python3 click_seguro_app/tools/generate_brand_assets.py` (Python, Pillow,
+libcairo e librsvg). O desenho e a cor do SVG são preservados; o app usa a
+exportação PNG, sem adicionar dependência para renderização de SVG.
+
 ---
 
 ## 🛠️ Stack Tecnológica & Pacotes Principais

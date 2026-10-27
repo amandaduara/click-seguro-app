@@ -1,11 +1,11 @@
 {
-    "name": "click_seguro_app",
-    "short_name": "click_seguro_app",
+    "name": "Click Seguro",
+    "short_name": "Click Seguro",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFDFB",
+    "theme_color": "#C0503E",
+    "description": "Notícias e atividades para reconhecer golpes digitais.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

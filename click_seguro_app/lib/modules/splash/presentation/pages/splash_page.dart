@@ -1,12 +1,12 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/app_logo.dart';
 import 'package:click_seguro_app/modules/splash/presentation/controller/splash_controller.dart';
 import 'package:click_seguro_app/modules/splash/presentation/controller/splash_destination.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 class SplashPage extends StatefulWidget {
@@ -36,33 +36,34 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.colors.primary,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              LucideIcons.shield,
-              color: context.colors.textPrimaryForeground,
-              size: 64,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppStrings.appTitle.tr(),
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                color: context.colors.textPrimaryForeground,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s2),
-            Text(
-              AppStrings.splashTagline.tr(),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: context.colors.textPrimaryForeground.withValues(
-                  alpha: 0.8,
+      backgroundColor: context.colors.background,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.s6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppLogo(size: 112),
+                const SizedBox(height: 16),
+                Text(
+                  AppStrings.appTitle.tr(),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: context.colors.secondary,
+                  ),
                 ),
-              ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  AppStrings.splashTagline.tr(),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.colors.textMutedForeground,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

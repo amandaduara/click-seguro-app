@@ -128,7 +128,7 @@ void main() {
       ('Alterar senha', '/settings/security'),
       ('Acessibilidade', '/settings/accessibility'),
       ('Privacidade', '/settings/privacy'),
-      ('Sobre o SafeNews', '/settings/about'),
+      ('Sobre o Click Seguro', '/settings/about'),
     ]) {
       await tapAndSettle(tester, find.text(label));
       expectPage(path);
@@ -136,7 +136,7 @@ void main() {
     }
   });
 
-  testWidgets('"Sobre o SafeNews" mostra a versão', (tester) async {
+  testWidgets('"Sobre o Click Seguro" mostra a versão', (tester) async {
     await open(tester);
     await tester.scrollUntilVisible(
       find.text('Versão 1.0.0'),
@@ -224,7 +224,7 @@ void main() {
         'Idioma',
         'Sobre',
         'Privacidade',
-        'Sobre o SafeNews',
+        'Sobre o Click Seguro',
         'Versão 1.0.0',
       ]) {
         expect(find.text(text), findsOneWidget, reason: text);
@@ -251,7 +251,7 @@ void main() {
       for (final (row, path) in [
         ('Acessibilidade', '/settings/accessibility'),
         ('Privacidade', '/settings/privacy'),
-        ('Sobre o SafeNews', '/settings/about'),
+        ('Sobre o Click Seguro', '/settings/about'),
       ]) {
         await tapAndSettle(tester, find.text(row));
         expectPage(path);
@@ -284,7 +284,7 @@ void main() {
 
       await open(tester);
       await tester.scrollUntilVisible(
-        find.text('Sobre o SafeNews'),
+        find.text('Sobre o Click Seguro'),
         300,
         scrollable: find.byType(Scrollable).first,
       );

@@ -36,7 +36,7 @@ void main() {
   test('textos pt-BR iguais ao wireframe', () {
     final json = load('pt-BR');
 
-    expect(json, containsPair('app_title', 'SafeNews'));
+    expect(json, containsPair('app_title', 'Click Seguro'));
     expect(
       json,
       containsPair('splash_tagline', 'Sua segurança em primeiro lugar'),

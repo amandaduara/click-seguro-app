@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
@@ -203,6 +204,27 @@ void main() {
       expect(find.text('Notícia não encontrada'), findsOneWidget);
       expect(find.text('Tentar novamente'), findsNothing);
       expect(find.byType(BackButton), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is SafeStateIllustration && widget.isError,
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('não encontrada: fonte 2× pode rolar em tela baixa', (
+      tester,
+    ) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      repository.detailResults.add(const Left(NewsNotFoundFailure()));
+      await pumpPage(tester, size: const Size(360, 240));
+
+      expect(find.text('Notícia não encontrada'), findsOneWidget);
+      expect(find.text('Tentar novamente'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.text('Notícia não encontrada'));
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('detalhe completo: imagem, categorias, título, fonte, data, '

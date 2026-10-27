@@ -14,6 +14,7 @@ import 'package:click_seguro_app/modules/profile/domain/repositories/profile_rep
 import 'package:click_seguro_app/modules/profile/profile.dart';
 import 'package:click_seguro_app/modules/settings/domain/repositories/account_repository.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_bottom_nav.dart';
+import 'package:click_seguro_app/modules/splash/splash.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -88,10 +89,16 @@ void main() {
         ),
       ),
     );
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 50)),
-    );
-    await tester.pump();
+    // Aguarda a tradução montar o splash antes de avançar seu tempo mínimo.
+    // Um atraso real fixo pode terminar antes da leitura dos assets.
+    for (var i = 0; i < 50 && find.byType(SplashPage).evaluate().isEmpty; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+    }
+    expect(find.byType(SplashPage), findsOneWidget);
+    expect(find.text('Click Seguro'), findsOneWidget);
 
     // Splash: tempo mínimo no relógio falso.
     await tester.pump(const Duration(seconds: 2));

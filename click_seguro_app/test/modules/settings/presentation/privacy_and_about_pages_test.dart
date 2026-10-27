@@ -55,11 +55,11 @@ void main() {
     testWidgets('nome, objetivo, versão e crédito genérico', (tester) async {
       await pumpLocalized(tester, child: const AboutPage());
 
-      expect(find.text('Sobre o SafeNews'), findsOneWidget);
-      expect(find.text('SafeNews'), findsOneWidget);
+      expect(find.text('Sobre o Click Seguro'), findsOneWidget);
+      expect(find.text('Click Seguro'), findsOneWidget);
       expect(
         find.text(
-          'O SafeNews ajuda você a reconhecer golpes digitais com notícias e '
+          'O Click Seguro ajuda você a reconhecer golpes digitais com notícias e '
           'atividades.',
         ),
         findsOneWidget,

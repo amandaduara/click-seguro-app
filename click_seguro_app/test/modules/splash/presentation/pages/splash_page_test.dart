@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:click_seguro_app/core/widgets/app_logo.dart';
 
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/splash/presentation/controller/splash_controller.dart';
@@ -50,7 +51,8 @@ void main() {
 
     await pumpLocalized(tester, router: buildRouter());
 
-    expect(find.text('SafeNews'), findsOneWidget);
+    expect(find.text('Click Seguro'), findsOneWidget);
+    expect(find.byType(AppLogo), findsOneWidget);
     expect(find.text('Sua segurança em primeiro lugar'), findsOneWidget);
 
     validateSession.completer!.complete(UserSessionStatus.authenticated);
@@ -66,6 +68,23 @@ void main() {
 
     expect(find.text('tela home'), findsOneWidget);
     expect(router.canPop(), isFalse);
+  });
+
+  testWidgets('marca oficial cabe em tela curta com fonte em 200%', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    validateSession.completer = Completer<UserSessionStatus>();
+    await pumpLocalized(tester, router: buildRouter());
+    expect(find.byType(AppLogo), findsOneWidget);
+    expect(find.text('Click Seguro'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    validateSession.completer!.complete(UserSessionStatus.authenticated);
+    await tester.pumpAndSettle();
   });
 
   testWidgets('visto + sem sessão abre o login', (tester) async {

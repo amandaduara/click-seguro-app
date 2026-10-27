@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -55,6 +56,12 @@ void main() {
       );
 
       expect(find.text('Falhou'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is SafeStateIllustration && widget.isError,
+        ),
+        findsOneWidget,
+      );
       expect(fontSizeOf(tester, 'Falhou'), greaterThanOrEqualTo(16));
 
       await tester.tap(find.text('Tentar novamente'));
@@ -82,6 +89,12 @@ void main() {
       await pump(tester, const SafeEmptyState());
 
       expect(find.text('Nada por aqui ainda.'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) => widget is SafeStateIllustration && !widget.isError,
+        ),
+        findsOneWidget,
+      );
       expect(
         fontSizeOf(tester, 'Nada por aqui ainda.'),
         greaterThanOrEqualTo(16),
@@ -154,5 +167,40 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('estados continuam utilizáveis em viewport curto e estreito', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(240, 180);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    var retries = 0;
+    await pump(
+      tester,
+      SafeErrorState(message: 'Falhou ao carregar', onRetry: () => retries++),
+    );
+
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.text('Tentar novamente'));
+    await tester.tap(find.text('Tentar novamente'));
+    expect(retries, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('ilustrações são decorativas para acessibilidade', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await pump(tester, SafeErrorState(message: 'Falhou', onRetry: () {}));
+
+    expect(find.bySemanticsLabel('Falhou'), findsOneWidget);
+    expect(find.bySemanticsLabel('Tentar novamente'), findsOneWidget);
+    expect(find.bySemanticsLabel('circleAlert'), findsNothing);
+    semantics.dispose();
   });
 }
