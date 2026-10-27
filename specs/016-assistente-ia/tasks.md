@@ -31,7 +31,7 @@
 
 Rastreabilidade dos 19 itens em [review-followup.md](review-followup.md).
 
-- [x] Registrar decisão de inclusão de IA, com responsável/data, e então atualizar escopo/RFs globais (aprovação do usuário solicitante em 2026-10-22; RF-043 a RF-045, B10).
+- [x] Registrar decisão de inclusão de IA, com responsável/data, e então atualizar escopo/RFs globais (aprovação de Amanda Duara em 2026-10-22; RF-043 a RF-045, B10).
 - [x] Validar todos os ajustes técnicos, regressões e análise estática na rodada integrada.
 - [x] Revalidar cabeçalho em tela de celular e convite padrão no emulador.
 - [ ] Homologar as operações reais de IA autenticadas; endpoints continuam 🧪.

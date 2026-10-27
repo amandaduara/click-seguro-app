@@ -83,7 +83,6 @@ AiAnalysisEntity analysisEntity({
   confidence: confidence,
   explanation: 'O endereço não corresponde ao serviço informado.',
   tips: const ['Não abra o link', 'Confirme por um canal oficial'],
-  source: 'WHATSAPP',
   status: status,
   createdAt: DateTime.utc(2026, 10, 20),
 );

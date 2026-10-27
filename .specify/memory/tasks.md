@@ -7,7 +7,7 @@
 **Criado em**: 2026-09-07
 
 **Insumos**: [constitution.md](constitution.md) v1.2.0 · [specification.md](specification.md)
-v2.3.0 · [plan.md](plan.md) v2.2.0 · [api-contract.md](api-contract.md) v1.1.1 ·
+v2.4.0 · [plan.md](plan.md) v2.2.0 · [api-contract.md](api-contract.md) v1.1.1 ·
 [openapi.json](openapi.json) · wireframe em `wireframe/` (React, referência visual) ·
 [guia de integração](../../click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md) · divisão em trilhas
 do wireframe do Lovable
@@ -336,15 +336,13 @@ Módulos: `activities`, `help`, `profile`, `settings`.
     Configurações dele mostram só Leitura e aparência (Acessibilidade, Idioma) e Sobre, sem
     convite e sem pedido ao serviço. Ler sozinho nas perguntas fica para a B2, que deve ler
     `autoReadAloud` como a notícia já faz e citar as atividades no subtítulo da chave.
+- [ ] **B10 Assistente de IA** (RF-043 a RF-045) (specs/016-assistente-ia)
+  - Escopo aprovado em 2026-10-22 por Amanda Duara (dupla do TCC), incluindo registro,
+    rota e acesso pelo cabeçalho compartilhado; substitui o adiamento de 2026-10-03.
+  - Implementado (chat, análise de texto/imagem e histórico, com testes).
+  - Pendente: homologação autenticada dos endpoints e do seletor/permissões de imagem reais.
 
 ---
-
-- [ ] **B10 Assistente de IA** (RF-043 a RF-045) (specs/016-assistente-ia)
-  - Escopo aprovado em 2026-10-22 pelo usuário solicitante nesta sessão, incluindo registro,
-    rota e acesso pelo cabeçalho compartilhado; substitui o adiamento de 2026-10-03.
-  - Implementação e ajustes técnicos validados: 107 testes direcionados e regressões;
-    análise sem erros/warnings, cabeçalho e convite padrão conferidos no Pixel_4.
-  - Homologação autenticada dos endpoints e seletor/permissões de imagem reais ainda pendentes.
 
 ## Fase C — Integração (as duas pessoas)
 
@@ -388,8 +386,8 @@ Dependências entre trilhas (as únicas):
 
 ## Notas
 
-- **Decisão de escopo de 2026-10-22 — PR #21:** usuário solicitante nesta sessão aprovou
-  explicitamente IA na v1 ("pode aprovar"). Incluída B10, RF-043 a RF-045 e registro no plano;
+- **Decisão de escopo de 2026-10-22 — PR #21:** Amanda Duara (dupla do TCC) aprovou
+  IA na v1. Incluída B10, RF-043 a RF-045 e registro no plano;
   revogado o adiamento de IA de 2026-10-03. Endpoints seguem 🧪 até homologação real.
 - **Fora da v1 (decisão 2026-10-03, atualizada em 2026-10-22):** contatos oficiais pela
   API, desativar conta e os quatro tipos de exercício que a API não tem. Ver §8 da

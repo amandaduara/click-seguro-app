@@ -22,7 +22,6 @@ class AiAnalysisEntity {
     required this.confidence,
     required this.explanation,
     required this.tips,
-    required this.source,
     required this.status,
     required this.createdAt,
   });
@@ -34,7 +33,6 @@ class AiAnalysisEntity {
   final double? confidence;
   final String? explanation;
   final List<String> tips;
-  final String? source;
   final AiAnalysisStatus status;
   final DateTime createdAt;
 }

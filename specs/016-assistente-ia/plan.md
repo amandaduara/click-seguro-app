@@ -8,7 +8,7 @@
 
 ## Riscos e decisões
 
-- Em 2026-10-22, o usuário solicitante nesta sessão aprovou explicitamente IA na v1,
+- Em 2026-10-22, Amanda Duara (dupla do TCC) aprovou explicitamente IA na v1,
   incluindo as mudanças em `main.dart` (registro), `app_router.dart` (composição de rota)
   e `AppTopBar` (ação protegida por `requireAccount`). Referências: RF-043 a RF-045 e B10.
 - O cabeçalho mantém ações na mesma linha com fonte padrão em telas de celular. A separação
