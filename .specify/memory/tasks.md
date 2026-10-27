@@ -253,7 +253,16 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `LessonController` (pergunta atual, avançar/voltar, concluídas) com teste.
   - `LessonPage` (enunciado, imagem, alternativas, ouvir enunciado + alternativas e leitura
     automática), com widget test.
-- [ ] **B3 Atividades: resposta e feedback** (RF-025 a RF-028, RN-005)
+- [x] **B3 Atividades: resposta e feedback** (RF-025 a RF-028, RN-005) (specs/018-resposta-feedback-atividades)
+  - Entregue (2026-10-27): escolher e confirmar no rodapé; painel de feedback que só fecha pelo
+    botão ou pelo voltar do aparelho (acerto/erro, correta, explicação, pontuação "X de Y
+    acertos"); responder de novo é livre (vale a mais recente); leitura automática do feedback.
+    **Sem `QuizController` nem `MultipleChoiceWidget`:** a resposta entrou no `LessonController`
+    e no `LessonOptionCard` da B2 (R1/R8). Cada `GET` do módulo reembaralha as alternativas, então
+    depois de responder só a pontuação é relida. **Para a B4:** `ModuleDetailEntity.score` já
+    existe (com conta, do serviço; sem conta, do `GuestProgressStore`, que agora guarda
+    `isCorrect`); a última pergunta leva a "Voltar às atividades", destino que a B4 troca pela
+    conclusão e pelo aviso de login; `progress.isCompleted` continua fora.
   - Endpoint: `POST /app/educational/modules/{moduleId}/lessons/{lessonId}/answer`.
   - `AnswerResultEntity` `{isCorrect, correctOptionId, explanation}` + model, com teste.
   - `AnswerLessonUseCase` (cadastrado: depois recarrega o `progress`; visitante: registra no

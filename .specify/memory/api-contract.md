@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.1.1 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-22
+**Versão**: 1.1.2 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-27
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -229,7 +229,10 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
   lição teórica separada nem outros tipos de exercício.
 - A **correção é do servidor**: o app não recebe `isCorrect` das opções, envia a escolha e
   recebe o resultado com a explicação.
-- As opções **já vêm embaralhadas** a cada request (RF-027 atendido pela API).
+- As opções **já vêm embaralhadas** a cada request (RF-027 atendido pela API). Conferido em
+  2026-10-22 (specs/018 R0): dois `GET` seguidos do mesmo módulo trazem as alternativas em outra
+  ordem; por isso, depois de responder, o app só lê a pontuação do detalhe e não troca as lições
+  da tela.
 - A **pontuação é do servidor**: `progress.score`/`totalScore`, considerando a resposta **mais
   recente** de cada lição (não a melhor).
 - Sem token, `answer` corrige mas **não salva**. O progresso do visitante fica em memória
@@ -279,6 +282,10 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
+- **1.1.2 (2026-10-27)**: resposta das atividades conferida no servidor real
+  (specs/018-resposta-feedback-atividades R0): `answer` → `{isCorrect, correctOptionId,
+  explanation}`; alternativa de outra lição → 400 `EDUCATIONAL_INVALID_OPTION`; lição que não
+  existe → 404 `EDUCATIONAL_LESSON_NOT_FOUND`; cada `GET` do módulo reembaralha as alternativas.
 - **1.1.1 (2026-10-22)**: Amanda Duara (dupla do TCC) aprova inclusão do Assistente na v1
   (RF-043 a RF-045, B10). Revogado o adiamento de IA de 2026-10-03; endpoints continuam 🧪.
 - **1.1.0 (2026-10-20, proposta da PR #21)**: integração de IA no cliente a partir do Swagger local,
