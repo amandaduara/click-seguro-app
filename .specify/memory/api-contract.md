@@ -153,7 +153,7 @@ bloco de atividade relacionada (RF-018).
 
 ### Assistente de IA — v1 aprovada (módulo `assistant`, PR #21)
 
-Inclusão na v1 aprovada em 2026-10-22 pelo usuário solicitante nesta sessão, após o review
+Inclusão na v1 aprovada em 2026-10-22 por Amanda Duara (dupla do TCC), após o review
 de 2026-10-21. A aprovação de escopo não altera o status 🧪: requests reais seguem pendentes.
 
 | Status | Método e caminho | Auth | Uso |
@@ -202,12 +202,19 @@ próprio app gera os alertas a partir das notícias novas, sem backend:
 
 | Status | Método e caminho | Auth | Uso |
 |---|---|---|---|
-| 🧪 | `GET /app/educational/modules` → `{modules[], totalLessonsCompleted, totalLessonsAvailable}` | opcional | RF-023 |
-| 🧪 | `GET /app/educational/modules/{moduleId}` → `moduleDetail` | opcional | RF-024, RF-025 |
-| 🧪 | `POST /app/educational/modules/{moduleId}/lessons/{lessonId}/answer` `{selectedOptionId}` → `{isCorrect, correctOptionId, explanation?}` | opcional | RF-026, RF-028 |
+| ✅ | `GET /app/educational/modules` → `{modules[], totalLessonsCompleted, totalLessonsAvailable}` | opcional | RF-023 |
+| ✅ | `GET /app/educational/modules/{moduleId}` → `moduleDetail` | opcional | RF-024, RF-025 |
+| ✅ | `POST /app/educational/modules/{moduleId}/lessons/{lessonId}/answer` `{selectedOptionId}` → `{isCorrect, correctOptionId, explanation?}` | opcional | RF-026, RF-028 |
 
 Erros: 404 `EDUCATIONAL_MODULE_NOT_FOUND`, 404 `EDUCATIONAL_LESSON_NOT_FOUND`,
-400 `EDUCATIONAL_INVALID_OPTION`.
+400 `EDUCATIONAL_INVALID_OPTION`. ⚠️ Conferido em 2026-10-19: `selectedOptionId` que não é CUID dá
+400 `VALIDATION_ERROR` (`errors[{field: 'selectedOptionId'}]`), não `EDUCATIONAL_INVALID_OPTION`.
+
+**Conferido no servidor real (2026-10-19, specs/015-painel-atividades R0)**:
+- Uma lição conta como **concluída ao ser respondida**, certa ou errada (`completedCount` sobe com
+  resposta errada; `score` não).
+- `progress.totalScore` vem **0** até a primeira resposta da conta no módulo (depois, o número de
+  lições). A B4 não deve mostrar "0 de 0".
 
 `moduleSummary`: `{ id, title, description, order, iconUrl?, lessonsCount, completedCount,
 progressPercent }` (ordenados por `order`; progresso zerado sem token).
@@ -272,7 +279,7 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
-- **1.1.1 (2026-10-22)**: usuário solicitante nesta sessão aprova inclusão do Assistente na v1
+- **1.1.1 (2026-10-22)**: Amanda Duara (dupla do TCC) aprova inclusão do Assistente na v1
   (RF-043 a RF-045, B10). Revogado o adiamento de IA de 2026-10-03; endpoints continuam 🧪.
 - **1.1.0 (2026-10-20, proposta da PR #21)**: integração de IA no cliente a partir do Swagger local,
   com aprovação de escopo ainda pendente conforme o review de 2026-10-21:
@@ -280,6 +287,10 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
   foi validado. Histórico não restaura diálogo, respostas completas ficam somente em memória e o
   app não persiste localmente mensagens ou imagens.
 
+- **1.0.10 (2026-10-19)**: atividades conferidas no servidor real (specs/015-painel-atividades
+  R0): os três endpoints de atividades passam a ✅; visitante recebe 200 sem token com progresso
+  zerado; resposta errada conta como lição concluída; vale a resposta mais recente para o
+  `score`; `totalScore` 0 até a 1ª resposta; opção que não é CUID → 400 `VALIDATION_ERROR`.
 - **1.0.9 (2026-10-14)**: troca de senha conferida no servidor real (specs/013-configuracoes R0):
   401/409/400 como no contrato; depois da troca o `refreshToken` anterior é recusado (401
   `TOKEN_INVALID`) e o `accessToken` continua valendo até vencer. `PATCH /users/me

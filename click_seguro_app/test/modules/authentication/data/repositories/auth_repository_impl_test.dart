@@ -41,6 +41,7 @@ void main() {
       expect(session.refreshToken, 'renovacao-1');
       expect(session.email, 'maria@exemplo.com');
       expect(session.userName, 'Maria Silva');
+      expect(session.startedFromSignUp, isFalse);
     });
 
     test('senha errada vira InvalidCredentialsFailure', () async {
@@ -105,6 +106,7 @@ void main() {
       expect(remote.calls, ['register', 'login', 'getMe']);
       expect(session.isAuthenticated, isTrue);
       expect(session.userName, 'Maria Silva');
+      expect(session.startedFromSignUp, isTrue);
     });
 
     test('e-mail duplicado não tenta entrar', () async {

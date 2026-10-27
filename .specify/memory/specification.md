@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.3.0
+**Versão**: 2.4.0
 
 **Criado em**: 2026-09-07
 
@@ -93,6 +93,7 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 | UC-14 | Cadastrado | Ver perfil, estatísticas e conquistas; editar dados | B7 |
 | UC-15 | Todos | Ajustar configurações e sair da conta | B8 |
 | UC-16 | Todos | Ajustar tamanho de fonte, alto contraste e leitura em voz alta | B9 |
+| UC-17 | Cadastrado | Conversar com o Assistente de IA e verificar mensagens ou imagens suspeitas | B10 |
 
 ---
 
@@ -222,9 +223,8 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 
 ### 3.10 Assistente de IA (B10)
 
-**Decisão de escopo — 2026-10-22:** o usuário solicitante nesta sessão
-aprovou explicitamente a inclusão do Assistente na v1 ao responder "pode aprovar" à
-pendência de aprovação registrada no review da PR #21. Esta decisão substitui a exclusão
+**Decisão de escopo — 2026-10-22:** Amanda Duara (dupla do TCC) aprovou a inclusão do
+Assistente na v1, pendência registrada no review da PR #21 (confirmado por ela em 2026-10-27). Esta decisão substitui a exclusão
 de IA de 2026-10-03; não representa homologação dos endpoints nem aprovação de merge.
 
 - **RF-043**: O usuário autenticado MUST poder conversar com o Assistente, com mensagens e
@@ -272,8 +272,8 @@ de IA de 2026-10-03; não representa homologação dos endpoints nem aprovação
   altera. Notícia sem categoria MUST ser exibida normalmente, sem rótulo. *(Até a v2.0.0 esta
   regra tratava do `VeracityStatus`.)*
 - **RN-003 (Limites do visitante)**: O visitante pode ler notícias, ver Reels, fazer atividades e
-  usar a central de ajuda. Salvar notícia, curtir, alertas, perfil e editar dados exigem
-  conta: ao tentar, o app MUST mostrar um convite para entrar ou se cadastrar, **sem** chamar a
+  usar a central de ajuda. Salvar notícia, curtir, alertas, perfil, editar dados e o Assistente
+  de IA exigem conta: ao tentar, o app MUST mostrar um convite para entrar ou se cadastrar, **sem** chamar a
   API.
 - **RN-004 (Onboarding único)**: Depois de concluído ou pulado, o onboarding MUST NOT voltar a
   aparecer naquele aparelho (flag local).
@@ -282,9 +282,12 @@ de IA de 2026-10-03; não representa homologação dos endpoints nem aprovação
   `score / totalScore`, considerando a resposta **mais recente** de cada lição. Para o
   visitante, o app calcula igual, em memória: concluído quando todas as lições foram
   respondidas, pontuação = acertos na resposta mais recente / total de lições.
-- **RN-006 (Progresso do visitante)**: O progresso do visitante vale só para a sessão atual.
-  Ao concluir um módulo como visitante, o app MUST exibir o aviso de login (RF-030) antes da
-  tela de conclusão.
+- **RN-006 (Progresso do visitante)**: O progresso do visitante vale só para a sessão atual
+  (fica só na memória do app). Se o visitante **criar uma conta** sem fechar o app, o progresso
+  da sessão MUST ser transferido para a conta nova; ao **entrar numa conta que já existe**, ele
+  é descartado. Uma lição conta como concluída ao ser respondida, certa ou errada (como no
+  serviço). Ao concluir um módulo como visitante, o app MUST exibir o aviso de login (RF-030)
+  antes da tela de conclusão.
 - **RN-007 (Contatos locais)**: Contatos pessoais pertencem ao aparelho, não à conta: sair da
   conta MUST NOT apagar os contatos.
 - **RN-008 (Conquistas)**: As conquistas do perfil são derivadas das estatísticas do perfil e
@@ -372,12 +375,17 @@ Este documento descreve requisitos de **negócio e produto**. Se um requisito ex
 [constitution.md](constitution.md), o requisito MUST ser redesenhado. Mudanças de escopo exigem
 nova versão e registro no changelog.
 
-**Versão**: 2.3.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-22
+**Versão**: 2.4.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-22
 
 ## Changelog
 
-- **2.3.0 (2026-10-22)**: usuário solicitante nesta sessão aprova IA na v1;
-  adicionados RF-043 a RF-045 e removida a exclusão vigente em §1.3/§8. Homologação real pendente.
+- **2.4.0 (2026-10-22)**: Amanda Duara (dupla do TCC) aprova o Assistente de IA na v1;
+  adicionados RF-043 a RF-045 e UC-17, RN-003 inclui o Assistente entre o que exige conta, e
+  removida a exclusão vigente em §1.3/§8. Homologação real pendente.
+- **2.3.0 (2026-10-21)**: RN-006 estendida: o progresso do visitante na sessão é transferido para
+  a conta se ele a criar sem fechar o app (descartado ao entrar numa conta existente); lição
+  concluída = respondida, como no serviço. Decidido em `specs/015-painel-atividades`
+  (clarificações de 2026-10-19).
 - **2.2.0 (2026-10-07)**: novo RF-042 (idioma do app nas configurações, seguindo o aparelho por
   padrão; a leitura em voz alta usa o mesmo idioma). Decidido em `specs/007-servicos-plataforma-voz`.
 - **2.1.0 (2026-10-03)**: alinhada à API real ([openapi.json](openapi.json)). IDs mantidos,
