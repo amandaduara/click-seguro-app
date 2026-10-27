@@ -803,6 +803,65 @@ void main() {
     });
   });
 
+  group('refazer (specs/020 US4)', () {
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Refazer o módulo" volta à primeira pergunta, sem marcação', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+      final int loadsBefore = repository.moduleDetailCalls;
+      // Recarregado, o serviço manda as três respondidas.
+      useModule(answered: {'l1', 'l2', 'l3'});
+
+      await tester.scrollUntilVisible(
+        find.text('Refazer o módulo'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.text('Refazer o módulo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Refazer o módulo'));
+      await tester.pumpAndSettle();
+
+      expect(repository.moduleDetailCalls, greaterThan(loadsBefore));
+      await tester.scrollUntilVisible(
+        find.text('Pergunta 1 de 3'),
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      expect(
+        tester
+            .widgetList<LessonOptionCard>(find.byType(LessonOptionCard))
+            .every((c) => c.state == LessonOptionState.idle),
+        isTrue,
+      );
+
+      // Responder as três de novo leva à conclusão outra vez.
+      for (final String option in ['Ignorar e denunciar', 'Ignorar']) {
+        await answer(tester, option);
+        await tester.tap(find.text('Próxima pergunta'));
+        await tester.pumpAndSettle();
+      }
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+  });
+
   group('polimento (specs/018 T038)', () {
     testWidgets('celular, letra 2× e alto contraste: responder sem estouro', (
       tester,

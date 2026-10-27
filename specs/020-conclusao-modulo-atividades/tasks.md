@@ -136,13 +136,13 @@ leva a Atividades ao entrar; continuar ou voltar segue para a conclusão (FR-007
 
 ### Testes (escrever primeiro e ver falhar)
 
-- [ ] T021 [US4] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "refazer (specs/020 US4)": da conclusão, "Refazer o módulo" → "Pergunta 1 de 3", sem alternativa marcada, `moduleDetailCalls` aumentou; responder as três de novo → "Ver resultado" → conclusão com a pontuação nova
+- [X] T021 [US4] Em `tact/presentation/pages/lesson_page_test.dart`, grupo "refazer (specs/020 US4)": da conclusão, "Refazer o módulo" → "Pergunta 1 de 3", sem alternativa marcada, `moduleDetailCalls` aumentou; responder as três de novo → "Ver resultado" → conclusão com a pontuação nova
 
 ### Implementação
 
-- [ ] T022 [US4] Em `act/presentation/pages/lesson_page.dart`: `CompletionAction.redo` → `_controller.load(moduleId)` (a B2 abre na primeira pergunta quando todas estão respondidas). Faz a T021 passar
+- [X] T022 [US4] Em `act/presentation/pages/lesson_page.dart`: `CompletionAction.redo` → `_controller.load(moduleId)` (a B2 abre na primeira pergunta quando todas estão respondidas). Faz a T021 passar
 
-**Checkpoint**: testes verdes. Commit da US4.
+**Checkpoint**: testes verdes. Commit da US4. **Nota:** o `redo` → `load` já tinha entrado na T012 (o `switch` da conclusão precisava cobrir as duas ações), então a T021 passou sem ter falhado antes; ela fica como teste do comportamento.
 
 ---
 
