@@ -124,7 +124,7 @@ leva a Atividades ao entrar; continuar ou voltar segue para a conclusão (FR-007
 
 - [X] T020 [US3] Em `act/presentation/pages/completion_page.dart`: botão "Compartilhar" (`SafeButtonTone.secondary`, ícone `LucideIcons.share2`) chamando `GetIt.instance<ShareService>().shareText(shareText, subject: title)` com a trava `_sharing` (padrão do detalhe da notícia, [R6](research.md#r6-compartilhar)). Faz a T019 passar
 
-**Checkpoint**: testes verdes. Commit da US3. **Nota:** o `FakeShareService` (`app/test/fakes/`) ganhou um `gate` opcional para provar o toque duplo; sem ele, nada muda para os testes da notícia.
+**Checkpoint**: testes verdes. Commit da US3. **Nota:** o `FakeShareService` (`app/test/fakes/`) ganhou um `gate` opcional para provar o toque duplo; a subclasse `_GatedShareService` do teste do detalhe da notícia, que fazia o mesmo, saiu (o teste usa o fake direto).
 
 ---
 
