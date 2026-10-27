@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/routing/navigator_keys.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/locale_rebuilder.dart';
 import 'package:click_seguro_app/modules/activities/activities.dart';
+import 'package:click_seguro_app/modules/assistant/assistant.dart';
 import 'package:click_seguro_app/modules/authentication/authentication.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
@@ -53,6 +54,7 @@ List<ModuleInterface> appModules() => [
   NewsModule(),
   NotificationsModule(),
   ActivitiesModule(),
+  AssistantModule(),
   HelpModule(),
   ProfileModule(),
   ShellModule(),

@@ -46,6 +46,10 @@ class _AppTopBarState extends State<AppTopBar> {
     if (await requireAccount(context) && mounted) await _open('/notifications');
   }
 
+  Future<void> _openAssistant() async {
+    if (await requireAccount(context) && mounted) await _open('/assistant');
+  }
+
   String _greeting() {
     final String? name = _session.userName;
     return _session.isAuthenticated && name != null && name.isNotEmpty
@@ -63,79 +67,115 @@ class _AppTopBarState extends State<AppTopBar> {
         AppSpacing.s5,
         AppSpacing.s3,
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Builder(
+        builder: (context) {
+          final title = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // O nome muda também quando o perfil é editado (SC-003).
+              ListenableBuilder(
+                listenable: Listenable.merge([
+                  _session.sessionStatus,
+                  _session.profileVersion,
+                ]),
+                builder: (context, _) => Text(
+                  widget.subtitle ?? _greeting(),
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: context.colors.textMutedForeground,
+                  ),
+                ),
+              ),
+              Semantics(
+                header: true,
+                child: Text(
+                  widget.title,
+                  style: textTheme.titleLarge?.copyWith(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: context.colors.secondary,
+                  ),
+                ),
+              ),
+            ],
+          );
+          final actions = Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              NotificationBellButton(onPressed: _openNotifications),
+              Padding(
+                padding: const EdgeInsets.only(left: AppSpacing.s2),
+                child: _CircleActionButton(
+                  label: AppStrings.assistantTitle.tr(),
+                  icon: LucideIcons.messageCircle,
+                  onPressed: _openAssistant,
+                ),
+              ),
+              // Também para o visitante, que ajusta acessibilidade e idioma
+              // (specs/014, R6).
+              Padding(
+                padding: const EdgeInsets.only(left: AppSpacing.s2),
+                child: _CircleActionButton(
+                  label: AppStrings.shellSettings.tr(),
+                  icon: LucideIcons.settings,
+                  onPressed: () => _open('/settings'),
+                ),
+              ),
+            ],
+          );
+          final compact = MediaQuery.textScalerOf(context).scale(24) > 30;
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // O nome muda também quando o perfil é editado (SC-003).
-                ListenableBuilder(
-                  listenable: Listenable.merge([
-                    _session.sessionStatus,
-                    _session.profileVersion,
-                  ]),
-                  builder: (context, _) => Text(
-                    widget.subtitle ?? _greeting(),
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: context.colors.textMutedForeground,
-                    ),
-                  ),
-                ),
-                Semantics(
-                  header: true,
-                  child: Text(
-                    widget.title,
-                    style: textTheme.titleLarge?.copyWith(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: context.colors.secondary,
-                    ),
-                  ),
-                ),
+                title,
+                const SizedBox(height: AppSpacing.s2),
+                Align(alignment: Alignment.centerRight, child: actions),
               ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s2),
-          NotificationBellButton(onPressed: _openNotifications),
-          // Também para o visitante, que ajusta acessibilidade e idioma
-          // (specs/014, R6).
-          Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.s2),
-            child: _SettingsButton(onPressed: () => _open('/settings')),
-          ),
-        ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: title),
+              const SizedBox(width: AppSpacing.s2),
+              actions,
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _SettingsButton extends StatelessWidget {
-  const _SettingsButton({required this.onPressed});
+class _CircleActionButton extends StatelessWidget {
+  const _CircleActionButton({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+  });
 
+  final String label;
+  final IconData icon;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: AppStrings.shellSettings.tr(),
-      excludeSemantics: true,
-      child: Material(
-        color: context.colors.input,
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onPressed,
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Icon(
-              LucideIcons.settings,
-              size: 20,
-              color: context.colors.secondary,
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        label: label,
+        excludeSemantics: true,
+        child: Material(
+          color: context.colors.input,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
+            child: SizedBox.square(
+              dimension: 48,
+              child: Icon(icon, size: 20, color: context.colors.secondary),
             ),
           ),
         ),

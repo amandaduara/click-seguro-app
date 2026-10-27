@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/constants/app_identity.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
@@ -11,8 +12,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// crédito genérico do TCC.
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
-
-  static const String appName = 'SafeNews';
 
   @override
   State<AboutPage> createState() => _AboutPageState();
@@ -37,7 +36,7 @@ class _AboutPageState extends State<AboutPage> {
             Semantics(
               header: true,
               child: Text(
-                AboutPage.appName,
+                AppIdentity.name,
                 textAlign: TextAlign.center,
                 style: textTheme.headlineSmall?.copyWith(
                   fontSize: 28,

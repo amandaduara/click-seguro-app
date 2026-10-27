@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/routing/navigator_keys.dart';
 import 'package:click_seguro_app/core/routing/not_found_page.dart';
 import 'package:click_seguro_app/modules/activities/activities.dart';
+import 'package:click_seguro_app/modules/assistant/assistant.dart';
 import 'package:click_seguro_app/modules/authentication/authentication.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/help/help.dart';
@@ -61,6 +62,7 @@ GoRouter buildAppRouter(UserSessionService session) {
         ].map((route) => StatefulShellBranch(routes: [route])).toList(),
       ),
       ...newsRoutes,
+      ...assistantRoutes,
       ...notificationsRoutes,
       ...settingsRoutes,
     ],
