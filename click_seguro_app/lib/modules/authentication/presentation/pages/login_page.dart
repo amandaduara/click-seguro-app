@@ -51,10 +51,9 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _controller = context.read<AuthenticationController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _controller.reset();
-      if (widget.initialMode == AuthMode.register) {
-        _controller.setMode(AuthMode.register);
-      }
+      _controller
+        ..reset()
+        ..setMode(widget.initialMode);
     });
     _controller.addListener(_onControllerChanged);
     // Ao sair de um campo, o erro dele (se houver) passa a aparecer.
