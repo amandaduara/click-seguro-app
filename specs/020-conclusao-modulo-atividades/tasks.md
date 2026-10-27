@@ -148,7 +148,7 @@ leva a Atividades ao entrar; continuar ou voltar segue para a conclusão (FR-007
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T023 Em `tact/presentation/pages/lesson_page_test.dart`, conferir o fluxo do visitante inteiro (aviso → conclusão) com letra 2× e alto contraste (`AppTheme.highContrastTheme`) num celular 1080×2340, dpr 3, e em inglês ("See result", "Keep your progress", "Module completed!")
+- [X] T023 Em `tact/presentation/pages/lesson_page_test.dart`, conferir o fluxo do visitante inteiro (aviso → conclusão) com letra 2× e alto contraste (`AppTheme.highContrastTheme`) num celular 1080×2340, dpr 3, e em inglês ("See result", "Keep your progress", "Module completed!")
 - [ ] T024 Rodar `/revisar-pr` sobre a branch (antes de abrir o PR: revisar o diff `develop...020-conclusao-modulo-atividades` com o mesmo roteiro da skill) e corrigir os achados Alta/Média, anotando aqui o que ficou aceito
 - [ ] T025 `flutter analyze` sem novos avisos em relação à linha de base da T001 e `flutter test` inteiro verde; anotar os números aqui
 - [ ] T026 Validação no aparelho: os 12 passos do [quickstart](quickstart.md) (a usuária valida; o passo 8 cria uma conta, só com a permissão dela); anotar o que falhar como tarefa nova

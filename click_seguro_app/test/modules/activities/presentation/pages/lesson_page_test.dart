@@ -862,6 +862,72 @@ void main() {
     });
   });
 
+  group('polimento (specs/020 T023)', () {
+    Future<void> finishAsGuest(
+      WidgetTester tester, {
+      Locale locale = const Locale('pt', 'BR'),
+      ThemeData? theme,
+      String confirm = 'Confirmar resposta',
+      String result = 'Ver resultado',
+    }) async {
+      await session.logout();
+      await session.startGuestSession();
+      useModule(answered: {'l1', 'l2'});
+      await pumpLocalized(tester, router: router, locale: locale, theme: theme);
+      await reveal(tester, find.text('Ignorar'));
+      await tester.tap(find.text('Ignorar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(confirm));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(result),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text(result));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('celular, letra 2× e alto contraste: aviso e conclusão', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2340)
+        ..devicePixelRatio = 3;
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await finishAsGuest(tester, theme: AppTheme.highContrastTheme);
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Continuar sem conta'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Continuar sem conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('em inglês', (tester) async {
+      await finishAsGuest(
+        tester,
+        locale: const Locale('en', 'US'),
+        confirm: 'Confirm answer',
+        result: 'See result',
+      );
+
+      expect(find.text('Keep your progress'), findsOneWidget);
+      await tester.tap(find.text('Continue without an account'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Module completed!'), findsOneWidget);
+    });
+  });
+
   group('polimento (specs/018 T038)', () {
     testWidgets('celular, letra 2× e alto contraste: responder sem estouro', (
       tester,
