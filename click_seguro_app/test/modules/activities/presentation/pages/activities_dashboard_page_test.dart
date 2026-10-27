@@ -393,8 +393,18 @@ void main() {
       final store = GuestProgressStore(session);
       addTearDown(store.dispose);
       store
-        ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1')
-        ..recordAnswer(moduleId: 'm1', lessonId: 'l2', selectedOptionId: 'o2');
+        ..recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l1',
+          selectedOptionId: 'o1',
+          isCorrect: true,
+        )
+        ..recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l2',
+          selectedOptionId: 'o2',
+          isCorrect: true,
+        );
       final remote = FakeActivitiesRemoteDataSource();
       GetIt.instance.registerSingleton<ActivitiesRepository>(
         ActivitiesRepositoryImpl(remote, store, session),

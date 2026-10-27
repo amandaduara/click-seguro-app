@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -15,4 +16,12 @@ abstract class ActivitiesRepository {
   /// Lições do módulo; "respondida" segue a mesma regra do painel (sem conta,
   /// o registro da sessão).
   Future<Either<Failure, ModuleDetailEntity>> getModuleDetail(String moduleId);
+
+  /// Envia a resposta para correção. Sem conta, grava no registro da sessão
+  /// (RN-006).
+  Future<Either<Failure, AnswerResultEntity>> answerLesson({
+    required String moduleId,
+    required String lessonId,
+    required String selectedOptionId,
+  });
 }

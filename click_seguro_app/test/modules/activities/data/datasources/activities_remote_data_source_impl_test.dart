@@ -60,25 +60,66 @@ void main() {
     });
   });
 
-  test('answerLesson: POST com a opção escolhida', () async {
+  test('answerLesson: POST com a opção escolhida e o resultado lido', () async {
     await session.saveSession(
       accessToken: 'tk',
       refreshToken: 'rf',
       email: 'maria@exemplo.com',
     );
-    adapter.body = {'isCorrect': true, 'correctOptionId': 'o1'};
+    adapter.body = answerJson(isCorrect: false);
 
-    await dataSource.answerLesson(
+    final model = await dataSource.answerLesson(
       moduleId: 'm1',
       lessonId: 'l1',
-      selectedOptionId: 'o1',
+      selectedOptionId: 'l1-o2',
     );
 
     final request = adapter.lastRequest!;
     expect(request.method, 'POST');
     expect(request.path, '/app/educational/modules/m1/lessons/l1/answer');
-    expect(request.data, {'selectedOptionId': 'o1'});
+    expect(request.data, {'selectedOptionId': 'l1-o2'});
     expect(request.headers['Authorization'], 'Bearer tk');
+    final result = model.toEntity();
+    expect(result.isCorrect, isFalse);
+    expect(result.correctOptionId, 'l1-o1');
+  });
+
+  test('answerLesson do visitante: POST sem token', () async {
+    await session.startGuestSession();
+    adapter.body = answerJson();
+
+    await dataSource.answerLesson(
+      moduleId: 'm1',
+      lessonId: 'l1',
+      selectedOptionId: 'l1-o1',
+    );
+
+    expect(adapter.lastRequest!.headers.containsKey('Authorization'), isFalse);
+  });
+
+  test('alternativa de outra lição: 400 sobe com o código', () async {
+    adapter
+      ..statusCode = 400
+      ..body = {
+        'statusCode': 400,
+        'code': 'EDUCATIONAL_INVALID_OPTION',
+        'message': 'Selected option does not belong to this lesson',
+      };
+
+    await expectLater(
+      dataSource.answerLesson(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'l2-o1',
+      ),
+      throwsA(
+        isA<ApiException>().having(
+          (e) => e.errorCode,
+          'errorCode',
+          'EDUCATIONAL_INVALID_OPTION',
+        ),
+      ),
+    );
   });
 
   test('erro do serviço sobe como ApiException com o código', () async {

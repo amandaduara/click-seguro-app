@@ -86,12 +86,15 @@ Map<String, dynamic> lessonJson({
 };
 
 /// O módulo "Golpes Digitais" com três lições; [answered] marca as
-/// concluídas (`isCompleted`).
+/// concluídas (`isCompleted`); [score]/[totalScore] vão no `progress`
+/// (`totalScore` 0 até a primeira resposta da conta, R0 de specs/015).
 Map<String, dynamic> moduleDetailJson({
   String id = 'm1',
   String title = 'Golpes Digitais',
   List<Map<String, dynamic>>? lessons,
   Set<String> answered = const {},
+  int score = 0,
+  int totalScore = 0,
 }) {
   final List<Map<String, dynamic>> list =
       lessons ??
@@ -132,9 +135,21 @@ Map<String, dynamic> moduleDetailJson({
     'progress': {
       'completedCount': answered.length,
       'progressPercent': 0,
-      'score': 0,
-      'totalScore': 0,
+      'score': score,
+      'totalScore': totalScore,
       'isCompleted': false,
     },
   };
 }
+
+/// O resultado de `POST …/lessons/{lessonId}/answer` (R0 de
+/// specs/018-resposta-feedback-atividades). Na `l1`, a correta é a `l1-o1`.
+Map<String, dynamic> answerJson({
+  bool isCorrect = true,
+  String correctOptionId = 'l1-o1',
+  String? explanation = 'Promessas de dinheiro em dobro são golpe.',
+}) => {
+  'isCorrect': isCorrect,
+  'correctOptionId': correctOptionId,
+  'explanation': ?explanation,
+};

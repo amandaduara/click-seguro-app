@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/activities/data/models/activities_dashboard_model.dart';
+import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
 import 'package:fpdart/fpdart.dart';
 
 import 'activities_fixtures.dart';
+import 'fake_activities_remote_data_source.dart';
 
 /// Painel em memória: [results] é uma fila (o último se repete); [gate]
 /// segura a próxima resposta até completar.
@@ -39,6 +42,30 @@ class FakeActivitiesRepository implements ActivitiesRepository {
     return moduleDetailResults.length > 1
         ? moduleDetailResults.removeAt(0)
         : moduleDetailResults.single;
+  }
+
+  /// Respostas: fila (o último se repete); [answerGate] segura o envio.
+  List<Either<Failure, AnswerResultEntity>> answerResults = [
+    Right(AnswerResultModel.fromJson(answerJson()).toEntity()),
+  ];
+  final List<SentAnswer> answerCalls = [];
+  Completer<void>? answerGate;
+
+  @override
+  Future<Either<Failure, AnswerResultEntity>> answerLesson({
+    required String moduleId,
+    required String lessonId,
+    required String selectedOptionId,
+  }) async {
+    answerCalls.add((
+      moduleId: moduleId,
+      lessonId: lessonId,
+      selectedOptionId: selectedOptionId,
+    ));
+    await answerGate?.future;
+    return answerResults.length > 1
+        ? answerResults.removeAt(0)
+        : answerResults.single;
   }
 
   @override

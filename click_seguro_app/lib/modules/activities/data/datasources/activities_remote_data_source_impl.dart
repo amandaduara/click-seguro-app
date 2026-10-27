@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/modules/activities/data/datasources/activities_remote_data_source.dart';
 import 'package:click_seguro_app/modules/activities/data/models/activities_dashboard_model.dart';
+import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 
@@ -29,14 +30,15 @@ class ActivitiesRemoteDataSourceImpl implements ActivitiesRemoteDataSource {
   }
 
   @override
-  Future<void> answerLesson({
+  Future<AnswerResultModel> answerLesson({
     required String moduleId,
     required String lessonId,
     required String selectedOptionId,
   }) async {
-    await _apiClient.post(
+    final response = await _apiClient.post(
       answerPath(moduleId, lessonId),
       data: {'selectedOptionId': selectedOptionId},
     );
+    return response.toModel(AnswerResultModel.fromJson);
   }
 }

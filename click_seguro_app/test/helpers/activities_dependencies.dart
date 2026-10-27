@@ -1,4 +1,5 @@
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
+import 'package:click_seguro_app/modules/activities/domain/usecases/answer_lesson_usecase.dart';
 import 'package:click_seguro_app/modules/activities/domain/usecases/get_activities_dashboard_usecase.dart';
 import 'package:click_seguro_app/modules/activities/domain/usecases/get_module_detail_usecase.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/activities_dashboard_controller.dart';
@@ -24,9 +25,12 @@ ActivitiesRepository registerActivitiesDependencies(
       ),
     )
     ..registerSingleton(GetModuleDetailUseCase(repo))
+    ..registerSingleton(AnswerLessonUseCase(repo))
     ..registerFactory(
-      () =>
-          LessonController(getModuleDetail: injector<GetModuleDetailUseCase>()),
+      () => LessonController(
+        getModuleDetail: injector<GetModuleDetailUseCase>(),
+        answerLesson: injector<AnswerLessonUseCase>(),
+      ),
     );
   return repo;
 }

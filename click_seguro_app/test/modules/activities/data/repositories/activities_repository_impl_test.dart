@@ -4,11 +4,13 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../fakes/activities_fixtures.dart';
@@ -77,12 +79,23 @@ void main() {
       'progresso do registro da sessão; totais disponíveis do serviço',
       () async {
         store
-          ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1')
-          ..recordAnswer(moduleId: 'm1', lessonId: 'l2', selectedOptionId: 'o5')
+          ..recordAnswer(
+            moduleId: 'm1',
+            lessonId: 'l1',
+            selectedOptionId: 'o1',
+            isCorrect: true,
+          )
+          ..recordAnswer(
+            moduleId: 'm1',
+            lessonId: 'l2',
+            selectedOptionId: 'o5',
+            isCorrect: true,
+          )
           ..recordAnswer(
             moduleId: 'm2',
             lessonId: 'l4',
             selectedOptionId: 'o9',
+            isCorrect: true,
           );
 
         final dashboard = await dashboardOrFail();
@@ -104,6 +117,7 @@ void main() {
           moduleId: 'm1',
           lessonId: lesson,
           selectedOptionId: 'o1',
+          isCorrect: true,
         );
       }
 
@@ -130,8 +144,18 @@ void main() {
     Future<void> guestThenSignUp() async {
       await session.startGuestSession();
       store
-        ..recordAnswer(moduleId: 'm1', lessonId: 'l1', selectedOptionId: 'o1')
-        ..recordAnswer(moduleId: 'm1', lessonId: 'l2', selectedOptionId: 'o5');
+        ..recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l1',
+          selectedOptionId: 'o1',
+          isCorrect: true,
+        )
+        ..recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l2',
+          selectedOptionId: 'o5',
+          isCorrect: true,
+        );
       await session.saveSession(
         accessToken: 'tk',
         refreshToken: 'rf',
@@ -259,6 +283,7 @@ void main() {
         moduleId: 'm1',
         lessonId: 'l1',
         selectedOptionId: 'o1',
+        isCorrect: true,
       );
 
       final module = await detailOrFail();
@@ -297,6 +322,128 @@ void main() {
       final result = await repository.getModuleDetail('m1');
 
       expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+    });
+
+    group('pontuação (specs/018 R3)', () {
+      test('conta: a do serviço', () async {
+        await signIn();
+        remote.moduleDetail = moduleDetailJson(score: 2, totalScore: 3);
+
+        final module = await detailOrFail();
+
+        expect(module.score?.score, 2);
+        expect(module.score?.total, 3);
+      });
+
+      test('visitante sem respostas no módulo: nenhuma', () async {
+        await session.startGuestSession();
+        store.recordAnswer(
+          moduleId: 'm2',
+          lessonId: 'l4',
+          selectedOptionId: 'o1',
+          isCorrect: true,
+        );
+
+        expect((await detailOrFail()).score, isNull);
+      });
+
+      test('visitante: acertos do registro / lições válidas', () async {
+        await session.startGuestSession();
+        store
+          ..recordAnswer(
+            moduleId: 'm1',
+            lessonId: 'l1',
+            selectedOptionId: 'l1-o1',
+            isCorrect: true,
+          )
+          ..recordAnswer(
+            moduleId: 'm1',
+            lessonId: 'l2',
+            selectedOptionId: 'l2-o2',
+            isCorrect: false,
+          );
+
+        final module = await detailOrFail();
+
+        expect(module.score?.score, 1);
+        expect(module.score?.total, 3);
+      });
+    });
+  });
+
+  group('responder (specs/018)', () {
+    Future<Either<Failure, AnswerResultEntity>> answer({
+      String lessonId = 'l1',
+      String option = 'l1-o2',
+    }) => repository.answerLesson(
+      moduleId: 'm1',
+      lessonId: lessonId,
+      selectedOptionId: option,
+    );
+
+    test('conta: resultado do serviço e nada no registro', () async {
+      await signIn();
+      remote.answerResults['l1'] = answerJson(isCorrect: false);
+
+      final result = (await answer()).getOrElse(
+        (failure) => throw StateError('falhou: $failure'),
+      );
+
+      expect(result.isCorrect, isFalse);
+      expect(result.correctOptionId, 'l1-o1');
+      expect(remote.sent.single.selectedOptionId, 'l1-o2');
+      expect(store.answeredCount('m1'), 0);
+    });
+
+    test('visitante: grava no registro com o acerto do serviço', () async {
+      await session.startGuestSession();
+      remote.answerResults['l1'] = answerJson();
+
+      final result = await answer(option: 'l1-o1');
+
+      expect(result.isRight(), isTrue);
+      expect(store.isAnswered('l1'), isTrue);
+      expect(store.correctCount('m1'), 1);
+    });
+
+    test('sessão expirada: grava como visitante', () async {
+      await signIn();
+      await session.expire();
+
+      await answer();
+
+      expect(store.isAnswered('l1'), isTrue);
+    });
+
+    for (final (int status, String code) in [
+      (400, 'EDUCATIONAL_INVALID_OPTION'),
+      (400, 'VALIDATION_ERROR'),
+      (404, 'EDUCATIONAL_LESSON_NOT_FOUND'),
+      (404, 'EDUCATIONAL_MODULE_NOT_FOUND'),
+    ]) {
+      test('$status $code → AnswerRejectedFailure e nada gravado', () async {
+        await session.startGuestSession();
+        remote.answerErrors['l1'] = apiError(
+          ApiErrorType.client,
+          statusCode: status,
+          errorCode: code,
+        );
+
+        final result = await answer();
+
+        expect(result.getLeft().toNullable(), isA<AnswerRejectedFailure>());
+        expect(store.isAnswered('l1'), isFalse);
+      });
+    }
+
+    test('sem internet → ConnectionFailure e nada gravado', () async {
+      await session.startGuestSession();
+      remote.answerErrors['l1'] = apiError(ApiErrorType.connection);
+
+      final result = await answer();
+
+      expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+      expect(store.isAnswered('l1'), isFalse);
     });
   });
 }

@@ -2,6 +2,7 @@ import 'package:click_seguro_app/modules/activities/activities.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/activities_remote_data_source.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
+import 'package:click_seguro_app/modules/activities/domain/usecases/answer_lesson_usecase.dart';
 import 'package:click_seguro_app/modules/activities/domain/usecases/get_activities_dashboard_usecase.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -29,6 +30,7 @@ void main() {
     expect(injector<ActivitiesRemoteDataSource>(), isNotNull);
     expect(injector<ActivitiesRepository>(), isNotNull);
     expect(injector<GetActivitiesDashboardUseCase>(), isNotNull);
+    expect(injector<AnswerLessonUseCase>(), isNotNull);
   });
 
   test('o registro do visitante é um só por execução', () {

@@ -96,4 +96,23 @@ void main() {
     expect(module.lessons[1].imageUrl, isNull);
     expect(parse(raw).lessons.first.isCompleted, isFalse);
   });
+
+  group('pontuação (progress)', () {
+    test('score e totalScore → pontuação do módulo', () {
+      final module = parse(moduleDetailJson(score: 2, totalScore: 3));
+
+      expect(module.score?.score, 2);
+      expect(module.score?.total, 3);
+    });
+
+    test('totalScore 0 → sem pontuação (nunca "0 de 0")', () {
+      expect(parse(moduleDetailJson()).score, isNull);
+    });
+
+    test('progress ausente → sem pontuação', () {
+      final Map<String, dynamic> raw = moduleDetailJson()..remove('progress');
+
+      expect(parse(raw).score, isNull);
+    });
+  });
 }

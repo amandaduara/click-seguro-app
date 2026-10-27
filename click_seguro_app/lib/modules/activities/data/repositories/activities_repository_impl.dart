@@ -4,8 +4,10 @@ import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/activities_remote_data_source.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/guest_answer.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_summary_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
@@ -27,6 +29,13 @@ class ActivitiesRepositoryImpl implements ActivitiesRepository {
   };
   static const int _badRequest = 400;
   static const String _moduleNotFoundCode = 'EDUCATIONAL_MODULE_NOT_FOUND';
+
+  /// Resposta recusada porque a pergunta mudou no serviço (R5 de specs/018).
+  static const Set<String> _rejectedCodes = {
+    ..._goneCodes,
+    'EDUCATIONAL_INVALID_OPTION',
+    'VALIDATION_ERROR',
+  };
 
   final ActivitiesRemoteDataSource _remote;
   final GuestProgressStore _store;
@@ -55,7 +64,8 @@ class ActivitiesRepositoryImpl implements ActivitiesRepository {
     try {
       final module = (await _remote.getModuleDetail(moduleId)).toEntity();
       if (_session.isAuthenticated) return Right(module);
-      // Sem conta, o serviço manda tudo como não respondido: vale o registro.
+      // Sem conta, o serviço manda tudo como não respondido e sem pontuação:
+      // vale o registro. O total são as lições válidas (R3 de specs/018).
       return Right(
         ModuleDetailEntity(
           title: module.title,
@@ -63,12 +73,49 @@ class ActivitiesRepositoryImpl implements ActivitiesRepository {
             for (final lesson in module.lessons)
               lesson.withCompleted(_store.isAnswered(lesson.id)),
           ],
+          score: _store.answeredCount(moduleId) > 0
+              ? ModuleScoreEntity(
+                  score: _store.correctCount(moduleId),
+                  total: module.lessons.length,
+                )
+              : null,
         ),
       );
     } on ApiException catch (e) {
       return Left(
         e.errorCode == _moduleNotFoundCode
             ? const ModuleNotFoundFailure()
+            : e.toFailure(),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, AnswerResultEntity>> answerLesson({
+    required String moduleId,
+    required String lessonId,
+    required String selectedOptionId,
+  }) async {
+    try {
+      final AnswerResultEntity result = (await _remote.answerLesson(
+        moduleId: moduleId,
+        lessonId: lessonId,
+        selectedOptionId: selectedOptionId,
+      )).toEntity();
+      // Sem conta, o serviço corrige mas não salva (RN-006).
+      if (!_session.isAuthenticated) {
+        _store.recordAnswer(
+          moduleId: moduleId,
+          lessonId: lessonId,
+          selectedOptionId: selectedOptionId,
+          isCorrect: result.isCorrect,
+        );
+      }
+      return Right(result);
+    } on ApiException catch (e) {
+      return Left(
+        _rejectedCodes.contains(e.errorCode)
+            ? const AnswerRejectedFailure()
             : e.toFailure(),
       );
     }

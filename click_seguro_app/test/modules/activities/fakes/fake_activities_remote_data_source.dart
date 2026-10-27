@@ -2,21 +2,25 @@ import 'dart:async';
 
 import 'package:click_seguro_app/modules/activities/data/datasources/activities_remote_data_source.dart';
 import 'package:click_seguro_app/modules/activities/data/models/activities_dashboard_model.dart';
+import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
-import 'package:click_seguro_app/modules/activities/domain/entities/guest_answer.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 
 import 'activities_fixtures.dart';
 
 /// Serviço de atividades em memória: [modules] devolve o JSON (ou lança a
-/// `ApiException`) e [answerErrors] decide a falha de cada resposta enviada.
+/// `ApiException`); [answerResults] e [answerErrors] decidem o resultado de
+/// cada resposta enviada.
 class FakeActivitiesRemoteDataSource implements ActivitiesRemoteDataSource {
   Map<String, dynamic> modules = dashboardJson();
   ApiException? modulesError;
   int modulesCalls = 0;
 
   /// Respostas enviadas, em ordem (inclusive as que falharam).
-  final List<GuestAnswer> sent = [];
+  final List<SentAnswer> sent = [];
+
+  /// Resultado por `lessonId`; ausente → acerto ([answerJson]).
+  final Map<String, Map<String, dynamic>> answerResults = {};
 
   /// Falha por `lessonId`; ausente → sucesso.
   final Map<String, ApiException> answerErrors = {};
@@ -50,24 +54,30 @@ class FakeActivitiesRemoteDataSource implements ActivitiesRemoteDataSource {
   }
 
   @override
-  Future<void> answerLesson({
+  Future<AnswerResultModel> answerLesson({
     required String moduleId,
     required String lessonId,
     required String selectedOptionId,
   }) async {
     calls.add('answer');
-    sent.add(
-      GuestAnswer(
-        moduleId: moduleId,
-        lessonId: lessonId,
-        selectedOptionId: selectedOptionId,
-      ),
-    );
+    sent.add((
+      moduleId: moduleId,
+      lessonId: lessonId,
+      selectedOptionId: selectedOptionId,
+    ));
     await answerGate?.future;
     final ApiException? error = answerErrors[lessonId];
     if (error != null) throw error;
+    return AnswerResultModel.fromJson(answerResults[lessonId] ?? answerJson());
   }
 }
+
+/// Um envio de resposta recebido pelo serviço falso.
+typedef SentAnswer = ({
+  String moduleId,
+  String lessonId,
+  String selectedOptionId,
+});
 
 ApiException apiError(
   ApiErrorType type, {

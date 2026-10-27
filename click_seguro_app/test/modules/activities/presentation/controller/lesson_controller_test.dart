@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
+import 'package:click_seguro_app/modules/activities/domain/usecases/answer_lesson_usecase.dart';
 import 'package:click_seguro_app/modules/activities/domain/usecases/get_module_detail_usecase.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
@@ -28,6 +30,7 @@ void main() {
     repository = FakeActivitiesRepository()..moduleDetailResults = results;
     return LessonController(
       getModuleDetail: GetModuleDetailUseCase(repository),
+      answerLesson: AnswerLessonUseCase(repository),
     );
   }
 
@@ -152,6 +155,320 @@ void main() {
         ..goNext();
 
       expect(controller.currentIndex, 2);
+    });
+  });
+
+  group('escolher e confirmar (specs/018 US1)', () {
+    setUp(() => controller.load('m1'));
+
+    test('sem escolha no início: não confirma', () {
+      expect(controller.selectedOptionId, isNull);
+      expect(controller.canSelect, isTrue);
+      expect(controller.canConfirm, isFalse);
+    });
+
+    test('escolher marca; escolher outra troca', () {
+      controller.select('l1-o2');
+      expect(controller.selectedOptionId, 'l1-o2');
+      expect(controller.canConfirm, isTrue);
+
+      controller.select('l1-o3');
+      expect(controller.selectedOptionId, 'l1-o3');
+    });
+
+    test('confirmar envia a escolhida, com envio em andamento', () async {
+      controller.select('l1-o3');
+      repository.answerGate = Completer<void>();
+
+      final Future<AnswerAttempt> attempt = controller.confirm();
+      expect(controller.isSubmitting, isTrue);
+      expect(controller.canConfirm, isFalse);
+      repository.answerGate!.complete();
+
+      expect(await attempt, AnswerAttempt.answered);
+      expect(controller.isSubmitting, isFalse);
+      expect(repository.answerCalls.single, (
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'l1-o3',
+      ));
+    });
+
+    test('dois toques seguidos: um envio só', () async {
+      controller.select('l1-o2');
+      repository.answerGate = Completer<void>();
+
+      final Future<AnswerAttempt> first = controller.confirm();
+      final AnswerAttempt second = await controller.confirm();
+      repository.answerGate!.complete();
+      await first;
+
+      expect(second, AnswerAttempt.ignored);
+      expect(repository.answerCalls, hasLength(1));
+    });
+
+    test('durante o envio, escolher não muda nada', () async {
+      controller.select('l1-o2');
+      repository.answerGate = Completer<void>();
+      final Future<AnswerAttempt> attempt = controller.confirm();
+
+      controller.select('l1-o4');
+
+      expect(controller.selectedOptionId, 'l1-o2');
+      repository.answerGate!.complete();
+      await attempt;
+    });
+
+    test('sem escolha: confirmar é ignorado', () async {
+      expect(await controller.confirm(), AnswerAttempt.ignored);
+      expect(repository.answerCalls, isEmpty);
+    });
+
+    test('dispose durante o envio não lança', () async {
+      controller.select('l1-o2');
+      repository.answerGate = Completer<void>();
+      final Future<AnswerAttempt> attempt = controller.confirm();
+
+      controller.dispose();
+      repository.answerGate!.complete();
+
+      await expectLater(attempt, completes);
+    });
+  });
+
+  group('resultado (specs/018 US2)', () {
+    Future<void> answerCurrent(String option) async {
+      controller.select(option);
+      await controller.confirm();
+    }
+
+    setUp(() => controller.load('m1'));
+
+    test('guarda o resultado e marca a lição como concluída', () async {
+      final List<String> optionsBefore = [
+        for (final o in controller.current!.options) o.id,
+      ];
+      repository.answerResults = [
+        Right(
+          AnswerResultModel.fromJson(answerJson(isCorrect: false)).toEntity(),
+        ),
+      ];
+
+      await answerCurrent('l1-o2');
+
+      expect(controller.currentResult?.isCorrect, isFalse);
+      expect(controller.currentResult?.correctOptionId, 'l1-o1');
+      expect(controller.current!.isCompleted, isTrue);
+      expect([
+        for (final o in controller.current!.options) o.id,
+      ], optionsBefore);
+      expect(controller.selectedOptionId, 'l1-o2');
+      expect(controller.canSelect, isFalse);
+      expect(controller.canConfirm, isFalse);
+      expect(controller.canGoNext, isTrue);
+    });
+
+    test('próxima sem escolha; voltar mostra o resultado de novo', () async {
+      await answerCurrent('l1-o1');
+
+      controller.goNext();
+      expect(controller.current!.id, 'l2');
+      expect(controller.selectedOptionId, isNull);
+      expect(controller.currentResult, isNull);
+      expect(controller.canSelect, isTrue);
+
+      controller.goPrevious();
+      expect(controller.currentResult?.isCorrect, isTrue);
+    });
+
+    test('isLastLesson só na última', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l2'})),
+      ]);
+      await controller.load('m1');
+
+      expect(controller.isLastLesson, isTrue);
+      controller.goPrevious();
+      expect(controller.isLastLesson, isFalse);
+    });
+
+    test('pontuação: do módulo, depois a da resposta', () async {
+      controller = build([
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(score: 1, totalScore: 3),
+          ).toEntity(),
+        ),
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(score: 2, totalScore: 3),
+          ).toEntity(),
+        ),
+      ]);
+      await controller.load('m1');
+      expect(controller.score?.score, 1);
+
+      await answerCurrent('l1-o1');
+
+      expect(controller.score?.score, 2);
+      expect(controller.score?.total, 3);
+    });
+
+    test('pontuação que não veio mantém a anterior', () async {
+      controller = build([
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(score: 1, totalScore: 3),
+          ).toEntity(),
+        ),
+        const Left(ConnectionFailure()),
+      ]);
+      await controller.load('m1');
+
+      await answerCurrent('l1-o1');
+
+      expect(controller.currentResult, isNotNull);
+      expect(controller.score?.score, 1);
+    });
+
+    test(
+      'responder de novo: limpa, continua concluída e envia outra vez',
+      () async {
+        await answerCurrent('l1-o2');
+
+        controller.answerAgain();
+
+        expect(controller.currentResult, isNull);
+        expect(controller.selectedOptionId, isNull);
+        expect(controller.current!.isCompleted, isTrue);
+        expect(controller.canGoNext, isTrue);
+        expect(controller.canSelect, isTrue);
+
+        repository.answerResults = [
+          Right(AnswerResultModel.fromJson(answerJson()).toEntity()),
+        ];
+        await answerCurrent('l1-o1');
+
+        expect(repository.answerCalls, hasLength(2));
+        expect(controller.currentResult?.isCorrect, isTrue);
+      },
+    );
+
+    test(
+      'respondida antes da visita: escolhe de novo, "Próxima" ativo',
+      () async {
+        controller = build([
+          Right(module(answered: {'l1', 'l2', 'l3'})),
+        ]);
+        await controller.load('m1');
+
+        expect(controller.current!.isCompleted, isTrue);
+        expect(controller.currentResult, isNull);
+        expect(controller.selectedOptionId, isNull);
+        expect(controller.canSelect, isTrue);
+        expect(controller.canGoNext, isTrue);
+      },
+    );
+
+    test('na última, responder não libera "Próxima"', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l2'})),
+      ]);
+      await controller.load('m1');
+
+      await answerCurrent('l3-o1');
+
+      expect(controller.current!.isCompleted, isTrue);
+      expect(controller.canGoNext, isFalse);
+    });
+  });
+
+  group('erros ao responder (specs/018 US6)', () {
+    setUp(() => controller.load('m1'));
+
+    test('falha comum: mantém a escolha e não conclui', () async {
+      repository.answerResults = [const Left(ConnectionFailure())];
+      controller.select('l1-o2');
+
+      expect(await controller.confirm(), AnswerAttempt.failed);
+
+      expect(controller.selectedOptionId, 'l1-o2');
+      expect(controller.current!.isCompleted, isFalse);
+      expect(controller.currentResult, isNull);
+      expect(controller.canConfirm, isTrue);
+    });
+
+    test('recusada: recarrega o módulo e esquece os resultados', () async {
+      repository
+        ..answerResults = [
+          Right(AnswerResultModel.fromJson(answerJson()).toEntity()),
+          const Left(AnswerRejectedFailure()),
+        ]
+        ..moduleDetailResults = [
+          Right(module(answered: {'l1'})),
+        ];
+      controller.select('l1-o1');
+      await controller.confirm();
+      controller
+        ..goNext()
+        ..select('l2-o1');
+      final int loadsBefore = repository.moduleDetailCalls;
+
+      expect(await controller.confirm(), AnswerAttempt.rejected);
+
+      expect(repository.moduleDetailCalls, greaterThan(loadsBefore));
+      expect(controller.status, LessonStatus.loaded);
+      expect(controller.current!.id, 'l2');
+      expect(controller.selectedOptionId, isNull);
+      controller.goPrevious();
+      expect(controller.currentResult, isNull);
+    });
+
+    test('recusada e o módulo sumiu: "sem atividades" (achado C1)', () async {
+      repository
+        ..answerResults = [const Left(AnswerRejectedFailure())]
+        ..moduleDetailResults = [const Left(ModuleNotFoundFailure())];
+      controller.select('l1-o1');
+
+      await controller.confirm();
+
+      expect(controller.status, LessonStatus.empty);
+    });
+
+    test('durante o envio não navega (revisão da branch)', () async {
+      controller = build([
+        Right(module(answered: {'l1', 'l2'})),
+      ]);
+      await controller.load('m1');
+      controller
+        ..goPrevious()
+        ..select('l2-o1');
+      repository.answerGate = Completer<void>();
+      final Future<AnswerAttempt> attempt = controller.confirm();
+
+      expect(controller.canGoPrevious, isFalse);
+      expect(controller.canGoNext, isFalse);
+      controller.goPrevious();
+      expect(controller.current!.id, 'l2');
+
+      repository.answerGate!.complete();
+      await attempt;
+      expect(controller.canGoPrevious, isTrue);
+      expect(controller.canGoNext, isTrue);
+    });
+
+    test('dispose durante o envio: nada notificado depois', () async {
+      controller.select('l1-o1');
+      repository.answerGate = Completer<void>();
+      int notifications = 0;
+      final Future<AnswerAttempt> attempt = controller.confirm();
+      controller.addListener(() => notifications++);
+      controller.dispose();
+
+      repository.answerGate!.complete();
+      await attempt;
+
+      expect(notifications, 0);
     });
   });
 }
