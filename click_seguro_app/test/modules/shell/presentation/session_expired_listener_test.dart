@@ -18,6 +18,7 @@ import '../../../fakes/fake_secure_storage_service.dart';
 import '../../authentication/fakes/controller_factory.dart';
 import '../../authentication/fakes/fake_auth_repository.dart';
 import '../../../helpers/feed_provider.dart';
+import '../../../helpers/help_dependencies.dart';
 import '../../../helpers/notifications_provider.dart';
 import '../../../helpers/reels_provider.dart';
 import '../../../helpers/settings_dependencies.dart';
@@ -32,6 +33,7 @@ void main() {
   setUp(() async {
     session = UserSessionService(FakeSecureStorageService());
     GetIt.instance.registerSingleton<UserSessionService>(session);
+    registerHelpDependencies(GetIt.instance);
     registerSettingsDependencies(GetIt.instance);
     router = buildAppRouter(session);
   });

@@ -31,18 +31,18 @@ Future<PhotoAction?> showPhotoSheet(
           option(
             PhotoAction.gallery,
             LucideIcons.image,
-            AppStrings.profilePhotoGallery.tr(),
+            AppStrings.commonPhotoGallery.tr(),
           ),
           option(
             PhotoAction.camera,
             LucideIcons.camera,
-            AppStrings.profilePhotoCamera.tr(),
+            AppStrings.commonPhotoCamera.tr(),
           ),
           if (hasPhoto)
             option(
               PhotoAction.remove,
               LucideIcons.trash2,
-              AppStrings.profilePhotoRemove.tr(),
+              AppStrings.commonPhotoRemove.tr(),
             ),
           const SizedBox(height: AppSpacing.s2),
         ],
@@ -73,7 +73,7 @@ Future<void> showPhotoPermissionSheet(BuildContext context) =>
                 Semantics(
                   header: true,
                   child: Text(
-                    AppStrings.profilePhotoPermissionTitle.tr(),
+                    AppStrings.commonPhotoPermissionTitle.tr(),
                     style: textTheme.titleMedium?.copyWith(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -83,12 +83,12 @@ Future<void> showPhotoPermissionSheet(BuildContext context) =>
                 ),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
-                  AppStrings.profilePhotoPermissionBody.tr(),
+                  AppStrings.commonPhotoPermissionBody.tr(),
                   style: textTheme.bodyLarge?.copyWith(fontSize: 16),
                 ),
                 const SizedBox(height: AppSpacing.s5),
                 SafeButton(
-                  label: AppStrings.profilePhotoPermissionOk.tr(),
+                  label: AppStrings.commonPhotoPermissionOk.tr(),
                   onPressed: () => Navigator.of(sheetContext).pop(),
                 ),
               ],

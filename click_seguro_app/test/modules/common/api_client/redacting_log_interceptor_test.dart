@@ -76,6 +76,28 @@ void main() {
     expect(log(), contains('Golpe do Pix'));
   });
 
+  for (final path in [
+    '/app/ai/chat',
+    '/app/ai/analyze',
+    '/app/ai/analyze/image',
+    '/app/ai/history',
+  ]) {
+    test('IA: $path não registra conteúdo enviado ou recebido', () async {
+      adapter.body = {'response': 'resposta-privada'};
+
+      await dio.request(
+        path,
+        data: {'message': 'mensagem-privada'},
+        options: Options(method: path.endsWith('/history') ? 'GET' : 'POST'),
+      );
+
+      expect(log(), isNot(contains('mensagem-privada')));
+      expect(log(), isNot(contains('resposta-privada')));
+      expect(log(), contains(path));
+      expect(log(), contains('200'));
+    });
+  }
+
   test('nenhum header Authorization é registrado', () async {
     await dio.get(
       '/app/news',

@@ -2,14 +2,14 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.1.1
+**Versão**: 2.2.0
 
 **Criado em**: 2026-09-07
 
 **Status**: Rascunho (Draft)
 
-**Alinhado a**: [constitution.md](constitution.md) v1.1.0 (o COMO), [specification.md](specification.md)
-v2.1.0 (o QUE, com IDs `RF-/RNF-/RN-/CB-`) e [api-contract.md](api-contract.md) v1.0.0
+**Alinhado a**: [constitution.md](constitution.md) v1.2.0 (o COMO), [specification.md](specification.md)
+v2.4.0 (o QUE, com IDs `RF-/RNF-/RN-/CB-`) e [api-contract.md](api-contract.md) v1.1.1
 (resumo do [openapi.json](openapi.json) da API real). Como escrever cada camada está no
 [guia de integração](../../click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md). Este plano diz **o
 que** existe e **onde**; o guia diz **como** escrever.
@@ -63,12 +63,16 @@ serviço com interface em `common/services/`, para que os testes usem fakes (Se�
 | `news` | A3, A4, A5 | data/domain/presentation | feed, busca, Reels, detalhe, favoritos, curtidas |
 | `notifications` | A6 | data/domain/presentation | alertas locais de notícias novas, não lidos, `NotificationBellButton` |
 | `activities` | B1–B4 | data/domain/presentation | painel, perguntas, feedback, conclusão |
+| `assistant` | B10 | data/domain/presentation | chat, análise de texto/imagem e histórico via `/app/ai/*` |
 | `help` | B6 | data/domain/presentation | contatos oficiais (asset) e pessoais (local) |
 | `profile` | B7 | data/domain/presentation | perfil, estatísticas, nível e conquistas (calculados), edição, foto |
 | `settings` | B8, B9 | data/domain/presentation | configurações, alterar senha, acessibilidade |
 
 B5 do wireframe ("tela antiga de atividades") não tem equivalente no Flutter: só o fluxo novo
 (B1–B4) é implementado.
+
+**Decisão de 2026-10-22 (PR #21, `specs/016-assistente-ia`):** inclusão do Assistente na v1
+aprovada por Amanda Duara (dupla do TCC). Requisitos RF-043 a RF-045.
 
 ### 1.2 Estrutura interna de cada módulo
 
@@ -106,6 +110,11 @@ lib/modules/{modulo}/
 
 ### 1.4 Registro no `main.dart`
 
+A decisão de 2026-10-22 inclui registrar `AssistantModule()` depois de `ActivitiesModule()` e
+compor `assistantRoutes` em `app_router.dart`, com `/assistant` sobre as abas. Inclui a ação
+no `AppTopBar`, protegida por `requireAccount`, mantendo a Row com fonte padrão e quebra apenas
+com fonte ampliada. Estas alterações nos arquivos compartilhados do §6 integram o escopo aprovado.
+
 Na Fase 0 **todos** os módulos são criados como esqueleto e registrados de uma vez. Assim, as
 trilhas não precisam mais tocar no `main.dart`:
 
@@ -119,6 +128,7 @@ await moduleManager.registerModules([
   NewsModule(),
   NotificationsModule(),
   ActivitiesModule(),
+  AssistantModule(),       // B10, inclusão aprovada em 2026-10-22
   HelpModule(),
   ProfileModule(),
   ShellModule(),
@@ -362,6 +372,7 @@ Critério de pronto de toda tarefa: teste antes (TDD), `flutter analyze` sem err
 | RF-029, RF-030, RN-006 | activities | B4 |
 | RF-031 a RF-034, RN-007, RNF-008, CB-009, CB-010 | help | B6 |
 | RF-035, RF-036, RN-008 | profile | B7 |
+| RF-043 a RF-045 | assistant, shell | B10 (specs/016-assistente-ia) |
 | RF-037, CB-013 | settings | B8 |
 | RF-038 a RF-041, RNF-004 | settings, core/theme | F0, B9 |
 | RN-003, CB-011 | shell (`requireAccount`) + cada tela restrita | F0 + A3–A6, B7 |
@@ -376,4 +387,4 @@ Este plano é o insumo de [tasks.md](tasks.md). Desvio encontrado durante a impl
 (método a mais num contrato, rota nova, dependência nova) MUST atualizar este plano, e o
 [api-contract.md](api-contract.md) quando for de API, antes de a tarefa ser marcada como concluída.
 
-**Versão**: 2.1.1 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-09
+**Versão**: 2.2.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-22

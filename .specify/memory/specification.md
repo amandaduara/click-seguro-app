@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.3.0
+**Versão**: 2.4.0
 
 **Criado em**: 2026-09-07
 
@@ -51,7 +51,6 @@ em voz alta.
   veracidade: a v1 classifica as notícias só por categoria (ver §8, Evoluções futuras).
 - Notificações push e notificações vindas do servidor (a v1 tem alertas gerados no próprio
   app a partir das notícias novas).
-- Recursos de IA da API (análise de mensagem ou imagem suspeita, chat com assistente).
 - Desativação de conta pelo app.
 - Rede social entre usuários (comentários, seguir, ranking público).
 - Produção de conteúdo dentro do app (notícias, módulos e lições vêm da API).
@@ -94,6 +93,7 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 | UC-14 | Cadastrado | Ver perfil, estatísticas e conquistas; editar dados | B7 |
 | UC-15 | Todos | Ajustar configurações e sair da conta | B8 |
 | UC-16 | Todos | Ajustar tamanho de fonte, alto contraste e leitura em voz alta | B9 |
+| UC-17 | Cadastrado | Conversar com o Assistente de IA e verificar mensagens ou imagens suspeitas | B10 |
 
 ---
 
@@ -221,6 +221,22 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 
 ---
 
+### 3.10 Assistente de IA (B10)
+
+**Decisão de escopo — 2026-10-22:** Amanda Duara (dupla do TCC) aprovou a inclusão do
+Assistente na v1, pendência registrada no review da PR #21 (confirmado por ela em 2026-10-27). Esta decisão substitui a exclusão
+de IA de 2026-10-03; não representa homologação dos endpoints nem aprovação de merge.
+
+- **RF-043**: O usuário autenticado MUST poder conversar com o Assistente, com mensagens e
+  contexto limitados conforme `specs/016-assistente-ia/spec.md`; a conversa permanece em memória.
+- **RF-044**: O usuário autenticado MUST poder solicitar análise de texto ou imagem suspeita,
+  mediante envio explícito, com validação local dos limites e apresentação de risco, confiança,
+  explicação e dicas quando disponíveis. Nulos e valores desconhecidos MUST permanecer explícitos.
+- **RF-045**: O Assistente MUST oferecer histórico paginado de análises e metadados de chat,
+  com filtros; o histórico não restaura diálogos completos. Visitantes MUST receber o convite
+  padrão de conta, sem chamadas de IA. Mensagens e imagens MUST ficar fora dos logs e não
+  ser persistidas localmente pelo app.
+
 ## 4. Requisitos Não-Funcionais (RNFs)
 
 - **RNF-001 (Desempenho)**: O feed inicial MUST aparecer em até 2 s em 4G/Wi-Fi típico (cache ou
@@ -256,8 +272,8 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   altera. Notícia sem categoria MUST ser exibida normalmente, sem rótulo. *(Até a v2.0.0 esta
   regra tratava do `VeracityStatus`.)*
 - **RN-003 (Limites do visitante)**: O visitante pode ler notícias, ver Reels, fazer atividades e
-  usar a central de ajuda. Salvar notícia, curtir, alertas, perfil e editar dados exigem
-  conta: ao tentar, o app MUST mostrar um convite para entrar ou se cadastrar, **sem** chamar a
+  usar a central de ajuda. Salvar notícia, curtir, alertas, perfil, editar dados e o Assistente
+  de IA exigem conta: ao tentar, o app MUST mostrar um convite para entrar ou se cadastrar, **sem** chamar a
   API.
 - **RN-004 (Onboarding único)**: Depois de concluído ou pulado, o onboarding MUST NOT voltar a
   aparecer naquele aparelho (flag local).
@@ -348,8 +364,6 @@ não serem perdidos:
 - Notificações push e notificações do servidor.
 - Outros tipos de exercício: verdadeiro/falso, checklist, cenário e ordenação (dependem da API).
 - Lições teóricas separadas das perguntas.
-- IA: análise de mensagem/imagem suspeita, chat com assistente e histórico (endpoints
-  `/app/ai/*` já existem na API).
 - Contatos oficiais sincronizados com `GET /app/official-contacts`.
 - Desativar conta (`DELETE /users/me/deactivate`).
 
@@ -361,10 +375,13 @@ Este documento descreve requisitos de **negócio e produto**. Se um requisito ex
 [constitution.md](constitution.md), o requisito MUST ser redesenhado. Mudanças de escopo exigem
 nova versão e registro no changelog.
 
-**Versão**: 2.1.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-03
+**Versão**: 2.4.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-22
 
 ## Changelog
 
+- **2.4.0 (2026-10-22)**: Amanda Duara (dupla do TCC) aprova o Assistente de IA na v1;
+  adicionados RF-043 a RF-045 e UC-17, RN-003 inclui o Assistente entre o que exige conta, e
+  removida a exclusão vigente em §1.3/§8. Homologação real pendente.
 - **2.3.0 (2026-10-21)**: RN-006 estendida: o progresso do visitante na sessão é transferido para
   a conta se ele a criar sem fechar o app (descartado ao entrar numa conta existente); lição
   concluída = respondida, como no serviço. Decidido em `specs/015-painel-atividades`

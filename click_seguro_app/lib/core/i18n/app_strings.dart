@@ -76,6 +76,14 @@ abstract class AppStrings {
   static const String commonListen = 'common_listen';
   static const String commonStop = 'common_stop';
   static const String commonLoading = 'common_loading';
+  static const String commonPhotoGallery = 'common_photo_gallery';
+  static const String commonPhotoCamera = 'common_photo_camera';
+  static const String commonPhotoRemove = 'common_photo_remove';
+  static const String commonPhotoPermissionTitle =
+      'common_photo_permission_title';
+  static const String commonPhotoPermissionBody =
+      'common_photo_permission_body';
+  static const String commonPhotoPermissionOk = 'common_photo_permission_ok';
   static const String commonEmpty = 'common_empty';
   static const String commonOfflineBanner = 'common_offline_banner';
   static const String commonComingSoon = 'common_coming_soon';
@@ -254,7 +262,29 @@ abstract class AppStrings {
 
   // --- help ---
   static const String helpTitle = 'help_title';
-  static const String helpContactTitle = 'help_contact_title';
+  static const String helpTabOfficial = 'help_tab_official';
+  static const String helpTabPersonal = 'help_tab_personal';
+  static const String helpOfficialUnavailable = 'help_official_unavailable';
+  static const String helpPersonalEmpty = 'help_personal_empty';
+  static const String helpAddContact = 'help_add_contact';
+  static const String helpEditContact = 'help_edit_contact';
+  static const String helpName = 'help_name';
+  static const String helpPhone = 'help_phone';
+  static const String helpRelationship = 'help_relationship';
+  static const String helpPhoto = 'help_photo';
+  static const String helpChoosePhoto = 'help_choose_photo';
+  static const String helpSaveContact = 'help_save_contact';
+  static const String helpDeleteContact = 'help_delete_contact';
+  static const String helpDeleteConfirm = 'help_delete_confirm';
+  static const String helpCancel = 'help_cancel';
+  static const String helpConfirm = 'help_confirm';
+  static const String helpPhoneFallback = 'help_phone_fallback';
+  static const String helpCall = 'help_call';
+  static const String helpCopyNumber = 'help_copy_number';
+  static const String helpCopied = 'help_copied';
+  static const String helpNameRequired = 'help_name_required';
+  static const String helpPhoneInvalid = 'help_phone_invalid';
+  static const String helpContactMissing = 'help_contact_missing';
 
   // --- profile ---
   static const String profileTitle = 'profile_title';
@@ -326,9 +356,6 @@ abstract class AppStrings {
       'profile_edit_discard_confirm';
   static const String profileEditDiscardCancel = 'profile_edit_discard_cancel';
   static const String profilePhotoChange = 'profile_photo_change';
-  static const String profilePhotoGallery = 'profile_photo_gallery';
-  static const String profilePhotoCamera = 'profile_photo_camera';
-  static const String profilePhotoRemove = 'profile_photo_remove';
   static const String profilePhotoRemoveConfirmTitle =
       'profile_photo_remove_confirm_title';
   static const String profilePhotoRemoveConfirm =
@@ -337,11 +364,6 @@ abstract class AppStrings {
   static const String profilePhotoUploading = 'profile_photo_uploading';
   static const String profilePhotoFailed = 'profile_photo_failed';
   static const String profilePhotoInvalid = 'profile_photo_invalid';
-  static const String profilePhotoPermissionTitle =
-      'profile_photo_permission_title';
-  static const String profilePhotoPermissionBody =
-      'profile_photo_permission_body';
-  static const String profilePhotoPermissionOk = 'profile_photo_permission_ok';
 
   // --- settings ---
   static const String settingsTitle = 'settings_title';
@@ -454,6 +476,85 @@ abstract class AppStrings {
   static const String settingsPrivacyUseBody = 'settings_privacy_use_body';
   static const String settingsAboutGoal = 'settings_about_goal';
   static const String settingsAboutCredits = 'settings_about_credits';
+
+  // --- assistant ---
+  static const String assistantTitle = 'assistant_title';
+  static const String assistantSubtitle = 'assistant_subtitle';
+  static const String assistantHeaderDescription =
+      'assistant_header_description';
+  static const String assistantPrivacy = 'assistant_privacy';
+  static const String assistantTabChat = 'assistant_tab_chat';
+  static const String assistantTabVerify = 'assistant_tab_verify';
+  static const String assistantTabHistory = 'assistant_tab_history';
+  static const String assistantGuestTitle = 'assistant_guest_title';
+  static const String assistantGuestAction = 'assistant_guest_action';
+  static const String assistantGreeting = 'assistant_greeting';
+  static const String assistantChatIntro = 'assistant_chat_intro';
+  static const String assistantSuggestionLink = 'assistant_suggestion_link';
+  static const String assistantSuggestionPrize = 'assistant_suggestion_prize';
+  static const String assistantSuggestionBank = 'assistant_suggestion_bank';
+  static const String assistantChatPlaceholder = 'assistant_chat_placeholder';
+  static const String assistantChatSend = 'assistant_chat_send';
+  static const String assistantChatRetry = 'assistant_chat_retry';
+  static const String assistantNewConversation = 'assistant_new_conversation';
+  static const String assistantNewConversationTitle =
+      'assistant_new_conversation_title';
+  static const String assistantNewConversationBody =
+      'assistant_new_conversation_body';
+  static const String assistantNewConversationConfirm =
+      'assistant_new_conversation_confirm';
+  static const String assistantCancel = 'assistant_cancel';
+  static const String assistantCharacters = 'assistant_characters';
+  static const String assistantVerifyingTitle = 'assistant_verifying_title';
+  static const String assistantVerifyText = 'assistant_verify_text';
+  static const String assistantVerifyImage = 'assistant_verify_image';
+  static const String assistantSource = 'assistant_source';
+  static const String assistantSourceWhatsapp = 'assistant_source_whatsapp';
+  static const String assistantSourceSms = 'assistant_source_sms';
+  static const String assistantSourceEmail = 'assistant_source_email';
+  static const String assistantSourceOther = 'assistant_source_other';
+  static const String assistantTextPlaceholder = 'assistant_text_placeholder';
+  static const String assistantAnalyze = 'assistant_analyze';
+  static const String assistantImageGallery = 'assistant_image_gallery';
+  static const String assistantImageCamera = 'assistant_image_camera';
+  static const String assistantImageRemove = 'assistant_image_remove';
+  static const String assistantImageLimit = 'assistant_image_limit';
+  static const String assistantImagePermission = 'assistant_image_permission';
+  static const String assistantImagePickFailed = 'assistant_image_pick_failed';
+  static const String assistantAnalysisResult = 'assistant_analysis_result';
+  static const String assistantRisk = 'assistant_risk';
+  static const String assistantConfidence = 'assistant_confidence';
+  static const String assistantExplanation = 'assistant_explanation';
+  static const String assistantTips = 'assistant_tips';
+  static const String assistantUnavailable = 'assistant_unavailable';
+  static const String assistantUnknown = 'assistant_unknown';
+  static const String assistantThreatPhishing = 'assistant_threat_phishing';
+  static const String assistantThreatFakeNews = 'assistant_threat_fake_news';
+  static const String assistantThreatFinancialScam =
+      'assistant_threat_financial_scam';
+  static const String assistantThreatSocialEngineering =
+      'assistant_threat_social_engineering';
+  static const String assistantThreatSpam = 'assistant_threat_spam';
+  static const String assistantThreatSafe = 'assistant_threat_safe';
+  static const String assistantThreatUncertain = 'assistant_threat_uncertain';
+  static const String assistantStatusError = 'assistant_status_error';
+  static const String assistantStatusRateLimited =
+      'assistant_status_rate_limited';
+  static const String assistantHistoryAll = 'assistant_history_all';
+  static const String assistantHistoryAnalyses = 'assistant_history_analyses';
+  static const String assistantHistoryConversations =
+      'assistant_history_conversations';
+  static const String assistantHistoryConversationRecorded =
+      'assistant_history_conversation_recorded';
+  static const String assistantHistoryEmpty = 'assistant_history_empty';
+  static const String assistantHistoryEmptyFilter =
+      'assistant_history_empty_filter';
+  static const String assistantHistoryLoadMore = 'assistant_history_load_more';
+  static const String assistantInvalidInput = 'assistant_invalid_input';
+  static const String assistantInvalidImage = 'assistant_invalid_image';
+  static const String assistantProviderFailed = 'assistant_provider_failed';
+  static const String assistantParseFailed = 'assistant_parse_failed';
+  static const String assistantRateLimited = 'assistant_rate_limited';
 
   static const String errorGeneric = 'error_generic';
   static const String errorConnection = 'error_connection';

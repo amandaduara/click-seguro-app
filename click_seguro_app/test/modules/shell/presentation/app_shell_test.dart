@@ -17,6 +17,7 @@ import '../../../helpers/activities_dependencies.dart';
 import '../../../helpers/localized_app.dart';
 import '../../../helpers/news_detail_dependencies.dart';
 import '../../../helpers/feed_provider.dart';
+import '../../../helpers/help_dependencies.dart';
 import '../../../helpers/notifications_provider.dart';
 import '../../../helpers/reels_provider.dart';
 import '../../../helpers/splash_provider.dart';
@@ -28,6 +29,7 @@ void main() {
   setUp(() async {
     session = UserSessionService(FakeSecureStorageService());
     GetIt.instance.registerSingleton<UserSessionService>(session);
+    registerHelpDependencies(GetIt.instance);
     registerNewsDetailDependencies(GetIt.instance);
     registerActivitiesDependencies(GetIt.instance);
     await session.startGuestSession();

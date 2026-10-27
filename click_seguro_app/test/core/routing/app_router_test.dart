@@ -25,6 +25,7 @@ import '../../helpers/news_detail_dependencies.dart';
 import '../../helpers/profile_dependencies.dart';
 import '../../helpers/settings_dependencies.dart';
 import '../../helpers/feed_provider.dart';
+import '../../helpers/help_dependencies.dart';
 import '../../helpers/notifications_provider.dart';
 import '../../helpers/reels_provider.dart';
 import '../../helpers/splash_provider.dart';
@@ -36,6 +37,7 @@ void main() {
   setUp(() async {
     session = UserSessionService(FakeSecureStorageService());
     GetIt.instance.registerSingleton<UserSessionService>(session);
+    registerHelpDependencies(GetIt.instance);
     registerNewsDetailDependencies(GetIt.instance);
     registerProfileDependencies(GetIt.instance);
     registerSettingsDependencies(GetIt.instance);
@@ -83,8 +85,8 @@ void main() {
     };
     const overlayPaths = <String, Type>{
       '/activities/m1': LessonPage,
-      '/help/contact/new': HelpContactPage,
-      '/help/contact/c1': HelpContactPage,
+      '/help/contact/new': ContactFormPage,
+      '/help/contact/c1': ContactFormPage,
       '/profile/edit': ProfileEditPage,
       '/news/n1': NewsDetailPage,
       '/news/saved': UserNewsListPage,
@@ -132,7 +134,7 @@ void main() {
     ) async {
       await open(tester, '/help/contact/new');
 
-      final page = tester.widget<HelpContactPage>(find.byType(HelpContactPage));
+      final page = tester.widget<ContactFormPage>(find.byType(ContactFormPage));
       expect(page.contactId, isNull);
     });
   });

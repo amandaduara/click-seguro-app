@@ -1,0 +1,1 @@
+enum AiHistoryFeature { analyze, chat }
