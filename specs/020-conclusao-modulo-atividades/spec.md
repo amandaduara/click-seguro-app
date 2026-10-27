@@ -199,7 +199,9 @@ pergunta do mesmo módulo.
 - **FR-008**: "Criar conta" MUST abrir a tela de cadastro já no modo de criar conta; o progresso da
   sessão MUST ir para a conta nova se ela for criada sem fechar o app (RN-006 2.3.0, mecanismo da
   B1); terminado o cadastro, o app MUST abrir a aba Atividades (clarificação de 2026-10-27).
-  Entrar numa conta que já existe por essa tela segue o caminho normal do login.
+  Se, nessa mesma tela, a pessoa trocar para "Entrar" numa conta que já existe, também vai para a
+  aba Atividades (o progresso da sessão é descartado, RN-006). Voltar sem entrar segue para a
+  conclusão, como visitante.
 - **FR-009**: "Continuar sem conta" e o voltar do aparelho no aviso MUST seguir para a conclusão.
 - **FR-010**: "Refazer o módulo" MUST abrir a primeira pergunta do mesmo módulo.
 - **FR-011**: A tela de conclusão e o aviso MUST seguir o padrão de acessibilidade do app
