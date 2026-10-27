@@ -85,6 +85,30 @@ class _DashboardBodyState extends State<_DashboardBody>
   void onReturn() =>
       unawaited(context.read<ActivitiesDashboardController>().refresh());
 
+  final UserSessionService _session = GetIt.instance<UserSessionService>();
+
+  @override
+  void initState() {
+    super.initState();
+    _session.sessionStatus.addListener(_onSessionChanged);
+  }
+
+  @override
+  void dispose() {
+    _session.sessionStatus.removeListener(_onSessionChanged);
+    super.dispose();
+  }
+
+  /// Entrou ou saiu de uma conta com um módulo aberto (o login pelo aviso do
+  /// fim do módulo, specs/020): o login troca a pilha com `go`, a tela do
+  /// módulo sai sem "voltar" e o `push` nunca termina. Libera a trava do
+  /// toque duplo e recarrega com a sessão nova.
+  void _onSessionChanged() {
+    if (!mounted) return;
+    _opening = false;
+    onReturn();
+  }
+
   Future<void> _openModule(ModuleSummaryEntity module) async {
     if (_opening) return;
     _opening = true;

@@ -295,6 +295,35 @@ void main() {
       expect(find.byType(ActivitiesDashboardPage), findsOneWidget);
     });
 
+    testWidgets('a pilha trocada por go (login pelo aviso, specs/020) não '
+        'trava os próximos toques', (tester) async {
+      await session.logout();
+      await session.startGuestSession();
+      await open(tester);
+      await tester.tap(find.text('Golpes Digitais'));
+      await tester.pumpAndSettle();
+
+      // O aviso abre o login sobre as perguntas; a pessoa cria a conta e o
+      // login faz go para Atividades.
+      unawaited(router.push('/login'));
+      await tester.pumpAndSettle();
+      final int loadsBefore = repository.calls;
+      await session.saveSession(
+        accessToken: 'tk2',
+        refreshToken: 'rf2',
+        email: 'nova@exemplo.com',
+        newAccount: true,
+      );
+      router.go('/activities');
+      await tester.pumpAndSettle();
+      expect(repository.calls, greaterThan(loadsBefore));
+
+      await tester.tap(find.text('Golpes no WhatsApp'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities/m2'), findsOneWidget);
+    });
+
     testWidgets('módulo indisponível não abre nem é botão', (tester) async {
       repository = FakeActivitiesRepository([
         Right(
