@@ -54,6 +54,8 @@ página de login vai para `/activities` (R4) e a pilha das perguntas sai. Se vol
 
 **Rationale**: FR-007 a FR-009 e a clarificação 1; quem decide "com conta ou não" é a sessão
 (`UserSessionService.isAuthenticated`), como no resto das atividades; o aviso não chama a rede.
+Com a leitura automática ligada (B9), a `LessonPage` lê o título e o texto do aviso no lugar
+do feedback e para a leitura ao fechá-lo (achado no aparelho, T031).
 
 **Alternatives considered**: reaproveitar o `AccountRequiredSheet` do shell (outro texto e
 outros botões; e o `activities` não importa o `shell`).

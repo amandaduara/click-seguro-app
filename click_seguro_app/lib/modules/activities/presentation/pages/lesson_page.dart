@@ -186,7 +186,19 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     // feedback não pode continuar por cima deles (achado no aparelho).
     unawaited(_readAloud.stop());
     if (!GetIt.instance<UserSessionService>().isAuthenticated) {
+      // Com a leitura automática, o aviso é lido no lugar do feedback.
+      if (_autoReadEnabled) {
+        unawaited(
+          _readAloud.speak(
+            [
+              AppStrings.activitiesGuestAlertTitle.tr(),
+              AppStrings.activitiesGuestAlertBody.tr(),
+            ].join('\n'),
+          ),
+        );
+      }
       final GuestAlertAction? choice = await showGuestProgressAlert(context);
+      unawaited(_readAloud.stop());
       if (!mounted) return;
       if (choice == GuestAlertAction.createAccount) {
         // Entrando, o login vai para Atividades e esta tela sai da pilha;

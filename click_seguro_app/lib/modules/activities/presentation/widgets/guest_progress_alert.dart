@@ -9,7 +9,8 @@ import 'package:flutter/material.dart';
 enum GuestAlertAction { createAccount, continueWithoutAccount }
 
 /// Aviso antes da conclusão, só para quem está sem conta (RF-030, RN-006).
-/// Não lê sozinho e não chama a rede (R3 de specs/020).
+/// Não chama a rede; a leitura automática fica com a `LessonPage` (R3 de
+/// specs/020).
 Future<GuestAlertAction?> showGuestProgressAlert(BuildContext context) =>
     showModalBottomSheet<GuestAlertAction>(
       context: context,
