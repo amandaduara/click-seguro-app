@@ -121,10 +121,17 @@ class ActivitiesRepositoryImpl implements ActivitiesRepository {
     }
   }
 
-  /// Uma resposta por vez; o que falhar fica para a próxima carga.
+  /// Uma resposta por vez; o que falhar fica para a próxima carga. Sem
+  /// pendentes, não abre um envio: um envio vazio ainda em andamento seria
+  /// reaproveitado pelo do cadastro, e as respostas ficariam no aparelho
+  /// (specs/020).
   @override
-  Future<void> syncGuestAnswers() =>
-      _syncing ??= _sendPending().whenComplete(() => _syncing = null);
+  Future<void> syncGuestAnswers() {
+    if (_syncing == null && _store.pendingTransfer.isEmpty) {
+      return Future.value();
+    }
+    return _syncing ??= _sendPending().whenComplete(() => _syncing = null);
+  }
 
   Future<void> _sendPending() async {
     for (final GuestAnswer answer in _store.pendingTransfer) {

@@ -103,10 +103,17 @@ class _DashboardBodyState extends State<_DashboardBody>
   /// fim do módulo, specs/020): o login troca a pilha com `go`, a tela do
   /// módulo sai sem "voltar" e o `push` nunca termina. Libera a trava do
   /// toque duplo e recarrega com a sessão nova.
+  ///
+  /// O recarregamento espera os outros ouvintes da sessão: o registro do
+  /// visitante precisa pôr as respostas na fila de envio antes; recarregar
+  /// antes começava um envio vazio que o registro reaproveitava, e as
+  /// respostas não iam para a conta nova.
   void _onSessionChanged() {
     if (!mounted) return;
     _opening = false;
-    onReturn();
+    scheduleMicrotask(() {
+      if (mounted) onReturn();
+    });
   }
 
   Future<void> _openModule(ModuleSummaryEntity module) async {

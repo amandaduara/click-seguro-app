@@ -227,6 +227,33 @@ void main() {
       expect([for (final a in remote.sent) a.lessonId], ['l1', 'l2']);
     });
 
+    test(
+      'um envio vazio em andamento não engole o do cadastro (specs/020)',
+      () async {
+        await session.startGuestSession();
+        store.recordAnswer(
+          moduleId: 'm1',
+          lessonId: 'l1',
+          selectedOptionId: 'o1',
+          isCorrect: true,
+        );
+        // Alguém pede o envio antes de o registro pôr as respostas na fila.
+        final Future<void> early = repository.syncGuestAnswers();
+
+        await session.saveSession(
+          accessToken: 'tk',
+          refreshToken: 'rf',
+          email: 'nova@exemplo.com',
+          newAccount: true,
+        );
+        await early;
+        await pumpEventQueue();
+
+        expect([for (final a in remote.sent) a.lessonId], ['l1']);
+        expect(store.pendingTransfer, isEmpty);
+      },
+    );
+
     test('o cadastro dispara o envio sem abrir o painel', () async {
       await guestThenSignUp();
       await pumpEventQueue();

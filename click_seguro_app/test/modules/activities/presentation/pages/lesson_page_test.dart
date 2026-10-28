@@ -788,6 +788,29 @@ void main() {
       expect(find.text('Módulo concluído!'), findsOneWidget);
     });
 
+    testWidgets('"Ver resultado" para a leitura do feedback antes do aviso e '
+        'do login (achado no aparelho)', (tester) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await session.logout();
+      await session.startGuestSession();
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      // O feedback está sendo lido sozinho.
+      expect(find.text('Parar'), findsWidgets);
+      final int stopsBefore = tts.stopCalls;
+
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+      final int spokenBefore = tts.spoken.length;
+      await tester.tap(find.text('Criar conta'));
+      await tester.pumpAndSettle();
+      expect(find.text('page:/login'), findsOneWidget);
+      expect(tts.spoken, hasLength(spokenBefore));
+    });
+
     testWidgets('sessão que expira antes de "Ver resultado" → aviso '
         '(achado C1)', (tester) async {
       useModule(answered: {'l1', 'l2'});

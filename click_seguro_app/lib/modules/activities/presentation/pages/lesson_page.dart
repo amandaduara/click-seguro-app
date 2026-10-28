@@ -182,6 +182,9 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   Future<void> _finishModule() async {
     final ModuleDetailEntity? module = _controller.module;
     if (module == null) return;
+    // Esta tela fica embaixo do aviso, do login e da conclusão: a leitura do
+    // feedback não pode continuar por cima deles (achado no aparelho).
+    unawaited(_readAloud.stop());
     if (!GetIt.instance<UserSessionService>().isAuthenticated) {
       final GuestAlertAction? choice = await showGuestProgressAlert(context);
       if (!mounted) return;
