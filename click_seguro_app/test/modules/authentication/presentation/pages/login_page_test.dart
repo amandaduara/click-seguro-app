@@ -25,19 +25,24 @@ void main() {
     controller = buildAuthenticationController(repository);
   });
 
-  Future<void> pumpLogin(WidgetTester tester) => pumpLocalized(
+  Future<void> pumpLogin(
+    WidgetTester tester, {
+    LoginPage page = const LoginPage(),
+  }) => pumpLocalized(
     tester,
     router: GoRouter(
       initialLocation: '/login',
       routes: [
         GoRoute(
           path: '/login',
-          builder: (_, _) => ChangeNotifierProvider.value(
-            value: controller,
-            child: const LoginPage(),
-          ),
+          builder: (_, _) =>
+              ChangeNotifierProvider.value(value: controller, child: page),
         ),
         GoRoute(path: '/home', builder: (_, _) => const Text('HOME')),
+        GoRoute(
+          path: '/activities',
+          builder: (_, _) => const Text('ACTIVITIES'),
+        ),
       ],
     ),
   );
@@ -286,6 +291,44 @@ void main() {
       repository.gate!.complete();
       await tester.pumpAndSettle();
       expect(find.text('HOME'), findsOneWidget);
+    });
+  });
+
+  group('aberto pelo aviso das atividades (specs/020 R4)', () {
+    const LoginPage fromAlert = LoginPage(
+      initialMode: AuthMode.register,
+      next: '/activities',
+    );
+
+    testWidgets('abre direto em "Criar conta"', (tester) async {
+      await pumpLogin(tester, page: fromAlert);
+
+      expect(field('Seu nome'), findsOneWidget);
+      expect(find.byType(PasswordRulesList), findsOneWidget);
+    });
+
+    testWidgets('cadastro leva a Atividades, não ao Início', (tester) async {
+      await pumpLogin(tester, page: fromAlert);
+      await tester.enterText(field('Seu nome'), 'Maria Silva');
+      await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
+      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.pump();
+
+      await tapPrimary(tester, 'Criar conta');
+
+      expect(find.text('ACTIVITIES'), findsOneWidget);
+      expect(find.text('HOME'), findsNothing);
+    });
+
+    testWidgets('trocar para "Entrar" também leva a Atividades', (
+      tester,
+    ) async {
+      await pumpLogin(tester, page: const LoginPage(next: '/activities'));
+      await fillLogin(tester);
+
+      await tapPrimary(tester, 'Entrar');
+
+      expect(find.text('ACTIVITIES'), findsOneWidget);
     });
   });
 }

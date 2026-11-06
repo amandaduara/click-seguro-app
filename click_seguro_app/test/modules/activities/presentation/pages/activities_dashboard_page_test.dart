@@ -6,6 +6,8 @@ import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
+import 'package:click_seguro_app/modules/activities/domain/usecases/get_activities_dashboard_usecase.dart';
+import 'package:click_seguro_app/modules/activities/presentation/controller/activities_dashboard_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/activities_dashboard_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/module_card.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -295,6 +297,47 @@ void main() {
       expect(find.byType(ActivitiesDashboardPage), findsOneWidget);
     });
 
+    testWidgets('a pilha trocada por go (login pelo aviso, specs/020) não '
+        'trava os próximos toques', (tester) async {
+      await session.logout();
+      await session.startGuestSession();
+      await open(tester);
+      await tester.tap(find.text('Golpes Digitais'));
+      await tester.pumpAndSettle();
+
+      // O aviso abre o login sobre as perguntas; a pessoa cria a conta e o
+      // login faz go para Atividades.
+      unawaited(router.push('/login'));
+      await tester.pumpAndSettle();
+      final int loadsBefore = repository.calls;
+      await session.saveSession(
+        accessToken: 'tk2',
+        refreshToken: 'rf2',
+        email: 'nova@exemplo.com',
+        newAccount: true,
+      );
+      router.go('/activities');
+      await tester.pumpAndSettle();
+      expect(repository.calls, greaterThan(loadsBefore));
+
+      await tester.tap(find.text('Golpes no WhatsApp'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities/m2'), findsOneWidget);
+    });
+
+    testWidgets('a sessão que expira não recarrega na hora (revisão do PR)', (
+      tester,
+    ) async {
+      await open(tester);
+      final int loadsBefore = repository.calls;
+
+      await session.expire();
+      await tester.pumpAndSettle();
+
+      expect(repository.calls, loadsBefore);
+    });
+
     testWidgets('módulo indisponível não abre nem é botão', (tester) async {
       repository = FakeActivitiesRepository([
         Right(
@@ -426,6 +469,61 @@ void main() {
         findsOneWidget,
       );
     });
+  });
+
+  testWidgets('cadastro com o painel aberto: as respostas do visitante vão '
+      'antes de recarregar (specs/020, achado no aparelho)', (tester) async {
+    await session.logout();
+    await session.startGuestSession();
+    final FakeActivitiesRemoteDataSource remote =
+        FakeActivitiesRemoteDataSource();
+    GuestProgressStore? store;
+    addTearDown(() => store?.dispose());
+    // Como no app: o registro do visitante nasce quando o painel monta a
+    // lista, depois de o painel começar a ouvir a sessão.
+    GetIt.instance.registerFactory(() {
+      store ??= GuestProgressStore(session);
+      return ActivitiesDashboardController(
+        getDashboard: GetActivitiesDashboardUseCase(
+          ActivitiesRepositoryImpl(remote, store!, session),
+        ),
+      );
+    });
+    await pumpLocalized(
+      tester,
+      router: router,
+      providers: [fakeNotificationsProvider()],
+    );
+    store!
+      ..recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l1',
+        selectedOptionId: 'o1',
+        isCorrect: true,
+      )
+      ..recordAnswer(
+        moduleId: 'm1',
+        lessonId: 'l2',
+        selectedOptionId: 'o5',
+        isCorrect: false,
+      );
+    remote.calls.clear();
+
+    await session.saveSession(
+      accessToken: 'tk2',
+      refreshToken: 'rf2',
+      email: 'nova@exemplo.com',
+      newAccount: true,
+    );
+    await tester.pumpAndSettle();
+
+    expect(remote.calls.where((c) => c == 'answer'), hasLength(2));
+    expect(remote.calls.last, 'modules');
+    expect(
+      remote.calls.lastIndexOf('answer'),
+      lessThan(remote.calls.lastIndexOf('modules')),
+    );
+    expect(remote.calls.indexOf('modules'), greaterThan(1));
   });
 
   group('estados (US4)', () {

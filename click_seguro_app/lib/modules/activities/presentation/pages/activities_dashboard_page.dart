@@ -78,12 +78,45 @@ class _DashboardBodyState extends State<_DashboardBody>
   /// Evita abrir o mesmo módulo duas vezes com toque duplo (FR-005).
   bool _opening = false;
 
+  final UserSessionService _session = GetIt.instance<UserSessionService>();
+
   @override
   String get tabPath => ActivitiesDashboardPage.path;
 
   @override
   void onReturn() =>
       unawaited(context.read<ActivitiesDashboardController>().refresh());
+
+  @override
+  void initState() {
+    super.initState();
+    _session.sessionStatus.addListener(_onSessionChanged);
+  }
+
+  @override
+  void dispose() {
+    _session.sessionStatus.removeListener(_onSessionChanged);
+    super.dispose();
+  }
+
+  /// Entrou numa conta com um módulo aberto (o login pelo aviso do fim do
+  /// módulo, specs/020): o login troca a pilha com `go`, a tela do módulo
+  /// sai sem "voltar" e o `push` nunca termina. Libera a trava do toque
+  /// duplo e recarrega com a conta nova. Ao sair da conta ou expirar, só
+  /// libera a trava: a volta para a aba recarrega, como antes.
+  ///
+  /// O recarregamento espera os outros ouvintes da sessão: o registro do
+  /// visitante precisa pôr as respostas na fila de envio antes; recarregar
+  /// antes começava um envio vazio que o registro reaproveitava, e as
+  /// respostas não iam para a conta nova.
+  void _onSessionChanged() {
+    if (!mounted) return;
+    _opening = false;
+    if (!_session.isAuthenticated) return;
+    scheduleMicrotask(() {
+      if (mounted) onReturn();
+    });
+  }
 
   Future<void> _openModule(ModuleSummaryEntity module) async {
     if (_opening) return;

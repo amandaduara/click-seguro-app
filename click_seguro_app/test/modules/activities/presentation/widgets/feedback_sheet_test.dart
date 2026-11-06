@@ -37,6 +37,7 @@ void main() {
     WidgetTester tester, {
     AnswerResultEntity? answer,
     bool isLast = false,
+    bool completed = false,
     ModuleScoreEntity? score,
   }) async {
     await pumpLocalized(
@@ -51,6 +52,7 @@ void main() {
                   lesson: lesson,
                   result: answer ?? result(),
                   isLast: isLast,
+                  completed: completed,
                   score: score,
                 ),
               ),
@@ -150,6 +152,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(actions, [FeedbackAction.finish]);
+  });
+
+  testWidgets('na última, com o módulo concluído: "Ver resultado"', (
+    tester,
+  ) async {
+    await openSheet(tester, isLast: true, completed: true);
+
+    expect(find.text('Voltar às atividades'), findsNothing);
+    await tester.tap(find.text('Ver resultado'));
+    await tester.pumpAndSettle();
+
+    expect(actions, [FeedbackAction.result]);
   });
 
   testWidgets('dois toques rápidos fecham só o painel (achado U1)', (

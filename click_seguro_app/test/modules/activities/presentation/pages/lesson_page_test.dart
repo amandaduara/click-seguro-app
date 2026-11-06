@@ -10,6 +10,7 @@ import 'package:click_seguro_app/modules/activities/data/models/answer_result_mo
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
+import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/lesson_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/feedback_sheet.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
@@ -39,6 +40,9 @@ void main() {
   late AccessibilityPreferencesNotifier preferences;
   late GoRouter router;
 
+  /// Parâmetros com que a tela de login foi aberta (specs/020 US2).
+  Map<String, String>? loginQuery;
+
   void useModule({
     Set<String> answered = const {},
     List<Map<String, dynamic>>? lessons,
@@ -67,9 +71,17 @@ void main() {
         () => ReadAloudController(tts, preferences: preferences),
       );
     registerActivitiesDependencies(GetIt.instance, repository: repository);
+    loginQuery = null;
     router = GoRouter(
       initialLocation: '/activities/m1',
       routes: [
+        GoRoute(
+          path: '/login',
+          builder: (_, state) {
+            loginQuery = state.uri.queryParameters;
+            return const Scaffold(body: Text('page:/login'));
+          },
+        ),
         GoRoute(
           path: '/activities',
           builder: (_, _) => const Scaffold(body: Text('page:/activities')),
@@ -78,6 +90,14 @@ void main() {
               path: ':moduleId',
               builder: (_, state) =>
                   LessonPage(moduleId: state.pathParameters['moduleId']!),
+              routes: [
+                GoRoute(
+                  path: 'done',
+                  builder: (_, state) => CompletionPage(
+                    completion: state.extra as ModuleCompletion?,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -556,19 +576,6 @@ void main() {
         isTrue,
       );
     });
-
-    testWidgets('na última, "Voltar às atividades" volta ao painel', (
-      tester,
-    ) async {
-      useModule(answered: {'l1', 'l2'});
-      await open(tester);
-
-      await answer(tester, 'Ignorar');
-      await tester.tap(find.text('Voltar às atividades'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('page:/activities'), findsOneWidget);
-    });
   });
 
   group('responder de novo (specs/018 US4)', () {
@@ -625,6 +632,339 @@ void main() {
         );
       },
     );
+  });
+
+  group('conclusão (specs/020 US1)', () {
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('com conta: "Ver resultado" → conclusão, sem aviso', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2'});
+      repository.moduleDetailResults = [
+        ...repository.moduleDetailResults,
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(
+              answered: {'l1', 'l2', 'l3'},
+              score: 2,
+              totalScore: 3,
+            ),
+          ).toEntity(),
+        ),
+      ];
+      await open(tester);
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
+
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Guarde seu progresso'), findsNothing);
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+      expect(find.text('Você acertou 2 de 3'), findsOneWidget);
+    });
+
+    Future<void> reachCompletion(WidgetTester tester) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Voltar às atividades" → painel de atividades', (
+      tester,
+    ) async {
+      await reachCompletion(tester);
+
+      await tester.scrollUntilVisible(
+        find.text('Voltar às atividades'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Voltar às atividades'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities'), findsOneWidget);
+    });
+
+    testWidgets('voltar do aparelho na conclusão → painel de atividades', (
+      tester,
+    ) async {
+      await reachCompletion(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities'), findsOneWidget);
+    });
+
+    testWidgets('sem todas respondidas, a 2ª pergunta segue para a próxima', (
+      tester,
+    ) async {
+      useModule(answered: {'l1'});
+      await open(tester);
+
+      await answer(tester, 'Ignorar');
+
+      expect(find.text('Próxima pergunta'), findsOneWidget);
+      expect(find.text('Ver resultado'), findsNothing);
+    });
+  });
+
+  group('visitante (specs/020 US2)', () {
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    /// Visitante com a 1 e a 2 respondidas, na 3, que acaba de responder e
+    /// toca em "Ver resultado".
+    Future<void> finishAsGuest(WidgetTester tester) async {
+      await session.logout();
+      await session.startGuestSession();
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('aviso antes da conclusão; continuar → conclusão', (
+      tester,
+    ) async {
+      await finishAsGuest(tester);
+
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
+      expect(find.text('Módulo concluído!'), findsNothing);
+
+      await tester.tap(find.text('Continuar sem conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+
+    testWidgets('voltar no aviso → conclusão', (tester) async {
+      await finishAsGuest(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+
+    testWidgets('"Criar conta" abre o login em cadastro, voltando para '
+        'Atividades (achado A1)', (tester) async {
+      await finishAsGuest(tester);
+
+      await tester.tap(find.text('Criar conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/login'), findsOneWidget);
+      expect(loginQuery?['mode'], 'register');
+      expect(loginQuery?['next'], '/activities');
+    });
+
+    testWidgets('voltar do login sem entrar → conclusão como visitante', (
+      tester,
+    ) async {
+      await finishAsGuest(tester);
+      await tester.tap(find.text('Criar conta'));
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+
+    testWidgets('leitura automática: o aviso troca a leitura do feedback e '
+        'para ao ir para o login (achados no aparelho)', (tester) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await session.logout();
+      await session.startGuestSession();
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      // O feedback está sendo lido sozinho.
+      expect(find.text('Parar'), findsWidgets);
+      final int stopsBefore = tts.stopCalls;
+
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+      expect(
+        tts.spoken.last.text,
+        'Guarde seu progresso\nSem conta, seu progresso vale só até fechar '
+        'o app. Crie uma conta agora e ele fica guardado.',
+      );
+      final int spokenBefore = tts.spoken.length;
+      final int stopsOnAlert = tts.stopCalls;
+      await tester.tap(find.text('Criar conta'));
+      await tester.pumpAndSettle();
+      expect(find.text('page:/login'), findsOneWidget);
+      expect(tts.stopCalls, greaterThan(stopsOnAlert));
+      expect(tts.spoken, hasLength(spokenBefore));
+    });
+
+    testWidgets('sem leitura automática, o aviso não lê sozinho', (
+      tester,
+    ) async {
+      await finishAsGuest(tester);
+
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
+      expect(tts.spoken, isEmpty);
+    });
+
+    testWidgets('sessão que expira antes de "Ver resultado" → aviso '
+        '(achado C1)', (tester) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+
+      await session.expire();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
+    });
+  });
+
+  group('refazer (specs/020 US4)', () {
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Refazer o módulo" volta à primeira pergunta, sem marcação', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+      final int loadsBefore = repository.moduleDetailCalls;
+      // Recarregado, o serviço manda as três respondidas.
+      useModule(answered: {'l1', 'l2', 'l3'});
+
+      await tester.scrollUntilVisible(
+        find.text('Refazer o módulo'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.text('Refazer o módulo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Refazer o módulo'));
+      await tester.pumpAndSettle();
+
+      expect(repository.moduleDetailCalls, greaterThan(loadsBefore));
+      await tester.scrollUntilVisible(
+        find.text('Pergunta 1 de 3'),
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      expect(
+        tester
+            .widgetList<LessonOptionCard>(find.byType(LessonOptionCard))
+            .every((c) => c.state == LessonOptionState.idle),
+        isTrue,
+      );
+
+      // Responder as três de novo leva à conclusão outra vez.
+      for (final String option in ['Ignorar e denunciar', 'Ignorar']) {
+        await answer(tester, option);
+        await tester.tap(find.text('Próxima pergunta'));
+        await tester.pumpAndSettle();
+      }
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+  });
+
+  group('polimento (specs/020 T023)', () {
+    Future<void> finishAsGuest(
+      WidgetTester tester, {
+      Locale locale = const Locale('pt', 'BR'),
+      ThemeData? theme,
+      String confirm = 'Confirmar resposta',
+      String result = 'Ver resultado',
+    }) async {
+      await session.logout();
+      await session.startGuestSession();
+      useModule(answered: {'l1', 'l2'});
+      await pumpLocalized(tester, router: router, locale: locale, theme: theme);
+      await reveal(tester, find.text('Ignorar'));
+      await tester.tap(find.text('Ignorar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(confirm));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(result),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text(result));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('celular, letra 2× e alto contraste: aviso e conclusão', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2340)
+        ..devicePixelRatio = 3;
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await finishAsGuest(tester, theme: AppTheme.highContrastTheme);
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Continuar sem conta'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Continuar sem conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('em inglês', (tester) async {
+      await finishAsGuest(
+        tester,
+        locale: const Locale('en', 'US'),
+        confirm: 'Confirm answer',
+        result: 'See result',
+      );
+
+      expect(find.text('Keep your progress'), findsOneWidget);
+      await tester.tap(find.text('Continue without an account'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Module completed!'), findsOneWidget);
+    });
   });
 
   group('polimento (specs/018 T038)', () {

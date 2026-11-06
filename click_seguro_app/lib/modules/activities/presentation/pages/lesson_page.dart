@@ -10,16 +10,20 @@ import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
+import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/answer_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/lesson_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/confirm_answer_footer.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/feedback_sheet.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/guest_progress_alert.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_progress_indicator.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -151,6 +155,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       lesson: lesson,
       result: result,
       isLast: _controller.isLastLesson,
+      completed: _controller.isModuleCompleted,
       score: _controller.score,
       listen: _listenButton(spoken),
     );
@@ -164,8 +169,54 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
         _controller.goNext();
       case FeedbackAction.finish:
         context.pop();
+      case FeedbackAction.result:
+        await _finishModule();
       case null:
         unawaited(_readAloud.stop());
+    }
+  }
+
+  /// Fim do módulo (specs/020): sem conta, o aviso antes (RN-006); depois a
+  /// conclusão, de onde refazer recarrega o módulo e voltar sai das
+  /// perguntas.
+  Future<void> _finishModule() async {
+    final ModuleDetailEntity? module = _controller.module;
+    if (module == null) return;
+    // Esta tela fica embaixo do aviso, do login e da conclusão: a leitura do
+    // feedback não pode continuar por cima deles (achado no aparelho).
+    unawaited(_readAloud.stop());
+    if (!GetIt.instance<UserSessionService>().isAuthenticated) {
+      // Com a leitura automática, o aviso é lido no lugar do feedback.
+      if (_autoReadEnabled) {
+        unawaited(
+          _readAloud.speak(
+            [
+              AppStrings.activitiesGuestAlertTitle.tr(),
+              AppStrings.activitiesGuestAlertBody.tr(),
+            ].join('\n'),
+          ),
+        );
+      }
+      final GuestAlertAction? choice = await showGuestProgressAlert(context);
+      unawaited(_readAloud.stop());
+      if (!mounted) return;
+      if (choice == GuestAlertAction.createAccount) {
+        // Entrando, o login vai para Atividades e esta tela sai da pilha;
+        // voltando sem entrar, segue para a conclusão como visitante.
+        await context.push<void>('/login?mode=register&next=/activities');
+        if (!mounted) return;
+      }
+    }
+    final CompletionAction? action = await context.push<CompletionAction>(
+      '/activities/${widget.moduleId}/done',
+      extra: ModuleCompletion(title: module.title, score: _controller.score),
+    );
+    if (!mounted) return;
+    switch (action) {
+      case CompletionAction.redo:
+        unawaited(_controller.load(widget.moduleId));
+      case CompletionAction.finish || null:
+        context.pop();
     }
   }
 
