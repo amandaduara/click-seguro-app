@@ -270,7 +270,15 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `QuizController` (seleção, confirmar, feedback, avançar, pontuação), com teste.
   - `MultipleChoiceWidget` (sem reordenar as opções), `ConfirmAnswerFooter` e `FeedbackSheet`
     (acerto/erro, correta destacada, explicação). Com widget tests.
-- [ ] **B4 Atividades: conclusão e aviso de login** (RF-029, RF-030, RN-005, RN-006)
+- [x] **B4 Atividades: conclusão e aviso de login** (RF-029, RF-030, RN-005, RN-006) (specs/020-conclusao-modulo-atividades)
+  - Entregue (2026-11-06): na última pergunta, com o módulo todo respondido, o feedback mostra
+    "Ver resultado" e abre a conclusão (`/activities/:moduleId/done`): troféu, pontuação e
+    mensagem por faixa, "Compartilhar" (`ShareService`), "Refazer o módulo" e leitura automática
+    uma vez. A conclusão usa a pontuação da B3 (`ModuleDetailEntity.score`), sem pedido novo.
+    O visitante vê o aviso "Guarde seu progresso" **a cada módulo concluído**, lido sozinho com a
+    leitura automática. "Criar conta" abre `/login?mode=register&next=/activities` (parâmetros
+    opcionais novos no `authentication`); no cadastro, as respostas vão para a conta nova
+    (RN-006). O painel ouve a sessão para destravar e recarregar depois do login (T028–T029).
   - `CompletionPage` (pontuação `score/totalScore` da API, ou do `GuestProgressStore` para
     visitante; compartilhar conquista via `ShareService`).
   - `GuestProgressAlert` antes da conclusão, para visitante, com botões "Criar conta" (o progresso
