@@ -326,6 +326,18 @@ void main() {
       expect(find.text('page:/activities/m2'), findsOneWidget);
     });
 
+    testWidgets('a sessão que expira não recarrega na hora (revisão do PR)', (
+      tester,
+    ) async {
+      await open(tester);
+      final int loadsBefore = repository.calls;
+
+      await session.expire();
+      await tester.pumpAndSettle();
+
+      expect(repository.calls, loadsBefore);
+    });
+
     testWidgets('módulo indisponível não abre nem é botão', (tester) async {
       repository = FakeActivitiesRepository([
         Right(
