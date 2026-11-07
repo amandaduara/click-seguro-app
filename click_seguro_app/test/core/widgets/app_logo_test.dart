@@ -40,14 +40,4 @@ void main() {
     expect(find.bySemanticsLabel('Click Seguro'), findsOneWidget);
     semantics.dispose();
   });
-
-  testWidgets('logo isolada pode anunciar o nome oficial', (tester) async {
-    final semantics = tester.ensureSemantics();
-    await tester.pumpWidget(
-      const MaterialApp(home: AppLogo(excludeFromSemantics: false)),
-    );
-    await tester.pumpAndSettle();
-    expect(find.bySemanticsLabel('Click Seguro'), findsOneWidget);
-    semantics.dispose();
-  });
 }

@@ -194,7 +194,7 @@ void main() {
       expect(find.byType(BackButton), findsOneWidget);
       expect(
         find.byWidgetPredicate(
-          (widget) => widget is SafeStateIllustration && widget.isError,
+          (widget) => widget is SafeStateIllustration && !widget.isError,
         ),
         findsOneWidget,
       );

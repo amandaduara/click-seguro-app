@@ -38,4 +38,4 @@ flutter:
   assets:
     - assets/translations/
     - assets/data/official_contacts.json
-    - assets/branding/
+    - assets/branding/click_seguro_logo.png

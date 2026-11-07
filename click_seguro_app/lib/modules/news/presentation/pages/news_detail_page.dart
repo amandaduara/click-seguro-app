@@ -285,7 +285,7 @@ class _NotFound extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SafeStateIllustration(
-            isError: true,
+            isError: false,
             icon: LucideIcons.newspaper,
           ),
           const SizedBox(height: AppSpacing.s3),

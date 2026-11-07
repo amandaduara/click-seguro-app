@@ -4,7 +4,7 @@
 
 Identidade visual oficial: **Click Seguro**. A prioridade máxima registrada em
 27/10/2026 é aplicar a logo oficial, unificar o nome e ilustrar estados de erro e
-vazio. Implementação e validação em [specs/017-identidade-visual/tasks.md](specs/017-identidade-visual/tasks.md).
+vazio. Implementação e validação em [specs/021-identidade-visual/tasks.md](specs/021-identidade-visual/tasks.md).
 
 A fonte da logo fica em `click_seguro_app/assets/branding/click_seguro_logo.svg`.
 Para gerar novamente PNGs, ícones e imagens de abertura, execute

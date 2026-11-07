@@ -34,7 +34,7 @@ do Assistente de IA. A mudança não altera a integração da API.
 - [x] AAPT2 vinculou os recursos com a plataforma Android 35 e confirmou o rótulo
   Click Seguro e o ícone adaptativo. Esse pacote contém somente recursos de
   validação, sem código do app, e não substitui o APK instalável.
-- [x] Conferir visualmente a [prévia dos componentes reais](../../click_seguro_app/previews/click-seguro-branding-states.png).
+- [x] Conferir visualmente a [prévia dos componentes reais](previews/click-seguro-branding-states.png).
 - [ ] Gerar APK e validar ícone/abertura no aparelho: a primeira tentativa foi
   bloqueada pela gravação do lock do Gradle em `~/.gradle`, somente leitura.
   A tentativa com cache gravável em `/tmp/pi-app-gradle`, offline e sem daemon,
@@ -61,8 +61,7 @@ intacto; arquivos de cache graváveis foram preparados em `/tmp`.
 
 ## Continuação — suíte completa e estados próprios de notícias
 
-- **1.397 testes aprovados**, em 133 arquivos, sem falhas no resultado final:
-  [resumo por arquivo](evidencias/test-summary.json).
+- **1.397 testes aprovados**, em 133 arquivos, sem falhas no resultado final.
 - Cada arquivo foi executado em um processo separado do Flutter Tester para
   preservar o isolamento entre suites. Após a revisão, foram reexecutados os
   arquivos afetados: detalhe de notícia (50 testes), listas pessoais (22) e
