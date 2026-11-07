@@ -2,7 +2,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.dart';
-import 'package:click_seguro_app/modules/profile/presentation/widgets/profile_avatar.dart';
+import 'package:click_seguro_app/core/widgets/person_avatar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -90,7 +90,7 @@ class ProfileHeaderCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: colors.shadowSm,
                     ),
-                    child: ProfileAvatar(
+                    child: PersonAvatar(
                       initials: profile.initials,
                       imageUrl: profile.avatarUrl,
                       size: _avatarSize,

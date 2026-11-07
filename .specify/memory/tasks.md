@@ -7,7 +7,7 @@
 **Criado em**: 2026-09-07
 
 **Insumos**: [constitution.md](constitution.md) v1.2.0 · [specification.md](specification.md)
-v2.3.0 · [plan.md](plan.md) v2.2.0 · [api-contract.md](api-contract.md) v1.1.1 ·
+v2.4.0 · [plan.md](plan.md) v2.2.0 · [api-contract.md](api-contract.md) v1.1.1 ·
 [openapi.json](openapi.json) · wireframe em `wireframe/` (React, referência visual) ·
 [guia de integração](../../click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md) · divisão em trilhas
 do wireframe do Lovable
@@ -220,7 +220,14 @@ Módulos: `splash`, `onboarding`, `authentication`, `news`, `notifications`.
 
 Módulos: `activities`, `help`, `profile`, `settings`.
 
-- [ ] **B1 Atividades: painel** (RF-023, CB-012)
+- [x] **B1 Atividades: painel** (RF-023, CB-012) (specs/015-painel-atividades)
+  - Entregue (2026-10-21): cartões em duas colunas com letra 100% e uma coluna com letra maior;
+    aviso do visitante com "Entrar ou criar conta"; uma lição conta como concluída ao ser
+    respondida, certa ou errada (como no servidor, contrato 1.0.10). **RN-006 estendida:** o
+    progresso do visitante continua só em memória, mas, se ele **criar uma conta** sem fechar o
+    app, as respostas são reenviadas à conta nova (`saveSession(newAccount: true)` →
+    `startedFromSignUp`); ao entrar numa conta existente, é descartado. **A B3 deve gravar cada
+    resposta do visitante com `GuestProgressStore.recordAnswer`** (módulo `activities`).
   - Endpoint: `GET /app/educational/modules` (o progresso já vem junto).
   - `ModuleSummaryEntity` (`completedCount`, `progressPercent`) e `ActivitiesDashboardEntity`
     (totais) + models, com teste.
@@ -232,7 +239,13 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `ActivitiesDashboardController` com teste.
   - Extension de status (rótulo, cor, ícone) com teste.
   - `ModuleCardWidget` e `ActivitiesDashboardPage`, com widget test.
-- [ ] **B2 Atividades: navegação pelas perguntas** (RF-024, RF-040, CB-012)
+- [x] **B2 Atividades: navegação pelas perguntas** (RF-024, RF-040, CB-012) (specs/017-perguntas-atividades)
+  - Entregue (2026-10-22): abre na primeira pergunta não respondida; "Anterior" livre e "Próxima"
+    só com a atual respondida (**a B3 precisa marcar a lição como respondida para liberar o
+    avanço**); leitura automática a cada pergunta que aparece; botão "Ouvir" compartilhado em
+    `core/widgets/listen_button.dart` (o detalhe da notícia também usa). `explanation` e o
+    `progress` do módulo (pontuação) **não** entraram nas entidades: a B3/B4 acrescentam quando
+    usarem. Corrigido no `common`: `ReadAloudController.stop()` para o motor antes de avisar.
   - Endpoint: `GET /app/educational/modules/{moduleId}`.
   - `ModuleDetailEntity`, `LessonEntity` (pergunta, imagem, opções, concluída) e
     `ModuleProgressEntity` + models, com teste (lição com < 2 opções descartada).
@@ -240,7 +253,16 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `LessonController` (pergunta atual, avançar/voltar, concluídas) com teste.
   - `LessonPage` (enunciado, imagem, alternativas, ouvir enunciado + alternativas e leitura
     automática), com widget test.
-- [ ] **B3 Atividades: resposta e feedback** (RF-025 a RF-028, RN-005)
+- [x] **B3 Atividades: resposta e feedback** (RF-025 a RF-028, RN-005) (specs/018-resposta-feedback-atividades)
+  - Entregue (2026-10-27): escolher e confirmar no rodapé; painel de feedback que só fecha pelo
+    botão ou pelo voltar do aparelho (acerto/erro, correta, explicação, pontuação "X de Y
+    acertos"); responder de novo é livre (vale a mais recente); leitura automática do feedback.
+    **Sem `QuizController` nem `MultipleChoiceWidget`:** a resposta entrou no `LessonController`
+    e no `LessonOptionCard` da B2 (R1/R8). Cada `GET` do módulo reembaralha as alternativas, então
+    depois de responder só a pontuação é relida. **Para a B4:** `ModuleDetailEntity.score` já
+    existe (com conta, do serviço; sem conta, do `GuestProgressStore`, que agora guarda
+    `isCorrect`); a última pergunta leva a "Voltar às atividades", destino que a B4 troca pela
+    conclusão e pelo aviso de login; `progress.isCompleted` continua fora.
   - Endpoint: `POST /app/educational/modules/{moduleId}/lessons/{lessonId}/answer`.
   - `AnswerResultEntity` `{isCorrect, correctOptionId, explanation}` + model, com teste.
   - `AnswerLessonUseCase` (cadastrado: depois recarrega o `progress`; visitante: registra no
@@ -248,15 +270,24 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `QuizController` (seleção, confirmar, feedback, avançar, pontuação), com teste.
   - `MultipleChoiceWidget` (sem reordenar as opções), `ConfirmAnswerFooter` e `FeedbackSheet`
     (acerto/erro, correta destacada, explicação). Com widget tests.
-- [ ] **B4 Atividades: conclusão e aviso de login** (RF-029, RF-030, RN-005, RN-006)
+- [x] **B4 Atividades: conclusão e aviso de login** (RF-029, RF-030, RN-005, RN-006) (specs/020-conclusao-modulo-atividades)
+  - Entregue (2026-11-06): na última pergunta, com o módulo todo respondido, o feedback mostra
+    "Ver resultado" e abre a conclusão (`/activities/:moduleId/done`): troféu, pontuação e
+    mensagem por faixa, "Compartilhar" (`ShareService`), "Refazer o módulo" e leitura automática
+    uma vez. A conclusão usa a pontuação da B3 (`ModuleDetailEntity.score`), sem pedido novo.
+    O visitante vê o aviso "Guarde seu progresso" **a cada módulo concluído**, lido sozinho com a
+    leitura automática. "Criar conta" abre `/login?mode=register&next=/activities` (parâmetros
+    opcionais novos no `authentication`); no cadastro, as respostas vão para a conta nova
+    (RN-006). O painel ouve a sessão para destravar e recarregar depois do login (T028–T029).
   - `CompletionPage` (pontuação `score/totalScore` da API, ou do `GuestProgressStore` para
     visitante; compartilhar conquista via `ShareService`).
-  - `GuestProgressAlert` antes da conclusão, para visitante, com botões "Criar conta" e "Continuar
-    sem salvar".
+  - `GuestProgressAlert` antes da conclusão, para visitante, com botões "Criar conta" (o progresso
+    da sessão vai para a conta nova, RN-006 2.3.0) e "Continuar sem conta" (o progresso vale até
+    fechar o app).
   - Widget tests dos dois fluxos (cadastrado e visitante).
-- [ ] **B6 Central de ajuda** (RF-031 a RF-034, RN-007, RNF-008, CB-009, CB-010)
-  - Definir a lista de contatos oficiais com a orientação do TCC (ex.: 190, 197, Procon, canais
-    de bancos) em `assets/data/official_contacts.json`.
+- [ ] **B6 Central de ajuda** (RF-031 a RF-034, RN-007, RNF-008, CB-009, CB-010) (specs/019-central-ajuda)
+  - Pendente: RF-031 depende da orientação do TCC para a lista de contatos oficiais (polícia,
+    bancos, Procon e canais anti-golpe) em `assets/data/official_contacts.json`.
   - `ContactEntity` (oficial/pessoal) + models, com teste.
   - `OfficialContactsLocalDataSource` (asset) e `PersonalContactsLocalDataSource`
     (`LocalCacheService` + `ImageStorageService`), com teste.
@@ -322,15 +353,13 @@ Módulos: `activities`, `help`, `profile`, `settings`.
     Configurações dele mostram só Leitura e aparência (Acessibilidade, Idioma) e Sobre, sem
     convite e sem pedido ao serviço. Ler sozinho nas perguntas fica para a B2, que deve ler
     `autoReadAloud` como a notícia já faz e citar as atividades no subtítulo da chave.
+- [ ] **B10 Assistente de IA** (RF-043 a RF-045) (specs/016-assistente-ia)
+  - Escopo aprovado em 2026-10-22 por Amanda Duara (dupla do TCC), incluindo registro,
+    rota e acesso pelo cabeçalho compartilhado; substitui o adiamento de 2026-10-03.
+  - Implementado (chat, análise de texto/imagem e histórico, com testes).
+  - Pendente: homologação autenticada dos endpoints e do seletor/permissões de imagem reais.
 
 ---
-
-- [ ] **B10 Assistente de IA** (RF-043 a RF-045) (specs/016-assistente-ia)
-  - Escopo aprovado em 2026-10-22 pelo usuário solicitante nesta sessão, incluindo registro,
-    rota e acesso pelo cabeçalho compartilhado; substitui o adiamento de 2026-10-03.
-  - Implementação e ajustes técnicos validados: 107 testes direcionados e regressões;
-    análise sem erros/warnings, cabeçalho e convite padrão conferidos no Pixel_4.
-  - Homologação autenticada dos endpoints e seletor/permissões de imagem reais ainda pendentes.
 
 ## Fase C — Integração (as duas pessoas)
 
@@ -374,8 +403,8 @@ Dependências entre trilhas (as únicas):
 
 ## Notas
 
-- **Decisão de escopo de 2026-10-22 — PR #21:** usuário solicitante nesta sessão aprovou
-  explicitamente IA na v1 ("pode aprovar"). Incluída B10, RF-043 a RF-045 e registro no plano;
+- **Decisão de escopo de 2026-10-22 — PR #21:** Amanda Duara (dupla do TCC) aprovou
+  IA na v1. Incluída B10, RF-043 a RF-045 e registro no plano;
   revogado o adiamento de IA de 2026-10-03. Endpoints seguem 🧪 até homologação real.
 - **Fora da v1 (decisão 2026-10-03, atualizada em 2026-10-22):** contatos oficiais pela
   API, desativar conta e os quatro tipos de exercício que a API não tem. Ver §8 da

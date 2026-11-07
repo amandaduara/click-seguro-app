@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.1.1 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-22
+**Versão**: 1.1.2 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-27
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -153,7 +153,7 @@ bloco de atividade relacionada (RF-018).
 
 ### Assistente de IA — v1 aprovada (módulo `assistant`, PR #21)
 
-Inclusão na v1 aprovada em 2026-10-22 pelo usuário solicitante nesta sessão, após o review
+Inclusão na v1 aprovada em 2026-10-22 por Amanda Duara (dupla do TCC), após o review
 de 2026-10-21. A aprovação de escopo não altera o status 🧪: requests reais seguem pendentes.
 
 | Status | Método e caminho | Auth | Uso |
@@ -202,12 +202,19 @@ próprio app gera os alertas a partir das notícias novas, sem backend:
 
 | Status | Método e caminho | Auth | Uso |
 |---|---|---|---|
-| 🧪 | `GET /app/educational/modules` → `{modules[], totalLessonsCompleted, totalLessonsAvailable}` | opcional | RF-023 |
-| 🧪 | `GET /app/educational/modules/{moduleId}` → `moduleDetail` | opcional | RF-024, RF-025 |
-| 🧪 | `POST /app/educational/modules/{moduleId}/lessons/{lessonId}/answer` `{selectedOptionId}` → `{isCorrect, correctOptionId, explanation?}` | opcional | RF-026, RF-028 |
+| ✅ | `GET /app/educational/modules` → `{modules[], totalLessonsCompleted, totalLessonsAvailable}` | opcional | RF-023 |
+| ✅ | `GET /app/educational/modules/{moduleId}` → `moduleDetail` | opcional | RF-024, RF-025 |
+| ✅ | `POST /app/educational/modules/{moduleId}/lessons/{lessonId}/answer` `{selectedOptionId}` → `{isCorrect, correctOptionId, explanation?}` | opcional | RF-026, RF-028 |
 
 Erros: 404 `EDUCATIONAL_MODULE_NOT_FOUND`, 404 `EDUCATIONAL_LESSON_NOT_FOUND`,
-400 `EDUCATIONAL_INVALID_OPTION`.
+400 `EDUCATIONAL_INVALID_OPTION`. ⚠️ Conferido em 2026-10-19: `selectedOptionId` que não é CUID dá
+400 `VALIDATION_ERROR` (`errors[{field: 'selectedOptionId'}]`), não `EDUCATIONAL_INVALID_OPTION`.
+
+**Conferido no servidor real (2026-10-19, specs/015-painel-atividades R0)**:
+- Uma lição conta como **concluída ao ser respondida**, certa ou errada (`completedCount` sobe com
+  resposta errada; `score` não).
+- `progress.totalScore` vem **0** até a primeira resposta da conta no módulo (depois, o número de
+  lições). A B4 não deve mostrar "0 de 0".
 
 `moduleSummary`: `{ id, title, description, order, iconUrl?, lessonsCount, completedCount,
 progressPercent }` (ordenados por `order`; progresso zerado sem token).
@@ -222,7 +229,10 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
   lição teórica separada nem outros tipos de exercício.
 - A **correção é do servidor**: o app não recebe `isCorrect` das opções, envia a escolha e
   recebe o resultado com a explicação.
-- As opções **já vêm embaralhadas** a cada request (RF-027 atendido pela API).
+- As opções **já vêm embaralhadas** a cada request (RF-027 atendido pela API). Conferido em
+  2026-10-22 (specs/018 R0): dois `GET` seguidos do mesmo módulo trazem as alternativas em outra
+  ordem; por isso, depois de responder, o app só lê a pontuação do detalhe e não troca as lições
+  da tela.
 - A **pontuação é do servidor**: `progress.score`/`totalScore`, considerando a resposta **mais
   recente** de cada lição (não a melhor).
 - Sem token, `answer` corrige mas **não salva**. O progresso do visitante fica em memória
@@ -272,7 +282,11 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 ## Changelog
 
-- **1.1.1 (2026-10-22)**: usuário solicitante nesta sessão aprova inclusão do Assistente na v1
+- **1.1.2 (2026-10-27)**: resposta das atividades conferida no servidor real
+  (specs/018-resposta-feedback-atividades R0): `answer` → `{isCorrect, correctOptionId,
+  explanation}`; alternativa de outra lição → 400 `EDUCATIONAL_INVALID_OPTION`; lição que não
+  existe → 404 `EDUCATIONAL_LESSON_NOT_FOUND`; cada `GET` do módulo reembaralha as alternativas.
+- **1.1.1 (2026-10-22)**: Amanda Duara (dupla do TCC) aprova inclusão do Assistente na v1
   (RF-043 a RF-045, B10). Revogado o adiamento de IA de 2026-10-03; endpoints continuam 🧪.
 - **1.1.0 (2026-10-20, proposta da PR #21)**: integração de IA no cliente a partir do Swagger local,
   com aprovação de escopo ainda pendente conforme o review de 2026-10-21:
@@ -280,6 +294,10 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
   foi validado. Histórico não restaura diálogo, respostas completas ficam somente em memória e o
   app não persiste localmente mensagens ou imagens.
 
+- **1.0.10 (2026-10-19)**: atividades conferidas no servidor real (specs/015-painel-atividades
+  R0): os três endpoints de atividades passam a ✅; visitante recebe 200 sem token com progresso
+  zerado; resposta errada conta como lição concluída; vale a resposta mais recente para o
+  `score`; `totalScore` 0 até a 1ª resposta; opção que não é CUID → 400 `VALIDATION_ERROR`.
 - **1.0.9 (2026-10-14)**: troca de senha conferida no servidor real (specs/013-configuracoes R0):
   401/409/400 como no contrato; depois da troca o `refreshToken` anterior é recusado (401
   `TOKEN_INVALID`) e o `accessToken` continua valendo até vencer. `PATCH /users/me

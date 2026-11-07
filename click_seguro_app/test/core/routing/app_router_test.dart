@@ -19,11 +19,13 @@ import '../../modules/authentication/fakes/controller_factory.dart';
 import '../../modules/authentication/fakes/fake_auth_repository.dart';
 import '../../modules/authentication/fakes/forgot_password_controller_factory.dart';
 import '../../helpers/accessibility_provider.dart';
+import '../../helpers/activities_dependencies.dart';
 import '../../helpers/localized_app.dart';
 import '../../helpers/news_detail_dependencies.dart';
 import '../../helpers/profile_dependencies.dart';
 import '../../helpers/settings_dependencies.dart';
 import '../../helpers/feed_provider.dart';
+import '../../helpers/help_dependencies.dart';
 import '../../helpers/notifications_provider.dart';
 import '../../helpers/reels_provider.dart';
 import '../../helpers/splash_provider.dart';
@@ -35,9 +37,11 @@ void main() {
   setUp(() async {
     session = UserSessionService(FakeSecureStorageService());
     GetIt.instance.registerSingleton<UserSessionService>(session);
+    registerHelpDependencies(GetIt.instance);
     registerNewsDetailDependencies(GetIt.instance);
     registerProfileDependencies(GetIt.instance);
     registerSettingsDependencies(GetIt.instance);
+    registerActivitiesDependencies(GetIt.instance);
     await session.startGuestSession();
     router = buildAppRouter(session);
   });
@@ -73,16 +77,16 @@ void main() {
   group('caminhos do plano do produto', () {
     const tabPaths = <String, Type>{
       '/home': NewsHomePage,
-      '/activities': ActivitiesPage,
+      '/activities': ActivitiesDashboardPage,
       '/reels': ReelsPage,
       '/reels?start=n1': ReelsPage,
       '/help': HelpPage,
       '/profile': ProfilePage,
     };
     const overlayPaths = <String, Type>{
-      '/activities/m1': ActivityModulePage,
-      '/help/contact/new': HelpContactPage,
-      '/help/contact/c1': HelpContactPage,
+      '/activities/m1': LessonPage,
+      '/help/contact/new': ContactFormPage,
+      '/help/contact/c1': ContactFormPage,
       '/profile/edit': ProfileEditPage,
       '/news/n1': NewsDetailPage,
       '/news/saved': UserNewsListPage,
@@ -117,6 +121,16 @@ void main() {
       });
     });
 
+    testWidgets('/activities/m1/done sem dados volta, sem erro (specs/020)', (
+      tester,
+    ) async {
+      await open(tester, '/activities/m1/done');
+
+      expect(find.byType(CompletionPage), findsNothing);
+      expect(find.byType(NotFoundPage), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('subtelas de configurações têm o próprio título', (
       tester,
     ) async {
@@ -130,7 +144,7 @@ void main() {
     ) async {
       await open(tester, '/help/contact/new');
 
-      final page = tester.widget<HelpContactPage>(find.byType(HelpContactPage));
+      final page = tester.widget<ContactFormPage>(find.byType(ContactFormPage));
       expect(page.contactId, isNull);
     });
   });

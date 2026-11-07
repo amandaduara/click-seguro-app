@@ -541,4 +541,49 @@ void main() {
       expect(session.profileVersion.value, 0);
     });
   });
+
+  group('conta criada (specs/015 R4)', () {
+    Future<void> save({bool? newAccount}) => newAccount == null
+        ? session.saveSession(
+            accessToken: 't',
+            refreshToken: 'r',
+            email: 'u@exemplo.com',
+          )
+        : session.saveSession(
+            accessToken: 't',
+            refreshToken: 'r',
+            email: 'u@exemplo.com',
+            newAccount: newAccount,
+          );
+
+    test('cadastro: startedFromSignUp já vale dentro do ouvinte', () async {
+      bool? seen;
+      session.sessionStatus.addListener(
+        () => seen ??= session.startedFromSignUp,
+      );
+
+      await save(newAccount: true);
+
+      expect(seen, isTrue);
+      expect(session.startedFromSignUp, isTrue);
+    });
+
+    test('login (padrão) → falso', () async {
+      await save();
+
+      expect(session.startedFromSignUp, isFalse);
+    });
+
+    test('restaurar, visitante e sair voltam a falso', () async {
+      await save(newAccount: true);
+      expect((await reopen()).startedFromSignUp, isFalse);
+
+      await session.startGuestSession();
+      expect(session.startedFromSignUp, isFalse);
+
+      await save(newAccount: true);
+      await session.logout();
+      expect(session.startedFromSignUp, isFalse);
+    });
+  });
 }

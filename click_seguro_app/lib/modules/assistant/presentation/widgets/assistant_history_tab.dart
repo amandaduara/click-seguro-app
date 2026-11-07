@@ -55,30 +55,26 @@ class _HistoryFilters extends StatelessWidget {
             AppStrings.assistantHistoryConversations,
           ),
         ]) ...[
-          Semantics(
-            button: true,
-            selected: controller.historyFilter == filter,
-            label: label.tr(),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 48),
-              child: ChoiceChip(
-                label: Text(label.tr()),
-                selected: controller.historyFilter == filter,
-                onSelected: (_) => controller.setHistoryFilter(filter),
-                labelStyle: TextStyle(
-                  color: controller.historyFilter == filter
-                      ? context.colors.textPrimaryForeground
-                      : context.colors.textMutedForeground,
-                  fontWeight: FontWeight.w600,
-                ),
-                selectedColor: context.colors.secondary,
-                backgroundColor: context.colors.input,
-                side: BorderSide(color: context.colors.border),
-                showCheckmark: false,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s2,
-                  vertical: AppSpacing.s1,
-                ),
+          // O ChoiceChip já se anuncia com o rótulo e o estado selecionado.
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: ChoiceChip(
+              label: Text(label.tr()),
+              selected: controller.historyFilter == filter,
+              onSelected: (_) => controller.setHistoryFilter(filter),
+              labelStyle: TextStyle(
+                color: controller.historyFilter == filter
+                    ? context.colors.textPrimaryForeground
+                    : context.colors.textMutedForeground,
+                fontWeight: FontWeight.w600,
+              ),
+              selectedColor: context.colors.secondary,
+              backgroundColor: context.colors.input,
+              side: BorderSide(color: context.colors.border),
+              showCheckmark: false,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s2,
+                vertical: AppSpacing.s1,
               ),
             ),
           ),

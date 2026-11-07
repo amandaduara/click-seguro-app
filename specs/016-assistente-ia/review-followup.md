@@ -4,9 +4,8 @@ Referência: review de `amandaduara` em 2026-10-21, sobre o commit `f1bcf939`.
 
 ## Decisão de escopo
 
-Em 2026-10-22, o usuário solicitante nesta sessão respondeu "pode aprovar" à pendência de
-inclusão de IA na v1. A aprovação foi registrada como decisão do solicitante; não foi atribuída
-à revisora nem interpretada como homologação dos endpoints ou aprovação de merge.
+Em 2026-10-22, Amanda Duara (dupla do TCC) aprovou a inclusão de IA na v1 (confirmado por ela
+em 2026-10-27, na revisão da PR #21). A aprovação não é homologação dos endpoints.
 
 - Item 1: decisão registrada com data e responsável; criados RF-043 a RF-045 e tarefa B10,
   removida a exclusão vigente de IA de §1.3/§8 e das notas globais.

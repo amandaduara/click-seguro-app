@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/refresh_on_return.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -141,56 +142,15 @@ class _AccountProfile extends StatefulWidget {
   State<_AccountProfile> createState() => _AccountProfileState();
 }
 
-/// Atualiza ao voltar à aba (FR-007, R4): a aba fica viva no shell, então
-/// ouve o roteador e recarrega quando o caminho volta a ser `/profile`
-/// (troca de aba ou volta de uma tela aberta daqui).
-class _AccountProfileState extends State<_AccountProfile> {
-  GoRouterDelegate? _delegate;
-  String? _lastPath;
+/// Atualiza ao voltar à aba (FR-007, R4): troca de aba ou volta de uma tela
+/// aberta daqui (`RefreshOnReturnMixin`, R6 de specs/015).
+class _AccountProfileState extends State<_AccountProfile>
+    with RefreshOnReturnMixin<_AccountProfile> {
+  @override
+  String get tabPath => ProfilePage.path;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final GoRouterDelegate delegate = GoRouter.of(context).routerDelegate;
-    if (delegate == _delegate) return;
-    _delegate?.removeListener(_onRouteChanged);
-    _delegate = delegate..addListener(_onRouteChanged);
-    _lastPath = _currentPath;
-  }
-
-  String? get _currentPath => _delegate?.currentConfiguration.uri.path;
-
-  void _onRouteChanged() {
-    final String? path = _currentPath;
-    final bool returned =
-        path == ProfilePage.path && _lastPath != ProfilePage.path;
-    _lastPath = path;
-    if (returned && mounted) _refresh();
-  }
-
-  /// Quantas vezes a aba já atualizou: evita atualizar duas vezes na volta.
-  int _refreshes = 0;
-
-  void _refresh() {
-    _refreshes++;
-    unawaited(context.read<ProfileController>().refresh());
-  }
-
-  /// Abre uma tela sobre a aba e atualiza na volta. O `pop` não avisa o
-  /// roteador; se um dia avisar, o ouvinte já atualizou e nada se repete.
-  Future<void> _open(String location, {Object? extra}) async {
-    final int before = _refreshes;
-    await context.push<void>(location, extra: extra);
-    if (!mounted || _refreshes != before) return;
-    _lastPath = _currentPath;
-    _refresh();
-  }
-
-  @override
-  void dispose() {
-    _delegate?.removeListener(_onRouteChanged);
-    super.dispose();
-  }
+  void onReturn() => unawaited(context.read<ProfileController>().refresh());
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +165,7 @@ class _AccountProfileState extends State<_AccountProfile> {
         ),
         ProfileStatus.loaded => _LoadedProfile(
           controller: controller,
-          open: _open,
+          open: pushAndRefresh,
         ),
       },
     );

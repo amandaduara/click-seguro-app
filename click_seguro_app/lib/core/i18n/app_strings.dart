@@ -73,7 +73,17 @@ abstract class AppStrings {
 
   // --- common ---
   static const String commonTryAgain = 'common_try_again';
+  static const String commonListen = 'common_listen';
+  static const String commonStop = 'common_stop';
   static const String commonLoading = 'common_loading';
+  static const String commonPhotoGallery = 'common_photo_gallery';
+  static const String commonPhotoCamera = 'common_photo_camera';
+  static const String commonPhotoRemove = 'common_photo_remove';
+  static const String commonPhotoPermissionTitle =
+      'common_photo_permission_title';
+  static const String commonPhotoPermissionBody =
+      'common_photo_permission_body';
+  static const String commonPhotoPermissionOk = 'common_photo_permission_ok';
   static const String commonEmpty = 'common_empty';
   static const String commonOfflineBanner = 'common_offline_banner';
   static const String commonComingSoon = 'common_coming_soon';
@@ -160,8 +170,6 @@ abstract class AppStrings {
   static const String newsReelsThousand = 'news_reels_thousand';
   static const String newsDecimalSeparator = 'news_decimal_separator';
   static const String newsErrorNotFound = 'news_error_not_found';
-  static const String newsDetailListen = 'news_detail_listen';
-  static const String newsDetailStop = 'news_detail_stop';
   static const String newsDetailSpeed = 'news_detail_speed';
   static const String newsDetailSpeedSlow = 'news_detail_speed_slow';
   static const String newsDetailSpeedNormal = 'news_detail_speed_normal';
@@ -211,10 +219,92 @@ abstract class AppStrings {
   // --- activities ---
   static const String activitiesTitle = 'activities_title';
   static const String activitiesModuleTitle = 'activities_module_title';
+  static const String activitiesOverallTitle = 'activities_overall_title';
+  static const String activitiesOverallCount = 'activities_overall_count';
+  static const String activitiesModuleCount = 'activities_module_count';
+  static const String activitiesModuleUnavailable =
+      'activities_module_unavailable';
+  static const String activitiesStatusNotStarted =
+      'activities_status_not_started';
+  static const String activitiesStatusInProgress =
+      'activities_status_in_progress';
+  static const String activitiesStatusCompleted = 'activities_status_completed';
+  static const String activitiesStatusUnavailable =
+      'activities_status_unavailable';
+  static const String activitiesGuestNotice = 'activities_guest_notice';
+  static const String activitiesGuestAction = 'activities_guest_action';
+  static const String activitiesEmptyTitle = 'activities_empty_title';
+  static const String activitiesEmptyBody = 'activities_empty_body';
+  static const String activitiesErrorTitle = 'activities_error_title';
+  static const String activitiesSlow = 'activities_slow';
+  static const String activitiesLessonPosition = 'activities_lesson_position';
+  static const String activitiesLessonProgressSemantics =
+      'activities_lesson_progress_semantics';
+  static const String activitiesLessonPrevious = 'activities_lesson_previous';
+  static const String activitiesLessonNext = 'activities_lesson_next';
+  static const String activitiesLessonOptionSpoken =
+      'activities_lesson_option_spoken';
+  static const String activitiesAnswerConfirm = 'activities_answer_confirm';
+  static const String activitiesAnswerAgain = 'activities_answer_again';
+  static const String activitiesAnswerFailed = 'activities_answer_failed';
+  static const String activitiesAnswerRejected = 'activities_answer_rejected';
+  static const String activitiesFeedbackCorrect = 'activities_feedback_correct';
+  static const String activitiesFeedbackWrong = 'activities_feedback_wrong';
+  static const String activitiesFeedbackCorrectOption =
+      'activities_feedback_correct_option';
+  static const String activitiesFeedbackExplanation =
+      'activities_feedback_explanation';
+  static const String activitiesFeedbackScore = 'activities_feedback_score';
+  static const String activitiesFeedbackNext = 'activities_feedback_next';
+  static const String activitiesFeedbackFinish = 'activities_feedback_finish';
+  static const String activitiesOptionCorrect = 'activities_option_correct';
+  static const String activitiesOptionWrong = 'activities_option_wrong';
+  static const String activitiesFeedbackResult = 'activities_feedback_result';
+  static const String activitiesCompletionTitle = 'activities_completion_title';
+  static const String activitiesCompletionScore = 'activities_completion_score';
+  static const String activitiesCompletionPerfect =
+      'activities_completion_perfect';
+  static const String activitiesCompletionGood = 'activities_completion_good';
+  static const String activitiesCompletionRetry = 'activities_completion_retry';
+  static const String activitiesCompletionShare = 'activities_completion_share';
+  static const String activitiesCompletionRedo = 'activities_completion_redo';
+  static const String activitiesCompletionShareText =
+      'activities_completion_share_text';
+  static const String activitiesCompletionShareTextNoScore =
+      'activities_completion_share_text_no_score';
+  static const String activitiesGuestAlertTitle =
+      'activities_guest_alert_title';
+  static const String activitiesGuestAlertBody = 'activities_guest_alert_body';
+  static const String activitiesGuestAlertCreate =
+      'activities_guest_alert_create';
+  static const String activitiesGuestAlertContinue =
+      'activities_guest_alert_continue';
 
   // --- help ---
   static const String helpTitle = 'help_title';
-  static const String helpContactTitle = 'help_contact_title';
+  static const String helpTabOfficial = 'help_tab_official';
+  static const String helpTabPersonal = 'help_tab_personal';
+  static const String helpOfficialUnavailable = 'help_official_unavailable';
+  static const String helpPersonalEmpty = 'help_personal_empty';
+  static const String helpAddContact = 'help_add_contact';
+  static const String helpEditContact = 'help_edit_contact';
+  static const String helpName = 'help_name';
+  static const String helpPhone = 'help_phone';
+  static const String helpRelationship = 'help_relationship';
+  static const String helpPhoto = 'help_photo';
+  static const String helpChoosePhoto = 'help_choose_photo';
+  static const String helpSaveContact = 'help_save_contact';
+  static const String helpDeleteContact = 'help_delete_contact';
+  static const String helpDeleteConfirm = 'help_delete_confirm';
+  static const String helpCancel = 'help_cancel';
+  static const String helpConfirm = 'help_confirm';
+  static const String helpPhoneFallback = 'help_phone_fallback';
+  static const String helpCall = 'help_call';
+  static const String helpCopyNumber = 'help_copy_number';
+  static const String helpCopied = 'help_copied';
+  static const String helpNameRequired = 'help_name_required';
+  static const String helpPhoneInvalid = 'help_phone_invalid';
+  static const String helpContactMissing = 'help_contact_missing';
 
   // --- profile ---
   static const String profileTitle = 'profile_title';
@@ -286,9 +376,6 @@ abstract class AppStrings {
       'profile_edit_discard_confirm';
   static const String profileEditDiscardCancel = 'profile_edit_discard_cancel';
   static const String profilePhotoChange = 'profile_photo_change';
-  static const String profilePhotoGallery = 'profile_photo_gallery';
-  static const String profilePhotoCamera = 'profile_photo_camera';
-  static const String profilePhotoRemove = 'profile_photo_remove';
   static const String profilePhotoRemoveConfirmTitle =
       'profile_photo_remove_confirm_title';
   static const String profilePhotoRemoveConfirm =
@@ -297,11 +384,6 @@ abstract class AppStrings {
   static const String profilePhotoUploading = 'profile_photo_uploading';
   static const String profilePhotoFailed = 'profile_photo_failed';
   static const String profilePhotoInvalid = 'profile_photo_invalid';
-  static const String profilePhotoPermissionTitle =
-      'profile_photo_permission_title';
-  static const String profilePhotoPermissionBody =
-      'profile_photo_permission_body';
-  static const String profilePhotoPermissionOk = 'profile_photo_permission_ok';
 
   // --- settings ---
   static const String settingsTitle = 'settings_title';

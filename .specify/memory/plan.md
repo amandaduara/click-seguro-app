@@ -9,7 +9,7 @@
 **Status**: Rascunho (Draft)
 
 **Alinhado a**: [constitution.md](constitution.md) v1.2.0 (o COMO), [specification.md](specification.md)
-v2.3.0 (o QUE, com IDs `RF-/RNF-/RN-/CB-`) e [api-contract.md](api-contract.md) v1.1.1
+v2.4.0 (o QUE, com IDs `RF-/RNF-/RN-/CB-`) e [api-contract.md](api-contract.md) v1.1.1
 (resumo do [openapi.json](openapi.json) da API real). Como escrever cada camada está no
 [guia de integração](../../click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md). Este plano diz **o
 que** existe e **onde**; o guia diz **como** escrever.
@@ -72,7 +72,7 @@ B5 do wireframe ("tela antiga de atividades") não tem equivalente no Flutter: s
 (B1–B4) é implementado.
 
 **Decisão de 2026-10-22 (PR #21, `specs/016-assistente-ia`):** inclusão do Assistente na v1
-aprovada pelo usuário solicitante nesta sessão. Requisitos RF-043 a RF-045.
+aprovada por Amanda Duara (dupla do TCC). Requisitos RF-043 a RF-045.
 
 ### 1.2 Estrutura interna de cada módulo
 

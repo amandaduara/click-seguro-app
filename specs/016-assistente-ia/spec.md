@@ -4,7 +4,7 @@
 
 Oferecer orientação sobre segurança digital e permitir verificar textos ou imagens suspeitas usando os endpoints v1 de IA da API.
 
-**Decisão de escopo — 2026-10-22:** usuário solicitante nesta sessão aprovou explicitamente
+**Decisão de escopo — 2026-10-22:** Amanda Duara (dupla do TCC) aprovou explicitamente
 a inclusão do Assistente na v1 ("pode aprovar"), após a pendência levantada no review da PR #21.
 Esta decisão substitui o adiamento de 2026-10-03 e inclui registro, rota e acesso pelo cabeçalho
 compartilhado. Requisitos globais RF-043 a RF-045, tarefa B10. Homologação real ainda pendente.

@@ -47,7 +47,6 @@ Future<void> main() async {
 /// pelo teste de fumaça.
 List<ModuleInterface> appModules() => [
   CommonModule(),
-  AssistantModule(),
   SettingsModule(),
   AuthenticationModule(),
   OnboardingModule(),
@@ -55,6 +54,7 @@ List<ModuleInterface> appModules() => [
   NewsModule(),
   NotificationsModule(),
   ActivitiesModule(),
+  AssistantModule(),
   HelpModule(),
   ProfileModule(),
   ShellModule(),

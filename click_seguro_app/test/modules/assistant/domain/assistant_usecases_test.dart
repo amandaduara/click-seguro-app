@@ -71,7 +71,6 @@ final _analysis = AiAnalysisEntity(
   confidence: null,
   explanation: null,
   tips: [],
-  source: null,
   status: AiAnalysisStatus.success,
   createdAt: DateTime.utc(2026),
 );

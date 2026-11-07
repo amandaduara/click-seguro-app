@@ -37,18 +37,6 @@ import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_news_repository.dart';
 import '../../fakes/news_detail_controller_factory.dart';
 
-/// Segura o resultado até [gate] terminar, para tocar duas vezes seguidas.
-class _GatedShareService extends FakeShareService {
-  Completer<void>? gate;
-
-  @override
-  Future<ShareOutcome> shareText(String text, {String? subject}) async {
-    final outcome = await super.shareText(text, subject: subject);
-    await gate?.future;
-    return outcome;
-  }
-}
-
 class _GatedLauncherService extends FakeExternalLauncherService {
   Completer<void>? gate;
 
@@ -62,7 +50,7 @@ class _GatedLauncherService extends FakeExternalLauncherService {
 
 void main() {
   late UserSessionService session;
-  late _GatedShareService share;
+  late FakeShareService share;
   late _GatedLauncherService launcher;
   late FakeNewsRepository repository;
   late FakeTextToSpeechService tts;
@@ -73,7 +61,7 @@ void main() {
     session = UserSessionService(FakeSecureStorageService());
     tts = FakeTextToSpeechService();
     preferences = AccessibilityPreferencesNotifier();
-    share = _GatedShareService();
+    share = FakeShareService();
     launcher = _GatedLauncherService();
     GetIt.instance
       ..registerSingleton<UserSessionService>(session)

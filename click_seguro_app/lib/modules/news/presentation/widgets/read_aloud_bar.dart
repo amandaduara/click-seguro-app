@@ -1,12 +1,9 @@
-import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
-import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_detail_presentation_extension.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Botão "Ouvir"/"Parar" e seletor de velocidade (lenta, normal, rápida) do
 /// detalhe (RF-015, FR-005 a FR-007, FR-010). Some sem voz no idioma do app,
@@ -37,26 +34,14 @@ class ReadAloudBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!isAvailable) return const SizedBox.shrink();
-    final String label =
-        (isSpeaking ? AppStrings.newsDetailStop : AppStrings.newsDetailListen)
-            .tr();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: AppSpacing.s5),
-        Semantics(
-          button: true,
-          label: label,
-          excludeSemantics: true,
-          child: SafeButton(
-            key: listenKey,
-            label: label,
-            tone: isSpeaking
-                ? SafeButtonTone.secondary
-                : SafeButtonTone.primary,
-            icon: Icon(isSpeaking ? LucideIcons.square : LucideIcons.volume2),
-            onPressed: onToggle,
-          ),
+        ListenButton(
+          key: listenKey,
+          isSpeaking: isSpeaking,
+          onPressed: onToggle,
         ),
         const SizedBox(height: AppSpacing.s3),
         Semantics(

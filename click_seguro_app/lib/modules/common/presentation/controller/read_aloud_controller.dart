@@ -69,10 +69,14 @@ class ReadAloudController extends ChangeNotifier {
     if (generation == _generation) _setSpeaking(false);
   }
 
+  /// O motor recebe o "parar" antes do aviso: quem ouve o "parado" pode
+  /// começar outra leitura na hora (leitura automática da próxima pergunta),
+  /// e ela não pode ser cancelada por este parar (revisão de specs/017).
   Future<void> stop() async {
     _generation++;
+    final Future<void> stopping = _tts.stop();
     _setSpeaking(false);
-    await _tts.stop();
+    await stopping;
   }
 
   void setSpeed(ReadingSpeed speed) {

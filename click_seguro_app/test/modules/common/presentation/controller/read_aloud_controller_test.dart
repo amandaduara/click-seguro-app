@@ -75,6 +75,29 @@ void main() {
     expect(controller.isSpeaking, isFalse);
   });
 
+  test(
+    'parar manda o motor parar antes de avisar quem ouve (specs/017)',
+    () async {
+      // Quem ouve o "parado" pode começar outra leitura na hora (leitura
+      // automática da próxima pergunta); o parar não pode cancelá-la.
+      await controller.prepare(portuguese);
+      unawaited(controller.speak('pergunta 1'));
+      int? stopsWhenNotified;
+      void readNext() {
+        if (controller.isSpeaking || stopsWhenNotified != null) return;
+        stopsWhenNotified = tts.stopCalls;
+        unawaited(controller.speak('pergunta 2'));
+      }
+
+      controller.addListener(readNext);
+      await controller.stop();
+
+      expect(stopsWhenNotified, 1);
+      expect(tts.spoken.last.text, 'pergunta 2');
+      expect(controller.isSpeaking, isTrue);
+    },
+  );
+
   test('5. ao terminar, volta a "parado" sozinho', () async {
     await controller.prepare(portuguese);
     final reading = controller.speak('texto');

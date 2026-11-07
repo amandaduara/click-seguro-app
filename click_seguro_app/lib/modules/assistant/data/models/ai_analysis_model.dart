@@ -14,7 +14,6 @@ class AiAnalysisModel {
         confidence: (json['confidence'] as num?)?.toDouble(),
         explanation: json['explanation'] as String?,
         tips: (json['tips'] as List).cast<String>(),
-        source: json['source'] as String?,
         status: _status(json['status'] as String),
         createdAt: DateTime.parse(json['createdAt'] as String),
       ),
