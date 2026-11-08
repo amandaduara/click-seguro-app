@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,8 @@ class OnboardingPageIndicator extends StatelessWidget {
       children: List.generate(pageCount, (index) {
         final bool isActive = index == currentPage;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: AppMotion.of(context).medium,
+          curve: AppMotion.standard,
           margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s1),
           width: isActive ? 24 : 8,
           height: 8,

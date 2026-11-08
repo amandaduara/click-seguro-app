@@ -118,7 +118,7 @@ class ClickSeguroApp extends StatelessWidget {
             ),
             // Movimento de todas as telas (specs/022 FR-008 a FR-010).
             child: AppMotionScope(
-              appReduceMotion: false,
+              appReduceMotion: preferences.reduceMotion,
               // Ícones escuros na barra de status; os Reels trocam para
               // claros sobre o fundo preto (FR-031).
               child: AnnotatedRegion<SystemUiOverlayStyle>(

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:click_seguro_app/core/constants/app_identity.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
@@ -99,11 +100,16 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
 
   void _scrollChatToEnd() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _chatScroll.hasClients) {
+      if (!mounted || !_chatScroll.hasClients) return;
+      final double end = _chatScroll.position.maxScrollExtent;
+      final Duration duration = AppMotion.of(context).medium;
+      if (duration == Duration.zero) {
+        _chatScroll.jumpTo(end);
+      } else {
         _chatScroll.animateTo(
-          _chatScroll.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
+          end,
+          duration: duration,
+          curve: AppMotion.standard,
         );
       }
     });

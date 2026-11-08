@@ -337,6 +337,8 @@
   "settings_accessibility_section_appearance": "Appearance",
   "settings_accessibility_high_contrast": "High contrast",
   "settings_accessibility_high_contrast_sub": "Stronger colors for easier reading",
+  "settings_accessibility_reduce_motion": "Reduce motion",
+  "settings_accessibility_reduce_motion_sub": "Screen changes and effects without movement",
   "settings_accessibility_section_voice": "Read aloud",
   "settings_accessibility_auto_read": "Read automatically",
   "settings_accessibility_auto_read_sub": "When you open a news story or an activity question, the app starts reading on its own",

@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'app_page_transitions.dart';
 import 'app_palette.dart';
 import 'app_spacing.dart';
 
@@ -16,6 +18,31 @@ abstract class AppTheme {
       extensions: [palette],
       fontFamily: 'Montserrat',
       scaffoldBackgroundColor: palette.background,
+
+      // Telas empilhadas: volta preditiva no Android, deslize no iOS; corte
+      // seco com o movimento reduzido (specs/022 R4).
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: MotionAwareTransitionsBuilder(
+            PredictiveBackPageTransitionsBuilder(),
+          ),
+          TargetPlatform.iOS: MotionAwareTransitionsBuilder(
+            CupertinoPageTransitionsBuilder(),
+          ),
+          TargetPlatform.macOS: MotionAwareTransitionsBuilder(
+            CupertinoPageTransitionsBuilder(),
+          ),
+          TargetPlatform.windows: MotionAwareTransitionsBuilder(
+            ZoomPageTransitionsBuilder(),
+          ),
+          TargetPlatform.linux: MotionAwareTransitionsBuilder(
+            ZoomPageTransitionsBuilder(),
+          ),
+          TargetPlatform.fuchsia: MotionAwareTransitionsBuilder(
+            ZoomPageTransitionsBuilder(),
+          ),
+        },
+      ),
 
       // Customização das Cores ---
       colorScheme: ColorScheme.light(

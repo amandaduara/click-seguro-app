@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
@@ -96,6 +97,7 @@ class _SafeButtonState extends State<SafeButton> {
   @override
   Widget build(BuildContext context) {
     final style = _toneStyle;
+    final AppMotion motion = AppMotion.of(context);
     final opacity = _isDisabled ? 0.4 : 1.0;
 
     final content = Row(
@@ -157,14 +159,15 @@ class _SafeButtonState extends State<SafeButton> {
         onTap: _isDisabled ? null : widget.onPressed,
         child: AnimatedScale(
           scale: _pressed ? 0.95 : 1.0,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
+          duration: motion.short,
+          curve: AppMotion.standard,
           child: AnimatedOpacity(
             opacity: opacity,
-            duration: const Duration(milliseconds: 200),
+            duration: motion.short,
+            curve: AppMotion.standard,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
+              duration: motion.short,
+              curve: AppMotion.standard,
               padding: _padding,
               width: widget.size == SafeButtonSize.large
                   ? double.infinity

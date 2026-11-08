@@ -9,6 +9,7 @@ void main() {
     highContrast: true,
     autoReadAloud: true,
     readingSpeed: ReadingSpeed.slow,
+    reduceMotion: true,
   );
 
   test('grava os nomes dos enums e os booleanos', () {
@@ -17,6 +18,7 @@ void main() {
       'highContrast': true,
       'autoReadAloud': true,
       'readingSpeed': 'slow',
+      'reduceMotion': true,
     });
   });
 
@@ -56,5 +58,26 @@ void main() {
     expect(preferences.fontScale, FontScaleLevel.large);
     expect(preferences.highContrast, isTrue);
     expect(preferences.readingSpeed, ReadingSpeed.normal);
+  });
+
+  test('registro sem "Reduzir animações" (versão anterior) → desligado', () {
+    final preferences = AccessibilityPreferencesModel.fromJson({
+      'fontScale': 'large',
+      'highContrast': true,
+      'autoReadAloud': true,
+      'readingSpeed': 'fast',
+    });
+
+    expect(preferences.reduceMotion, isFalse);
+    expect(preferences.fontScale, FontScaleLevel.large);
+  });
+
+  test('"Reduzir animações" ilegível cai em desligado', () {
+    expect(
+      AccessibilityPreferencesModel.fromJson({
+        'reduceMotion': 'sim',
+      }).reduceMotion,
+      isFalse,
+    );
   });
 }

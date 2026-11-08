@@ -45,6 +45,9 @@ class AccessibilityController extends ChangeNotifier {
   Future<void> setReadingSpeed(ReadingSpeed readingSpeed) =>
       _update(preferences.copyWith(readingSpeed: readingSpeed));
 
+  Future<void> setReduceMotion(bool reduceMotion) =>
+      _update(preferences.copyWith(reduceMotion: reduceMotion));
+
   /// Aplica na hora (FR-006) e grava em seguida. Se a gravação falhar, o valor
   /// vale até o app fechar (FR-009): não há o que mostrar à pessoa.
   Future<void> _update(AccessibilityPreferences next) {

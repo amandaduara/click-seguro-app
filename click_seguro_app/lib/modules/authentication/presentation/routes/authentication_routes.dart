@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/routing/app_fade_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/forgot_password_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
@@ -5,7 +6,12 @@ import 'package:go_router/go_router.dart';
 
 /// Rotas do módulo, compostas em `app_router.dart`.
 final List<RouteBase> authenticationRoutes = [
-  GoRoute(path: '/login', builder: (context, state) => loginPageFor(state.uri)),
+  // Sair e entrar trocam o contexto do app: esmaece (specs/022 R4).
+  GoRoute(
+    path: '/login',
+    pageBuilder: (context, state) =>
+        appFadePage(state, loginPageFor(state.uri)),
+  ),
   GoRoute(
     path: '/forgot-password',
     builder: (context, state) =>

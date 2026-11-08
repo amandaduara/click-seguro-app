@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
@@ -43,9 +44,10 @@ class _SafeCardState extends State<SafeCard> {
 
   @override
   Widget build(BuildContext context) {
+    final AppMotion motion = AppMotion.of(context);
     final card = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
+      duration: motion.short,
+      curve: AppMotion.standard,
       padding: widget.padded
           ? const EdgeInsets.all(AppSpacing.s5)
           : EdgeInsets.zero,
@@ -71,8 +73,8 @@ class _SafeCardState extends State<SafeCard> {
         onTap: widget.onTap,
         child: AnimatedScale(
           scale: _pressed ? 0.99 : 1.0,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
+          duration: motion.short,
+          curve: AppMotion.standard,
           child: card,
         ),
       ),

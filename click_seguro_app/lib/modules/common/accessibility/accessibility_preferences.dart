@@ -31,13 +31,15 @@ class AccessibilityPreferences {
     required this.highContrast,
     required this.autoReadAloud,
     required this.readingSpeed,
+    this.reduceMotion = false,
   });
 
   const AccessibilityPreferences.defaults()
     : fontScale = FontScaleLevel.standard,
       highContrast = false,
       autoReadAloud = false,
-      readingSpeed = ReadingSpeed.normal;
+      readingSpeed = ReadingSpeed.normal,
+      reduceMotion = false;
 
   final FontScaleLevel fontScale;
   final bool highContrast;
@@ -46,16 +48,22 @@ class AccessibilityPreferences {
   final bool autoReadAloud;
   final ReadingSpeed readingSpeed;
 
+  /// "Reduzir animações": troca imediata em vez de movimento (specs/022
+  /// FR-009, FR-010). Desligado por padrão: a animação curta orienta.
+  final bool reduceMotion;
+
   AccessibilityPreferences copyWith({
     FontScaleLevel? fontScale,
     bool? highContrast,
     bool? autoReadAloud,
     ReadingSpeed? readingSpeed,
+    bool? reduceMotion,
   }) => AccessibilityPreferences(
     fontScale: fontScale ?? this.fontScale,
     highContrast: highContrast ?? this.highContrast,
     autoReadAloud: autoReadAloud ?? this.autoReadAloud,
     readingSpeed: readingSpeed ?? this.readingSpeed,
+    reduceMotion: reduceMotion ?? this.reduceMotion,
   );
 
   @override
@@ -64,9 +72,15 @@ class AccessibilityPreferences {
       other.fontScale == fontScale &&
       other.highContrast == highContrast &&
       other.autoReadAloud == autoReadAloud &&
-      other.readingSpeed == readingSpeed;
+      other.readingSpeed == readingSpeed &&
+      other.reduceMotion == reduceMotion;
 
   @override
-  int get hashCode =>
-      Object.hash(fontScale, highContrast, autoReadAloud, readingSpeed);
+  int get hashCode => Object.hash(
+    fontScale,
+    highContrast,
+    autoReadAloud,
+    readingSpeed,
+    reduceMotion,
+  );
 }

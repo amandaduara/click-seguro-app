@@ -1,5 +1,7 @@
+import 'package:click_seguro_app/core/routing/app_fade_page.dart';
 import 'package:click_seguro_app/core/routing/navigator_keys.dart';
 import 'package:click_seguro_app/core/routing/not_found_page.dart';
+import 'package:click_seguro_app/core/routing/tab_branch_container.dart';
 import 'package:click_seguro_app/modules/activities/activities.dart';
 import 'package:click_seguro_app/modules/assistant/assistant.dart';
 import 'package:click_seguro_app/modules/authentication/authentication.dart';
@@ -45,13 +47,23 @@ GoRouter buildAppRouter(UserSessionService session) {
       GoRoute(path: '/', builder: (context, state) => const SplashPage()),
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingPage(),
+        pageBuilder: (context, state) =>
+            appFadePage(state, const OnboardingPage()),
       ),
       ...authenticationRoutes,
-      StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) => SessionExpiredListener(
-          child: AppShell(navigationShell: navigationShell),
+      // Abas montadas juntas, com esmaecimento na que entra (specs/022 R5).
+      StatefulShellRoute(
+        pageBuilder: (context, state, navigationShell) => appFadePage(
+          state,
+          SessionExpiredListener(
+            child: AppShell(navigationShell: navigationShell),
+          ),
         ),
+        navigatorContainerBuilder: (context, navigationShell, children) =>
+            TabBranchContainer(
+              currentIndex: navigationShell.currentIndex,
+              children: children,
+            ),
         // Na ordem do AppTab.
         branches: [
           newsHomeRoute,

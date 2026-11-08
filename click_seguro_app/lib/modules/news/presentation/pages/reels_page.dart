@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
@@ -37,8 +38,6 @@ class ReelsPage extends StatefulWidget {
 }
 
 class _ReelsPageState extends State<ReelsPage> {
-  static const Duration _pageAnimation = Duration(milliseconds: 300);
-
   late final ReelsController _controller;
   StreamSubscription<ReelsMessage>? _messages;
   PageController? _pageController;
@@ -121,12 +120,15 @@ class _ReelsPageState extends State<ReelsPage> {
   }
 
   void _goTo(int index) {
+    final PageController? pages = _pageController;
+    if (pages == null) return;
+    final Duration duration = AppMotion.of(context).medium;
+    if (duration == Duration.zero) {
+      pages.jumpToPage(index);
+      return;
+    }
     unawaited(
-      _pageController?.animateToPage(
-        index,
-        duration: _pageAnimation,
-        curve: Curves.easeOut,
-      ),
+      pages.animateToPage(index, duration: duration, curve: AppMotion.standard),
     );
   }
 

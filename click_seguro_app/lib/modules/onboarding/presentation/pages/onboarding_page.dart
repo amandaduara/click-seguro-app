@@ -1,4 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/controller/onboarding_controller.dart';
@@ -38,10 +39,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (mounted) context.go('/login');
       return;
     }
+    if (!mounted) return;
+    final Duration duration = AppMotion.of(context).long;
+    if (duration == Duration.zero) {
+      _pageController.jumpToPage(controller.currentPage);
+      return;
+    }
     await _pageController.animateToPage(
       controller.currentPage,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
+      duration: duration,
+      curve: AppMotion.standard,
     );
   }
 

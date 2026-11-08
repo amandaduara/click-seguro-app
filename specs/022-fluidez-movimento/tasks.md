@@ -120,36 +120,36 @@ limpo, `flutter test` verde e o trecho correspondente do [quickstart](quickstart
 
 ### Tests (US2)
 
-- [ ] T020 [P] [US2] Testes do campo `reduceMotion` (padrão `false`; a chave ausente é lida como
+- [x] T020 [P] [US2] Testes do campo `reduceMotion` (padrão `false`; a chave ausente é lida como
   `false`; ida e volta no modelo) em
   `test/modules/settings/data/models/accessibility_preferences_model_test.dart`.
-- [ ] T021 [P] [US2] Widget test: o interruptor "Reduzir animações" na `AccessibilityPage` muda a
+- [x] T021 [P] [US2] Widget test: o interruptor "Reduzir animações" na `AccessibilityPage` muda a
   preferência e persiste, em `test/modules/settings/presentation/accessibility_page_test.dart`.
-- [ ] T022 [P] [US2] Widget test do `TabBranchContainer`: só a aba ativa fica com `TickerMode`
+- [x] T022 [P] [US2] Widget test do `TabBranchContainer`: só a aba ativa fica com `TickerMode`
   ligado e o estado das outras é preservado, em
   `test/core/routing/tab_branch_container_test.dart`.
 
 ### Implementation (US2)
 
-- [ ] T023 [US2] Acrescentar `reduceMotion` (bool, padrão `false`) em
+- [x] T023 [US2] Acrescentar `reduceMotion` (bool, padrão `false`) em
   `lib/modules/common/accessibility/accessibility_preferences.dart` (`copyWith`, `==` e
   `hashCode`) e no modelo em `lib/modules/settings/data/models/accessibility_preferences_model.dart`
   ("preferência guardada antes desta versão é lida como `false`").
-- [ ] T024 [US2] Ação `setReduceMotion` no `AccessibilityController` (no módulo `settings`) e
+- [x] T024 [US2] Ação `setReduceMotion` no `AccessibilityController` (no módulo `settings`) e
   interruptor na `lib/modules/settings/presentation/pages/accessibility_page.dart`. Novas chaves em
   `lib/core/i18n/app_strings.dart` e `assets/translations/{pt-BR,en-US}.json`.
-- [ ] T025 [US2] Ligar a preferência ao `AppMotionScope(appReduceMotion:)` em `lib/main.dart`.
-- [ ] T026 [US2] `pageTransitionsTheme` com o `_MotionAwareTransitionsBuilder` (volta preditiva no
+- [x] T025 [US2] Ligar a preferência ao `AppMotionScope(appReduceMotion:)` em `lib/main.dart`.
+- [x] T026 [US2] `pageTransitionsTheme` com o `_MotionAwareTransitionsBuilder` (volta preditiva no
   Android, Cupertino no iOS, corte quando o movimento está reduzido) em
   `lib/core/theme/app_theme.dart`.
-- [ ] T027 [P] [US2] `appFadePage` em `lib/core/routing/app_fade_page.dart`; usar em `/onboarding`
+- [x] T027 [P] [US2] `appFadePage` em `lib/core/routing/app_fade_page.dart`; usar em `/onboarding`
   (`lib/core/routing/app_router.dart`) e `/login`
   (`lib/modules/authentication/presentation/routes/authentication_routes.dart`).
-- [ ] T028 [US2] `TabBranchContainer` (Offstage + TickerMode + FadeThroughTransition) em
+- [x] T028 [US2] `TabBranchContainer` (Offstage + TickerMode + FadeThroughTransition) em
   `lib/core/routing/tab_branch_container.dart`. No `lib/core/routing/app_router.dart`, trocar
   `StatefulShellRoute.indexedStack` por `StatefulShellRoute(navigatorContainerBuilder:)` com
   `pageBuilder` de esmaecimento.
-- [ ] T029 [US2] Trocar as durações literais de animação pelos tokens de `AppMotion` em
+- [x] T029 [US2] Trocar as durações literais de animação pelos tokens de `AppMotion` em
   `lib/core/widgets/safe_button.dart`, `safe_card.dart` e `safe_text_field.dart`,
   `lib/modules/onboarding/presentation/**`,
   `lib/modules/authentication/presentation/widgets/auth_mode_switch.dart`, e nas animações de
