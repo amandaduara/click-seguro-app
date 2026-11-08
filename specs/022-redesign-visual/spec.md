@@ -287,8 +287,9 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
   de emergência mostra o texto traduzido, e o número continua 190, porque é o serviço brasileiro.
 - **Discador indisponível** (tablet sem telefone): o "Ligar para 190" mostra o mesmo aviso dos
   contatos, com a opção de copiar o número.
-- **Grade com fonte ampliada**: no maior nível de fonte, a grade de 2 colunas MUST passar para
-  uma coluna, para o título dos cartões não ficar espremido.
+- **Grade com fonte ampliada**: quando a escala total do texto (a do app vezes a do sistema)
+  passar de 1,3, a grade de 2 colunas MUST passar para uma coluna, para o título dos cartões não
+  ficar espremido.
 - **Telas que o Figma não desenhou** (Configurações, Editar dados, Recuperar senha, Alertas,
   notícias salvas/lidas/curtidas, Sobre, Privacidade, Acessibilidade): mudam só por herdar os
   componentes novos, sem layout próprio.
@@ -374,8 +375,9 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
 - **FR-020**: O app MUST ter animações curtas: troca de tela (aparecer e deslizar, 250 ms), toque
   em botões e cartões (encolher para 98%, 150 ms), progresso enchendo (400 ms), folha inferior
   subindo (400 ms), resposta certa com mola, resposta errada com balanço suave duas vezes,
-  conclusão com confete e contagem do placar (1200 ms), brilho do carregamento e pulso do botão
-  "Ouvir" enquanto lê.
+  conclusão com confete e contagem do placar (1200 ms), brilho do carregamento, pulso do botão
+  "Ouvir" enquanto lê, pulso suave do círculo da logo no splash e flutuação suave da ilustração
+  do onboarding.
 - **FR-021**: Toda animação MUST respeitar "reduzir movimento": se o interruptor do app (FR-024)
   **ou** a opção do aparelho estiver ligado, o conteúdo aparece direto no estado final. Nenhuma
   animação MUST piscar mais de 3 vezes por segundo.

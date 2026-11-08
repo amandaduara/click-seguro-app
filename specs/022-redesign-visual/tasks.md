@@ -249,7 +249,7 @@ contraste (spec, US1).
   `tcore/widgets/listen_button_test.dart` (o teste antes).
 - [ ] T029 [US1] Reescrever `mod/shell/presentation/widgets/app_bottom_nav.dart`:
   - sem `_CenterItem` nem `AppTab.isCenter`;
-  - 5 itens iguais, cada um com pílula de 60×34, ícone 26 e rótulo 14 que quebra em até 2 linhas;
+  - 5 itens iguais, cada um com pílula de 60×34, ícone 26 e rótulo 15 (mínimo do FR-003) que quebra em até 2 linhas;
   - aba atual: ícone `primary` sobre `primarySoft` e rótulo em negrito;
   - fundo branco com linha `border` em cima.
 
@@ -360,16 +360,16 @@ passo 1).
 ### Implementação da US3
 
 - [ ] T043 [P] [US3] `mod/activities/presentation/widgets/overall_progress_card.dart`: cartão
-  `flat` com `SafeProgressRing`, título "Seu progresso", o texto atual e um `SafeBadge.success`
-  quando há módulo completo, se o dado já existe. Nada de dado novo.
+  `flat` com `SafeProgressRing`, título "Seu progresso" e o texto atual. O selo "1 módulo
+  completo" do Figma **não** entra, porque seria texto novo (FR-022).
 - [ ] T044 [US3] `mod/activities/presentation/widgets/module_card.dart`: `SafeCard` com capa de
   150 (canto 16, fundo `theme.pastel`, `SafeIllustration(theme.illustration)`), selo sobre a capa,
   título `title3` em negrito, "X de Y lições", `SafeIconButton` de seta e `SafeProgressBar`
-  (`success` quando concluído). `module_icon.dart` deixa de ser usado no cartão: remover o arquivo
-  se ficar sem uso.
+  (`success` quando concluído). Módulo indisponível (CB-012): capa com opacidade 0,5 e sem toque.
+  `module_icon.dart` deixa de ser usado no cartão: remover o arquivo se ficar sem uso.
 - [ ] T045 [US3] `mod/activities/presentation/pages/activities_dashboard_page.dart`: título
-  `display` com `ListenButton` ao lado e a lista com espaçamento de 20. Aviso do visitante e
-  estados como hoje.
+  `display` e a lista com espaçamento de 20. Aviso do visitante e estados como hoje. O botão
+  "Ouvir" do Figma **não** entra, porque o painel não tem leitura em voz alta hoje (FR-022).
 - [ ] T046 [P] [US3] Na pergunta:
   - `lesson_progress_indicator.dart` vira `SafeSegmentedProgress`;
   - `lesson_option_card.dart` com as quatro aparências e o balanço (`AnimationController` de
@@ -422,7 +422,8 @@ passos 3 e 4).
   - "Destaques" em largura total;
   - "Recomendadas" e "Tudo recente" em 2 colunas, mantendo a ordem da API (esquerda para direita,
     de cima para baixo);
-  - com `textScaler` de 2,0 (maior nível), 1 coluna;
+  - com escala total de texto acima de 1,3, 1 coluna;
+  - a mesma lista gera sempre as mesmas alturas de capa (regra determinística do T053);
   - paginação e rodapé como antes.
 
   Rodar e ver falhar.
@@ -442,8 +443,11 @@ passos 3 e 4).
 - [ ] T054 [US4] `mod/news/presentation/pages/news_home_page.dart`:
   - "Recomendadas" e "Tudo recente" num sliver de 2 colunas que distribui os itens em ordem;
   - 1 coluna quando a escala de texto passar de 1,3;
-  - saudação com avatar, `SafeIconButton` de alertas, busca em pílula (`feed_search_field.dart`) e
-    chips (`category_filter_bar.dart` com `SafeChip`);
+  - busca em pílula (`feed_search_field.dart`) e chips (`category_filter_bar.dart` com
+    `SafeChip`);
+  - a saudação e o sino de alertas continuam no `AppTopBar` do shell
+    (`mod/shell/presentation/widgets/app_top_bar.dart`), que só ganha os componentes novos. Sem
+    avatar e sem mudar a saudação de lugar (FR-022);
   - `feed_section_title.dart` em `title2`.
 
   T051 passa.
@@ -570,7 +574,8 @@ notícias salvas (quickstart, passo 8).
   `flutter test` e `flutter build web`.
 - [ ] T074 Validação da usuária no aparelho, seguindo o [quickstart](quickstart.md) inteiro (passos
   1 a 11). Mudanças de comportamento achadas viram clarificação na spec.
-- [ ] T075 Marcar a tarefa R1 em `.specify/memory/tasks.md` (link para `specs/022-redesign-visual`),
+- [ ] T075 Adicionar a tarefa R1 "Redesign visual 2.0" em `.specify/memory/tasks.md`, já marcada e
+  com o link para `specs/022-redesign-visual`,
   marcar as tarefas deste arquivo e fazer o **commit** de docs:
   `docs(022): redesign validado no aparelho`. Push e PR para `develop` ("O que entra", "Como
   validar", "Fora do escopo").

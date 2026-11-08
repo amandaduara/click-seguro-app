@@ -19,7 +19,7 @@ Regras para todos os widgets:
 |---|---|---|---|
 | `SafeButton` | `label`, `onPressed`, `icon`, `iconRight`, `loading`, `disabled`, `size`, `tone` | `SafeButtonTone`: `primary`, `secondary`, `outline`, `link` (`gradient` e `ghost` saem; os usos migram). `SafeButtonSize`: `large` (60), `compact` (48) (`pill` sai). `shadow` sai. | coral, creme, contorno tinta ou sublinhado; ao tocar, cor pressionada e escala 0,98; cresce em altura se o texto quebrar; carregando mostra indicador no lugar do texto, com o rótulo mantido para leitura |
 | `SafeCard` | `child`, `onTap`, `padding` | `+ flat` (creme, sem sombra) | branco, canto 20, sombra única; tocável com escala 0,98 |
-| `SafeBadge` | `label`, `icon` | tons: `success`, `warning`, `neutral`, `alert`, `onImage` | pílula de 30, texto 14/700 |
+| `SafeBadge` | `label`, `icon` | tons: `success`, `warning`, `neutral`, `alert`, `onImage` | pílula de 32, texto 15/700 (o Figma usou 14; vale o mínimo de 15 do FR-003) |
 | `SafeTextField` | parâmetros atuais (rótulo, erro, obscure, teclado, etc.) | nenhuma | rótulo acima, 60 de altura, canto 16; foco: borda tinta 2,5; erro: borda e mensagem na cor de erro, com ícone |
 | `SafeLoadingState` | `semanticsLabel`/mensagem atual | `+ layout` (`list`, `cards`, `detail`), padrão `cards` | blocos `SafeSkeleton` no formato do conteúdo; anuncia carregando como hoje |
 | `SafeErrorState` | mensagem, `onRetry`, ação secundária | nenhuma | ilustração `stateError` (ou `stateOffline` quando a falha for de conexão), título, texto, "Tentar de novo" primário |

@@ -234,7 +234,8 @@ um é uma dependência para poucas linhas de código (constituição, dependênc
 **Decision**: `AppBottomNav` perde o `_CenterItem` e o `AppTab.isCenter`. Cada aba vira o mesmo
 item:
 - pílula de 60×34 atrás do ícone (26);
-- rótulo sempre visível (14, negrito na aba atual), com até duas linhas quando a fonte cresce;
+- rótulo sempre visível (15, negrito na aba atual), com até duas linhas quando a fonte cresce.
+  O Figma usou 14, mas vale o mínimo de 15 do FR-003;
 - semântica de aba selecionada.
 
 O destino de cada aba e o `StatefulShellRoute` não mudam.
