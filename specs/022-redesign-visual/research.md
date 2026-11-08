@@ -114,9 +114,8 @@ No alto contraste, ela vira lista vazia mais borda.
 - `SafeIllustration` desenha com `SvgPicture.asset`, dentro de `ExcludeSemantics`.
 - No alto contraste, um `ColorMapper` troca cada cor da paleta da ilustração pela equivalente AAA:
   pastéis → branco, tinta → preto, coral → #9E0019, verde → #005A3C, dourado → #6E4200.
-- Dependência: `flutter_svg: 2.3.0` (maio de 2026), com versão fixada. Confirmar no implement que
-  o `colorMapper` está na API dessa versão. Se não estiver, usar `SvgStringLoader` com a troca de
-  cores feita no texto do SVG.
+- Dependência: `flutter_svg: 2.3.0` (maio de 2026), com versão fixada. **Confirmado no T001**:
+  `SvgPicture.asset` aceita `colorMapper` (classe `ColorMapper.substitute`) nessa versão.
 
 **Rationale**: as ilustrações aprovadas são vetores (FR-017). Precisam ficar nítidas com a fonte
 ampliada, recolorir no alto contraste (FR-002) e funcionar offline. Detalhes em Complexity

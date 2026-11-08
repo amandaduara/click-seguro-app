@@ -80,6 +80,9 @@ void main() {
     final fields = find.byType(TextField);
     await tester.enterText(fields.at(0), 'Ana');
     await tester.enterText(fields.at(1), '(11) 99999-1234');
+    // O formulário ficou mais alto (campos de 60): rola até o botão.
+    await tester.ensureVisible(find.text('Salvar contato'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Salvar contato'));
     await tester.pumpAndSettle();
     expect(repository.personal.single.name, 'Ana');
@@ -196,12 +199,18 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Adicionar contato'));
     await tester.pumpAndSettle();
+    // O formulário ficou mais alto (campos de 60): rola até o botão.
+    await tester.ensureVisible(find.text('Salvar contato'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Salvar contato'));
     await tester.pumpAndSettle();
     expect(find.text('Informe o nome do contato.'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).at(0), 'Ana');
     await tester.enterText(find.byType(TextField).at(1), '12');
+    // O formulário ficou mais alto (campos de 60): rola até o botão.
+    await tester.ensureVisible(find.text('Salvar contato'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Salvar contato'));
     await tester.pumpAndSettle();
     expect(

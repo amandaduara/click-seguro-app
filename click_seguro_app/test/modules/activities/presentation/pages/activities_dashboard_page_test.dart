@@ -222,11 +222,12 @@ void main() {
       await open(tester, textScale: 1.15);
 
       final Rect m1 = tester.getRect(card('Golpes Digitais'));
-      await reveal(tester, card('Golpes no WhatsApp'));
+      // Lida antes de rolar: com a letra maior, o 1º cartão sai da tela.
       final Text description = tester.widget(
         find.text('Aprenda a reconhecer as táticas mais comuns.'),
       );
       expect(description.maxLines, isNull);
+      await reveal(tester, card('Golpes no WhatsApp'));
       final Rect m2 = tester.getRect(card('Golpes no WhatsApp'));
       expect(m2.left, m1.left);
     });

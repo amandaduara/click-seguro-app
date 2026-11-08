@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -20,7 +21,7 @@ class AreaNotice extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s4),
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: AppSpacing.radius2xl,
+        borderRadius: AppSpacing.radiusLg,
         border: Border.all(color: colors.border),
       ),
       child: Column(
@@ -39,7 +40,7 @@ class AreaNotice extends StatelessWidget {
                 child: Text(
                   message,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontSize: 15,
+                    fontSize: AppTypography.caption.fontSize,
                     color: colors.textForeground,
                   ),
                 ),

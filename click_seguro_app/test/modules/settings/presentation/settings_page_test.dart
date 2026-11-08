@@ -153,18 +153,18 @@ void main() {
     await open(tester);
     final Finder logout = find.text('Sair da conta');
 
+    // A frase fica abaixo do botão; com a letra maior, rola até ela também.
+    final Finder phrase = find.text(
+      'Ao sair, seus contatos de emergência continuam guardados neste '
+      'celular.',
+    );
     await tester.scrollUntilVisible(
-      logout,
+      phrase,
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(
-      find.text(
-        'Ao sair, seus contatos de emergência continuam guardados neste '
-        'celular.',
-      ),
-      findsOneWidget,
-    );
+    expect(logout, findsOneWidget);
+    expect(phrase, findsOneWidget);
 
     await tester.tap(logout);
     await tester.tap(logout, warnIfMissed: false);

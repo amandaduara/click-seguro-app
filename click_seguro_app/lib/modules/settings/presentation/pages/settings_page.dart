@@ -15,6 +15,7 @@ import 'package:click_seguro_app/modules/settings/presentation/widgets/language_
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_section.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_tile.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -167,7 +168,7 @@ class _SettingsList extends StatelessWidget {
           AppStrings.settingsLogoutNote.tr(),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontSize: 14,
+            fontSize: AppTypography.caption.fontSize,
             color: context.colors.textMutedForeground,
           ),
         ),
@@ -272,7 +273,10 @@ class _LogoutButton extends StatelessWidget {
         shape: const RoundedRectangleBorder(
           borderRadius: AppSpacing.radiusFull,
         ),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        textStyle: TextStyle(
+          fontSize: AppTypography.label.fontSize,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       icon: const Icon(LucideIcons.logOut, size: 20),
       label: Text(AppStrings.settingsLogout.tr()),

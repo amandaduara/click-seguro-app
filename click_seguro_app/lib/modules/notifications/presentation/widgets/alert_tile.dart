@@ -5,6 +5,7 @@ import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:click_seguro_app/modules/notifications/domain/entities/alert_entity.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/extensions/alert_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Um alerta na lista: "Novo" escrito (além da cor) quando não lido, título e
@@ -35,7 +36,7 @@ class AlertTile extends StatelessWidget {
         child: Container(
           decoration: unread
               ? BoxDecoration(
-                  borderRadius: AppSpacing.radius3xl,
+                  borderRadius: AppSpacing.radiusXl,
                   border: Border.all(color: context.colors.primary, width: 2),
                 )
               : null,
@@ -54,7 +55,7 @@ class AlertTile extends StatelessWidget {
                   Text(
                     alert.title,
                     style: textTheme.titleMedium?.copyWith(
-                      fontSize: 18,
+                      fontSize: AppTypography.body.fontSize,
                       fontWeight: unread ? FontWeight.bold : FontWeight.w500,
                       color: unread
                           ? context.colors.secondary
@@ -65,7 +66,7 @@ class AlertTile extends StatelessWidget {
                   Text(
                     '${alert.source} · ${alert.timeLabel(now)}',
                     style: textTheme.bodyLarge?.copyWith(
-                      fontSize: 16,
+                      fontSize: AppTypography.label.fontSize,
                       color: context.colors.textMutedForeground,
                     ),
                   ),
@@ -94,7 +95,7 @@ class _NewBadge extends StatelessWidget {
       child: Text(
         AppStrings.notificationsBadgeNew.tr(),
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          fontSize: 14,
+          fontSize: AppTypography.caption.fontSize,
           fontWeight: FontWeight.bold,
           color: context.colors.textPrimaryForeground,
         ),

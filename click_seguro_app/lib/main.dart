@@ -113,6 +113,10 @@ class ClickSeguroApp extends StatelessWidget {
               textScaler: TextScaler.linear(
                 preferences.fontScale.totalScale(systemScale),
               ),
+              // Um sinal só para toda animação: o do aparelho ou o do app
+              // (FR-021, FR-024; R8 de specs/022-redesign-visual).
+              disableAnimations:
+                  media.disableAnimations || preferences.reduceMotion,
             ),
             child: LocaleRebuilder(child: child!),
           );

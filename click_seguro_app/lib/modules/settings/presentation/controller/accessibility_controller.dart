@@ -42,6 +42,9 @@ class AccessibilityController extends ChangeNotifier {
   Future<void> setAutoReadAloud(bool autoReadAloud) =>
       _update(preferences.copyWith(autoReadAloud: autoReadAloud));
 
+  Future<void> setReduceMotion(bool reduceMotion) =>
+      _update(preferences.copyWith(reduceMotion: reduceMotion));
+
   Future<void> setReadingSpeed(ReadingSpeed readingSpeed) =>
       _update(preferences.copyWith(readingSpeed: readingSpeed));
 

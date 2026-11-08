@@ -1,11 +1,14 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
 enum SafeCardElevation { flat, sm, md }
 
-/// SafeCard — contêiner com bordas arredondadas (rounded-3xl), elevação e
-/// modo interativo (hover: shadow-md · active: scale 0.99).
+/// SafeCard — cartão do redesign 2.0 (FR-004): branco, canto 20 e a sombra
+/// única; `flat` é creme e sem sombra. No alto contraste, borda no lugar da
+/// sombra. Tocável: encolhe para 98% (FR-020), sem movimento com reduzir
+/// animações (FR-021).
 class SafeCard extends StatefulWidget {
   const SafeCard({
     super.key,
@@ -29,31 +32,27 @@ class SafeCard extends StatefulWidget {
 class _SafeCardState extends State<SafeCard> {
   bool _pressed = false;
 
-  List<BoxShadow>? get _shadow {
-    if (widget.interactive) return context.colors.shadowMd;
-    switch (widget.elevation) {
-      case SafeCardElevation.flat:
-        return null;
-      case SafeCardElevation.sm:
-        return context.colors.shadowSm;
-      case SafeCardElevation.md:
-        return context.colors.shadowMd;
-    }
+  void _setPressed(bool value) {
+    if (_pressed != value) setState(() => _pressed = value);
   }
 
   @override
   Widget build(BuildContext context) {
-    final card = AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
+    final AppPalette colors = context.colors;
+    final bool flat = widget.elevation == SafeCardElevation.flat;
+    final bool highContrast = colors.shadow.isEmpty;
+    final bool reduceMotion = context.reduceMotion;
+
+    final Widget card = AnimatedContainer(
+      duration: AppMotion.duration(AppMotion.fast, reduce: reduceMotion),
       padding: widget.padded
           ? const EdgeInsets.all(AppSpacing.s5)
           : EdgeInsets.zero,
       decoration: BoxDecoration(
-        color: context.colors.card,
-        border: Border.all(color: context.colors.border),
-        borderRadius: AppSpacing.radius3xl,
-        boxShadow: _shadow,
+        color: flat ? colors.surface : colors.card,
+        borderRadius: AppSpacing.radiusLg,
+        border: highContrast ? Border.all(color: colors.border) : null,
+        boxShadow: flat ? null : colors.shadow,
       ),
       child: widget.child,
     );
@@ -61,14 +60,15 @@ class _SafeCardState extends State<SafeCard> {
     if (!widget.interactive) return card;
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => _setPressed(true),
+      onTapUp: (_) => _setPressed(false),
+      onTapCancel: () => _setPressed(false),
       onTap: widget.onTap,
       child: AnimatedScale(
-        scale: _pressed ? 0.99 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
+        scale: _pressed && !reduceMotion ? 0.98 : 1.0,
+        duration: AppMotion.duration(AppMotion.fast, reduce: reduceMotion),
+        curve: AppMotion.enter,
         child: card,
       ),
     );

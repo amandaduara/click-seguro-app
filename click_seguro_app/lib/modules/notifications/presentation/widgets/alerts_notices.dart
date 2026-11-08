@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -72,7 +73,7 @@ class _DisabledNotice extends StatelessWidget {
                   child: Text(
                     AppStrings.notificationsDisabledNotice.tr(),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 16,
+                      fontSize: AppTypography.label.fontSize,
                       color: context.colors.textForeground,
                     ),
                   ),

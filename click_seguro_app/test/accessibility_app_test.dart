@@ -65,6 +65,31 @@ void main() {
     expect(textScale(), 1.0);
   });
 
+  testWidgets(
+    'reduzir animações do app desliga as animações (FR-021, FR-024)',
+    (tester) async {
+      await pumpApp(tester);
+      expect(MediaQuery.disableAnimationsOf(screen), isFalse);
+
+      notifier.value = notifier.value.copyWith(reduceMotion: true);
+      await tester.pumpAndSettle();
+
+      expect(MediaQuery.disableAnimationsOf(screen), isTrue);
+    },
+  );
+
+  testWidgets('reduzir movimento do aparelho vale mesmo com o do app '
+      'desligado (FR-021)', (tester) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+
+    await pumpApp(tester);
+
+    expect(notifier.value.reduceMotion, isFalse);
+    expect(MediaQuery.disableAnimationsOf(screen), isTrue);
+  });
+
   testWidgets('cada nível aumenta a letra na hora (US1, FR-006)', (
     tester,
   ) async {

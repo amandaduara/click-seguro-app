@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -35,7 +36,7 @@ class AccountCard extends StatelessWidget {
           initials,
           textScaler: TextScaler.noScaling,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: AppTypography.title3.fontSize,
             fontWeight: FontWeight.w800,
             color: colors.secondary,
           ),
@@ -48,7 +49,7 @@ class AccountCard extends StatelessWidget {
         child: Material(
           color: colors.card,
           shape: RoundedRectangleBorder(
-            borderRadius: AppSpacing.radius2xl,
+            borderRadius: AppSpacing.radiusLg,
             side: BorderSide(color: colors.border),
           ),
           clipBehavior: Clip.antiAlias,
@@ -82,7 +83,7 @@ class AccountCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: textTheme.titleMedium?.copyWith(
-                            fontSize: 18,
+                            fontSize: AppTypography.body.fontSize,
                             fontWeight: FontWeight.w800,
                             color: colors.secondary,
                           ),
@@ -90,7 +91,7 @@ class AccountCard extends StatelessWidget {
                         Text(
                           AppStrings.settingsAccountCardAction.tr(),
                           style: textTheme.bodyMedium?.copyWith(
-                            fontSize: 14,
+                            fontSize: AppTypography.caption.fontSize,
                             color: colors.textMutedForeground,
                           ),
                         ),

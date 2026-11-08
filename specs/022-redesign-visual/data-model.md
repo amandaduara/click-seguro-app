@@ -39,7 +39,7 @@ Campos que existem e mudam de valor (tema claro):
 | `background` / `card` | #FFFFFF | #FFFFFF |
 | `border` | #E4E1DA | #000000 |
 | `input` | #F7F5F0 | #F2F2F2 |
-| `inputBorder` | #C9C5BD | #000000 |
+| `inputBorder` | #8A8F9C (o #C9C5BD do Figma dava 1,7:1; WCAG 1.4.11 pede 3:1) | #000000 |
 | `success` | #0F7B4F | #005A3C |
 | `warning` | #8F5600 | #6E4200 |
 | `destructive` | #C4122F | #9E0019 |
@@ -65,7 +65,7 @@ por `shadow`).
 mais no claro (3:1 para texto de 24 ou mais em negrito) e de 7:1 no alto contraste. O teste está
 em `app_palette_test.dart` (SC-002).
 
-### AppTypography, AppSpacing, AppShadows, AppMotion
+### AppTypography, AppSpacing, AppMotion
 
 Valores em [R3](research.md#r3-escala-de-texto), [R4](research.md#r4-cantos-sombra-e-espaçamento)
 e [R8](research.md#r8-reduzir-animações-um-sinal-só). São constantes, sem estado.
@@ -99,7 +99,9 @@ Regras:
 - Usa só as cores da paleta das ilustrações (tinta, branco, coral, dourado, verde, menta, cinza e
   os pastéis), para o `ColorMapper` do alto contraste conseguir trocar cada uma
   ([R5](research.md#r5-ilustrações-em-svg-com-flutter_svg)).
-- O fundo pastel não faz parte do SVG. Ele vem do container: capa, cartão ou estado.
+- Nas capas de tema (`theme*`), o fundo pastel não faz parte do SVG: vem do container (capa ou
+  cartão). Nas de estado, onboarding e resposta, o círculo pastel atrás do desenho faz parte dele,
+  como no Figma, e vira branco no alto contraste.
 
 ## IllustrationTheme
 

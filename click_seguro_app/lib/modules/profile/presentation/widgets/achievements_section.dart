@@ -6,6 +6,7 @@ import 'package:click_seguro_app/modules/profile/presentation/controller/area_st
 import 'package:click_seguro_app/modules/profile/presentation/widgets/area_notice.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/medal_card.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -32,9 +33,9 @@ class AchievementsSection extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.s4),
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: AppSpacing.radius3xl,
+        borderRadius: AppSpacing.radiusXl,
         border: Border.all(color: colors.border),
-        boxShadow: colors.shadowSm,
+        boxShadow: colors.shadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -53,7 +54,7 @@ class AchievementsSection extends StatelessWidget {
                         )
                       : AppStrings.profileAchievements.tr(),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 18,
+                    fontSize: AppTypography.body.fontSize,
                     fontWeight: FontWeight.w700,
                     color: colors.secondary,
                   ),

@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Título de seção e as linhas dela num cartão branco (quadro
@@ -47,7 +48,7 @@ class SettingsSectionTitle extends StatelessWidget {
         child: Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontSize: 18,
+            fontSize: AppTypography.body.fontSize,
             fontWeight: FontWeight.w700,
             color: context.colors.secondary,
           ),
@@ -69,7 +70,7 @@ class SettingsCard extends StatelessWidget {
     return Material(
       color: colors.card,
       shape: RoundedRectangleBorder(
-        borderRadius: AppSpacing.radius2xl,
+        borderRadius: AppSpacing.radiusLg,
         side: BorderSide(color: colors.border),
       ),
       clipBehavior: Clip.antiAlias,

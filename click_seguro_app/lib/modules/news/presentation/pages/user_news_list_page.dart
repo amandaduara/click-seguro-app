@@ -17,6 +17,7 @@ import 'package:click_seguro_app/modules/news/presentation/controller/user_news_
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_footer.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -87,7 +88,9 @@ class _GuestInvite extends StatelessWidget {
             Text(
               kind.guestBody.tr(),
               textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(fontSize: 16),
+              style: textTheme.bodyLarge?.copyWith(
+                fontSize: AppTypography.label.fontSize,
+              ),
             ),
             const SizedBox(height: AppSpacing.s6),
             SafeButton(
@@ -219,7 +222,7 @@ class _EmptyList extends StatelessWidget {
               kind.empty.tr(),
               textAlign: TextAlign.center,
               style: textTheme.bodyLarge?.copyWith(
-                fontSize: 16,
+                fontSize: AppTypography.label.fontSize,
                 fontWeight: FontWeight.w600,
                 color: context.colors.textForeground,
               ),
@@ -229,7 +232,7 @@ class _EmptyList extends StatelessWidget {
               kind.emptyHint.tr(),
               textAlign: TextAlign.center,
               style: textTheme.bodyLarge?.copyWith(
-                fontSize: 16,
+                fontSize: AppTypography.label.fontSize,
                 color: context.colors.textMutedForeground,
               ),
             ),

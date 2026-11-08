@@ -256,7 +256,6 @@ class _LoginPageState extends State<LoginPage> {
                   // Só com todos os campos corretos (no cadastro, a senha
                   // cumprindo as 5 regras).
                   disabled: !controller.canSubmit && !controller.isSubmitting,
-                  shadow: controller.canSubmit,
                   onPressed: _submit,
                 ),
                 SlowRequestNotice(

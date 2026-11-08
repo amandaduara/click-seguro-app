@@ -51,15 +51,15 @@ class _NewsCardState extends State<NewsCard> {
       excludeSemantics: true,
       child: Material(
         color: context.colors.card,
-        borderRadius: AppSpacing.radius3xl,
+        borderRadius: AppSpacing.radiusXl,
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: _open,
           child: Ink(
             decoration: BoxDecoration(
               border: Border.all(color: context.colors.border),
-              borderRadius: AppSpacing.radius3xl,
-              boxShadow: context.colors.shadowSm,
+              borderRadius: AppSpacing.radiusXl,
+              boxShadow: context.colors.shadow,
             ),
             child: widget.compact ? _compact(item) : _full(item),
           ),

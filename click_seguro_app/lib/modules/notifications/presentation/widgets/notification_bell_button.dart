@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/notifications_controller.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -95,7 +96,7 @@ class _Badge extends StatelessWidget {
       child: Text(
         count > 99 ? '99+' : '$count',
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          fontSize: 14,
+          fontSize: AppTypography.caption.fontSize,
           height: 1,
           fontWeight: FontWeight.bold,
           color: context.colors.textPrimaryForeground,

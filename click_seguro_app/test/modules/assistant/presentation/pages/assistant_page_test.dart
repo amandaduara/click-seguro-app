@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/connection_failure.dart';
@@ -25,12 +27,28 @@ Finder _verificationScrollable() {
   return find.descendant(of: list, matching: find.byType(Scrollable)).first;
 }
 
-Future<void> _scrollToVerificationTarget(WidgetTester tester, Finder target) =>
-    tester.scrollUntilVisible(
-      target,
-      120,
-      scrollable: _verificationScrollable(),
-    );
+/// Rola a lista da aba Verificar pela posição, não por arrasto: com a fonte
+/// ampliada o campo de texto fica no meio da tela e consumiria o arrasto.
+Future<void> _scrollToVerificationTarget(
+  WidgetTester tester,
+  Finder target,
+) async {
+  final ScrollPosition position = tester
+      .state<ScrollableState>(_verificationScrollable())
+      .position;
+  if (target.evaluate().isEmpty) {
+    position.jumpTo(0);
+    await tester.pump();
+  }
+  while (target.evaluate().isEmpty &&
+      position.pixels < position.maxScrollExtent) {
+    position.jumpTo(math.min(position.pixels + 120, position.maxScrollExtent));
+    await tester.pump();
+  }
+  // No meio da tela: na borda, o botão pode ficar sob a barra inferior.
+  await Scrollable.ensureVisible(tester.element(target.first), alignment: 0.5);
+  await tester.pumpAndSettle();
+}
 
 Future<void> _tapAnalyzeButton(WidgetTester tester) async {
   final label = find.text('Analisar mensagem');
@@ -38,8 +56,6 @@ Future<void> _tapAnalyzeButton(WidgetTester tester) async {
   final button = find
       .ancestor(of: label, matching: find.byType(SafeButton))
       .first;
-  await tester.ensureVisible(button);
-  await tester.pumpAndSettle();
   await tester.tap(button);
 }
 
@@ -264,6 +280,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.imageCalls, hasLength(1));
     expect(imageStorage.deletedPaths, ['/tmp/assistant-test.png']);
+    // O resultado fica abaixo do botão, que ficou mais alto: rola até ele.
+    await _scrollToVerificationTarget(tester, find.text('Phishing'));
     expect(find.text('Phishing'), findsOneWidget);
   });
 

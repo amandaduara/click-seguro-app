@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -32,7 +33,7 @@ class SettingsGuestInvite extends StatelessWidget {
                 AppStrings.settingsGuestTitle.tr(),
                 textAlign: TextAlign.center,
                 style: textTheme.titleLarge?.copyWith(
-                  fontSize: 22,
+                  fontSize: AppTypography.title2.fontSize,
                   fontWeight: FontWeight.w800,
                   color: colors.secondary,
                 ),
@@ -42,7 +43,9 @@ class SettingsGuestInvite extends StatelessWidget {
             Text(
               AppStrings.settingsGuestBody.tr(),
               textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(fontSize: 16),
+              style: textTheme.bodyLarge?.copyWith(
+                fontSize: AppTypography.label.fontSize,
+              ),
             ),
             const SizedBox(height: AppSpacing.s6),
             SafeButton(

@@ -1,12 +1,19 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
-enum SafeButtonSize { large, compact, pill }
+/// Altura mínima: `large` 60, `compact` 48 (RNF-003, FR-006).
+enum SafeButtonSize { large, compact }
 
-enum SafeButtonTone { primary, gradient, secondary, ghost }
+/// Tons do redesign 2.0 (FR-006): `primary` coral (uma ação principal por
+/// tela), `secondary` creme, `ghost` contorno tinta, `link` texto sublinhado.
+enum SafeButtonTone { primary, secondary, ghost, link }
 
-/// SafeButton — botão de ação com hover, active:scale-95, loading e disabled.
+/// SafeButton — botão com estado pressionado (cor mais escura e escala 0,98),
+/// carregando e desativado. Cresce em altura quando o rótulo quebra a linha
+/// (fonte ampliada).
 class SafeButton extends StatefulWidget {
   const SafeButton({
     super.key,
@@ -16,7 +23,6 @@ class SafeButton extends StatefulWidget {
     this.tone = SafeButtonTone.primary,
     this.icon,
     this.iconRight,
-    this.shadow = false,
     this.loading = false,
     this.disabled = false,
   });
@@ -27,7 +33,6 @@ class SafeButton extends StatefulWidget {
   final SafeButtonTone tone;
   final Widget? icon;
   final Widget? iconRight;
-  final bool shadow;
   final bool loading;
   final bool disabled;
 
@@ -39,136 +44,128 @@ class _SafeButtonState extends State<SafeButton> {
   bool _pressed = false;
 
   bool get _isDisabled => widget.disabled || widget.loading;
+  bool get _large => widget.size == SafeButtonSize.large;
 
-  EdgeInsets get _padding {
-    switch (widget.size) {
-      case SafeButtonSize.large:
-        return const EdgeInsets.symmetric(vertical: 16);
-      case SafeButtonSize.compact:
-        return const EdgeInsets.symmetric(horizontal: 20, vertical: 10);
-      case SafeButtonSize.pill:
-        return const EdgeInsets.symmetric(horizontal: 14, vertical: 8);
-    }
-  }
-
-  double get _fontSize {
-    switch (widget.size) {
-      case SafeButtonSize.large:
-        return 16;
-      case SafeButtonSize.compact:
-        return 14;
-      case SafeButtonSize.pill:
-        return 12;
-    }
-  }
-
-  ({Color? bg, Color fg, Gradient? gradient}) get _toneStyle {
+  ({Color bg, Color fg, BorderSide? border}) _style(AppPalette colors) {
     switch (widget.tone) {
-      case SafeButtonTone.gradient:
+      case SafeButtonTone.primary:
         return (
-          bg: null,
-          fg: context.colors.textPrimaryForeground,
-          gradient: context.colors.gradient,
+          bg: _pressed ? colors.primaryPressed : colors.primary,
+          fg: colors.textPrimaryForeground,
+          border: null,
         );
       case SafeButtonTone.secondary:
-        // Texto claro sobre o azul-escuro, como no wireframe
-        // (text-secondary-foreground); o escuro sumia no fundo.
         return (
-          bg: context.colors.secondary,
-          fg: context.colors.textPrimaryForeground,
-          gradient: null,
+          bg: colors.surfaceStrong,
+          fg: colors.textForeground,
+          border: null,
         );
       case SafeButtonTone.ghost:
         return (
-          bg: Colors.transparent,
-          fg: context.colors.secondary,
-          gradient: null,
+          bg: colors.card,
+          fg: colors.textForeground,
+          border: BorderSide(color: colors.textForeground, width: 1.5),
         );
-      case SafeButtonTone.primary:
+      case SafeButtonTone.link:
         return (
-          bg: context.colors.primary,
-          fg: context.colors.textPrimaryForeground,
-          gradient: null,
+          bg: Colors.transparent,
+          fg: colors.textForeground,
+          border: null,
         );
     }
+  }
+
+  void _setPressed(bool value) {
+    if (_pressed != value) setState(() => _pressed = value);
   }
 
   @override
   Widget build(BuildContext context) {
-    final style = _toneStyle;
-    final opacity = _isDisabled ? 0.4 : 1.0;
+    final AppPalette colors = context.colors;
+    final style = _style(colors);
+    final bool reduceMotion = context.reduceMotion;
+    final TextStyle labelStyle =
+        (_large ? AppTypography.button : AppTypography.label).copyWith(
+          color: style.fg,
+          fontWeight: FontWeight.w700,
+          decoration: widget.tone == SafeButtonTone.link
+              ? TextDecoration.underline
+              : null,
+          decorationColor: style.fg,
+        );
 
-    final content = Row(
-      mainAxisSize: widget.size == SafeButtonSize.large
-          ? MainAxisSize.max
-          : MainAxisSize.min,
+    final Widget content = Row(
+      mainAxisSize: _large ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (widget.loading)
           SizedBox(
-            width: 16,
-            height: 16,
+            width: 20,
+            height: 20,
             child: CircularProgressIndicator(
-              strokeWidth: 2,
+              strokeWidth: 2.5,
               valueColor: AlwaysStoppedAnimation<Color>(style.fg),
             ),
           )
         else if (widget.icon != null)
           IconTheme(
-            data: IconThemeData(color: style.fg, size: 16),
+            data: IconThemeData(color: style.fg, size: 22),
             child: widget.icon!,
           ),
-        if (widget.loading || widget.icon != null) const SizedBox(width: 8),
+        if (widget.loading || widget.icon != null) const SizedBox(width: 10),
         // Flexible: com fonte ampliada (RNF-003) o rótulo quebra a linha em
         // vez de estourar a largura do botão.
         Flexible(
           child: Text(
             widget.label,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontSize: _fontSize,
-              fontWeight: FontWeight.w700,
-              color: style.fg,
-            ),
+            style: labelStyle,
           ),
         ),
         if (widget.iconRight != null) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           IconTheme(
-            data: IconThemeData(color: style.fg, size: 16),
+            data: IconThemeData(color: style.fg, size: 22),
             child: widget.iconRight!,
           ),
         ],
       ],
     );
 
-    return GestureDetector(
-      onTapDown: _isDisabled ? null : (_) => setState(() => _pressed = true),
-      onTapUp: _isDisabled ? null : (_) => setState(() => _pressed = false),
-      onTapCancel: _isDisabled ? null : () => setState(() => _pressed = false),
-      onTap: _isDisabled ? null : widget.onPressed,
-      child: AnimatedScale(
-        scale: _pressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        child: AnimatedOpacity(
-          opacity: opacity,
-          duration: const Duration(milliseconds: 200),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            padding: _padding,
-            width: widget.size == SafeButtonSize.large ? double.infinity : null,
-            decoration: BoxDecoration(
-              color: style.bg,
-              gradient: style.gradient,
-              borderRadius: AppSpacing.radiusFull,
-              boxShadow: widget.shadow ? context.colors.shadowPrimary : null,
-              border: widget.tone == SafeButtonTone.ghost
-                  ? Border.all(color: context.colors.border, width: 1)
-                  : null,
+    return Semantics(
+      button: true,
+      enabled: !_isDisabled,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: _isDisabled ? null : (_) => _setPressed(true),
+        onTapUp: _isDisabled ? null : (_) => _setPressed(false),
+        onTapCancel: _isDisabled ? null : () => _setPressed(false),
+        onTap: _isDisabled ? null : widget.onPressed,
+        child: AnimatedScale(
+          scale: _pressed && !reduceMotion ? 0.98 : 1.0,
+          duration: AppMotion.duration(AppMotion.fast, reduce: reduceMotion),
+          curve: AppMotion.enter,
+          child: Opacity(
+            opacity: _isDisabled && !widget.loading ? 0.45 : 1.0,
+            child: Container(
+              constraints: BoxConstraints(minHeight: _large ? 60 : 48),
+              padding: EdgeInsets.symmetric(
+                horizontal: _large ? AppSpacing.s6 : AppSpacing.s5,
+                vertical: AppSpacing.s3,
+              ),
+              width: _large ? double.infinity : null,
+              decoration: BoxDecoration(
+                color: style.bg,
+                borderRadius: _large
+                    ? AppSpacing.radiusMd
+                    : BorderRadius.circular(14),
+                border: style.border == null
+                    ? null
+                    : Border.fromBorderSide(style.border!),
+              ),
+              alignment: Alignment.center,
+              child: content,
             ),
-            child: content,
           ),
         ),
       ),

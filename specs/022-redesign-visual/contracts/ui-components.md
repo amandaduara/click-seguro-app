@@ -17,16 +17,16 @@ Regras para todos os widgets:
 
 | Widget | API que se mantém | Mudança de API | Comportamento visual |
 |---|---|---|---|
-| `SafeButton` | `label`, `onPressed`, `icon`, `iconRight`, `loading`, `disabled`, `size`, `tone` | `SafeButtonTone`: `primary`, `secondary`, `outline`, `link` (`gradient` e `ghost` saem; os usos migram). `SafeButtonSize`: `large` (60), `compact` (48) (`pill` sai). `shadow` sai. | coral, creme, contorno tinta ou sublinhado; ao tocar, cor pressionada e escala 0,98; cresce em altura se o texto quebrar; carregando mostra indicador no lugar do texto, com o rótulo mantido para leitura |
-| `SafeCard` | `child`, `onTap`, `padding` | `+ flat` (creme, sem sombra) | branco, canto 20, sombra única; tocável com escala 0,98 |
-| `SafeBadge` | `label`, `icon` | tons: `success`, `warning`, `neutral`, `alert`, `onImage` | pílula de 32, texto 15/700 (o Figma usou 14; vale o mínimo de 15 do FR-003) |
+| `SafeButton` | `label`, `onPressed`, `icon`, `iconRight`, `loading`, `disabled`, `size`, `tone` | `SafeButtonTone`: `primary` (coral), `secondary` (agora creme), `ghost` (agora contorno tinta), `link` (novo); `gradient` sai. `SafeButtonSize`: `large` (60), `compact` (48); `pill` sai. `shadow` sai. *(No implement, os nomes `secondary`/`ghost` foram mantidos para não mexer nas 30 telas que os usam.)* | coral, creme, contorno tinta ou sublinhado; ao tocar, cor pressionada e escala 0,98; cresce em altura se o texto quebrar; carregando mostra indicador no lugar do texto, com o rótulo mantido para leitura |
+| `SafeCard` | `child`, `elevation` (`flat`/`sm`/`md`), `padded`, `interactive`, `onTap` | nenhuma; `flat` passa a ser creme e sem sombra | branco, canto 20, sombra única; tocável com escala 0,98 |
+| `SafeBadge` | `child`, `icon`, `tone` | os tons atuais (`primary` faz o papel de "alerta": coral suave com texto `primaryPressed`) mais `onImage` (branco com sombra) | pílula de 32, texto 15/700 (o Figma usou 14; vale o mínimo de 15 do FR-003) |
 | `SafeTextField` | parâmetros atuais (rótulo, erro, obscure, teclado, etc.) | nenhuma | rótulo acima, 60 de altura, canto 16; foco: borda tinta 2,5; erro: borda e mensagem na cor de erro, com ícone |
 | `SafeLoadingState` | `semanticsLabel`/mensagem atual | `+ layout` (`list`, `cards`, `detail`), padrão `cards` | blocos `SafeSkeleton` no formato do conteúdo; anuncia carregando como hoje |
 | `SafeErrorState` | mensagem, `onRetry`, ação secundária | nenhuma | ilustração `stateError` (ou `stateOffline` quando a falha for de conexão), título, texto, "Tentar de novo" primário |
 | `SafeEmptyState` | mensagem, dica, ação | nenhuma | ilustração `stateEmpty`, título, texto, ação secundária |
 | `SafeOfflineBanner` | atual | nenhuma | faixa tinta, canto 14, ícone `wifiOff` branco |
 | `SlowRequestNotice` | atual | nenhuma | caixa `infoSoft` com ícone de relógio na cor `info` |
-| `ListenButton` | atual | nenhuma | pílula com borda, ícone coral; pulsa enquanto lê |
+| `ListenButton` | atual | nenhuma | pílula com borda, ícone coral; ao começar a ler, pulsa 3 vezes e fica com um anel parado até a leitura acabar |
 | `AppLogo` (021) | atual | nenhuma | sem mudança |
 
 ## Novos
@@ -35,8 +35,8 @@ Regras para todos os widgets:
 |---|---|---|
 | `SafeIllustration` | `SafeIllustration(AppIllustration, {double? height})` | SVG decorativo; recolore no alto contraste |
 | `SafeIconButton` | `icon`, `semanticLabel` (obrigatório), `onPressed`, `size` (48/56), `onImage` | redondo, creme ou branco com sombra |
-| `SafeChip` | `label`, `selected`, `onSelected` | pílula de 44; selecionado em tinta com texto branco; semântica de botão selecionado |
-| `SafePillTabs` | `tabs: List<String>`, `selectedIndex`, `onChanged` | trilho creme forte de 56, aba atual branca com sombra; semântica de aba e selecionada |
+| `SafeChip` | `label`, `selected`, `onTap`, `icon` | pílula de 44; selecionado em tinta com texto branco; semântica de botão selecionado |
+| `SafePillTabs` | `tabs: List<String>`, `selectedIndex`, `onChanged` | trilho creme forte de 56, aba atual branca com sombra; semântica de selecionada; rótulo numa linha (encolhe só em telas estreitas com fonte muito grande) |
 | `SafeProgressBar` | `value` (0–1), `tone` (`primary`/`success`) | 10 de altura, enche em 400 ms |
 | `SafeProgressRing` | `value`, `label`, `size` | anel de 104 com rótulo no centro, enche em 400 ms |
 | `SafeSegmentedProgress` | `total`, `done`, `current` | segmentos: feitos em coral, atual em coral claro, futuros em creme |

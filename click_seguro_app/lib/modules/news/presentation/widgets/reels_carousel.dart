@@ -61,8 +61,8 @@ class _ReelCard extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: context.colors.secondary,
-            borderRadius: AppSpacing.radius3xl,
-            boxShadow: context.colors.shadowMd,
+            borderRadius: AppSpacing.radiusXl,
+            boxShadow: context.colors.shadow,
           ),
           child: Stack(
             fit: StackFit.expand,

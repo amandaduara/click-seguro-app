@@ -10,13 +10,21 @@ void main() {
 
   setUp(() => taps = 0);
 
-  Future<void> pump(WidgetTester tester, {required bool isSpeaking}) =>
-      pumpLocalized(
-        tester,
-        child: Scaffold(
-          body: ListenButton(isSpeaking: isSpeaking, onPressed: () => taps++),
-        ),
-      );
+  Future<void> pump(
+    WidgetTester tester, {
+    required bool isSpeaking,
+    bool disableAnimations = false,
+  }) => pumpLocalized(
+    tester,
+    // Lendo, o halo pulsa por 6 s: o teste do pulso confere antes disso.
+    settle: !isSpeaking || disableAnimations,
+    child: MediaQuery(
+      data: MediaQueryData(disableAnimations: disableAnimations),
+      child: Scaffold(
+        body: ListenButton(isSpeaking: isSpeaking, onPressed: () => taps++),
+      ),
+    ),
+  );
 
   testWidgets('parado: "Ouvir" com o ícone de som', (tester) async {
     await pump(tester, isSpeaking: false);
@@ -44,5 +52,38 @@ void main() {
       tester.getSize(find.byType(ListenButton)).height,
       greaterThanOrEqualTo(48),
     );
+  });
+
+  testWidgets('pílula do tamanho do texto, mesmo numa coluna esticada', (
+    tester,
+  ) async {
+    await pump(tester, isSpeaking: false);
+
+    expect(tester.getSize(find.byType(ListenButton)).width, lessThan(200));
+  });
+
+  testWidgets('lendo: o halo pulsa 3 vezes e depois fica parado (FR-020)', (
+    tester,
+  ) async {
+    await pump(tester, isSpeaking: true);
+
+    expect(tester.hasRunningAnimations, isTrue);
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pump();
+    expect(tester.hasRunningAnimations, isFalse);
+  });
+
+  testWidgets('lendo com reduzir animações: nada pulsa (FR-021)', (
+    tester,
+  ) async {
+    await pump(tester, isSpeaking: true, disableAnimations: true);
+
+    expect(tester.hasRunningAnimations, isFalse);
+  });
+
+  testWidgets('parado: nada pulsa', (tester) async {
+    await pump(tester, isSpeaking: false);
+
+    expect(tester.hasRunningAnimations, isFalse);
   });
 }

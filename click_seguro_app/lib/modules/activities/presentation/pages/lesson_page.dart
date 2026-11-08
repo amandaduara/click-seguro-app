@@ -347,7 +347,7 @@ class _LessonBody extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: maxImageHeight),
               child: ClipRRect(
-                borderRadius: AppSpacing.radius2xl,
+                borderRadius: AppSpacing.radiusLg,
                 // O espaço depois da imagem só existe com ela: o errorBuilder
                 // não passa pelo frameBuilder (FR-013).
                 child: Image.network(

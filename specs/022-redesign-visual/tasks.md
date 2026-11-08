@@ -53,13 +53,13 @@ description: "Task list for feature 022: redesign visual 2.0"
 
 **Purpose**: dependência, fonte e assets que todas as histórias usam.
 
-- [ ] T001 Adicionar `flutter_svg: 2.3.0` (versão fixada) em `app/pubspec.yaml` e rodar
+- [X] T001 Adicionar `flutter_svg: 2.3.0` (versão fixada) em `app/pubspec.yaml` e rodar
   `flutter pub get`. Conferir na API da versão instalada se `SvgPicture.asset` aceita
   `colorMapper`. Anotar o resultado no [R5](research.md#r5-ilustrações-em-svg-com-flutter_svg).
-- [ ] T002 [P] Baixar os arquivos estáticos da Inter (Regular 400, Medium 500, SemiBold 600, Bold
+- [X] T002 [P] Baixar os arquivos estáticos da Inter (Regular 400, Medium 500, SemiBold 600, Bold
   700, ExtraBold 800) e a licença `OFL.txt` para `app/assets/fonts/`. Declarar a família `Inter`
   em `fonts:` no `app/pubspec.yaml` ([R2](research.md#r2-fonte-inter-empacotada)).
-- [ ] T003 [P] Criar os 16 SVGs da tabela "Ilustração" do [data-model](data-model.md#ilustração)
+- [X] T003 [P] Criar os 16 SVGs da tabela "Ilustração" do [data-model](data-model.md#ilustração)
   em `app/assets/illustrations/`, a partir do gerador do Figma:
   - sem `<text>`, sem `mask`/`clipPath` e sem fundo pastel, que vem do container;
   - cores só da paleta das ilustrações;
@@ -79,7 +79,7 @@ depende desta fase.
 
 ### Testes primeiro
 
-- [ ] T004 [P] Estender `tcore/theme/app_palette_test.dart`:
+- [X] T004 [P] Estender `tcore/theme/app_palette_test.dart`:
   - tema claro com os valores e campos novos do [data-model](data-model.md#apppalette);
   - contraste de 4,5:1 ou mais em todo par de texto e fundo dos componentes (`textForeground`,
     `textBody` e `textMutedForeground` sobre `background`/`surface`/`surfaceStrong`; branco sobre
@@ -88,7 +88,7 @@ depende desta fase.
   - os campos removidos (`primaryGlow`, `shadowPrimary`, `gradient`) não existem mais.
 
   Rodar e ver falhar.
-- [ ] T005 [P] Criar `tcore/illustrations/illustration_theme_test.dart` com uma tabela de casos
+- [X] T005 [P] Criar `tcore/illustrations/illustration_theme_test.dart` com uma tabela de casos
   para `IllustrationTheme.fromText` ([R7](research.md#r7-reconhecer-o-tema-do-módulo-e-da-notícia)):
   - um título por tema, em pt e em en;
   - com acento e maiúsculas ("LIGAÇÃO falsa" → `call`);
@@ -97,7 +97,7 @@ depende desta fase.
   - `illustration` e `pastel(palette)` de cada tema, com branco no alto contraste.
 
   Rodar e ver falhar.
-- [ ] T006 [P] Estender `tmod/common/accessibility/accessibility_preferences_test.dart` e
+- [X] T006 [P] Estender `tmod/common/accessibility/accessibility_preferences_test.dart` e
   `tmod/settings/data/accessibility_preferences_model_test.dart`:
   - `reduceMotion` com padrão `false`;
   - `copyWith`;
@@ -106,14 +106,14 @@ depende desta fase.
 
   Também `tmod/settings/data/accessibility_repository_impl_test.dart`: salva e lê com
   `reduceMotion`. Rodar e ver falhar.
-- [ ] T007 [P] Criar `tcore/theme/app_motion_test.dart`:
+- [X] T007 [P] Criar `tcore/theme/app_motion_test.dart`:
   - `context.reduceMotion` é `true` com `MediaQueryData(disableAnimations: true)` e `false` sem;
   - as durações valem 150/250/400/1200 ms.
 
   Criar também `app/test/main_motion_test.dart` (ou estender o `accessibility_app_test.dart`): com
   `reduceMotion: true` no notifier, o `MediaQuery` abaixo do `MaterialApp` tem
   `disableAnimations == true`. Rodar e ver falhar.
-- [ ] T008 [P] Criar `tcore/widgets/safe_illustration_test.dart`:
+- [X] T008 [P] Criar `tcore/widgets/safe_illustration_test.dart`:
   - desenha um `SvgPicture` do asset da `AppIllustration`;
   - fica fora da semântica;
   - no `AppTheme.highContrastTheme`, usa o mapeador de cores.
@@ -122,7 +122,7 @@ depende desta fase.
 
 ### Implementação
 
-- [ ] T009 Reescrever os tokens de cor:
+- [X] T009 Reescrever os tokens de cor:
   - `core/theme/app_colors.dart` com os valores novos;
   - `core/theme/app_palette.dart` com os campos novos e os removidos, conforme o
     [data-model](data-model.md#apppalette), nos temas `light` e `highContrast`, mais `copyWith` e
@@ -130,17 +130,18 @@ depende desta fase.
 
   Corrigir os usos de `primaryGlow`, `gradient`, `shadowPrimary` e `shadowSm`/`shadowMd` em `lib/`:
   `shadow` no lugar das sombras e `primary` no lugar do gradiente. T004 passa.
-- [ ] T010 [P] Criar os tokens restantes:
+- [X] T010 [P] Criar os tokens restantes:
   - `core/theme/app_typography.dart` (estilos do [R3](research.md#r3-escala-de-texto) em Inter,
     cor pelo `AppPalette`);
-  - `core/theme/app_shadows.dart` (sombra única);
+  - a sombra única fica em `AppPalette.shadow` (vazia no alto contraste); no implement, o
+    `app_shadows.dart` previsto foi dispensado para não duplicar a sombra;
   - em `core/theme/app_spacing.dart`, os cantos `radiusSm` 12, `radiusMd` 16, `radiusLg` 20,
     `radiusXl` 24, `radius2xl` 32, `radiusFull` e o espaço `s8` 48. Ajustar os usos dos nomes
     antigos `radius2xl` (20 → `radiusLg`) e `radius3xl` (24 → `radiusXl`) em `lib/`.
-- [ ] T011 [P] Criar `core/theme/app_motion.dart` ([R8](research.md#r8-reduzir-animações-um-sinal-só)):
+- [X] T011 [P] Criar `core/theme/app_motion.dart` ([R8](research.md#r8-reduzir-animações-um-sinal-só)):
   durações `fast`/`standard`/`emphasis`/`celebration`, curvas `enter`/`exit`/`spring` e a extensão
   `context.reduceMotion`. T007 (parte do motion) passa.
-- [ ] T012 Atualizar `core/theme/app_theme.dart`:
+- [X] T012 Atualizar `core/theme/app_theme.dart`:
   - `fontFamily: 'Inter'` e `textTheme` a partir do `AppTypography`;
   - `inputDecorationTheme` (canto 16, borda `inputBorder`, foco tinta 2,5, erro);
   - `bottomSheetTheme` (canto 32 em cima, branco);
@@ -149,7 +150,7 @@ depende desta fase.
     `enter`, e troca direta com `context.reduceMotion`.
 
   Depende de T009 a T011.
-- [ ] T013 Adicionar `reduceMotion` (padrão `false`) de ponta a ponta:
+- [X] T013 Adicionar `reduceMotion` (padrão `false`) de ponta a ponta:
   - `mod/common/accessibility/accessibility_preferences.dart`;
   - o modelo `mod/settings/data/models/accessibility_preferences_model.dart` (chave nova; ausente →
     `false`);
@@ -157,27 +158,28 @@ depende desta fase.
     gravada lá.
 
   T006 passa.
-- [ ] T014 Em `app/lib/main.dart`, no `builder` que aplica a escala de fonte, somar
+- [X] T014 Em `app/lib/main.dart`, no `builder` que aplica a escala de fonte, somar
   `disableAnimations: media.disableAnimations || preferences.reduceMotion`. T007 passa.
-- [ ] T015 Criar o interruptor "Reduzir animações" ([FR-024](spec.md)):
+- [X] T015 Criar o interruptor "Reduzir animações" ([FR-024](spec.md)):
   - chaves `accessibilityReduceMotion` e `accessibilityReduceMotionHint` em
     `core/i18n/app_strings.dart` e nos dois JSON de `app/assets/translations/`. pt-BR: "Reduzir
     animações" e "Mostra as telas sem movimento." en-US: "Reduce animations" e "Shows screens
     without motion.";
   - em `mod/settings/presentation/controller/accessibility_controller.dart`, um
     `setReduceMotion(bool)` igual aos outros interruptores;
-  - em `mod/settings/presentation/pages/accessibility_page.dart`, um `SettingsSwitchTile` depois
-    da leitura automática.
+  - em `mod/settings/presentation/pages/accessibility_page.dart`, um `SettingsSwitchTile` na seção
+    "Aparência", logo depois do alto contraste (no implement: fica junto das opções visuais, não na
+    de voz).
 
   O teste vem antes: em `tmod/settings/presentation/accessibility_controller_test.dart`, salva e
   publica; em `accessibility_page_test.dart`, o interruptor aparece, liga e tem rótulo de
   semântica. Rodar e ver falhar antes.
-- [ ] T016 Criar `core/illustrations/app_illustration.dart` (enum → caminho do asset) e
+- [X] T016 Criar `core/illustrations/app_illustration.dart` (enum → caminho do asset) e
   `core/illustrations/illustration_theme.dart` (`fromText`, `illustration`, `pastel`). T005 passa.
-- [ ] T017 Criar `core/widgets/safe_illustration.dart` com `SvgPicture.asset` em
+- [X] T017 Criar `core/widgets/safe_illustration.dart` com `SvgPicture.asset` em
   `ExcludeSemantics` e o `ColorMapper` do alto contraste
   ([R5](research.md#r5-ilustrações-em-svg-com-flutter_svg)). T008 passa.
-- [ ] T018 Rodar `flutter analyze` e `flutter test` com tudo verde. Os testes que quebrarem só por
+- [X] T018 Rodar `flutter analyze` e `flutter test` com tudo verde. Os testes que quebrarem só por
   cor ou nome de token são ajustados aqui. Os de comportamento não mudam.
 
 **Checkpoint**: os tokens, o movimento, a preferência e a ilustração estão prontos. O app já mostra
@@ -196,7 +198,7 @@ contraste (spec, US1).
 
 ### Testes da US1
 
-- [ ] T019 [P] [US1] Estender `tcore/widgets/safe_button_test.dart`:
+- [X] T019 [P] [US1] Estender `tcore/widgets/safe_button_test.dart`:
   - tons `primary`/`secondary`/`outline`/`link`;
   - `large` com altura mínima 60 e `compact` com 48;
   - ao pressionar, escala 0,98 (nenhuma com `disableAnimations`);
@@ -204,11 +206,11 @@ contraste (spec, US1).
   - carregando mantém o rótulo de semântica.
 
   Remover os casos de `gradient`/`ghost`/`pill`. Rodar e ver falhar.
-- [ ] T020 [P] [US1] Estender `tcore/widgets/safe_badge_test.dart` para os tons `success`,
+- [X] T020 [P] [US1] Estender `tcore/widgets/safe_badge_test.dart` para os tons `success`,
   `warning`, `neutral`, `alert` e `onImage`, com ícone opcional, e criar
   `tcore/widgets/safe_card_test.dart` (canto 20, sombra, variante `flat` sem sombra, toque com
   escala). Rodar e ver falhar.
-- [ ] T021 [P] [US1] Criar testes de widget para os componentes novos do
+- [X] T021 [P] [US1] Criar testes de widget para os componentes novos do
   [contrato](contracts/ui-components.md):
   - `tcore/widgets/safe_icon_button_test.dart`: rótulo obrigatório, alvo de 48 ou mais;
   - `safe_chip_test.dart`: semântica de selecionado, `onSelected`;
@@ -219,10 +221,10 @@ contraste (spec, US1).
   - `safe_sheet_test.dart`: alça e canto 32.
 
   Rodar e ver falhar.
-- [ ] T022 [P] [US1] Estender o teste do `SafeTextField` (criar `tcore/widgets/safe_text_field_test.dart`
+- [X] T022 [P] [US1] Estender o teste do `SafeTextField` (criar `tcore/widgets/safe_text_field_test.dart`
   se não existir): rótulo acima, altura 60, borda tinta no foco e mensagem de erro com ícone. Rodar
   e ver falhar.
-- [ ] T023 [P] [US1] Em `tmod/shell/presentation/app_shell_test.dart`:
+- [X] T023 [P] [US1] Em `tmod/shell/presentation/app_shell_test.dart`:
   - remover o caso do botão central;
   - novo caso: cinco itens de mesma largura, todos com rótulo, a aba atual com semântica de
     selecionada, "Notícias" abre os Reels como antes.
@@ -231,30 +233,32 @@ contraste (spec, US1).
 
 ### Implementação da US1
 
-- [ ] T024 [US1] Reescrever `core/widgets/safe_button.dart` conforme o
+- [X] T024 [US1] Reescrever `core/widgets/safe_button.dart` conforme o
   [contrato](contracts/ui-components.md#mantidos-com-visual-novo-api-compatível) e migrar os usos
   de `SafeButtonTone.gradient`/`ghost`, `SafeButtonSize.pill` e `shadow:` em `lib/` (53 usos;
   `gradient` → `primary`, `ghost` → `link`, `pill` → `SafeChip` ou `compact`). T019 passa.
-- [ ] T025 [P] [US1] Reescrever `core/widgets/safe_card.dart` e `core/widgets/safe_badge.dart`
+- [X] T025 [P] [US1] Reescrever `core/widgets/safe_card.dart` e `core/widgets/safe_badge.dart`
   (migrar os 7 usos de `SafeBadge` para os tons novos). T020 passa.
-- [ ] T026 [P] [US1] Reescrever `core/widgets/safe_text_field.dart` (rótulo acima, 60, canto 16,
+- [X] T026 [P] [US1] Reescrever `core/widgets/safe_text_field.dart` (rótulo acima, 60, canto 16,
   foco e erro). T022 passa.
-- [ ] T027 [P] [US1] Criar `core/widgets/safe_icon_button.dart`, `safe_chip.dart`,
+- [X] T027 [P] [US1] Criar `core/widgets/safe_icon_button.dart`, `safe_chip.dart`,
   `safe_pill_tabs.dart`, `safe_progress.dart` (`SafeProgressBar`, `SafeProgressRing` e
   `SafeSegmentedProgress`, com arco em `CustomPainter`), `safe_skeleton.dart` (gradiente que corre
   em 1,4 s com um `AnimationController`, parado com `context.reduceMotion`) e `safe_sheet.dart`.
   T021 passa.
-- [ ] T028 [P] [US1] Atualizar `core/widgets/listen_button.dart`: pílula com borda e ícone coral;
+- [X] T028 [P] [US1] Atualizar `core/widgets/listen_button.dart`: pílula com borda e ícone coral;
   enquanto lê, um halo pulsa em ciclos de 2 s, e nada pulsa com `reduceMotion`. Ajustar
   `tcore/widgets/listen_button_test.dart` (o teste antes).
-- [ ] T029 [US1] Reescrever `mod/shell/presentation/widgets/app_bottom_nav.dart`:
+- [X] T029 [US1] Reescrever `mod/shell/presentation/widgets/app_bottom_nav.dart`:
   - sem `_CenterItem` nem `AppTab.isCenter`;
   - 5 itens iguais, cada um com pílula de 60×34, ícone 26 e rótulo 15 (mínimo do FR-003) que quebra em até 2 linhas;
   - aba atual: ícone `primary` sobre `primarySoft` e rótulo em negrito;
   - fundo branco com linha `border` em cima.
 
   T023 passa.
-- [ ] T030 [US1] Trocar as abas pelo `SafePillTabs`, mantendo rótulos, ordem e comportamento:
+- [X] T030 [US1] Trocar as abas pelo `SafePillTabs`, mantendo rótulos, ordem e comportamento (no
+  implement, o `AuthModeSwitch` ganhou o mesmo visual sem trocar o widget, para manter as chaves
+  `auth-mode-*` e a pílula que desliza):
   - o `TabBar` de `mod/help/presentation/pages/help_page.dart` (Oficiais/Meus contatos, ainda
     controlado pelo `TabController`);
   - o `_Segment` próprio de `mod/authentication/presentation/widgets/auth_mode_switch.dart`
@@ -263,7 +267,7 @@ contraste (spec, US1).
 
   O `SegmentedButton` de `app/lib/dev/platform_services_playground.dart` é de desenvolvimento e
   fica como está.
-- [ ] T031 [US1] Passar Perfil e telas sem desenho próprio para os componentes e o `AppTypography`,
+- [X] T031 [US1] Passar Perfil e telas sem desenho próprio para os componentes e o `AppTypography`,
   sem mudar layout nem textos ([FR-013](spec.md)):
   - `mod/profile/presentation/` (pages e widgets);
   - `mod/settings/presentation/` (pages e widgets);
@@ -274,10 +278,10 @@ contraste (spec, US1).
 
   Trocar os `fontSize:` soltos por estilos do `AppTypography`. Ajustar os testes dessas telas só
   onde conferem aparência.
-- [ ] T032 [US1] Atualizar `app/lib/style_guide/style_guide.dart` para mostrar os componentes
+- [X] T032 [US1] Atualizar `app/lib/style_guide/style_guide.dart` para mostrar os componentes
   novos (botões, chips, abas, selos, campos, progresso, avisos, ilustrações), na mesma ordem da
   prancha "Componentes".
-- [ ] T033 [US1] `flutter analyze` e `flutter test` com tudo verde. **Commit**:
+- [X] T033 [US1] `flutter analyze` e `flutter test` com tudo verde. **Commit**:
   `feat(022): base e US1 — tokens, componentes e barra inferior`.
 
 **Checkpoint**: o app inteiro com a linguagem nova. As histórias seguintes só ajustam o layout

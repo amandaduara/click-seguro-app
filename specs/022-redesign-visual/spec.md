@@ -376,7 +376,8 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
   em botões e cartões (encolher para 98%, 150 ms), progresso enchendo (400 ms), folha inferior
   subindo (400 ms), resposta certa com mola, resposta errada com balanço suave duas vezes,
   conclusão com confete e contagem do placar (1200 ms), brilho do carregamento, pulso do botão
-  "Ouvir" enquanto lê, pulso suave do círculo da logo no splash e flutuação suave da ilustração
+  "Ouvir" ao começar a ler (3 vezes, depois um anel parado enquanto lê; ajuste do implement para
+  não ter movimento sem fim), pulso suave do círculo da logo no splash e flutuação suave da ilustração
   do onboarding.
 - **FR-021**: Toda animação MUST respeitar "reduzir movimento": se o interruptor do app (FR-024)
   **ou** a opção do aparelho estiver ligado, o conteúdo aparece direto no estado final. Nenhuma

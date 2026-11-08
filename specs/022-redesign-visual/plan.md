@@ -129,7 +129,7 @@ click_seguro_app/
 │   │   │   ├── app_palette.dart         # + campos semânticos, claro e alto contraste
 │   │   │   ├── app_typography.dart      # NOVO: estilos de texto em Inter
 │   │   │   ├── app_spacing.dart         # + cantos 12/16/20/24/32/pílula, + espaço 48
-│   │   │   ├── app_shadows.dart         # NOVO: a sombra única
+│   │   │   │                            # (sombra única: AppPalette.shadow, sem arquivo próprio)
 │   │   │   ├── app_motion.dart          # NOVO: durações, curvas, context.reduceMotion
 │   │   │   └── app_theme.dart           # Inter, textTheme, campos, folha, snackbar, transição
 │   │   ├── illustrations/               # NOVO

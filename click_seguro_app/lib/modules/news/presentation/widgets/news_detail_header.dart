@@ -28,7 +28,7 @@ class NewsDetailHeader extends StatelessWidget {
       children: [
         if (image != null) ...[
           ClipRRect(
-            borderRadius: AppSpacing.radius3xl,
+            borderRadius: AppSpacing.radiusXl,
             child: Image.network(
               image,
               height: _imageHeight,

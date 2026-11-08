@@ -1,11 +1,14 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 
-/// SafeTextField — campo de entrada com label superior, hint/erro e ícones
-/// laterais. A borda anima para `primary` no foco (focus-within:border-primary)
-/// e para `destructive` quando há erro.
+/// SafeTextField — campo com rótulo sempre visível acima, dica/erro e ícones
+/// laterais (redesign 2.0, FR-007). Foco: borda tinta de 2,5; erro: borda e
+/// mensagem na cor de erro, com ícone (não só a cor).
 class SafeTextField extends StatefulWidget {
   const SafeTextField({
     super.key,
@@ -84,8 +87,10 @@ class _SafeTextFieldState extends State<SafeTextField> {
     final hasError = widget.error != null && widget.error!.isNotEmpty;
     final borderColor = hasError
         ? context.colors.destructive
-        : (_focused ? context.colors.primary : context.colors.inputBorder);
-    final borderWidth = hasError || _focused ? 2.0 : 2.0;
+        : (_focused
+              ? context.colors.textForeground
+              : context.colors.inputBorder);
+    final double borderWidth = _focused ? 2.5 : (hasError ? 2.0 : 1.5);
 
     return Opacity(
       opacity: widget.enabled ? 1 : 0.4,
@@ -97,21 +102,24 @@ class _SafeTextFieldState extends State<SafeTextField> {
             if (widget.label != null) ...[
               Text(
                 widget.label!,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                style: AppTypography.label.copyWith(
                   color: hasError
                       ? context.colors.destructive
-                      : context.colors.secondary,
-                  fontWeight: FontWeight.w600,
+                      : context.colors.textForeground,
                 ),
               ),
-              const SizedBox(height: AppSpacing.s1),
+              const SizedBox(height: AppSpacing.s2),
             ],
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: AppMotion.duration(
+                AppMotion.fast,
+                reduce: context.reduceMotion,
+              ),
+              constraints: const BoxConstraints(minHeight: 60),
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
               decoration: BoxDecoration(
-                color: context.colors.background,
-                borderRadius: BorderRadius.circular(16),
+                color: context.colors.card,
+                borderRadius: AppSpacing.radiusMd,
                 border: Border.all(color: borderColor, width: borderWidth),
               ),
               child: Row(
@@ -120,11 +128,11 @@ class _SafeTextFieldState extends State<SafeTextField> {
                     IconTheme(
                       data: IconThemeData(
                         color: context.colors.textMutedForeground,
-                        size: 18,
+                        size: 22,
                       ),
                       child: widget.leftIcon!,
                     ),
-                    const SizedBox(width: AppSpacing.s1),
+                    const SizedBox(width: AppSpacing.s3),
                   ],
                   Expanded(
                     // MergeSemantics: rótulo e campo viram um só nó para o
@@ -143,18 +151,21 @@ class _SafeTextFieldState extends State<SafeTextField> {
                           onSubmitted: widget.onSubmitted,
                           autofillHints: widget.autofillHints,
                           inputFormatters: widget.inputFormatters,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: context.colors.textForeground),
+                          style: AppTypography.body.copyWith(
+                            color: context.colors.textForeground,
+                          ),
                           decoration: InputDecoration(
                             hintText: widget.placeholder,
-                            hintStyle: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: context.colors.textMutedForeground,
-                                ),
+                            hintStyle: AppTypography.body.copyWith(
+                              color: context.colors.textMutedForeground,
+                            ),
                             border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            filled: false,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
-                              vertical: 14,
+                              vertical: 16,
                             ),
                           ),
                         ),
@@ -165,8 +176,8 @@ class _SafeTextFieldState extends State<SafeTextField> {
                     const SizedBox(width: AppSpacing.s2),
                     IconTheme(
                       data: IconThemeData(
-                        color: context.colors.textMutedForeground,
-                        size: 18,
+                        color: context.colors.textForeground,
+                        size: 24,
                       ),
                       child: widget.rightIcon!,
                     ),
@@ -175,14 +186,33 @@ class _SafeTextFieldState extends State<SafeTextField> {
               ),
             ),
             if (widget.hint != null || hasError) ...[
-              const SizedBox(height: AppSpacing.s1),
-              Text(
-                hasError ? widget.error! : widget.hint!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: hasError
-                      ? context.colors.destructive
-                      : context.colors.textMutedForeground,
-                ),
+              const SizedBox(height: AppSpacing.s2),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasError) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Icon(
+                        LucideIcons.circleAlert,
+                        size: 16,
+                        color: context.colors.destructive,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.s1 + 2),
+                  ],
+                  Flexible(
+                    child: Text(
+                      hasError ? widget.error! : widget.hint!,
+                      style: AppTypography.caption.copyWith(
+                        color: hasError
+                            ? context.colors.destructive
+                            : context.colors.textMutedForeground,
+                        fontWeight: hasError ? FontWeight.w600 : null,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ],

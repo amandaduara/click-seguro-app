@@ -1,4 +1,6 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Seletor em pílula "Entrar" / "Criar conta" (wireframe, LoginScreen).
@@ -25,17 +27,26 @@ class AuthModeSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Mesmo visual do `SafePillTabs` (redesign 2.0); a pílula desliza, ou
+    // troca direto com reduzir animações (FR-021).
+    final Duration duration = AppMotion.duration(
+      _duration,
+      reduce: context.reduceMotion,
+    );
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: context.colors.input,
+        color: context.colors.surfaceStrong,
         borderRadius: const BorderRadius.all(Radius.circular(999)),
+        border: context.colors.shadow.isEmpty
+            ? Border.all(color: context.colors.border)
+            : null,
       ),
       child: Stack(
         children: [
           Positioned.fill(
             child: AnimatedAlign(
-              duration: _duration,
+              duration: duration,
               curve: Curves.easeOut,
               alignment: isRegister
                   ? Alignment.centerRight
@@ -45,9 +56,12 @@ class AuthModeSwitch extends StatelessWidget {
                 heightFactor: 1,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: context.colors.background,
+                    color: context.colors.card,
                     borderRadius: const BorderRadius.all(Radius.circular(999)),
-                    boxShadow: context.colors.shadowSm,
+                    boxShadow: context.colors.shadow,
+                    border: context.colors.shadow.isEmpty
+                        ? Border.all(color: context.colors.border, width: 2)
+                        : null,
                   ),
                 ),
               ),
@@ -89,11 +103,11 @@ class _Segment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.labelLarge?.copyWith(
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
+    final TextStyle style = AppTypography.label.copyWith(
+      fontSize: 17,
+      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
       color: selected
-          ? context.colors.secondary
+          ? context.colors.textForeground
           : context.colors.textMutedForeground,
     );
     return Expanded(
@@ -104,11 +118,14 @@ class _Segment extends StatelessWidget {
           onTap: selected ? null : onTap,
           behavior: HitTestBehavior.opaque,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
+            constraints: const BoxConstraints(minHeight: 46),
             child: Center(
               child: AnimatedDefaultTextStyle(
-                duration: AuthModeSwitch._duration,
-                style: style ?? const TextStyle(),
+                duration: AppMotion.duration(
+                  AuthModeSwitch._duration,
+                  reduce: context.reduceMotion,
+                ),
+                style: style,
                 child: Text(label, textAlign: TextAlign.center),
               ),
             ),

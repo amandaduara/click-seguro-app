@@ -19,6 +19,7 @@ import 'package:click_seguro_app/modules/profile/presentation/widgets/profile_ct
 import 'package:click_seguro_app/modules/profile/presentation/widgets/profile_header_card.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/stat_tile.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -104,7 +105,7 @@ class _Header extends StatelessWidget {
             child: Text(
               AppStrings.profileTitle.tr(),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: 30,
+                fontSize: AppTypography.title1.fontSize,
                 fontWeight: FontWeight.w800,
                 color: colors.secondary,
               ),

@@ -48,7 +48,7 @@ class ModuleCard extends StatelessWidget {
       child: Material(
         color: colors.card,
         shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.radius2xl,
+          borderRadius: AppSpacing.radiusLg,
           side: BorderSide(color: colors.border),
         ),
         clipBehavior: Clip.antiAlias,

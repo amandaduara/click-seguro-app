@@ -60,18 +60,20 @@ void main() {
       await controller.setHighContrast(true);
       await controller.setAutoReadAloud(true);
       await controller.setReadingSpeed(ReadingSpeed.slow);
+      await controller.setReduceMotion(true);
 
       const expected = AccessibilityPreferences(
         fontScale: FontScaleLevel.larger,
         highContrast: true,
         autoReadAloud: true,
         readingSpeed: ReadingSpeed.slow,
+        reduceMotion: true,
       );
       expect(notifier.value, expected);
       expect(controller.preferences, expected);
       expect(repository.stored, expected);
-      expect(repository.saved, hasLength(4));
-      expect(notifications, 4);
+      expect(repository.saved, hasLength(5));
+      expect(notifications, 5);
     });
 
     test('o valor muda antes de a gravação terminar', () async {

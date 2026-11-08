@@ -427,6 +427,10 @@ abstract class AppStrings {
       'settings_accessibility_high_contrast';
   static const String settingsAccessibilityHighContrastSub =
       'settings_accessibility_high_contrast_sub';
+  static const String settingsAccessibilityReduceMotion =
+      'settings_accessibility_reduce_motion';
+  static const String settingsAccessibilityReduceMotionSub =
+      'settings_accessibility_reduce_motion_sub';
   static const String settingsAccessibilitySectionVoice =
       'settings_accessibility_section_voice';
   static const String settingsAccessibilityAutoRead =

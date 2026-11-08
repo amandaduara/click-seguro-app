@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/settings/domain/entities/language_choice.dart';
 import 'package:click_seguro_app/modules/settings/presentation/extensions/language_choice_presentation.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -22,7 +23,10 @@ Future<LanguageChoice?> showLanguageSheet(
             ListTile(
               minTileHeight: 56,
               selected: choice == current,
-              title: Text(choice.label, style: const TextStyle(fontSize: 16)),
+              title: Text(
+                choice.label,
+                style: TextStyle(fontSize: AppTypography.label.fontSize),
+              ),
               trailing: choice == current
                   ? Icon(LucideIcons.check, color: colors.primary)
                   : null,

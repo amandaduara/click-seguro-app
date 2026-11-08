@@ -175,7 +175,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     SafeButton(
       label: AppStrings.authResetSendCode.tr(),
       loading: controller.isSubmitting,
-      shadow: true,
       onPressed: () => controller.submitEmail(_emailController.text),
     ),
   ];
@@ -205,7 +204,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     SafeButton(
       label: AppStrings.authResetContinue.tr(),
       loading: controller.isSubmitting,
-      shadow: true,
       onPressed: () => controller.submitCode(_codeController.text),
     ),
     const SizedBox(height: AppSpacing.s3),
@@ -267,7 +265,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     SafeButton(
       label: AppStrings.authResetSave.tr(),
       loading: controller.isSubmitting,
-      shadow: true,
       onPressed: () => _saveNewPassword(controller),
     ),
   ];

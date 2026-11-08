@@ -18,7 +18,7 @@ class OverallProgressCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.card,
-        borderRadius: AppSpacing.radius2xl,
+        borderRadius: AppSpacing.radiusLg,
         border: Border.all(color: colors.border),
       ),
       child: Padding(

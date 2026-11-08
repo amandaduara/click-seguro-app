@@ -57,7 +57,7 @@ class LessonOptionCard extends StatelessWidget {
         child: Material(
           color: colors.card,
           shape: RoundedRectangleBorder(
-            borderRadius: AppSpacing.radius2xl,
+            borderRadius: AppSpacing.radiusLg,
             side: BorderSide(
               color: accent ?? colors.border,
               width: accent == null ? 1 : 2,

@@ -18,6 +18,7 @@ import 'package:click_seguro_app/modules/common/services/image_storage_service.d
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
@@ -423,60 +424,23 @@ class _AssistantTabs extends StatelessWidget {
   final AssistantTab activeTab;
   final ValueChanged<AssistantTab> onSelect;
 
+  static const List<(AssistantTab, String)> _tabs = [
+    (AssistantTab.chat, AppStrings.assistantTabChat),
+    (AssistantTab.verify, AppStrings.assistantTabVerify),
+    (AssistantTab.history, AppStrings.assistantTabHistory),
+  ];
+
+  // Abas em pílula do redesign 2.0 (T030 de specs/022-redesign-visual).
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
+  Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(
       horizontal: AppSpacing.s5,
       vertical: AppSpacing.s2,
     ),
-    child: Row(
-      children: [
-        for (final (tab, label, icon) in [
-          (
-            AssistantTab.chat,
-            AppStrings.assistantTabChat,
-            LucideIcons.messageCircle,
-          ),
-          (
-            AssistantTab.verify,
-            AppStrings.assistantTabVerify,
-            LucideIcons.scanSearch,
-          ),
-          (
-            AssistantTab.history,
-            AppStrings.assistantTabHistory,
-            LucideIcons.clock3,
-          ),
-        ]) ...[
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: ChoiceChip(
-              avatar: Icon(
-                icon,
-                size: 18,
-                color: activeTab == tab
-                    ? context.colors.textPrimaryForeground
-                    : context.colors.textMutedForeground,
-              ),
-              label: Text(label.tr()),
-              selected: activeTab == tab,
-              onSelected: (_) => onSelect(tab),
-              labelStyle: TextStyle(
-                color: activeTab == tab
-                    ? context.colors.textPrimaryForeground
-                    : context.colors.textMutedForeground,
-                fontWeight: FontWeight.w700,
-              ),
-              selectedColor: context.colors.secondary,
-              backgroundColor: context.colors.card,
-              side: BorderSide(color: context.colors.border),
-              showCheckmark: false,
-            ),
-          ),
-          if (tab != AssistantTab.history) const SizedBox(width: AppSpacing.s2),
-        ],
-      ],
+    child: SafePillTabs(
+      tabs: [for (final (_, label) in _tabs) label.tr()],
+      selectedIndex: _tabs.indexWhere((t) => t.$1 == activeTab),
+      onChanged: (index) => onSelect(_tabs[index].$1),
     ),
   );
 }
@@ -532,7 +496,7 @@ class _ChatBubble extends StatelessWidget {
             ? DecoratedBox(
                 decoration: BoxDecoration(
                   color: context.colors.primary,
-                  borderRadius: AppSpacing.radius2xl,
+                  borderRadius: AppSpacing.radiusLg,
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.s4),
@@ -602,7 +566,7 @@ class _ChatComposer extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.colors.card,
             border: Border.all(color: context.colors.border),
-            borderRadius: AppSpacing.radius2xl,
+            borderRadius: AppSpacing.radiusLg,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,

@@ -5,6 +5,7 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/app_logo.dart';
 import 'package:click_seguro_app/modules/common/services/app_info_service.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
@@ -39,7 +40,7 @@ class _AboutPageState extends State<AboutPage> {
                 AppIdentity.name,
                 textAlign: TextAlign.center,
                 style: textTheme.headlineSmall?.copyWith(
-                  fontSize: 28,
+                  fontSize: AppTypography.title1.fontSize,
                   fontWeight: FontWeight.w800,
                   color: colors.secondary,
                 ),
@@ -57,7 +58,7 @@ class _AboutPageState extends State<AboutPage> {
                           AppStrings.settingsVersion.tr(args: [version]),
                           textAlign: TextAlign.center,
                           style: textTheme.bodyMedium?.copyWith(
-                            fontSize: 14,
+                            fontSize: AppTypography.caption.fontSize,
                             color: colors.textMutedForeground,
                           ),
                         ),
@@ -69,7 +70,7 @@ class _AboutPageState extends State<AboutPage> {
               AppStrings.settingsAboutGoal.tr(),
               textAlign: TextAlign.center,
               style: textTheme.bodyLarge?.copyWith(
-                fontSize: 16,
+                fontSize: AppTypography.label.fontSize,
                 height: 1.5,
                 color: colors.textForeground,
               ),
@@ -79,7 +80,7 @@ class _AboutPageState extends State<AboutPage> {
               AppStrings.settingsAboutCredits.tr(),
               textAlign: TextAlign.center,
               style: textTheme.bodyMedium?.copyWith(
-                fontSize: 14,
+                fontSize: AppTypography.caption.fontSize,
                 color: colors.textMutedForeground,
               ),
             ),

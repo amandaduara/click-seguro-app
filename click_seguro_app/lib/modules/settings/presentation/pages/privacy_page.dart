@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Como o app cuida dos dados (FR-022): o que fica no serviço e o que fica
@@ -58,7 +59,7 @@ class _Paragraph extends StatelessWidget {
             child: Text(
               title,
               style: textTheme.titleMedium?.copyWith(
-                fontSize: 18,
+                fontSize: AppTypography.body.fontSize,
                 fontWeight: FontWeight.w700,
                 color: context.colors.secondary,
               ),
@@ -68,7 +69,7 @@ class _Paragraph extends StatelessWidget {
           Text(
             body,
             style: textTheme.bodyLarge?.copyWith(
-              fontSize: 16,
+              fontSize: AppTypography.label.fontSize,
               height: 1.5,
               color: context.colors.textForeground,
             ),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+
+import 'app_motion.dart';
 import 'app_palette.dart';
 import 'app_spacing.dart';
+import 'app_typography.dart';
 
 abstract class AppTheme {
   AppTheme._();
@@ -11,88 +14,138 @@ abstract class AppTheme {
   static ThemeData get highContrastTheme => _build(AppPalette.highContrast);
 
   static ThemeData _build(AppPalette palette) {
+    final OutlineInputBorder idle = OutlineInputBorder(
+      borderRadius: AppSpacing.radiusMd,
+      borderSide: BorderSide(color: palette.inputBorder, width: 1.5),
+    );
     return ThemeData(
       useMaterial3: true,
       extensions: [palette],
-      fontFamily: 'Montserrat',
+      fontFamily: AppTypography.fontFamily,
       scaffoldBackgroundColor: palette.background,
-
-      // Customização das Cores ---
       colorScheme: ColorScheme.light(
         primary: palette.primary,
+        onPrimary: palette.textPrimaryForeground,
         secondary: palette.secondary,
         surface: palette.card,
-        error: palette.primary,
+        onSurface: palette.textForeground,
+        error: palette.destructive,
       ),
-
-      // Customização dos Textos ---
-      textTheme: TextTheme(
-        displayLarge: TextStyle(
-          // text-3xl (30px / bold) - Título de tela grande
-          fontSize: 30,
-          fontWeight: FontWeight.bold,
-          color: palette.textForeground,
-          letterSpacing: -0.6,
-        ),
-
-        titleLarge: TextStyle(
-          // text-2xl (24px / bold) - Títulos de header
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: palette.textForeground,
-          letterSpacing: -0.48,
-        ),
-
-        titleMedium: TextStyle(
-          // text-lg (18px / bold) - Títulos de seção / cards
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: palette.textForeground,
-        ),
-
-        bodyLarge: TextStyle(
-          // text-base (16px / regular) - Corpo destacado / Inputs
-          fontSize: 16,
-          fontWeight: FontWeight.normal,
-          color: palette.textForeground,
-        ),
-
-        bodyMedium: TextStyle(
-          // text-sm (14px / regular) - Corpo padrão / botões
-          fontSize: 14,
-          fontWeight: FontWeight.normal,
-          color: palette.textMutedForeground,
-        ),
-
-        bodySmall: TextStyle(
-          // text-xs (12px / regular) - Legendas / metadados
-          fontSize: 12,
-          fontWeight: FontWeight.normal,
-          color: palette.textMutedForeground,
-        ),
-      ),
-
-      // Customização dos Cards ---
+      textTheme: AppTypography.textTheme(palette),
+      iconTheme: IconThemeData(color: palette.textForeground, size: 24),
+      dividerTheme: DividerThemeData(color: palette.border, thickness: 1),
       cardTheme: CardThemeData(
         color: palette.card,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.radius2xl,
-          side: BorderSide(color: palette.border, width: 1),
+          borderRadius: AppSpacing.radiusLg,
+          side: palette.shadow.isEmpty
+              ? BorderSide(color: palette.border)
+              : BorderSide.none,
         ),
       ),
-
-      // Customização dos Inputs ---
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: palette.card,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s4,
-          vertical: AppSpacing.s3,
+          vertical: 18,
         ),
-        border: OutlineInputBorder(
-          borderRadius: AppSpacing.radius2xl,
-          borderSide: BorderSide(color: palette.border),
+        hintStyle: AppTypography.body.copyWith(
+          color: palette.textMutedForeground,
+        ),
+        border: idle,
+        enabledBorder: idle,
+        focusedBorder: idle.copyWith(
+          borderSide: BorderSide(color: palette.textForeground, width: 2.5),
+        ),
+        errorBorder: idle.copyWith(
+          borderSide: BorderSide(color: palette.destructive, width: 2),
+        ),
+        focusedErrorBorder: idle.copyWith(
+          borderSide: BorderSide(color: palette.destructive, width: 2.5),
+        ),
+        errorStyle: AppTypography.caption.copyWith(color: palette.destructive),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: palette.card,
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: false,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: palette.secondary,
+        contentTextStyle: AppTypography.label.copyWith(
+          fontSize: 17,
+          color: palette.textPrimaryForeground,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusMd),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: palette.card,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusXl),
+        titleTextStyle: AppTypography.title2.copyWith(
+          color: palette.textForeground,
+        ),
+        contentTextStyle: AppTypography.body.copyWith(color: palette.textBody),
+      ),
+      switchTheme: SwitchThemeData(
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? palette.primary
+              : palette.surfaceStrong,
+        ),
+      ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeSlidePageTransitionsBuilder(),
+          TargetPlatform.iOS: FadeSlidePageTransitionsBuilder(),
+          TargetPlatform.linux: FadeSlidePageTransitionsBuilder(),
+          TargetPlatform.macOS: FadeSlidePageTransitionsBuilder(),
+          TargetPlatform.windows: FadeSlidePageTransitionsBuilder(),
+          TargetPlatform.fuchsia: FadeSlidePageTransitionsBuilder(),
+        },
+      ),
+    );
+  }
+}
+
+/// Troca de tela do redesign: a nova aparece e desliza 24 px (FR-020); com
+/// "reduzir animações", troca direto (FR-021).
+class FadeSlidePageTransitionsBuilder extends PageTransitionsBuilder {
+  const FadeSlidePageTransitionsBuilder();
+
+  static const double _offset = 24;
+
+  @override
+  Duration get transitionDuration => AppMotion.standard;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (context.reduceMotion) return child;
+    final Animation<double> curved = CurvedAnimation(
+      parent: animation,
+      curve: AppMotion.enter,
+      reverseCurve: AppMotion.exit,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: AnimatedBuilder(
+        animation: curved,
+        child: child,
+        builder: (context, child) => Transform.translate(
+          offset: Offset(_offset * (1 - curved.value), 0),
+          child: child,
         ),
       ),
     );

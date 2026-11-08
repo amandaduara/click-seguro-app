@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -66,7 +67,7 @@ class SettingsTile extends StatelessWidget {
                         Text(
                           title,
                           style: textTheme.bodyLarge?.copyWith(
-                            fontSize: 16,
+                            fontSize: AppTypography.label.fontSize,
                             fontWeight: FontWeight.w700,
                             color: colors.textForeground,
                           ),
@@ -75,7 +76,7 @@ class SettingsTile extends StatelessWidget {
                           Text(
                             sub,
                             style: textTheme.bodyMedium?.copyWith(
-                              fontSize: 14,
+                              fontSize: AppTypography.caption.fontSize,
                               color: colors.textMutedForeground,
                             ),
                           ),
@@ -89,7 +90,7 @@ class SettingsTile extends StatelessWidget {
                         detail,
                         textAlign: TextAlign.end,
                         style: textTheme.bodyMedium?.copyWith(
-                          fontSize: 14,
+                          fontSize: AppTypography.caption.fontSize,
                           color: colors.textMutedForeground,
                         ),
                       ),

@@ -11,6 +11,7 @@ import 'package:click_seguro_app/modules/help/presentation/routes/help_routes.da
 import 'package:click_seguro_app/core/widgets/person_avatar.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
@@ -27,6 +28,37 @@ class HelpPage extends StatelessWidget {
   );
 }
 
+/// "Oficiais" / "Meus contatos" em pílula (T030 de
+/// specs/022-redesign-visual), ligadas ao `TabController` da tela, que
+/// continua aceitando o deslize entre as listas.
+class _HelpTabs extends StatelessWidget {
+  const _HelpTabs();
+
+  @override
+  Widget build(BuildContext context) {
+    final TabController controller = DefaultTabController.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s5,
+        AppSpacing.s2,
+        AppSpacing.s5,
+        AppSpacing.s2,
+      ),
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) => SafePillTabs(
+          tabs: [
+            AppStrings.helpTabOfficial.tr(),
+            AppStrings.helpTabPersonal.tr(),
+          ],
+          selectedIndex: controller.index,
+          onChanged: controller.animateTo,
+        ),
+      ),
+    );
+  }
+}
+
 class _HelpPageContent extends StatelessWidget {
   const _HelpPageContent();
 
@@ -38,12 +70,7 @@ class _HelpPageContent extends StatelessWidget {
         child: Column(
           children: [
             AppTopBar(title: AppStrings.helpTitle.tr()),
-            TabBar(
-              tabs: [
-                Tab(text: AppStrings.helpTabOfficial.tr()),
-                Tab(text: AppStrings.helpTabPersonal.tr()),
-              ],
-            ),
+            const _HelpTabs(),
             Expanded(
               child: Consumer<HelpController>(
                 builder: (context, controller, _) => TabBarView(

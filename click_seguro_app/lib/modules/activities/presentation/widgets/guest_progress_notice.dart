@@ -18,7 +18,7 @@ class GuestProgressNotice extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.primary.withValues(alpha: 0.06),
-        borderRadius: AppSpacing.radius2xl,
+        borderRadius: AppSpacing.radiusLg,
         border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
       ),
       child: Padding(
