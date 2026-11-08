@@ -1,6 +1,6 @@
 import 'package:package_info_plus/package_info_plus.dart';
 
-/// Dados do app instalado (versão em "Sobre o SafeNews", specs/013 R7).
+/// Dados do app instalado (versão em "Sobre o Click Seguro", specs/013 R7).
 abstract class AppInfoService {
   /// Ex.: `1.0.0`. Não lança: sem a informação, devolve `''`.
   Future<String> version();

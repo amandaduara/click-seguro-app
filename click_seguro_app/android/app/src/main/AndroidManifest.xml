@@ -5,7 +5,7 @@
     <!-- allowBackup=false: o backup do Android quebra a chave do flutter_secure_storage ao
          restaurar ("Failed to unwrap key") e o produto não guarda dados pessoais na nuvem. -->
     <application
-        android:label="click_seguro_app"
+        android:label="Click Seguro"
         android:name="${applicationName}"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher">

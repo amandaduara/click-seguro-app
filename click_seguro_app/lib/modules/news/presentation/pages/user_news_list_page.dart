@@ -7,6 +7,7 @@ import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
@@ -212,11 +213,7 @@ class _EmptyList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              _iconOf(kind),
-              size: 40,
-              color: context.colors.textMutedForeground,
-            ),
+            SafeStateIllustration(isError: false, icon: _iconOf(kind)),
             const SizedBox(height: AppSpacing.s3),
             Text(
               kind.empty.tr(),

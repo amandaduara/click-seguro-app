@@ -2,13 +2,13 @@ import 'package:click_seguro_app/core/constants/app_identity.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/app_logo.dart';
 import 'package:click_seguro_app/modules/common/services/app_info_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// "Sobre o SafeNews" (FR-023): nome, objetivo, versão instalada e o
+/// "Sobre o Click Seguro" (FR-023): nome, objetivo, versão instalada e o
 /// crédito genérico do TCC.
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
@@ -31,7 +31,7 @@ class _AboutPageState extends State<AboutPage> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.s6),
           children: [
-            Icon(LucideIcons.shieldCheck, size: 56, color: colors.primary),
+            const Center(child: AppLogo(size: 88)),
             const SizedBox(height: AppSpacing.s3),
             Semantics(
               header: true,

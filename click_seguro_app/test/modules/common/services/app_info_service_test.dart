@@ -7,7 +7,7 @@ void main() {
 
   test('devolve a versão instalada', () async {
     PackageInfo.setMockInitialValues(
-      appName: 'SafeNews',
+      appName: 'Click Seguro',
       packageName: 'com.example.click_seguro_app',
       version: '1.0.0',
       buildNumber: '1',

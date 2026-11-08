@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="88 440 444 492" width="444" height="492">
+  <title>Click Seguro</title>
+  <defs>
+    <!-- Contorno do escudo (linha central do traço) -->
+    <path id="shield" d="M310,464 C252,500 182,526 111,536 L111,620 C111,762 200,852 310,906 C420,852 509,762 509,620 L509,536 C438,526 368,500 310,464 Z"/>
+    <clipPath id="inside">
+      <use href="#shield"/>
+    </clipPath>
+    <!-- Detalhes (óculos, orelha, gola) recortados da silhueta -->
+    <mask id="details" maskUnits="userSpaceOnUse" x="88" y="440" width="444" height="492">
+      <rect x="88" y="440" width="444" height="492" fill="#fff"/>
+      <g fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M268,634 L361,634" stroke-width="7"/>
+        <circle cx="377" cy="638" r="16" stroke-width="7"/>
+        <path d="M393,633 L404,628" stroke-width="6"/>
+        <path d="M284,641 C264,630 256,664 270,680 C277,688 287,690 293,684" stroke-width="7"/>
+        <path d="M238,712 L333,779 L352,766" stroke-width="5"/>
+      </g>
+    </mask>
+  </defs>
+
+  <g fill="#C0503E">
+    <!-- Silhueta do idoso, limitada ao interior do escudo -->
+    <path clip-path="url(#inside)" mask="url(#details)"
+      d="M160,815 L238,710 C248,701 254,694 258,686
+         C226,662 215,632 217,605 C220,561 259,532 302,532
+         C345,532 378,556 388,590 L392,615
+         C396,631 405,648 416,660 C419,667 412,671 400,673
+         L402,684 C400,690 397,695 398,700
+         C396,708 386,713 366,713 L355,716
+         C358,736 366,758 375,792 L392,862 L392,960 L140,960 Z"/>
+    <!-- Escudo -->
+    <use href="#shield" fill="none" stroke="#C0503E" stroke-width="32" stroke-linejoin="round"/>
+  </g>
+</svg>
