@@ -60,6 +60,18 @@ feature 005). A segunda é o cartão de emergência na Central de ajuda (amplia 
   módulo? → A: Pelo tema reconhecido no título (WhatsApp, Pix, link, ligação, senha, fake news),
   com uma ilustração genérica de proteção quando nenhum tema bater (FR-014).
 
+### Session 2026-11-08 (clarify)
+
+- Q: Além de seguir o "reduzir movimento" do celular, a tela de Acessibilidade deve ganhar um
+  interruptor próprio "Reduzir animações"? → A: Sim, desligado por padrão e salvo no aparelho
+  como as outras preferências; as animações param se o do app ou o do celular estiver ligado
+  (FR-021, FR-024).
+- Q: No Início, quais seções usam a grade de duas colunas com alturas variadas? → A: "Novidades"
+  continua carrossel, "Destaques" em cartões grandes de largura total, "Recomendadas" e "Tudo
+  recente" em grade de 2 colunas com alturas variadas (FR-025).
+- Q: O redesign vai para o `develop` num PR só ou em PRs menores? → A: Um PR só no fim, com um
+  commit por história, como nas features anteriores.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Uma linguagem visual única em todo o app (Priority: P1)
@@ -184,7 +196,8 @@ imagem e outra sem, e comparar com os quadros "04" e "05" do Figma.
 **Acceptance Scenarios**:
 
 1. **Given** o Início (RF-009 a RF-012), **When** carrega, **Then** mantém a saudação, o contador
-   de novidades, a busca, os filtros por categoria e as seções da feature 006, com os cartões novos.
+   de novidades, a busca, os filtros por categoria e as seções da feature 006, com os cartões novos
+   dispostos como no FR-025.
 2. **Given** uma notícia com imagem, **When** o cartão é montado, **Then** a imagem da notícia é a
    capa; **Given** uma notícia sem imagem, **Then** a capa é uma ilustração própria sobre fundo
    pastel, nunca um espaço vazio.
@@ -264,7 +277,7 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
 - **Fonte ampliada**: botões de 60 crescem em altura quando o texto quebra em duas linhas, e não
   cortam o texto. A barra inferior mantém os rótulos legíveis e, se não couberem, quebram em duas
   linhas em vez de sumir.
-- **Reduzir movimento**: no aparelho ou na tela de Acessibilidade, todas as animações desta
+- **Reduzir movimento**: com o do aparelho ou o interruptor do app ligado, todas as animações desta
   feature aparecem no estado final, inclusive o brilho do carregamento, que fica parado.
 - **Imagem de notícia que falha ao carregar**: a capa volta para a ilustração pastel, como uma
   notícia sem imagem.
@@ -274,6 +287,8 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
   de emergência mostra o texto traduzido, e o número continua 190, porque é o serviço brasileiro.
 - **Discador indisponível** (tablet sem telefone): o "Ligar para 190" mostra o mesmo aviso dos
   contatos, com a opção de copiar o número.
+- **Grade com fonte ampliada**: no maior nível de fonte, a grade de 2 colunas MUST passar para
+  uma coluna, para o título dos cartões não ficar espremido.
 - **Telas que o Figma não desenhou** (Configurações, Editar dados, Recuperar senha, Alertas,
   notícias salvas/lidas/curtidas, Sobre, Privacidade, Acessibilidade): mudam só por herdar os
   componentes novos, sem layout próprio.
@@ -331,6 +346,10 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
   ligação, senha e fake news, cada um com a sua ilustração e cor pastel. Quando nenhum tema bater,
   o cartão MUST usar uma ilustração genérica de proteção. O reconhecimento MUST ignorar
   maiúsculas e acentos e funcionar com os títulos em português e inglês.
+- **FR-025**: No Início, "Novidades" MUST continuar como carrossel, "Destaques" MUST usar cartões
+  grandes de largura total e "Recomendadas" e "Tudo recente" MUST usar uma grade de 2 colunas com
+  alturas de capa variadas (estilo Pinterest), mantendo a ordem das notícias da API (lida da
+  esquerda para a direita, de cima para baixo), a paginação e o rodapé atuais.
 - **FR-015**: Toda notícia MUST ter capa: a imagem da notícia quando houver e carregar, senão uma
   ilustração própria sobre fundo pastel.
 - **FR-016**: A Central de ajuda MUST mostrar no topo um cartão coral com o título "Caiu em um
@@ -357,13 +376,17 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
   subindo (400 ms), resposta certa com mola, resposta errada com balanço suave duas vezes,
   conclusão com confete e contagem do placar (1200 ms), brilho do carregamento e pulso do botão
   "Ouvir" enquanto lê.
-- **FR-021**: Toda animação MUST respeitar "reduzir movimento", do aparelho ou da preferência do
-  app: com ele ligado, o conteúdo aparece direto no estado final. Nenhuma animação MUST piscar
-  mais de 3 vezes por segundo.
+- **FR-021**: Toda animação MUST respeitar "reduzir movimento": se o interruptor do app (FR-024)
+  **ou** a opção do aparelho estiver ligado, o conteúdo aparece direto no estado final. Nenhuma
+  animação MUST piscar mais de 3 vezes por segundo.
+- **FR-024**: A tela de Acessibilidade MUST ganhar o interruptor "Reduzir animações", desligado
+  por padrão, salvo no aparelho e aplicado já na abertura do app, como as outras preferências de
+  acessibilidade (RF-041), com texto em português e inglês e rótulo para o leitor de tela.
 
 **Escopo e documentação**
 
-- **FR-022**: Esta feature MUST NOT mudar textos (exceto o novo cartão de emergência), rotas,
+- **FR-022**: Esta feature MUST NOT mudar textos (exceto o novo cartão de emergência e o
+  interruptor "Reduzir animações"), rotas,
   regras de negócio, chamadas à API nem o comportamento das telas.
 - **FR-023**: O [design system](../../.specify/memory/design-system.md) MUST ser atualizado para a
   versão 2.0.0, descrevendo os tokens, componentes, ilustrações e animações novas, e a
@@ -375,8 +398,9 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
   animação, nas versões normal e alto contraste.
 - **Ilustração**: desenho decorativo identificado pelo uso (estado, slide, tema de módulo, capa de
   notícia), com a versão de alto contraste.
-- **Preferência de movimento**: a combinação de "reduzir movimento" do aparelho com a do app, que
-  decide se as animações rodam.
+- **Preferência de movimento**: o interruptor "Reduzir animações" do app (nova preferência de
+  acessibilidade, salva no aparelho) combinado com o "reduzir movimento" do sistema; se qualquer
+  um estiver ligado, as animações não rodam.
 
 ## Success Criteria *(mandatory)*
 
@@ -391,7 +415,8 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
 - **SC-004**: Com "reduzir movimento" ligado, nenhuma tela mostra animação.
 - **SC-005**: Todos os testes automatizados que já existem continuam passando sem mudar o que eles
   verificam de comportamento. Só mudam os que conferem aparência.
-- **SC-006**: Nenhum texto visível muda, exceto os três textos do cartão de emergência.
+- **SC-006**: Nenhum texto visível muda, exceto os três textos do cartão de emergência e os do
+  interruptor "Reduzir animações".
 - **SC-007**: Na validação no aparelho, a usuária identifica em qual aba está, só olhando a barra
   inferior, em todas as cinco abas.
 
@@ -409,5 +434,10 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
   015 a 020, 016 (Assistente) e 019 (Ajuda).
 - A tela dos Reels continua escura e em tela cheia. O Figma não a redesenha, e ela só herda os
   componentes novos.
+- A entrega é um PR só para o `develop`, com um commit por história e validação no aparelho
+  antes do PR. Antes de abrir o PR, a branch MUST ser atualizada com o `develop` para resolver
+  conflitos com o trabalho em paralelo.
+- O Figma desenhou só o primeiro slide do onboarding. Os slides 2 ("Notícias verificadas") e 3
+  ("Aprenda na prática") ganham ilustrações próprias no mesmo estilo.
 - A animação de troca de tela vale para as navegações dentro do app. Abrir o discador, o navegador
   ou o menu de compartilhar segue o padrão do sistema.
