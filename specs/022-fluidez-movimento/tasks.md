@@ -14,16 +14,16 @@ limpo, `flutter test` verde e o trecho correspondente do [quickstart](quickstart
 
 **Purpose**: compilar no emulador e preparar fontes e dependências.
 
-- [ ] T001 Atualizar o toolchain Android (research R14):
+- [x] T001 Atualizar o toolchain Android (research R14):
   - Gradle 9.3.1 em `android/gradle/wrapper/gradle-wrapper.properties`;
   - AGP 9.1.0 e Kotlin 2.4.0 em `android/settings.gradle.kts`;
   - `kotlinOptions` → `kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }` em
     `android/app/build.gradle.kts`;
   - validar com `flutter run -d emulator-5554`.
-- [ ] T002 [P] Embutir a Montserrat (research R1): baixar Regular, Medium, SemiBold, Bold e
+- [x] T002 [P] Embutir a Montserrat (research R1): baixar Regular, Medium, SemiBold, Bold e
   ExtraBold (TTF estáticos) e `OFL.txt` para `assets/fonts/montserrat/`, declarar
   `flutter.fonts` (`family: Montserrat`, pesos 400–800) em `pubspec.yaml`.
-- [ ] T003 [P] Adicionar `animations` e `skeletonizer` em `pubspec.yaml`
+- [x] T003 [P] Adicionar `animations` e `skeletonizer` em `pubspec.yaml`
   (`flutter pub add animations skeletonizer`) e registrar as duas na tabela de stack do
   `README.md` da raiz.
 
@@ -31,12 +31,12 @@ limpo, `flutter test` verde e o trecho correspondente do [quickstart](quickstart
 
 ## Phase 2: Foundational (bloqueia as histórias)
 
-- [ ] T004 [P] Teste: `AppMotion` normal (150/250/350 ms) e reduzido (zero) com a preferência e
+- [x] T004 [P] Teste: `AppMotion` normal (150/250/350 ms) e reduzido (zero) com a preferência e
   com `MediaQuery.disableAnimations`, em `test/core/theme/app_motion_test.dart`.
-- [ ] T005 Criar `AppMotion` e `AppMotionScope` conforme o
+- [x] T005 Criar `AppMotion` e `AppMotionScope` conforme o
   [contrato](contracts/ui-components.md#appmotion--appmotionscope--corethemeapp_motiondart) em
   `lib/core/theme/app_motion.dart`.
-- [ ] T006 Envolver o `builder` do `MaterialApp` com `AppMotionScope` e
+- [x] T006 Envolver o `builder` do `MaterialApp` com `AppMotionScope` e
   `AnnotatedRegion<SystemUiOverlayStyle.dark>` em `lib/main.dart`; fazer o mesmo no harness
   `test/helpers/localized_app.dart`.
 

@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/routing/app_router.dart';
 import 'package:click_seguro_app/core/routing/navigator_keys.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/locale_rebuilder.dart';
 import 'package:click_seguro_app/modules/activities/activities.dart';
@@ -19,6 +20,7 @@ import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:click_seguro_app/modules/splash/splash.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -114,7 +116,16 @@ class ClickSeguroApp extends StatelessWidget {
                 preferences.fontScale.totalScale(systemScale),
               ),
             ),
-            child: LocaleRebuilder(child: child!),
+            // Movimento de todas as telas (specs/022 FR-008 a FR-010).
+            child: AppMotionScope(
+              appReduceMotion: false,
+              // Ícones escuros na barra de status; os Reels trocam para
+              // claros sobre o fundo preto (FR-031).
+              child: AnnotatedRegion<SystemUiOverlayStyle>(
+                value: SystemUiOverlayStyle.dark,
+                child: LocaleRebuilder(child: child!),
+              ),
+            ),
           );
         },
       ),
