@@ -1,15 +1,19 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_categories_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_page_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_feed_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/watch_news_interactions_usecase.dart';
+import 'package:click_seguro_app/modules/news/presentation/controller/feed_message.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:flutter/foundation.dart';
@@ -22,18 +26,32 @@ class FeedController extends ChangeNotifier {
     required GetFeedPageUseCase getFeedPage,
     required GetNewsUseCase getNews,
     required GetCategoriesUseCase getCategories,
+    required WatchNewsInteractionsUseCase watchInteractions,
+    required ValueListenable<UserSessionStatus> sessionStatus,
     DateTime Function()? now,
   }) : _getFeed = getFeed,
        _getFeedPage = getFeedPage,
        _getNews = getNews,
        _getCategories = getCategories,
-       _now = now ?? DateTime.now;
+       _sessionStatus = sessionStatus,
+       _now = now ?? DateTime.now {
+    _sessionStatus.addListener(_onSessionChanged);
+    _interactions = watchInteractions().listen(_applyInteraction);
+  }
 
   final GetFeedUseCase _getFeed;
   final GetFeedPageUseCase _getFeedPage;
   final GetNewsUseCase _getNews;
   final GetCategoriesUseCase _getCategories;
+  final ValueListenable<UserSessionStatus> _sessionStatus;
   final DateTime Function() _now;
+  late final StreamSubscription<NewsInteractionChange> _interactions;
+
+  final StreamController<FeedMessage> _messages =
+      StreamController<FeedMessage>.broadcast();
+
+  /// Avisos que não trocam a tela (falha ao puxar para atualizar).
+  Stream<FeedMessage> get messages => _messages.stream;
 
   /// Espera depois da última letra antes de buscar (FR-016).
   static const Duration searchDebounce = Duration(milliseconds: 500);
@@ -68,6 +86,12 @@ class FeedController extends ChangeNotifier {
 
   bool _hasMore = false;
   bool get hasMore => _hasMore;
+
+  bool _isRefreshing = false;
+
+  /// Recarga com a lista na tela: a lista continua até a nova chegar
+  /// (specs/022 FR-002).
+  bool get isRefreshing => _isRefreshing;
 
   bool _isLoadingMore = false;
   bool get isLoadingMore => _isLoadingMore;
@@ -112,11 +136,12 @@ class FeedController extends ChangeNotifier {
     _filter = slug == null
         ? _filter.copyWith(clearCategory: true)
         : _filter.copyWith(categorySlug: slug);
-    await _loadFirst();
+    await _loadFirst(keepContent: true);
   }
 
-  /// Puxar para atualizar: volta à página 1.
-  Future<void> refresh() => _loadFirst();
+  /// Puxar para atualizar: volta à página 1; a lista continua na tela e,
+  /// se falhar, fica como estava (FR-003).
+  Future<void> refresh() => _loadFirst(keepContent: true, keepOnFailure: true);
 
   /// Texto digitado na busca: busca depois de [searchDebounce] sem novas
   /// letras; texto curto demais volta à lista sem busca (FR-016, FR-017).
@@ -125,9 +150,12 @@ class FeedController extends ChangeNotifier {
     final bool wasSearching = _filter.hasSearch;
     _filter = _filter.copyWith(search: text);
     if (_filter.hasSearch) {
-      _searchTimer = Timer(searchDebounce, _loadFirst);
+      _searchTimer = Timer(
+        searchDebounce,
+        () => unawaited(_loadFirst(keepContent: true)),
+      );
     } else if (wasSearching) {
-      unawaited(_loadFirst());
+      unawaited(_loadFirst(keepContent: true));
     }
   }
 
@@ -136,19 +164,50 @@ class FeedController extends ChangeNotifier {
     _searchTimer?.cancel();
     final bool wasSearching = _filter.hasSearch;
     _filter = _filter.copyWith(search: '');
-    if (wasSearching) unawaited(_loadFirst());
+    if (wasSearching) unawaited(_loadFirst(keepContent: true));
   }
 
   @override
   void dispose() {
     _searchTimer?.cancel();
+    _sessionStatus.removeListener(_onSessionChanged);
+    unawaited(_interactions.cancel());
+    unawaited(_messages.close());
     super.dispose();
+  }
+
+  /// Outra conta (ou visitante): recarrega sem manter a lista, para não
+  /// mostrar as marcas da conta anterior (FR-004).
+  void _onSessionChanged() => unawaited(_loadFirst());
+
+  /// Leitura, curtida ou "salvar" confirmado em outra tela: corrige só o
+  /// item, sem pedir ao servidor (FR-005).
+  void _applyInteraction(NewsInteractionChange change) {
+    List<NewsItemEntity> patch(List<NewsItemEntity> list) => [
+      for (final item in list)
+        item.id == change.newsId
+            ? item.withInteraction(change.applyTo(item.interaction))
+            : item,
+    ];
+    bool contains(List<NewsItemEntity> list) =>
+        list.any((item) => item.id == change.newsId);
+    if (![_reels, _highlights, _recommended, _items].any(contains)) return;
+    _reels = patch(_reels);
+    _highlights = patch(_highlights);
+    _recommended = patch(_recommended);
+    _items = patch(_items);
+    notifyListeners();
   }
 
   /// Próxima página da lista atual. Não faz nada sem mais páginas, durante
   /// outra carga ou com a cópia guardada.
   Future<void> loadMore() async {
-    if (!_hasMore || _isLoadingMore || _status != FeedStatus.loaded) return;
+    if (!_hasMore ||
+        _isLoadingMore ||
+        _isRefreshing ||
+        _status != FeedStatus.loaded) {
+      return;
+    }
     final int requestId = _requestId;
     _isLoadingMore = true;
     _loadMoreFailure = null;
@@ -172,9 +231,22 @@ class FeedController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _loadFirst() async {
+  /// Página 1 da lista atual. Com [keepContent] e uma lista na tela, ela
+  /// continua visível ([isRefreshing]) em vez de virar carregando. Com
+  /// [keepOnFailure], uma falha mantém a lista e vira [FeedMessage]; sem
+  /// ele, vira o estado de erro (troca de filtro: a lista antiga não
+  /// corresponde mais).
+  Future<void> _loadFirst({
+    bool keepContent = false,
+    bool keepOnFailure = false,
+  }) async {
     final int requestId = ++_requestId;
-    _status = FeedStatus.loading;
+    final bool refreshing = keepContent && _status == FeedStatus.loaded;
+    if (refreshing) {
+      _isRefreshing = true;
+    } else {
+      _status = FeedStatus.loading;
+    }
     _failure = null;
     _loadMoreFailure = null;
     _isLoadingMore = false;
@@ -189,9 +261,14 @@ class FeedController extends ChangeNotifier {
       result = await _fetchFirst(isFeed);
     }
     if (requestId != _requestId) return;
+    _isRefreshing = false;
 
     result.fold(
       (failure) {
+        if (refreshing && keepOnFailure) {
+          _messages.add(FeedMessage(failure.message));
+          return;
+        }
         _failure = failure;
         _status = FeedStatus.error;
       },

@@ -51,38 +51,38 @@ limpo, `flutter test` verde e o trecho correspondente do [quickstart](quickstart
 
 ### Tests (US1)
 
-- [ ] T007 [P] [US1] Testes do `FeedController` em
+- [x] T007 [P] [US1] Testes do `FeedController` em
   `test/modules/news/presentation/controller/feed_controller_test.dart`:
   - a recarga mantém `items` e `status == loaded` com `isRefreshing`;
   - uma falha na recarga mantém a lista e emite um `FeedMessage`;
   - trocar a categoria mantém a lista anterior até a resposta chegar;
   - uma mudança em `sessionStatus` dispara a recarga;
   - um `NewsInteractionChange` corrige só o item.
-- [ ] T008 [P] [US1] Testes do stream de interações do `NewsRepositoryImpl` em
+- [x] T008 [P] [US1] Testes do stream de interações do `NewsRepositoryImpl` em
   `test/modules/news/data/repositories/news_repository_impl_test.dart`: publica depois de
   `markAsRead`, `toggleSave` e `toggleLike` com sucesso e não publica depois de uma falha.
-- [ ] T009 [P] [US1] Widget tests em `test/core/widgets/safe_button_test.dart` e
+- [x] T009 [P] [US1] Widget tests em `test/core/widgets/safe_button_test.dart` e
   `test/core/widgets/safe_card_test.dart`:
   - `SafeButton` tem `button: true` e `enabled` coerente com `disabled`/`loading`;
   - `SafeCard` interativo é botão.
-- [ ] T010 [P] [US1] Widget test em
+- [x] T010 [P] [US1] Widget test em
   `test/modules/shell/presentation/widgets/app_bottom_nav_test.dart`: tocar 4 dp abaixo do topo
   do círculo central chama `onSelected(AppTab.news.index)`.
 
 ### Implementation (US1)
 
-- [ ] T011 [P] [US1] Criar a entidade `NewsInteractionChange` (`newsId`, `isRead?`, `isSaved?`,
+- [x] T011 [P] [US1] Criar a entidade `NewsInteractionChange` (`newsId`, `isRead?`, `isSaved?`,
   `isLiked?`, `likes?`; `null` = não mudou) em
   `lib/modules/news/domain/entities/news_interaction_change.dart`.
-- [ ] T012 [US1] Acrescentar `Stream<NewsInteractionChange> get interactionChanges` ao contrato em
+- [x] T012 [US1] Acrescentar `Stream<NewsInteractionChange> get interactionChanges` ao contrato em
   `lib/modules/news/domain/repositories/news_repository.dart`; implementar no `NewsRepositoryImpl`
   (`StreamController.broadcast`, publicação só depois de sucesso) em
   `lib/modules/news/data/repositories/news_repository_impl.dart`; atualizar os fakes de teste que
   implementam o contrato.
-- [ ] T013 [US1] Criar `WatchNewsInteractionsUseCase` em
+- [x] T013 [US1] Criar `WatchNewsInteractionsUseCase` em
   `lib/modules/news/domain/usecases/watch_news_interactions_usecase.dart` e registrar em
   `lib/modules/news/news_module.dart`.
-- [ ] T014 [US1] `FeedController` em
+- [x] T014 [US1] `FeedController` em
   `lib/modules/news/presentation/controller/feed_controller.dart`:
   - separar a primeira carga da recarga (`isRefreshing`);
   - `Stream<FeedMessage> messages` (novo `feed_message.dart`);
@@ -90,22 +90,22 @@ limpo, `flutter test` verde e o trecho correspondente do [quickstart](quickstart
   - corrigir o item afetado por `NewsInteractionChange`;
   - cancelar as assinaturas no `dispose`;
   - injetar as dependências em `news_module.dart`.
-- [ ] T015 [US1] `ReelsController` assina `watchInteractions` e corrige o Reel afetado, em
+- [x] T015 [US1] `ReelsController` assina `watchInteractions` e corrige o Reel afetado, em
   `lib/modules/news/presentation/controller/reels_controller.dart`.
-- [ ] T016 [US1] `NewsHomePage` em `lib/modules/news/presentation/pages/news_home_page.dart`:
+- [x] T016 [US1] `NewsHomePage` em `lib/modules/news/presentation/pages/news_home_page.dart`:
   - o refresh devolve um future que termina na recarga, sem trocar a árvore;
   - durante a troca de categoria ou busca, `AnimatedOpacity` (0,5) na lista e
     `LinearProgressIndicator` fino no topo;
   - `FeedMessage` vira um aviso rápido (snackbar).
-- [ ] T017 [US1] Botão central dentro dos limites (research R12): faixa transparente de 16 dp no
+- [x] T017 [US1] Botão central dentro dos limites (research R12): faixa transparente de 16 dp no
   topo da barra e sem `Transform.translate` em
   `lib/modules/shell/presentation/widgets/app_bottom_nav.dart`; `extendBody: true` em
   `lib/modules/shell/presentation/app_shell.dart`. Conferir no emulador que nenhuma aba tem
   conteúdo escondido atrás da barra.
-- [ ] T018 [P] [US1] `Semantics(button: true, enabled:)` no `SafeButton`
+- [x] T018 [P] [US1] `Semantics(button: true, enabled:)` no `SafeButton`
   (`lib/core/widgets/safe_button.dart`) e no `SafeCard` interativo
   (`lib/core/widgets/safe_card.dart`).
-- [ ] T019 [US1] Conferir no emulador que o texto sai em Montserrat (T002) e ajustar os pesos do
+- [x] T019 [US1] Conferir no emulador que o texto sai em Montserrat (T002) e ajustar os pesos do
   `textTheme` em `lib/core/theme/app_theme.dart`, se algum estilo depender de um peso que não foi
   embutido.
 
@@ -277,6 +277,9 @@ animações".
   "Reduzir animações" e os padrões (esqueleto, fade-through, volta preditiva).
 - [ ] T058 Rodar o [quickstart](quickstart.md) completo no emulador, com e sem "Reduzir
   animações", e com letra em 200% e alto contraste; registrar os achados.
+- [ ] T060 [P] `SafeTextField`: o preenchimento do `inputDecorationTheme` (`filled: true`) desenha um retângulo de outro tom dentro do campo arredondado (visto no login, no emulador); usar `filled: false` no `InputDecoration` interno em `lib/core/widgets/safe_text_field.dart`.
+- [ ] T061 [P] Chip "Todas" sai como círculo (largura mínima = altura com letra grande); conferir `lib/modules/news/presentation/widgets/category_filter_bar.dart`.
+- [ ] T062 [P] `SlowRequestNotice` sem margem lateral: o texto encosta nas bordas da tela; padding horizontal `AppSpacing.s5` em `lib/core/widgets/slow_request_notice.dart`.
 - [ ] T059 `flutter analyze` limpo e `flutter test` verde; perfil (`--profile`) do feed e dos Reels
   sem travadas perceptíveis (SC-006).
 

@@ -57,7 +57,8 @@ conferir que o texto usa a fonte da marca.
    atualização.
 2. **Given** o feed carregado, **When** a pessoa troca de categoria ou digita uma busca, **Then**
    a lista anterior continua visível (esmaecida ou com indicador discreto) até a nova chegar; se
-   der erro, a lista anterior continua e um aviso explica o erro.
+   der erro, aparece o erro com "Tentar novamente" (a lista anterior não corresponde ao filtro
+   novo).
 3. **Given** a pessoa abriu uma notícia a partir do feed, **When** volta ao feed, **Then** o
    cartão dessa notícia mostra o sinal de "lida" (e de "salva", se ela salvou).
 4. **Given** uma sessão terminada (sair ou expirar), **When** outra conta entra ou a pessoa segue
@@ -238,10 +239,11 @@ ausência de tela preta ao deslizar para o próximo Reel e o uso de memória est
 - **FR-002**: Atualizar o feed (puxar, trocar de categoria, buscar) MUST manter a lista atual
   visível até a nova chegar; a lista só é trocada pela tela de carregamento quando ainda não há
   nenhuma lista.
-- **FR-003**: Uma falha ao atualizar com lista na tela MUST manter a lista e avisar o erro sem
-  apagá-la.
+- **FR-003**: Uma falha ao atualizar a **mesma** lista (puxar para atualizar) MUST manter a lista
+  e avisar o erro sem apagá-la. Uma falha ao trocar de categoria ou busca mostra o erro com
+  "Tentar novamente", como hoje.
 - **FR-004**: O feed MUST recarregar quando a sessão muda de conta (sair, expirar, entrar, seguir
-  como visitante).
+  como visitante), sem mostrar as marcas da conta anterior durante a recarga.
 - **FR-005**: Ao voltar do detalhe de uma notícia, o feed MUST refletir as marcas de lida e salva
   dessa notícia.
 - **FR-006**: Toda a área visível do botão central da barra inferior MUST responder ao toque.

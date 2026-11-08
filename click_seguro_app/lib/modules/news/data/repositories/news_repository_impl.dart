@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_failure_mapper.dart';
@@ -11,6 +13,7 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_category_enti
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
@@ -43,6 +46,22 @@ class NewsRepositoryImpl implements NewsRepository {
 
   final NewsRemoteDataSource _remote;
   final NewsLocalDataSource _local;
+
+  /// Vive enquanto o app: o repositório é um singleton do módulo.
+  final StreamController<NewsInteractionChange> _changes =
+      StreamController<NewsInteractionChange>.broadcast();
+
+  @override
+  Stream<NewsInteractionChange> get interactionChanges => _changes.stream;
+
+  /// Publica [change] só se [result] deu certo.
+  Either<Failure, T> _publishOnSuccess<T>(
+    Either<Failure, T> result,
+    NewsInteractionChange Function(T value) change,
+  ) {
+    if (result case Right(value: final T value)) _changes.add(change(value));
+    return result;
+  }
 
   @override
   Future<Either<Failure, NewsFeedEntity>> getFeedFirstPage() async {
@@ -94,15 +113,25 @@ class NewsRepositoryImpl implements NewsRepository {
       });
 
   @override
-  Future<Either<Failure, LikeResultEntity>> toggleLike(String newsId) =>
-      _guardNews(() async {
-        final result = await _remote.toggleLike(newsId);
-        return result.toEntity();
-      });
+  Future<Either<Failure, LikeResultEntity>> toggleLike(String newsId) async =>
+      _publishOnSuccess(
+        await _guardNews(() async {
+          final result = await _remote.toggleLike(newsId);
+          return result.toEntity();
+        }),
+        (like) => NewsInteractionChange(
+          newsId: newsId,
+          isLiked: like.liked,
+          likesCount: like.likesCount,
+        ),
+      );
 
   @override
-  Future<Either<Failure, bool>> toggleSave(String newsId) =>
-      _guardNews(() => _remote.toggleSave(newsId));
+  Future<Either<Failure, bool>> toggleSave(String newsId) async =>
+      _publishOnSuccess(
+        await _guardNews(() => _remote.toggleSave(newsId)),
+        (saved) => NewsInteractionChange(newsId: newsId, isSaved: saved),
+      );
 
   @override
   Future<Either<Failure, NewsDetailResult>> getNewsDetail(String id) =>
@@ -125,10 +154,14 @@ class NewsRepositoryImpl implements NewsRepository {
       });
 
   @override
-  Future<Either<Failure, Unit>> markAsRead(String id) => _guard(() async {
-    await _remote.markAsRead(id);
-    return unit;
-  });
+  Future<Either<Failure, Unit>> markAsRead(String id) async =>
+      _publishOnSuccess(
+        await _guard(() async {
+          await _remote.markAsRead(id);
+          return unit;
+        }),
+        (_) => NewsInteractionChange(newsId: id, isRead: true),
+      );
 
   @override
   Future<Either<Failure, UserNewsListResult>> getUserNewsList(

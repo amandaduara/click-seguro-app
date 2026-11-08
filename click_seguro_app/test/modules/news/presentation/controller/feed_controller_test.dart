@@ -1,9 +1,14 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/presentation/controller/feed_message.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -249,8 +254,13 @@ void main() {
       await controller.load();
 
       final selecting = controller.selectCategory('phishing');
-      expect(controller.status, FeedStatus.loading);
+      // A lista do feed continua na tela até a filtrada chegar (FR-002).
+      expect(controller.status, FeedStatus.loaded);
+      expect(controller.isRefreshing, isTrue);
+      expect(controller.highlights.single.id, 'h1');
       await selecting;
+
+      expect(controller.isRefreshing, isFalse);
 
       expect(controller.status, FeedStatus.loaded);
       expect(controller.filter.categorySlug, 'phishing');
@@ -459,6 +469,144 @@ void main() {
       expect(controller.status, FeedStatus.loaded);
       expect(controller.isFromCache, isTrue);
       expect(repository.feedCalls, 2);
+    });
+  });
+
+  group('recarga com a lista na tela (specs/022)', () {
+    test('puxar para atualizar mantém a lista até a nova chegar', () async {
+      repository.feedResults
+        ..clear()
+        ..addAll([
+          Right(newsFeed(recent: [newsItem('velha')])),
+          Right(newsFeed(recent: [newsItem('nova')])),
+        ]);
+      await controller.load();
+      repository.feedGate = Completer<void>();
+
+      final refreshing = controller.refresh();
+
+      expect(controller.status, FeedStatus.loaded);
+      expect(controller.isRefreshing, isTrue);
+      expect(controller.items.single.id, 'velha');
+      repository.feedGate!.complete();
+      await refreshing;
+      expect(controller.isRefreshing, isFalse);
+      expect(controller.items.single.id, 'nova');
+    });
+
+    test('falha ao puxar mantém a lista e avisa', () async {
+      repository.feedResults
+        ..clear()
+        ..addAll([
+          Right(newsFeed(recent: [newsItem('n1')])),
+          const Left(ServerFailure()),
+        ]);
+      await controller.load();
+      final messages = <FeedMessage>[];
+      final sub = controller.messages.listen(messages.add);
+
+      await controller.refresh();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.status, FeedStatus.loaded);
+      expect(controller.isRefreshing, isFalse);
+      expect(controller.items.single.id, 'n1');
+      expect(messages.single.failureKey, const ServerFailure().message);
+      await sub.cancel();
+    });
+
+    test('mais páginas não sai durante a recarga', () async {
+      repository.feedResults[0] = Right(
+        newsFeed(recent: newsItems(20), hasMore: true),
+      );
+      await controller.load();
+      repository.feedGate = Completer<void>();
+
+      final refreshing = controller.refresh();
+      await controller.loadMore();
+
+      expect(repository.feedPageCalls, isEmpty);
+      repository.feedGate!.complete();
+      await refreshing;
+    });
+
+    test('primeira carga ainda passa por carregando', () {
+      expect(controller.status, FeedStatus.loading);
+      expect(controller.isRefreshing, isFalse);
+    });
+  });
+
+  group('sessão (specs/022 FR-004)', () {
+    test('troca de conta recarrega sem manter a lista anterior', () async {
+      final session = ValueNotifier<UserSessionStatus>(
+        UserSessionStatus.authenticated,
+      );
+      controller.dispose();
+      controller = buildFeedController(repository, sessionStatus: session);
+      repository.feedResults
+        ..clear()
+        ..addAll([
+          Right(
+            newsFeed(
+              recent: [
+                newsItem(
+                  'n1',
+                  interaction: const NewsInteraction(isRead: true),
+                ),
+              ],
+            ),
+          ),
+          Right(newsFeed(recent: [newsItem('n1')])),
+        ]);
+      await controller.load();
+      repository.feedGate = Completer<void>();
+
+      session.value = UserSessionStatus.unauthenticated;
+
+      expect(controller.status, FeedStatus.loading);
+      repository.feedGate!.complete();
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.feedCalls, 2);
+      expect(controller.items.single.interaction.isRead, isFalse);
+    });
+  });
+
+  group('interações de outras telas (specs/022 FR-005)', () {
+    test('corrige só o item afetado, sem pedir ao servidor', () async {
+      repository.feedResults[0] = Right(
+        newsFeed(
+          highlights: [newsItem('n1')],
+          recent: [newsItem('n1'), newsItem('n2')],
+        ),
+      );
+      await controller.load();
+      var notified = 0;
+      controller.addListener(() => notified++);
+
+      repository.interactions.add(
+        const NewsInteractionChange(newsId: 'n1', isRead: true, isSaved: true),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.items[0].interaction.isRead, isTrue);
+      expect(controller.items[0].interaction.isSaved, isTrue);
+      expect(controller.highlights.single.interaction.isRead, isTrue);
+      expect(controller.items[1].interaction.isRead, isFalse);
+      expect(repository.feedCalls, 1);
+      expect(notified, 1);
+    });
+
+    test('notícia fora da tela não avisa os ouvintes', () async {
+      await controller.load();
+      var notified = 0;
+      controller.addListener(() => notified++);
+
+      repository.interactions.add(
+        const NewsInteractionChange(newsId: 'outra', isRead: true),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(notified, 0);
     });
   });
 }

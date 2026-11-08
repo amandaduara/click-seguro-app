@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:click_seguro_app/core/theme/app_colors.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
@@ -52,5 +54,59 @@ void main() {
         )
         .map((container) => (container.decoration as BoxDecoration?)?.color);
     expect(backgrounds, contains(AppPalette.highContrast.primary));
+  });
+
+  group('leitor de tela (specs/022 FR-007)', () {
+    Future<void> pumpButton(
+      WidgetTester tester, {
+      bool disabled = false,
+      bool loading = false,
+    }) => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SafeButton(
+            label: 'Entrar',
+            disabled: disabled,
+            loading: loading,
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('é anunciado como botão habilitado, com o rótulo', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpButton(tester);
+
+      expect(
+        tester.getSemantics(find.byType(SafeButton)),
+        matchesSemantics(
+          label: 'Entrar',
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          hasTapAction: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('desabilitado ou carregando: botão desabilitado', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      for (final (disabled, loading) in [(true, false), (false, true)]) {
+        await pumpButton(tester, disabled: disabled, loading: loading);
+
+        final data = tester
+            .getSemantics(find.byType(SafeButton))
+            .getSemanticsData();
+        expect(data.flagsCollection.isButton, isTrue);
+        expect(data.flagsCollection.isEnabled, Tristate.isFalse);
+      }
+      handle.dispose();
+    });
   });
 }

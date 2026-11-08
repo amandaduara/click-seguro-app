@@ -24,12 +24,19 @@ enum AppTab {
 }
 
 /// Barra inferior do wireframe (design system §7.12).
+///
+/// O círculo central sobe [overhang] acima da barra. Essa faixa faz parte da
+/// área do widget (transparente), para o toque funcionar no círculo inteiro:
+/// o Flutter não entrega toques fora dos limites do pai (specs/022 FR-006).
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
     required this.currentIndex,
     required this.onSelected,
   });
+
+  /// Quanto o círculo central sobe acima da borda da barra.
+  static const double overhang = AppSpacing.s4;
 
   final int currentIndex;
   final ValueChanged<int> onSelected;
@@ -39,41 +46,69 @@ class AppBottomNav extends StatelessWidget {
     return Semantics(
       container: true,
       label: AppStrings.shellNavLabel.tr(),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: context.colors.background.withValues(alpha: 0.95),
-          border: Border(top: BorderSide(color: context.colors.border)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s2,
-              AppSpacing.s2,
-              AppSpacing.s2,
-              AppSpacing.s3,
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: overhang),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: context.colors.background.withValues(alpha: 0.95),
+                border: Border(top: BorderSide(color: context.colors.border)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s2,
+                    AppSpacing.s2,
+                    AppSpacing.s2,
+                    AppSpacing.s3,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      for (final tab in AppTab.values)
+                        Expanded(
+                          // O espaço do círculo fica vazio aqui: ele é
+                          // desenhado na camada de cima.
+                          child: tab.isCenter
+                              ? const SizedBox.shrink()
+                              : _TabItem(
+                                  tab: tab,
+                                  selected: tab.index == currentIndex,
+                                  onTap: () => onSelected(tab.index),
+                                ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ),
+          ),
+          // Camada do círculo: começa no topo da faixa. Os espaços vazios ao
+          // lado não recebem toque, que segue para as abas de baixo.
+          Positioned(
+            top: 0,
+            left: AppSpacing.s2,
+            right: AppSpacing.s2,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 for (final tab in AppTab.values)
                   Expanded(
                     child: tab.isCenter
-                        ? _CenterItem(
-                            tab: tab,
-                            selected: tab.index == currentIndex,
-                            onTap: () => onSelected(tab.index),
+                        ? Center(
+                            child: _CenterItem(
+                              tab: tab,
+                              selected: tab.index == currentIndex,
+                              onTap: () => onSelected(tab.index),
+                            ),
                           )
-                        : _TabItem(
-                            tab: tab,
-                            selected: tab.index == currentIndex,
-                            onTap: () => onSelected(tab.index),
-                          ),
+                        : const SizedBox.shrink(),
                   ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -148,40 +183,32 @@ class _CenterItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // heightFactor: 1 para não ocupar a altura toda da barra; o círculo sobe
-    // um pouco acima da borda, como no wireframe.
-    return Center(
-      heightFactor: 1,
-      child: Transform.translate(
-        offset: const Offset(0, -AppSpacing.s4),
-        child: Semantics(
-          button: true,
-          selected: selected,
-          label: tab.labelKey.tr(),
-          excludeSemantics: true,
-          child: GestureDetector(
-            onTap: onTap,
-            child: Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: context.colors.primary,
-                shape: BoxShape.circle,
-                boxShadow: context.colors.shadowPrimary,
-                border: selected
-                    ? Border.all(
-                        color: context.colors.primary.withValues(alpha: 0.3),
-                        width: 4,
-                        strokeAlign: BorderSide.strokeAlignOutside,
-                      )
-                    : null,
-              ),
-              child: Icon(
-                tab.icon,
-                size: 28,
-                color: context.colors.textPrimaryForeground,
-              ),
-            ),
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: tab.labelKey.tr(),
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: context.colors.primary,
+            shape: BoxShape.circle,
+            boxShadow: context.colors.shadowPrimary,
+            border: selected
+                ? Border.all(
+                    color: context.colors.primary.withValues(alpha: 0.3),
+                    width: 4,
+                    strokeAlign: BorderSide.strokeAlignOutside,
+                  )
+                : null,
+          ),
+          child: Icon(
+            tab.icon,
+            size: 28,
+            color: context.colors.textPrimaryForeground,
           ),
         ),
       ),

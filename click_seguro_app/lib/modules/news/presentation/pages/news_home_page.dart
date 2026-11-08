@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
@@ -8,6 +12,7 @@ import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
+import 'package:click_seguro_app/modules/news/presentation/controller/feed_message.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/category_filter_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_footer.dart';
@@ -23,8 +28,49 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 /// Aba Início: o feed de notícias (specs/006-feed-inicio).
-class NewsHomePage extends StatelessWidget {
+class NewsHomePage extends StatefulWidget {
   const NewsHomePage({super.key});
+
+  @override
+  State<NewsHomePage> createState() => _NewsHomePageState();
+}
+
+class _NewsHomePageState extends State<NewsHomePage> {
+  StreamSubscription<FeedMessage>? _messages;
+
+  /// Puxar para atualizar em andamento: o indicador do gesto já basta, sem
+  /// a barra de progresso (specs/022 US1).
+  bool _pulling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _messages = context.read<FeedController>().messages.listen(_showMessage);
+  }
+
+  @override
+  void dispose() {
+    unawaited(_messages?.cancel());
+    super.dispose();
+  }
+
+  /// Falha ao atualizar com a lista na tela: a lista fica e um aviso
+  /// explica (FR-003).
+  void _showMessage(FeedMessage message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message.failureKey.tr())));
+  }
+
+  Future<void> _pullToRefresh(FeedController controller) async {
+    setState(() => _pulling = true);
+    try {
+      await controller.refresh();
+    } finally {
+      if (mounted) setState(() => _pulling = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +103,26 @@ class NewsHomePage extends StatelessWidget {
                 onSelected: controller.selectCategory,
               ),
             ),
-            Expanded(child: _content(context, controller)),
+            // Troca de categoria ou busca: a lista anterior fica esmaecida
+            // com uma barra fina até a nova chegar (FR-002).
+            SizedBox(
+              height: 2,
+              child: controller.isRefreshing && !_pulling
+                  ? LinearProgressIndicator(
+                      minHeight: 2,
+                      color: context.colors.primary,
+                      backgroundColor: Colors.transparent,
+                    )
+                  : null,
+            ),
+            Expanded(
+              child: AnimatedOpacity(
+                opacity: controller.isRefreshing && !_pulling ? 0.5 : 1,
+                duration: AppMotion.of(context).short,
+                curve: AppMotion.standard,
+                child: _content(context, controller),
+              ),
+            ),
           ],
         ),
       ),
@@ -110,7 +175,7 @@ class NewsHomePage extends StatelessWidget {
           );
         }
         return RefreshIndicator(
-          onRefresh: controller.refresh,
+          onRefresh: () => _pullToRefresh(controller),
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: _slivers(context, controller),

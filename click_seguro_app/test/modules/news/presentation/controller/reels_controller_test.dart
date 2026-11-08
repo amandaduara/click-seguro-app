@@ -8,6 +8,7 @@ import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart
 import 'package:click_seguro_app/modules/news/presentation/controller/reels_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/reels_status.dart';
 import 'package:flutter/foundation.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -411,6 +412,21 @@ void main() {
       await controller.open();
 
       expect(repository.reelsCalls, [null]);
+    });
+  });
+
+  group('interações de outras telas (specs/022 FR-005)', () {
+    test('salvar no detalhe aparece no Reel', () async {
+      firstPage(2);
+      await controller.open();
+
+      repository.interactions.add(
+        const NewsInteractionChange(newsId: 'r2', isSaved: true),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.reels[1].isSaved, isTrue);
+      expect(controller.reels[0].isSaved, isFalse);
     });
   });
 }

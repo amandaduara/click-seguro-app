@@ -4,6 +4,7 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_category_enti
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
@@ -11,6 +12,10 @@ import 'package:click_seguro_app/modules/news/domain/entities/user_news_list_res
 import 'package:fpdart/fpdart.dart';
 
 abstract class NewsRepository {
+  /// Cada leitura, curtida ou "salvar" confirmado pelo servidor, para as
+  /// telas abertas corrigirem o item (specs/022 FR-005). Falhas não chegam.
+  Stream<NewsInteractionChange> get interactionChanges;
+
   /// Primeira carga sem filtro; sem internet (ou com o servidor fora), a
   /// cópia guardada, se houver.
   Future<Either<Failure, NewsFeedEntity>> getFeedFirstPage();

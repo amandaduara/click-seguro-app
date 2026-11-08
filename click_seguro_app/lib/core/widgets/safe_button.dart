@@ -142,33 +142,44 @@ class _SafeButtonState extends State<SafeButton> {
       ],
     );
 
-    return GestureDetector(
-      onTapDown: _isDisabled ? null : (_) => setState(() => _pressed = true),
-      onTapUp: _isDisabled ? null : (_) => setState(() => _pressed = false),
-      onTapCancel: _isDisabled ? null : () => setState(() => _pressed = false),
-      onTap: _isDisabled ? null : widget.onPressed,
-      child: AnimatedScale(
-        scale: _pressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        child: AnimatedOpacity(
-          opacity: opacity,
+    // Leitor de tela: um botão com o rótulo, desabilitado quando carrega ou
+    // está bloqueado (specs/022 FR-007).
+    return Semantics(
+      container: true,
+      button: true,
+      enabled: !_isDisabled && widget.onPressed != null,
+      child: GestureDetector(
+        onTapDown: _isDisabled ? null : (_) => setState(() => _pressed = true),
+        onTapUp: _isDisabled ? null : (_) => setState(() => _pressed = false),
+        onTapCancel: _isDisabled
+            ? null
+            : () => setState(() => _pressed = false),
+        onTap: _isDisabled ? null : widget.onPressed,
+        child: AnimatedScale(
+          scale: _pressed ? 0.95 : 1.0,
           duration: const Duration(milliseconds: 200),
-          child: AnimatedContainer(
+          curve: Curves.easeOut,
+          child: AnimatedOpacity(
+            opacity: opacity,
             duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            padding: _padding,
-            width: widget.size == SafeButtonSize.large ? double.infinity : null,
-            decoration: BoxDecoration(
-              color: style.bg,
-              gradient: style.gradient,
-              borderRadius: AppSpacing.radiusFull,
-              boxShadow: widget.shadow ? context.colors.shadowPrimary : null,
-              border: widget.tone == SafeButtonTone.ghost
-                  ? Border.all(color: context.colors.border, width: 1)
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              padding: _padding,
+              width: widget.size == SafeButtonSize.large
+                  ? double.infinity
                   : null,
+              decoration: BoxDecoration(
+                color: style.bg,
+                gradient: style.gradient,
+                borderRadius: AppSpacing.radiusFull,
+                boxShadow: widget.shadow ? context.colors.shadowPrimary : null,
+                border: widget.tone == SafeButtonTone.ghost
+                    ? Border.all(color: context.colors.border, width: 1)
+                    : null,
+              ),
+              child: content,
             ),
-            child: content,
           ),
         ),
       ),
