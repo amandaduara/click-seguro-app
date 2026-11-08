@@ -130,7 +130,7 @@ esqueleto; liberar a resposta e conferir a troca suave para o conteúdo; forçar
 
 Abrir e fechar telas tem uma transição curta e consistente, com o gesto de voltar preditivo do
 Android; trocar de aba esmaece uma aba na outra; tocar num cartão de Reels do Início leva aos
-Reels com a imagem "crescendo" até a tela cheia; abrir uma notícia mostra na hora o título e a
+Reels com a imagem do Reel já na tela ao chegar; abrir uma notícia mostra na hora o título e a
 imagem que já estavam no cartão enquanto o resto carrega; a splash leva à primeira tela com um
 esmaecimento.
 
@@ -153,8 +153,9 @@ anterior.
    carregamento falhar, o erro aparece abaixo do que já estava na tela.
 4. **Given** a splash, **When** o destino é decidido, **Then** a primeira tela entra com um
    esmaecimento, sem tela em branco no meio.
-5. **Given** o carrossel de Reels no Início, **When** a pessoa toca um cartão, **Then** a imagem
-   do cartão leva visualmente ao Reel correspondente.
+5. **Given** o carrossel de Reels no Início, **When** a pessoa toca um cartão, **Then** a aba de
+   Reels entra com a mesma troca suave das abas e a imagem do Reel tocado já está visível ao
+   chegar (sem tela preta).
 
 ---
 
@@ -276,8 +277,8 @@ ausência de tela preta ao deslizar para o próximo Reel e o uso de memória est
 - **FR-017**: O detalhe da notícia aberto a partir de um cartão MUST mostrar imediatamente o
   título, a fonte, a data e a imagem que o cartão já tinha.
 - **FR-018**: A saída da splash MUST ser um esmaecimento para a primeira tela.
-- **FR-019**: Abrir um Reel pelo carrossel do Início MUST ter continuidade visual da imagem do
-  cartão para o Reel.
+- **FR-019**: Abrir um Reel pelo carrossel do Início MUST mostrar a imagem do Reel tocado já
+  carregada ao chegar à aba (a imagem do cartão é a mesma e é aproveitada).
 
 **Microinterações (US5)**
 
