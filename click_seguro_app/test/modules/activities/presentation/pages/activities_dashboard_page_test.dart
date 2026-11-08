@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
@@ -379,7 +379,10 @@ void main() {
       router.pop();
       await tester.pump();
 
-      expect(find.byType(SafeLoadingState), findsNothing);
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsNothing,
+      );
       await tester.pumpAndSettle();
       expect(find.text('1 de 9 lições concluídas'), findsOneWidget);
     });
@@ -533,7 +536,11 @@ void main() {
       repository = FakeActivitiesRepository()..gate = Completer<void>();
       await open(tester, settle: false);
 
-      expect(find.byType(SafeLoadingState), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('Carregando'), findsOneWidget);
       expect(find.textContaining('O serviço está acordando'), findsNothing);
       await tester.pump(SlowRequestNotice.delay);
       expect(find.textContaining('O serviço está acordando'), findsOneWidget);

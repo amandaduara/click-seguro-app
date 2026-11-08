@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
@@ -96,14 +97,18 @@ void main() {
   }
 
   group('navegação', () {
-    testWidgets('carregando mostra o indicador', (tester) async {
+    testWidgets('carregando mostra o esqueleto', (tester) async {
       firstPage(2);
       repository.reelsGate = Completer<void>();
 
       await pumpPage(tester, preload: false);
       await tester.pump();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsOneWidget,
+      );
+      expect(find.byType(CircularProgressIndicator), findsNothing);
       repository.reelsGate!.complete();
       await tester.pumpAndSettle();
       expect(title('r1'), findsOneWidget);

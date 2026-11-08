@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
@@ -94,7 +94,11 @@ void main() {
         settle: false,
       );
 
-      expect(find.byType(SafeLoadingState), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsOneWidget,
+      );
+      expect(find.byType(CircularProgressIndicator), findsNothing);
       await tester.pump(const Duration(seconds: 5));
       expect(
         find.text('Conectando ao servidor. Isso pode levar até um minuto.'),

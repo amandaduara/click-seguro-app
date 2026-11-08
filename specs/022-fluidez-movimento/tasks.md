@@ -166,29 +166,29 @@ limpo, `flutter test` verde e o trecho correspondente do [quickstart](quickstart
 
 ### Tests (US3)
 
-- [ ] T030 [P] [US3] Widget tests do `SafeSkeleton` (lido como "Carregando", não expõe o texto de
+- [x] T030 [P] [US3] Widget tests do `SafeSkeleton` (lido como "Carregando", não expõe o texto de
   exemplo, estático com movimento reduzido) e do `SafeStateSwitcher`, em
   `test/core/widgets/safe_skeleton_test.dart` e `safe_state_switcher_test.dart`.
 
 ### Implementation (US3)
 
-- [ ] T031 [US3] Criar `SafeSkeleton` e `SafeStateSwitcher` conforme o contrato em
+- [x] T031 [US3] Criar `SafeSkeleton` e `SafeStateSwitcher` conforme o contrato em
   `lib/core/widgets/`. O esqueleto usa cores do `AppPalette`, inclusive no alto contraste.
-- [ ] T032 [P] [US3] Dados de exemplo (`placeholder()`) para notícia, Reel, módulo, perfil e
+- [x] T032 [P] [US3] Dados de exemplo (`placeholder()`) para notícia, Reel, módulo, perfil e
   notificação nas extensions de apresentação de cada módulo (por exemplo
   `lib/modules/news/presentation/extensions/news_placeholders.dart`).
-- [ ] T033 [US3] Feed: esqueleto dos cartões e `SafeStateSwitcher` em `_content` de
+- [x] T033 [US3] Feed: esqueleto dos cartões e `SafeStateSwitcher` em `_content` de
   `lib/modules/news/presentation/pages/news_home_page.dart`; manter o `SlowRequestNotice`.
-- [ ] T034 [P] [US3] Reels: esqueleto escuro de tela cheia em
+- [x] T034 [P] [US3] Reels: esqueleto escuro de tela cheia em
   `lib/modules/news/presentation/pages/reels_page.dart`. Tirar os efeitos colaterais do `build`
   (`_resetPages`): o descarte do `PageController` passa a acontecer por mudança de status num
   listener.
-- [ ] T035 [P] [US3] Painel de atividades em
+- [x] T035 [P] [US3] Painel de atividades em
   `lib/modules/activities/presentation/pages/activities_dashboard_page.dart`.
-- [ ] T036 [P] [US3] Perfil em `lib/modules/profile/presentation/pages/profile_page.dart`.
-- [ ] T037 [P] [US3] Notificações em
+- [x] T036 [P] [US3] Perfil em `lib/modules/profile/presentation/pages/profile_page.dart`.
+- [x] T037 [P] [US3] Notificações em
   `lib/modules/notifications/presentation/pages/notifications_page.dart`.
-- [ ] T038 [US3] Ajustar os widget tests existentes dessas telas que procuram
+- [x] T038 [US3] Ajustar os widget tests existentes dessas telas que procuram
   `CircularProgressIndicator`/`SafeLoadingState` para o novo estado de carregamento.
 
 **Checkpoint**: nenhuma das seis telas mostra o círculo sozinho.

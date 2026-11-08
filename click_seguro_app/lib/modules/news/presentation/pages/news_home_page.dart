@@ -6,14 +6,16 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_message.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_placeholders.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/category_filter_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_footer.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_search_field.dart';
@@ -143,21 +145,20 @@ class _NewsHomePageState extends State<NewsHomePage> {
     return '$greeting $count';
   }
 
-  Widget _content(BuildContext context, FeedController controller) {
+  /// Carregando, erro, vazio e lista trocam com um esmaecimento (R8).
+  Widget _content(BuildContext context, FeedController controller) =>
+      SafeStateSwitcher(
+        stateKey: (controller.status, _isEmptyResult(controller)),
+        child: _stateContent(context, controller),
+      );
+
+  bool _isEmptyResult(FeedController controller) =>
+      controller.items.isEmpty && !controller.filter.isEmpty;
+
+  Widget _stateContent(BuildContext context, FeedController controller) {
     switch (controller.status) {
       case FeedStatus.loading:
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SafeLoadingState(),
-              SlowRequestNotice(
-                active: true,
-                message: AppStrings.newsSlowServer.tr(),
-              ),
-            ],
-          ),
-        );
+        return _FeedSkeleton(now: DateTime.now());
       case FeedStatus.error:
         return SafeErrorState(
           message: (controller.failure?.message ?? AppStrings.errorGeneric)
@@ -165,7 +166,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
           onRetry: controller.load,
         );
       case FeedStatus.loaded:
-        if (controller.items.isEmpty && !controller.filter.isEmpty) {
+        if (_isEmptyResult(controller)) {
           return SafeEmptyState(
             message: controller.isSearching
                 ? AppStrings.newsEmptySearch.tr(
@@ -252,4 +253,38 @@ class _NewsHomePageState extends State<NewsHomePage> {
       ),
     ];
   }
+}
+
+/// Primeira carga: os cartões do feed em esqueleto, com o aviso de servidor
+/// acordando acima deles (FR-011, FR-014).
+class _FeedSkeleton extends StatelessWidget {
+  const _FeedSkeleton({required this.now});
+
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    physics: const NeverScrollableScrollPhysics(),
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+    children: [
+      SlowRequestNotice(active: true, message: AppStrings.newsSlowServer.tr()),
+      SafeSkeleton(
+        enabled: true,
+        child: Column(
+          children: [
+            for (int index = 0; index < 3; index++)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s4),
+                child: NewsCard(
+                  item: NewsPlaceholders.item(index),
+                  now: now,
+                  compact: index > 0,
+                  onTap: () async {},
+                ),
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
