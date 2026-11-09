@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/utils/app_haptics.dart';
 import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
@@ -25,6 +27,7 @@ import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:animations/animations.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -63,6 +66,11 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   late final ReadAloudController _readAloud;
   Locale? _locale;
   int? _shownIndex;
+
+  /// A pergunta desenhada por último e se a troca para a atual foi para
+  /// trás: voltar desliza no sentido oposto a avançar (specs/022 FR-027).
+  int? _drawnIndex;
+  bool _backwards = false;
 
   /// A pergunta na tela já foi lida sozinha. Volta a `false` a cada troca de
   /// pergunta: voltar ou avançar para uma pergunta lê de novo (relato do
@@ -138,7 +146,12 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(message)));
     }
-    if (attempt == AnswerAttempt.answered) await _showFeedback();
+    if (attempt == AnswerAttempt.answered) {
+      // Uma vibração, distinta para acerto e erro (specs/022 FR-022).
+      final bool correct = _controller.currentResult?.isCorrect ?? false;
+      unawaited(correct ? AppHaptics.success() : AppHaptics.error());
+      await _showFeedback();
+    }
   }
 
   /// Painel de feedback; seguir vai à próxima pergunta ou, na última, de
@@ -244,6 +257,11 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   Widget build(BuildContext context) {
     final LessonController controller = context.watch<LessonController>();
     final LessonEntity? lesson = controller.current;
+    final int index = controller.currentIndex;
+    if (index != _drawnIndex) {
+      _backwards = _drawnIndex != null && index < _drawnIndex!;
+      _drawnIndex = index;
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -273,14 +291,27 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
           LessonStatus.loaded when lesson != null => Column(
             children: [
               Expanded(
-                child: _LessonBody(
-                  lesson: lesson,
-                  lessons: controller.module!.lessons,
-                  currentIndex: controller.currentIndex,
-                  selectedOptionId: controller.selectedOptionId,
-                  result: controller.currentResult,
-                  onSelect: controller.canSelect ? controller.select : null,
-                  listen: _listenButton(lesson.spokenText),
+                child: PageTransitionSwitcher(
+                  duration: AppMotion.of(context).long,
+                  reverse: _backwards,
+                  transitionBuilder: (child, primary, secondary) =>
+                      SharedAxisTransition(
+                        animation: primary,
+                        secondaryAnimation: secondary,
+                        transitionType: SharedAxisTransitionType.horizontal,
+                        fillColor: Colors.transparent,
+                        child: child,
+                      ),
+                  child: _LessonBody(
+                    key: ValueKey(lesson.id),
+                    lesson: lesson,
+                    lessons: controller.module!.lessons,
+                    currentIndex: index,
+                    selectedOptionId: controller.selectedOptionId,
+                    result: controller.currentResult,
+                    onSelect: controller.canSelect ? controller.select : null,
+                    listen: _listenButton(lesson.spokenText),
+                  ),
                 ),
               ),
               // O envio também pode esperar o servidor acordar (FR-014).
@@ -300,6 +331,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
 
 class _LessonBody extends StatelessWidget {
   const _LessonBody({
+    super.key,
     required this.lesson,
     required this.lessons,
     required this.currentIndex,

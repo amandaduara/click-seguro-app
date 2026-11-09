@@ -520,6 +520,7 @@ abstract class AppStrings {
   static const String assistantChatPlaceholder = 'assistant_chat_placeholder';
   static const String assistantChatSend = 'assistant_chat_send';
   static const String assistantChatRetry = 'assistant_chat_retry';
+  static const String assistantTyping = 'assistant_typing';
   static const String assistantNewConversation = 'assistant_new_conversation';
   static const String assistantNewConversationTitle =
       'assistant_new_conversation_title';

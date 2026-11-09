@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:click_seguro_app/core/errors/connection_failure.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/pages/assistant_page.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_analysis_card.dart';
+import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_typing_bubble.dart';
+import 'package:click_seguro_app/modules/assistant/presentation/widgets/chat_message_entrance.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_entity.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
@@ -172,6 +175,60 @@ void main() {
       tester.widget<TextField>(input).controller!.text,
       'Rascunho da próxima mensagem',
     );
+  });
+
+  testWidgets('balão "digitando" enquanto responde; a resposta entra animada '
+      '(specs/022 FR-026)', (tester) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    final gate = Completer<void>();
+    repository.chatGate = gate;
+    await open(tester);
+    final handle = tester.ensureSemantics();
+
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-chat-input')),
+      'É golpe?',
+    );
+    await tester.tap(find.byKey(const ValueKey('assistant-chat-send')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(AssistantTypingBubble), findsOneWidget);
+    expect(
+      find.bySemanticsLabel('O assistente está digitando'),
+      findsOneWidget,
+    );
+
+    gate.complete();
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(AssistantTypingBubble), findsNothing);
+    final reply = tester.widget<ChatMessageEntrance>(
+      find.byType(ChatMessageEntrance).last,
+    );
+    expect(reply.animate, isTrue);
+    await tester.pumpAndSettle();
+    handle.dispose();
+  });
+
+  testWidgets('com "Reduzir animações", os pontos ficam parados', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: AppMotionScope(
+          appReduceMotion: true,
+          child: Scaffold(body: AssistantTypingBubble()),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(tester.binding.hasScheduledFrame, isFalse);
   });
 
   testWidgets('verificação de texto só chama API após toque em analisar', (

@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/press_scale.dart';
 import 'package:flutter/material.dart';
 
 enum SafeButtonSize { large, compact, pill }
@@ -37,8 +38,6 @@ class SafeButton extends StatefulWidget {
 }
 
 class _SafeButtonState extends State<SafeButton> {
-  bool _pressed = false;
-
   bool get _isDisabled => widget.disabled || widget.loading;
 
   EdgeInsets get _padding {
@@ -100,14 +99,9 @@ class _SafeButtonState extends State<SafeButton> {
     final AppMotion motion = AppMotion.of(context);
     final opacity = _isDisabled ? 0.4 : 1.0;
 
-    final content = Row(
-      mainAxisSize: widget.size == SafeButtonSize.large
-          ? MainAxisSize.max
-          : MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (widget.loading)
-          SizedBox(
+    final Widget? leading = widget.loading
+        ? SizedBox(
+            key: const ValueKey('spinner'),
             width: 16,
             height: 16,
             child: CircularProgressIndicator(
@@ -115,12 +109,30 @@ class _SafeButtonState extends State<SafeButton> {
               valueColor: AlwaysStoppedAnimation<Color>(style.fg),
             ),
           )
-        else if (widget.icon != null)
-          IconTheme(
+        : widget.icon == null
+        ? null
+        : IconTheme(
+            key: const ValueKey('icon'),
             data: IconThemeData(color: style.fg, size: 16),
             child: widget.icon!,
+          );
+
+    final content = Row(
+      mainAxisSize: widget.size == SafeButtonSize.large
+          ? MainAxisSize.max
+          : MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (leading != null) ...[
+          // O ícone dá lugar ao spinner com esmaecimento (specs/022 R13).
+          AnimatedSwitcher(
+            duration: motion.short,
+            switchInCurve: AppMotion.enter,
+            switchOutCurve: AppMotion.exit,
+            child: leading,
           ),
-        if (widget.loading || widget.icon != null) const SizedBox(width: 8),
+          const SizedBox(width: 8),
+        ],
         // Flexible: com fonte ampliada (RNF-003) o rótulo quebra a linha em
         // vez de estourar a largura do botão.
         Flexible(
@@ -150,39 +162,29 @@ class _SafeButtonState extends State<SafeButton> {
       container: true,
       button: true,
       enabled: !_isDisabled && widget.onPressed != null,
-      child: GestureDetector(
-        onTapDown: _isDisabled ? null : (_) => setState(() => _pressed = true),
-        onTapUp: _isDisabled ? null : (_) => setState(() => _pressed = false),
-        onTapCancel: _isDisabled
-            ? null
-            : () => setState(() => _pressed = false),
-        onTap: _isDisabled ? null : widget.onPressed,
-        child: AnimatedScale(
-          scale: _pressed ? 0.95 : 1.0,
+      child: PressScale(
+        enabled: !_isDisabled,
+        pressedScale: 0.95,
+        onTap: widget.onPressed,
+        child: AnimatedOpacity(
+          opacity: opacity,
           duration: motion.short,
           curve: AppMotion.standard,
-          child: AnimatedOpacity(
-            opacity: opacity,
+          child: AnimatedContainer(
             duration: motion.short,
             curve: AppMotion.standard,
-            child: AnimatedContainer(
-              duration: motion.short,
-              curve: AppMotion.standard,
-              padding: _padding,
-              width: widget.size == SafeButtonSize.large
-                  ? double.infinity
+            padding: _padding,
+            width: widget.size == SafeButtonSize.large ? double.infinity : null,
+            decoration: BoxDecoration(
+              color: style.bg,
+              gradient: style.gradient,
+              borderRadius: AppSpacing.radiusFull,
+              boxShadow: widget.shadow ? context.colors.shadowPrimary : null,
+              border: widget.tone == SafeButtonTone.ghost
+                  ? Border.all(color: context.colors.border, width: 1)
                   : null,
-              decoration: BoxDecoration(
-                color: style.bg,
-                gradient: style.gradient,
-                borderRadius: AppSpacing.radiusFull,
-                boxShadow: widget.shadow ? context.colors.shadowPrimary : null,
-                border: widget.tone == SafeButtonTone.ghost
-                    ? Border.all(color: context.colors.border, width: 1)
-                    : null,
-              ),
-              child: content,
             ),
+            child: content,
           ),
         ),
       ),

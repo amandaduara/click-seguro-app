@@ -49,4 +49,38 @@ void main() {
 
     expect(selected, [AppTab.profile.index]);
   });
+
+  testWidgets('a aba ativa troca de cor com animação curta (FR-025)', (
+    tester,
+  ) async {
+    final ValueNotifier<int> current = ValueNotifier(0);
+    addTearDown(current.dispose);
+    await pumpLocalized(
+      tester,
+      child: Scaffold(
+        body: const SizedBox.expand(),
+        bottomNavigationBar: ValueListenableBuilder<int>(
+          valueListenable: current,
+          builder: (_, index, _) =>
+              AppBottomNav(currentIndex: index, onSelected: (_) {}),
+        ),
+      ),
+    );
+    Color? iconColor(IconData icon) =>
+        tester.widget<Icon>(find.byIcon(icon)).color;
+    final Color? muted = iconColor(AppTab.activities.icon);
+    final Color? active = iconColor(AppTab.home.icon);
+    expect(find.byType(BackdropFilter), findsOneWidget);
+
+    current.value = AppTab.activities.index;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    final Color? midway = iconColor(AppTab.activities.icon);
+    expect(midway, isNot(muted));
+    expect(midway, isNot(active));
+
+    await tester.pumpAndSettle();
+    expect(iconColor(AppTab.activities.icon), active);
+    expect(iconColor(AppTab.home.icon), muted);
+  });
 }

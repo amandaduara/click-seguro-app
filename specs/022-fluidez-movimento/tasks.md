@@ -245,27 +245,27 @@ limpo, `flutter test` verde e o trecho correspondente do [quickstart](quickstart
 **Independent Test**: roteiro 10–12 do quickstart; em cada tela, conferir com "Reduzir
 animações".
 
-- [ ] T048 [P] [US5] Criar `AppHaptics` em `lib/core/utils/app_haptics.dart`.
-- [ ] T049 [US5] `SafeButton` e `SafeCard`: pressão mínima de `AppMotion.short` e
+- [x] T048 [P] [US5] Criar `AppHaptics` em `lib/core/utils/app_haptics.dart`.
+- [x] T049 [US5] `SafeButton` e `SafeCard`: pressão mínima de `AppMotion.short` e
   `AnimatedSwitcher` entre o ícone e o spinner (`lib/core/widgets/safe_button.dart`,
   `safe_card.dart`).
-- [ ] T050 [US5] Curtir: pulso no coração (`ReelActions`) e dois toques na imagem (`ReelView`)
+- [x] T050 [US5] Curtir: pulso no coração (`ReelActions`) e dois toques na imagem (`ReelView`)
   chamando o mesmo `_like` da `ReelsPage`, com `AppHaptics.selection`. O visitante continua
   vendo o convite de conta. Widget test em
   `test/modules/news/presentation/pages/reels_page_test.dart`.
-- [ ] T051 [P] [US5] Lição: `PageTransitionSwitcher` + `SharedAxisTransition` horizontal pelo
+- [x] T051 [P] [US5] Lição: `PageTransitionSwitcher` + `SharedAxisTransition` horizontal pelo
   sentido do índice em `lib/modules/activities/presentation/pages/lesson_page.dart`; destaque
   animado e `AppHaptics.success/error` no resultado em
   `lib/modules/activities/presentation/widgets/lesson_option_card.dart`.
-- [ ] T052 [P] [US5] Login: `AnimatedSize` + `AnimatedSwitcher` no campo de nome, nas regras de
+- [x] T052 [P] [US5] Login: `AnimatedSize` + `AnimatedSwitcher` no campo de nome, nas regras de
   senha e nas mensagens em `lib/modules/authentication/presentation/pages/login_page.dart`; trocar
   `Icons.*` por Lucide (design system §5).
-- [ ] T053 [P] [US5] Onboarding: o indicador escuta o `PageController` e interpola a largura pela
+- [x] T053 [P] [US5] Onboarding: o indicador escuta o `PageController` e interpola a largura pela
   página fracionária (`onboarding_page_indicator.dart`, `onboarding_page.dart`); `AnimatedSwitcher`
   no rótulo do botão.
-- [ ] T054 [P] [US5] Barra inferior: cor e escala animadas na aba ativa e desfoque leve no fundo em
+- [x] T054 [P] [US5] Barra inferior: cor e escala animadas na aba ativa e desfoque leve no fundo em
   `lib/modules/shell/presentation/widgets/app_bottom_nav.dart`.
-- [ ] T055 [P] [US5] Assistente: balão "digitando" (três pontos; estático com movimento reduzido;
+- [x] T055 [P] [US5] Assistente: balão "digitando" (três pontos; estático com movimento reduzido;
   `Semantics` com a chave nova "O assistente está digitando") e entrada animada das mensagens em
   `lib/modules/assistant/presentation/pages/assistant_page.dart`; strings novas no i18n.
 

@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/utils/app_haptics.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
@@ -105,10 +106,19 @@ class _ReelsPageState extends State<ReelsPage> {
     }
   }
 
-  Future<void> _like(ReelEntity reel) async {
-    if (await requireAccount(context)) {
-      unawaited(_controller.toggleLike(reel.id));
+  /// Pulsos pedidos por Reel: dois toques num Reel já curtido só animam.
+  final Map<String, int> _likePulses = {};
+
+  /// O botão alterna; dois toques na imagem ([onlyLike]) só curtem
+  /// (specs/022 FR-021). Uma vibração por ação (FR-028).
+  Future<void> _like(ReelEntity reel, {bool onlyLike = false}) async {
+    if (!await requireAccount(context)) return;
+    unawaited(AppHaptics.selection());
+    if (onlyLike && reel.isLiked) {
+      setState(() => _likePulses[reel.id] = (_likePulses[reel.id] ?? 0) + 1);
+      return;
     }
+    unawaited(_controller.toggleLike(reel.id));
   }
 
   Future<void> _save(ReelEntity reel) async {
@@ -244,6 +254,7 @@ class _ReelsPageState extends State<ReelsPage> {
           now: now,
           onReadFull: () => unawaited(_openDetail(reel)),
           footer: index == reels.length - 1 ? _footer(controller) : null,
+          onDoubleTap: () => unawaited(_like(reel, onlyLike: true)),
           actions: ReelActions(
             onPrevious: index > 0 ? () => _goTo(index - 1) : null,
             onNext: index < reels.length - 1 ? () => _goTo(index + 1) : null,
@@ -251,6 +262,7 @@ class _ReelsPageState extends State<ReelsPage> {
             likesText: reel.formattedLikes,
             likeLabel: reel.likeSemanticLabel,
             onLike: () => unawaited(_like(reel)),
+            likePulse: _likePulses[reel.id] ?? 0,
             isSaved: isSaved,
             saveLabel: saveSemanticLabel(isSaved: isSaved),
             onSave: () => unawaited(_save(reel)),

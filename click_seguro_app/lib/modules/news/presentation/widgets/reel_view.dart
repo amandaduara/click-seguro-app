@@ -20,9 +20,11 @@ class ReelView extends StatelessWidget {
     required this.actions,
     required this.onReadFull,
     this.footer,
+    this.onDoubleTap,
   });
 
   static const double _actionsWidth = 64;
+  static const Key doubleTapKey = ValueKey('reel-double-tap');
 
   /// Põe a imagem do Reel no cache no tamanho em que ele a mostra, para
   /// aparecer sem tela preta (specs/022 R10, R11).
@@ -42,6 +44,10 @@ class ReelView extends StatelessWidget {
 
   /// Aviso no último Reel: fim da lista ou falha ao carregar mais.
   final Widget? footer;
+
+  /// Dois toques na imagem: curtir (specs/022 FR-021). Só o fundo responde;
+  /// textos e botões por cima ficam com os próprios toques.
+  final VoidCallback? onDoubleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +82,14 @@ class ReelView extends StatelessWidget {
               ),
             ),
           ),
+          if (onDoubleTap != null)
+            ExcludeSemantics(
+              child: GestureDetector(
+                key: doubleTapKey,
+                behavior: HitTestBehavior.opaque,
+                onDoubleTap: onDoubleTap,
+              ),
+            ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(

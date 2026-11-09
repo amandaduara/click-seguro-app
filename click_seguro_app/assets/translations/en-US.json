@@ -403,6 +403,7 @@
   "assistant_chat_placeholder": "Write your question...",
   "assistant_chat_send": "Send",
   "assistant_chat_retry": "Try again",
+  "assistant_typing": "The assistant is typing",
   "assistant_new_conversation": "New conversation",
   "assistant_new_conversation_title": "Start a new conversation?",
   "assistant_new_conversation_body": "Messages in this conversation will be cleared from this device.",

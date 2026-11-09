@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
@@ -23,6 +24,7 @@ class ReelActions extends StatelessWidget {
     required this.saveLabel,
     required this.onSave,
     required this.onOpenSource,
+    this.likePulse = 0,
   });
 
   static const Key previousKey = ValueKey('reels-previous');
@@ -30,6 +32,7 @@ class ReelActions extends StatelessWidget {
   static const Key likeKey = ValueKey('reels-like');
   static const Key saveKey = ValueKey('reels-save');
   static const Key sourceKey = ValueKey('reels-source');
+  static const Key likePulseKey = ValueKey('reels-like-pulse');
 
   /// `null` desabilita (primeiro ou último Reel).
   final VoidCallback? onPrevious;
@@ -41,6 +44,10 @@ class ReelActions extends StatelessWidget {
   final String likesText;
   final String likeLabel;
   final VoidCallback onLike;
+
+  /// Muda para pulsar o coração sem mudar a curtida (dois toques num Reel
+  /// já curtido).
+  final int likePulse;
 
   /// Estado já resolvido: o visitante vê sempre `false` (FR-016).
   final bool isSaved;
@@ -70,14 +77,18 @@ class ReelActions extends StatelessWidget {
           onTap: onNext,
         ),
         const SizedBox(height: AppSpacing.s3),
-        _RoundButton(
-          key: likeKey,
-          icon: LucideIcons.heart,
-          selectedIcon: Icons.favorite,
-          label: likeLabel,
-          onTap: onLike,
-          selected: isLiked,
-          selectedColor: context.colors.primary,
+        _LikePulse(
+          liked: isLiked,
+          pulse: likePulse,
+          child: _RoundButton(
+            key: likeKey,
+            icon: LucideIcons.heart,
+            selectedIcon: Icons.favorite,
+            label: likeLabel,
+            onTap: onLike,
+            selected: isLiked,
+            selectedColor: context.colors.primary,
+          ),
         ),
         ExcludeSemantics(
           child: Text(
@@ -108,6 +119,69 @@ class ReelActions extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Pulso do coração (1 → 1,3 → 1, `AppMotion.long`) ao curtir ou quando
+/// [pulse] muda (specs/022 R13). Descurtir não pulsa.
+class _LikePulse extends StatefulWidget {
+  const _LikePulse({
+    required this.liked,
+    required this.pulse,
+    required this.child,
+  });
+
+  final bool liked;
+  final int pulse;
+  final Widget child;
+
+  @override
+  State<_LikePulse> createState() => _LikePulseState();
+}
+
+class _LikePulseState extends State<_LikePulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(vsync: this);
+  late final Animation<double> _scale = _controller.drive(
+    TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 1,
+          end: 1.3,
+        ).chain(CurveTween(curve: AppMotion.enter)),
+        weight: 40,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(
+          begin: 1.3,
+          end: 1,
+        ).chain(CurveTween(curve: AppMotion.emphasis)),
+        weight: 60,
+      ),
+    ]),
+  );
+
+  @override
+  void didUpdateWidget(_LikePulse oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final bool liked = widget.liked && !oldWidget.liked;
+    if (liked || widget.pulse != oldWidget.pulse) {
+      _controller.duration = AppMotion.of(context).long;
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => ScaleTransition(
+    key: ReelActions.likePulseKey,
+    scale: _scale,
+    child: widget.child,
+  );
 }
 
 /// Círculo de 40 px (branco 20% com desfoque) numa área de toque de 48 dp

@@ -10,8 +10,10 @@ import 'package:click_seguro_app/modules/news/presentation/controller/reels_cont
 import 'package:click_seguro_app/modules/news/presentation/pages/reels_page.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/reel_actions.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/reel_view.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
@@ -326,6 +328,88 @@ void main() {
       expect(find.byType(SnackBar), findsOneWidget);
       expect(find.text('3'), findsOneWidget);
       expect(controller.reels.first.isLiked, isFalse);
+    });
+
+    group('microinterações (specs/022 FR-021)', () {
+      final List<Object?> vibrations = [];
+
+      setUp(() {
+        vibrations.clear();
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+              if (call.method == 'HapticFeedback.vibrate') {
+                vibrations.add(call.arguments);
+              }
+              return null;
+            });
+      });
+
+      tearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null),
+      );
+
+      Future<void> doubleTapImage(WidgetTester tester) async {
+        final Finder image = find.byKey(ReelView.doubleTapKey);
+        await tester.tap(image);
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.tap(image);
+        await tester.pumpAndSettle();
+      }
+
+      double pulse(WidgetTester tester) => tester
+          .widget<ScaleTransition>(find.byKey(ReelActions.likePulseKey))
+          .scale
+          .value;
+
+      testWidgets('curtir pulsa o coração e vibra uma vez', (tester) async {
+        await signIn();
+        onePage([reel('r1', likesCount: 3)]);
+        repository.likeResults.add(
+          const Right(LikeResultEntity(liked: true, likesCount: 4)),
+        );
+        await pumpPage(tester);
+
+        await tester.tap(find.byKey(ReelActions.likeKey));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(pulse(tester), greaterThan(1));
+
+        await tester.pumpAndSettle();
+        expect(pulse(tester), 1);
+        expect(vibrations, ['HapticFeedbackType.selectionClick']);
+      });
+
+      testWidgets('dois toques na imagem curtem; de novo, não descurtem', (
+        tester,
+      ) async {
+        await signIn();
+        onePage([reel('r1', likesCount: 3)]);
+        repository.likeResults.add(
+          const Right(LikeResultEntity(liked: true, likesCount: 4)),
+        );
+        await pumpPage(tester);
+
+        await doubleTapImage(tester);
+        expect(repository.likeCalls, ['r1']);
+        expect(controller.reels.first.isLiked, isTrue);
+
+        await doubleTapImage(tester);
+        expect(repository.likeCalls, ['r1']);
+        expect(controller.reels.first.isLiked, isTrue);
+        expect(vibrations, hasLength(2));
+      });
+
+      testWidgets('visitante: dois toques mostram o convite', (tester) async {
+        onePage([reel('r1')]);
+        await pumpPage(tester);
+
+        await doubleTapImage(tester);
+
+        expect(find.byType(AccountRequiredSheet), findsOneWidget);
+        expect(repository.likeCalls, isEmpty);
+        expect(vibrations, isEmpty);
+      });
     });
   });
 

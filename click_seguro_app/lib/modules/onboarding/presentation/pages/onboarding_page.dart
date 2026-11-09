@@ -85,13 +85,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
             OnboardingPageIndicator(
               pageCount: OnboardingPageContent.pages.length,
               currentPage: controller.currentPage,
+              controller: _pageController,
             ),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.s6),
-              child: SafeButton(
-                label: currentContent.buttonLabelKey.tr(),
-                iconRight: const Icon(LucideIcons.chevronRight, size: 16),
-                onPressed: () => _handleNext(controller),
+              // "Continuar" vira "Começar" esmaecendo; o fundo é o mesmo,
+              // então só o rótulo parece trocar.
+              child: AnimatedSwitcher(
+                duration: AppMotion.of(context).medium,
+                switchInCurve: AppMotion.enter,
+                switchOutCurve: AppMotion.exit,
+                child: SafeButton(
+                  key: ValueKey(currentContent.buttonLabelKey),
+                  label: currentContent.buttonLabelKey.tr(),
+                  iconRight: const Icon(LucideIcons.chevronRight, size: 16),
+                  onPressed: () => _handleNext(controller),
+                ),
               ),
             ),
           ],

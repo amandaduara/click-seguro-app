@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -50,36 +53,44 @@ class AppBottomNav extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: overhang),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: context.colors.background.withValues(alpha: 0.95),
-                border: Border(top: BorderSide(color: context.colors.border)),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s2,
-                    AppSpacing.s2,
-                    AppSpacing.s2,
-                    AppSpacing.s3,
+            // Desfoque leve do conteúdo que passa por trás (specs/022 R12).
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: context.colors.background.withValues(alpha: 0.95),
+                    border: Border(
+                      top: BorderSide(color: context.colors.border),
+                    ),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      for (final tab in AppTab.values)
-                        Expanded(
-                          // O espaço do círculo fica vazio aqui: ele é
-                          // desenhado na camada de cima.
-                          child: tab.isCenter
-                              ? const SizedBox.shrink()
-                              : _TabItem(
-                                  tab: tab,
-                                  selected: tab.index == currentIndex,
-                                  onTap: () => onSelected(tab.index),
-                                ),
-                        ),
-                    ],
+                  child: SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.s2,
+                        AppSpacing.s2,
+                        AppSpacing.s2,
+                        AppSpacing.s3,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          for (final tab in AppTab.values)
+                            Expanded(
+                              // O espaço do círculo fica vazio aqui: ele é
+                              // desenhado na camada de cima.
+                              child: tab.isCenter
+                                  ? const SizedBox.shrink()
+                                  : _TabItem(
+                                      tab: tab,
+                                      selected: tab.index == currentIndex,
+                                      onTap: () => onSelected(tab.index),
+                                    ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -127,10 +138,11 @@ class _TabItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color = selected
+    final Color target = selected
         ? context.colors.primary
         : context.colors.textMutedForeground;
     final String label = tab.labelKey.tr();
+    final AppMotion motion = AppMotion.of(context);
     return Semantics(
       button: true,
       selected: selected,
@@ -143,25 +155,36 @@ class _TabItem extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 48),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s1),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(tab.icon, size: 20, color: color),
-                const SizedBox(height: AppSpacing.s1),
-                // Com fonte grande o rótulo reduz em vez de ser cortado.
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: color,
+            // A aba ativa troca de cor e cresce um pouco (specs/022 FR-025).
+            child: TweenAnimationBuilder<Color?>(
+              tween: ColorTween(end: target),
+              duration: motion.short,
+              curve: AppMotion.standard,
+              builder: (context, color, _) => Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AnimatedScale(
+                    scale: selected ? 1.15 : 1,
+                    duration: motion.short,
+                    curve: AppMotion.emphasis,
+                    child: Icon(tab.icon, size: 20, color: color),
+                  ),
+                  const SizedBox(height: AppSpacing.s1),
+                  // Com fonte grande o rótulo reduz em vez de ser cortado.
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: color,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

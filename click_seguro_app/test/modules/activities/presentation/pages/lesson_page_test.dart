@@ -18,7 +18,9 @@ import 'package:click_seguro_app/modules/common/accessibility/accessibility_pref
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
@@ -221,6 +223,30 @@ void main() {
       expect(find.text('Pergunta 2 de 3'), findsOneWidget);
 
       await tester.tap(find.text('Anterior'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+    });
+
+    testWidgets('a pergunta desliza: avançar e voltar em sentidos opostos '
+        '(specs/022 FR-027)', (tester) async {
+      useModule(answered: {'l1', 'l2', 'l3'});
+      await open(tester);
+      bool reverse() => tester
+          .widget<PageTransitionSwitcher>(find.byType(PageTransitionSwitcher))
+          .reverse;
+
+      await tester.tap(find.text('Próxima'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget, reason: 'saindo');
+      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
+      expect(reverse(), isFalse);
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 1 de 3'), findsNothing);
+
+      await tester.tap(find.text('Anterior'));
+      await tester.pump();
+      expect(reverse(), isTrue);
       await tester.pumpAndSettle();
       expect(find.text('Pergunta 1 de 3'), findsOneWidget);
     });
@@ -500,6 +526,47 @@ void main() {
             matching: find.byType(LessonOptionCard),
           ),
         );
+
+    testWidgets('acerto e erro vibram diferente, uma vez (specs/022 FR-022)', (
+      tester,
+    ) async {
+      final List<Object?> vibrations = [];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'HapticFeedback.vibrate') {
+            vibrations.add(call.arguments);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      repository.answerResults = [
+        Right(AnswerResultModel.fromJson(answerJson()).toEntity()),
+      ];
+      await open(tester);
+
+      await answer(tester, 'Ignorar e denunciar');
+      expect(vibrations, ['HapticFeedbackType.lightImpact']);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Responder de novo'));
+      await tester.pumpAndSettle();
+      repository.answerResults = [
+        Right(
+          AnswerResultModel.fromJson(answerJson(isCorrect: false)).toEntity(),
+        ),
+      ];
+      vibrations.clear();
+      await answer(tester, 'Enviar');
+      expect(vibrations, ['HapticFeedbackType.heavyImpact']);
+    });
 
     testWidgets('a explicação só aparece depois de confirmar (FR-018)', (
       tester,

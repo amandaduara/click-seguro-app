@@ -109,4 +109,31 @@ void main() {
       handle.dispose();
     });
   });
+
+  testWidgets('o ícone dá lugar ao spinner com troca animada (R13)', (
+    tester,
+  ) async {
+    Widget button({required bool loading}) => MaterialApp(
+      home: Scaffold(
+        body: SafeButton(
+          label: 'Entrar',
+          icon: const Icon(Icons.login),
+          loading: loading,
+          onPressed: () {},
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(button(loading: false));
+    expect(find.byType(AnimatedSwitcher), findsOneWidget);
+    expect(find.byIcon(Icons.login), findsOneWidget);
+
+    await tester.pumpWidget(button(loading: true));
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byIcon(Icons.login), findsOneWidget, reason: 'saindo');
+
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byIcon(Icons.login), findsNothing);
+  });
 }

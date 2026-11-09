@@ -403,6 +403,7 @@
   "assistant_chat_placeholder": "Escreva sua pergunta...",
   "assistant_chat_send": "Enviar",
   "assistant_chat_retry": "Tentar novamente",
+  "assistant_typing": "O assistente está digitando",
   "assistant_new_conversation": "Nova conversa",
   "assistant_new_conversation_title": "Começar uma nova conversa?",
   "assistant_new_conversation_body": "As mensagens desta conversa serão apagadas deste aparelho.",
