@@ -65,6 +65,18 @@ Coberto nesta passada:
 Falta rodar: passos 2–7, 9, 11, 13, 14 e 16; letra em 200%, alto contraste e TalkBack; e o perfil
 (`--profile`) do feed e dos Reels (T059, SC-006).
 
+T067 (2026-11-09, `--profile` no emulador fuja_api36): Reels já carregados, roteiro fixo de 8
+passadas para cima e 8 para baixo, 3 rodadas de 20 s (~1050 quadros cada) por variante.
+
+| Variante | raster p50 | raster p90 | quadros > 16,7 ms |
+| --- | --- | --- | --- |
+| Com desfoque (barra e botões) | 3,7–4,0 ms | 4,8–5,4 ms | 0, 0, 1 |
+| Sem desfoque | 1,7–1,8 ms | 2,1–2,2 ms | 0, 0, 1 |
+
+O desfoque custa ~2 ms por quadro e fica muito abaixo do orçamento de 16,7 ms: mantido. Os 14 ms
+anteriores vieram de uma passada sem aquecimento (e as repetições logo depois deram 9,4 e 5,3
+ms): a hipótese é a primeira exibição das imagens (não medida à parte), não o desfoque.
+
 T056: as durações literais que sobraram não são de transição de interface (tempo-limite de rede,
 espera da busca, contagem do reenvio, tempo mínimo da splash, atraso do aviso de lentidão) ou são o
 período do brilho do esqueleto, que já fica parado com o movimento reduzido.

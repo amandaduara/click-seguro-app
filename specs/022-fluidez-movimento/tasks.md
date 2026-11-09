@@ -301,8 +301,9 @@ Achados da T058 (emulador, 2026-11-09):
 - [x] T066 [P] Feed: ao trocar de categoria vindo de "Todas", "Nenhuma notícia nesta categoria"
   pisca enquanto a nova lista carrega (o vazio olha o filtro novo com a lista antiga). Não mostrar
   o vazio durante `isRefreshing`, em `news_home_page.dart`.
-- [ ] T067 Reels com raster mediano de 14 ms e 6% dos quadros acima de 16,7 ms no emulador (feed:
-  3 ms, 0%). Medir sem os `BackdropFilter` (barra e botões) e decidir.
+- [x] T067 Reels com raster mediano de 14 ms e 6% dos quadros acima de 16,7 ms no emulador (feed:
+  3 ms, 0%). Medir sem os `BackdropFilter` (barra e botões) e decidir. Decisão: o desfoque fica
+  (medição no quickstart, 2026-11-09).
 
 ---
 
