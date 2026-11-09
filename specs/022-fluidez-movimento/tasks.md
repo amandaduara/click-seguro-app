@@ -277,12 +277,12 @@ animações".
   (`grep "Duration(milliseconds" lib --include=*.dart`) e trocar pelos tokens.
 - [x] T057 Atualizar a §6 (Movimento) de `.specify/memory/design-system.md` com os tokens, a opção
   "Reduzir animações" e os padrões (esqueleto, fade-through, volta preditiva).
-- [ ] T058 Rodar o [quickstart](quickstart.md) completo no emulador, com e sem "Reduzir
+- [x] T058 Rodar o [quickstart](quickstart.md) completo no emulador, com e sem "Reduzir
   animações", e com letra em 200% e alto contraste; registrar os achados.
 - [x] T060 [P] `SafeTextField`: o preenchimento do `inputDecorationTheme` (`filled: true`) desenha um retângulo de outro tom dentro do campo arredondado (visto no login, no emulador); usar `filled: false` no `InputDecoration` interno em `lib/core/widgets/safe_text_field.dart`.
 - [x] T061 [P] Chip "Todas" sai como círculo (largura mínima = altura com letra grande); conferir `lib/modules/news/presentation/widgets/category_filter_bar.dart`.
 - [x] T062 [P] `SlowRequestNotice` sem margem lateral: o texto encosta nas bordas da tela; padding horizontal `AppSpacing.s5` em `lib/core/widgets/slow_request_notice.dart`.
-- [ ] T059 `flutter analyze` limpo e `flutter test` verde; perfil (`--profile`) do feed e dos Reels
+- [x] T059 `flutter analyze` limpo e `flutter test` verde; perfil (`--profile`) do feed e dos Reels
   sem travadas perceptíveis (SC-006).
 
 Achados da T058 (emulador, 2026-11-09):
@@ -304,6 +304,12 @@ Achados da T058 (emulador, 2026-11-09):
 - [x] T067 Reels com raster mediano de 14 ms e 6% dos quadros acima de 16,7 ms no emulador (feed:
   3 ms, 0%). Medir sem os `BackdropFilter` (barra e botões) e decidir. Decisão: o desfoque fica
   (medição no quickstart, 2026-11-09).
+- [x] T068 [P] Detalhe aberto por um cartão compacto mostrava o ícone no lugar da imagem (FR-017;
+  outra chave de cache) e o Hero voava com "Reduzir animações" (FR-010). A miniatura do cartão
+  (`NewsCard.compactImageSize`) cobre a espera em `news_detail_header.dart`; sem `Hero` com
+  movimento reduzido em `news_card.dart` e `news_detail_header.dart`.
+- [x] T069 [P] FR-019 ainda falhava: o pré-carregamento no toque não dava tempo de baixar a imagem
+  em tela cheia. O cartão do carrossel pré-carrega ao aparecer, em `reels_carousel.dart`.
 
 ---
 

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
@@ -29,6 +28,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
+import '../../../../fakes/hanging_http_client.dart';
 import '../../../../fakes/fake_text_to_speech_service.dart';
 import '../../../../helpers/activities_dependencies.dart';
 import '../../../../helpers/localized_app.dart';
@@ -199,7 +199,7 @@ void main() {
       );
 
       // Imagens que nunca chegam: ficam no cache como pendentes.
-      debugNetworkImageHttpClientProvider = _HangingHttpClient.new;
+      debugNetworkImageHttpClientProvider = HangingHttpClient.new;
 
       await pumpLocalized(tester, router: router, settle: false);
       await tester.pump();
@@ -1445,14 +1445,3 @@ void main() {
 }
 
 /// Pedido de imagem que nunca responde (a imagem fica pendente no cache).
-class _HangingHttpClient implements HttpClient {
-  @override
-  bool autoUncompress = true;
-
-  @override
-  Future<HttpClientRequest> getUrl(Uri url) =>
-      Completer<HttpClientRequest>().future;
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}

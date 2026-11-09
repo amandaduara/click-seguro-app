@@ -137,9 +137,11 @@ Referência de implementação: `fuja_app` (`lib/ui/core/motion/motion.dart`,
 
 ## R10 — Carrossel → Reels (FR-019)
 
-- **Decision**: os Reels são uma aba, com outro `Navigator`, então o `Hero` não atravessa. Antes
-  do `go('/reels?start=')`, o carrossel chama `precacheImage` da imagem do Reel tocado; a aba entra
-  com o fade-through de R5, e o `ReelView` encontra a imagem já no `ImageCache`.
+- **Decision**: os Reels são uma aba, com outro `Navigator`, então o `Hero` não atravessa. Cada
+  cartão do carrossel chama `precacheImage` da imagem do Reel em tela cheia quando aparece; o item
+  tocado vai como `extra` de `/reels?start=`, e o esqueleto mostra a imagem dele enquanto a lista
+  carrega. A aba entra com o fade-through de R5. (Pré-carregar só no toque não dava tempo de baixar
+  a imagem: achados T063 e T069.)
 - **Rationale**: garante "sem tela preta" com uma linha de código; a spec foi ajustada para isso.
 - **Alternatives considered**: abrir os Reels como tela empilhada sobre o Início (muda a navegação
   aprovada na feature 005).

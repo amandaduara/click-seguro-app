@@ -62,11 +62,14 @@ class _ReelCardState extends State<_ReelCard> {
     if (_pressed != pressed) setState(() => _pressed = pressed);
   }
 
-  /// A aba de Reels tem outro `Navigator`, então não há `Hero`: a imagem vai
-  /// para o cache antes, e o Reel já a encontra ao chegar (specs/022 R10).
-  void _open() {
+  /// A aba de Reels tem outro `Navigator`, então não há `Hero`: a imagem em
+  /// tela cheia vai para o cache quando o cartão aparece, e o Reel já a
+  /// encontra ao chegar (specs/022 R10). Só no toque não dava tempo de
+  /// baixá-la (achado da T058).
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     unawaited(ReelView.precache(context, widget.item.imageUrl));
-    widget.onTap();
   }
 
   @override
@@ -79,7 +82,7 @@ class _ReelCardState extends State<_ReelCard> {
       label: '${AppStrings.newsReelsBadge.tr()}: ${item.title}, ${item.source}',
       excludeSemantics: true,
       child: GestureDetector(
-        onTap: _open,
+        onTap: widget.onTap,
         onTapDown: (_) => _setPressed(true),
         onTapUp: (_) => _setPressed(false),
         onTapCancel: () => _setPressed(false),

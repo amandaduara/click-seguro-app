@@ -1,4 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
@@ -19,6 +20,10 @@ class NewsCard extends StatefulWidget {
     this.compact = true,
     this.heroTag,
   });
+
+  /// Lado da imagem do cartão compacto; o detalhe usa a mesma miniatura
+  /// enquanto a imagem grande carrega (specs/022 FR-017).
+  static const double compactImageSize = 80;
 
   final NewsItemEntity item;
   final DateTime now;
@@ -81,7 +86,11 @@ class _NewsCardState extends State<NewsCard> {
         _hero(
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: _NewsImage(url: item.imageUrl, width: 80, height: 80),
+            child: _NewsImage(
+              url: item.imageUrl,
+              width: NewsCard.compactImageSize,
+              height: NewsCard.compactImageSize,
+            ),
           ),
         ),
         const SizedBox(width: AppSpacing.s3),
@@ -101,10 +110,15 @@ class _NewsCardState extends State<NewsCard> {
     ],
   );
 
-  /// Só com imagem: sem ela o detalhe não tem para onde voar.
+  /// Só com imagem (sem ela o detalhe não tem para onde voar) e com
+  /// movimento normal (specs/022 FR-010).
   Widget _hero(Widget child) {
     final String? tag = widget.heroTag;
-    if (tag == null || widget.item.imageUrl == null) return child;
+    if (tag == null ||
+        widget.item.imageUrl == null ||
+        AppMotion.of(context).reduced) {
+      return child;
+    }
     return Hero(tag: tag, child: child);
   }
 

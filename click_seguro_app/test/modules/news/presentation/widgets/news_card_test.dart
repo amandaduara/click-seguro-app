@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
@@ -97,6 +98,31 @@ void main() {
     await pumpCard(tester, newsItem('n1'), compact: false);
 
     expect(tester.getSize(placeholder().first).height, 176);
+  });
+
+  // specs/022 FR-010: com "Reduzir animações", a imagem não voa.
+  testWidgets('Hero só com movimento normal', (tester) async {
+    Future<void> pumpWithTag({required bool reduceMotion}) => pumpLocalized(
+      tester,
+      settle: false,
+      child: AppMotionScope(
+        appReduceMotion: reduceMotion,
+        child: Scaffold(
+          body: NewsCard(
+            item: newsItem('n1', imageUrl: 'https://img.test/n.jpg'),
+            now: feedNow,
+            heroTag: 'news-image-recent-n1',
+            onTap: () async {},
+          ),
+        ),
+      ),
+    );
+
+    await pumpWithTag(reduceMotion: false);
+    expect(find.byType(Hero), findsOneWidget);
+
+    await pumpWithTag(reduceMotion: true);
+    expect(find.byType(Hero), findsNothing);
   });
 
   testWidgets('dois toques rápidos abrem uma vez', (tester) async {

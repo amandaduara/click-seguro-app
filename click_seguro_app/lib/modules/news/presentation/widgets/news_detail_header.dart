@@ -1,9 +1,11 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -42,13 +44,17 @@ class NewsDetailHeader extends StatelessWidget {
       children: [
         if (image != null) ...[
           _hero(
+            context,
             ClipRRect(
               borderRadius: AppSpacing.radius3xl,
               child: SafeNetworkImage(
                 url: image,
                 height: _imageHeight,
                 width: double.infinity,
-                placeholder: const _ImagePlaceholder(),
+                // Vindo de um cartão, a miniatura dele já está no cache.
+                placeholder: heroTag == null
+                    ? const _ImagePlaceholder()
+                    : _CardThumbnail(url: image),
               ),
             ),
           ),
@@ -116,10 +122,43 @@ class NewsDetailHeader extends StatelessWidget {
     );
   }
 
-  Widget _hero(Widget child) {
+  /// A imagem voa do cartão só com movimento normal (specs/022 FR-010).
+  Widget _hero(BuildContext context, Widget child) {
     final String? tag = heroTag;
-    return tag == null ? child : Hero(tag: tag, child: child);
+    return tag == null || AppMotion.of(context).reduced
+        ? child
+        : Hero(tag: tag, child: child);
   }
+}
+
+/// A miniatura do cartão compacto, ampliada, enquanto a imagem grande
+/// carrega (specs/022 FR-017: o detalhe mostra na hora a imagem que o
+/// cartão já tinha). Sem ela, o quadro neutro.
+class _CardThumbnail extends StatelessWidget {
+  const _CardThumbnail({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    children: [
+      const _ImagePlaceholder(),
+      Positioned.fill(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          clipBehavior: Clip.hardEdge,
+          child: SafeNetworkImage(
+            url: url,
+            width: NewsCard.compactImageSize,
+            height: NewsCard.compactImageSize,
+            placeholder: const SizedBox.square(
+              dimension: NewsCard.compactImageSize,
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 /// Quadro neutro do feed para imagem que ainda carrega ou que falhou.

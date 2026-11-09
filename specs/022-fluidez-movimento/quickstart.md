@@ -62,8 +62,43 @@ Coberto nesta passada:
 - Achado e corrigido: o chip "All" (rótulo curto) saía como círculo; agora tem largura mínima de
   80 (T061).
 
-Falta rodar: passos 2–7, 9, 11, 13, 14 e 16; letra em 200%, alto contraste e TalkBack; e o perfil
-(`--profile`) do feed e dos Reels (T059, SC-006).
+## Achados (2026-11-09, emulador `fuja_api36`, build profile, inglês)
+
+Resto do roteiro, já com T063–T066:
+
+- Passo 2: puxar para atualizar mantém os cartões e mostra um só indicador.
+- Passo 3: três trocas rápidas de categoria: a lista antiga esmaece com a barra de progresso, sem
+  vazio e sem sumir (T066), e fica a última escolha.
+- Passos 4 e 5: título, fonte e data na hora; ao voltar, selo "lida". **Achado (T068)**: vindo de
+  um cartão compacto, a imagem do detalhe mostrava o ícone até carregar (o cartão decodifica em
+  80 px e o detalhe na largura da tela: outra chave de cache). Corrigido: a miniatura do cartão,
+  ampliada, cobre a espera; o Hero voa com ela.
+- Passo 6: conta nova ("Teste 022 c") sem a marca de lida da anterior. Observação: o filtro de
+  categoria escolhido continua o mesmo depois da troca de conta.
+- Passo 7: fade-through entre abas; a rolagem do feed volta onde estava.
+- Passo 9: **achado (T069)**: o esqueleto dos Reels ainda mostrava o ícone, porque o
+  pré-carregamento só começava no toque e a imagem em tela cheia não chegava a tempo. Corrigido:
+  o cartão do carrossel pré-carrega ao aparecer; agora a imagem está lá desde o primeiro quadro.
+- Passo 11: errada ("Not this time") e certa ("You got it right!") distintas; a imagem da próxima
+  pergunta já está pronta (T064). Observação (feature 017, fora do escopo): a bolinha de progresso
+  de uma pergunta respondida errada também ganha o check verde ("respondida", não "certa").
+- Passo 13: o gesto de voltar encolhe a tela com cantos arredondados e volta para Atividades
+  (Android 16 com SDK 36 liga a volta preditiva sem `enableOnBackInvokedCallback`).
+- Passo 14 (Reduzir animações): troca de aba e de categoria imediatas; Reels com o esqueleto
+  parado e a imagem do item tocado. **Achado (T068)**: o Hero da imagem ainda voava ao abrir e ao
+  voltar; corrigido (sem Hero com movimento reduzido). Em aberto: os indicadores de carregamento
+  (barra e círculo) continuam animados; tratados como essenciais (comunicam estado, WCAG 2.3.3), a
+  confirmar.
+- Letra em 200% (escala do sistema): Início, detalhe, Reels (título e texto com reticências e "Read
+  full story") e lição cabem, com rolagem; os ícones do topo descem para baixo do título. O rótulo
+  "Activities" da barra inferior encolhe para caber.
+- Alto contraste: bordas escuras nos cartões, vermelho mais forte, esqueleto visível no detalhe.
+- Passo 16: a árvore de acessibilidade expõe cartões, filtros, abas e botões do topo como
+  `Button` com rótulo completo. O TalkBack não reconhece os deslizes injetados pelo `adb`, então
+  os anúncios em voz não foram ouvidos.
+
+Perfil (T059, `--profile`, mesmo roteiro do T067, 3 rodadas): feed com raster p50 2,2–2,3 ms, p90
+2,7–2,9 ms e nenhum quadro acima de 16,7 ms; Reels conforme a tabela abaixo (com desfoque).
 
 T067 (2026-11-09, `--profile` no emulador fuja_api36): Reels já carregados, roteiro fixo de 8
 passadas para cima e 8 para baixo, 3 rodadas de 20 s (~1050 quadros cada) por variante.
