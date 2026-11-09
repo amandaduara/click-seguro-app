@@ -7,6 +7,7 @@ import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
@@ -348,16 +349,12 @@ class _LessonBody extends StatelessWidget {
               constraints: const BoxConstraints(maxHeight: maxImageHeight),
               child: ClipRRect(
                 borderRadius: AppSpacing.radius2xl,
-                // O espaço depois da imagem só existe com ela: o errorBuilder
-                // não passa pelo frameBuilder (FR-013).
-                child: Image.network(
-                  image,
+                // O espaço depois da imagem só existe com ela (FR-013).
+                child: SafeNetworkImage(
+                  url: image,
                   fit: BoxFit.contain,
-                  frameBuilder: (context, child, _, _) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-                    child: child,
-                  ),
-                  errorBuilder: (context, _, _) => const SizedBox.shrink(),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                  placeholder: const SizedBox.shrink(),
                 ),
               ),
             ),

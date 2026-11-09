@@ -22,6 +22,7 @@ import 'package:click_seguro_app/modules/news/presentation/widgets/reel_view.dar
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -156,7 +157,14 @@ class _ReelsPageState extends State<ReelsPage> {
   @override
   Widget build(BuildContext context) {
     final ReelsController controller = context.watch<ReelsController>();
-    return Scaffold(backgroundColor: Colors.black, body: _content(controller));
+    // Ícones claros na barra de status sobre o fundo escuro (R11).
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: _content(controller),
+      ),
+    );
   }
 
   /// A lista aparece só com Reels carregados.
@@ -221,7 +229,13 @@ class _ReelsPageState extends State<ReelsPage> {
       controller: _pageControllerFor(controller),
       scrollDirection: Axis.vertical,
       itemCount: reels.length,
-      onPageChanged: controller.setIndex,
+      onPageChanged: (index) {
+        controller.setIndex(index);
+        // O próximo já decodificado: rolar não mostra tela preta (R11).
+        if (index + 1 < reels.length) {
+          unawaited(ReelView.precache(context, reels[index + 1].news.imageUrl));
+        }
+      },
       itemBuilder: (context, index) {
         final ReelEntity reel = reels[index];
         final bool isSaved = isAuthenticated && reel.isSaved;

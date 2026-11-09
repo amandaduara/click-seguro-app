@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/reel_presentation_extension.dart';
@@ -22,6 +23,17 @@ class ReelView extends StatelessWidget {
   });
 
   static const double _actionsWidth = 64;
+
+  /// Põe a imagem do Reel no cache no tamanho em que ele a mostra, para
+  /// aparecer sem tela preta (specs/022 R10, R11).
+  static Future<void> precache(BuildContext context, String? url) async {
+    if (url == null) return;
+    await SafeNetworkImage.precache(
+      context,
+      url,
+      height: MediaQuery.sizeOf(context).height,
+    );
+  }
 
   final ReelEntity reel;
   final DateTime now;
@@ -49,10 +61,10 @@ class ReelView extends StatelessWidget {
           else
             Opacity(
               opacity: 0.7,
-              child: Image.network(
-                image,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const _NoImage(),
+              child: SafeNetworkImage(
+                url: image,
+                height: MediaQuery.sizeOf(context).height,
+                placeholder: const _NoImage(),
               ),
             ),
           const DecoratedBox(

@@ -4,7 +4,9 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/reel_view.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -63,12 +65,7 @@ class _ReelCardState extends State<_ReelCard> {
   /// A aba de Reels tem outro `Navigator`, então não há `Hero`: a imagem vai
   /// para o cache antes, e o Reel já a encontra ao chegar (specs/022 R10).
   void _open() {
-    final String? image = widget.item.imageUrl;
-    if (image != null) {
-      unawaited(
-        precacheImage(NetworkImage(image), context, onError: (_, _) {}),
-      );
-    }
+    unawaited(ReelView.precache(context, widget.item.imageUrl));
     widget.onTap();
   }
 
@@ -101,12 +98,12 @@ class _ReelCardState extends State<_ReelCard> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                if (image != null)
-                  Image.network(
-                    image,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                  ),
+                SafeNetworkImage(
+                  url: image,
+                  width: widget.width,
+                  height: widget.width * 16 / 9,
+                  placeholder: const SizedBox.shrink(),
+                ),
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(

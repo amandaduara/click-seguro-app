@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -141,6 +142,25 @@ class _RoundButton extends StatelessWidget {
     final bool enabled = onTap != null;
     final Color onDark = context.colors.textPrimaryForeground;
     final Color color = selected ? selectedColor ?? onDark : onDark;
+    // Desabilitado: cor com alfa, sem desfoque nem `Opacity`, que pesam por
+    // cima da imagem (specs/022 T047). No esqueleto, o círculo vira uma barra
+    // só.
+    final Widget circle = SafeSkeleton.leaf(
+      Container(
+        width: _visualSize,
+        height: _visualSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: enabled ? const Color(0x33FFFFFF) : const Color(0x14FFFFFF),
+        ),
+        alignment: Alignment.center,
+        child: Icon(
+          selected ? selectedIcon ?? icon : icon,
+          size: 20,
+          color: enabled ? color : color.withValues(alpha: 0.4),
+        ),
+      ),
+    );
     return Semantics(
       button: true,
       enabled: enabled,
@@ -153,25 +173,14 @@ class _RoundButton extends StatelessWidget {
         child: SizedBox.square(
           dimension: _touchSize,
           child: Center(
-            child: Opacity(
-              opacity: enabled ? 1 : 0.4,
-              child: ClipOval(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                  child: Container(
-                    width: _visualSize,
-                    height: _visualSize,
-                    color: const Color(0x33FFFFFF),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      selected ? selectedIcon ?? icon : icon,
-                      size: 20,
-                      color: color,
+            child: enabled
+                ? ClipOval(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: circle,
                     ),
-                  ),
-                ),
-              ),
-            ),
+                  )
+                : circle,
           ),
         ),
       ),

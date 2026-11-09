@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -43,15 +44,11 @@ class NewsDetailHeader extends StatelessWidget {
           _hero(
             ClipRRect(
               borderRadius: AppSpacing.radius3xl,
-              child: Image.network(
-                image,
+              child: SafeNetworkImage(
+                url: image,
                 height: _imageHeight,
                 width: double.infinity,
-                fit: BoxFit.cover,
-                excludeFromSemantics: true,
-                errorBuilder: (context, _, _) => const _ImagePlaceholder(),
-                loadingBuilder: (_, child, progress) =>
-                    progress == null ? child : const _ImagePlaceholder(),
+                placeholder: const _ImagePlaceholder(),
               ),
             ),
           ),

@@ -23,6 +23,11 @@ class SafeSkeleton extends StatelessWidget {
   final bool enabled;
   final Widget child;
 
+  /// Marca [child] como uma barra só no esqueleto (um botão redondo vira um
+  /// círculo, sem desenhar o que tem dentro). Fora do esqueleto, não muda
+  /// nada.
+  static Widget leaf(Widget child) => Skeleton.leaf(child: child);
+
   /// Texto de exemplo com [words] palavras, para os dados de exemplo das
   /// telas: vira barras no esqueleto e nunca é lido.
   static String text(int words) =>

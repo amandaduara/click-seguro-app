@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -213,17 +214,10 @@ class _NewsImage extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
-    final String? source = url;
-    if (source == null) return _placeholder(context);
-    return Image.network(
-      source,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      errorBuilder: (context, _, _) => _placeholder(context),
-      loadingBuilder: (_, child, progress) =>
-          progress == null ? child : _placeholder(context),
-    );
-  }
+  Widget build(BuildContext context) => SafeNetworkImage(
+    url: url,
+    width: width,
+    height: height,
+    placeholder: _placeholder(context),
+  );
 }

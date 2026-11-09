@@ -222,17 +222,17 @@ limpo, `flutter test` verde e o trecho correspondente do [quickstart](quickstart
 **Goal**: decodificar no tamanho, esmaecer, pré-carregar e ajustar a barra de status.
 **Independent Test**: roteiro 10 do quickstart.
 
-- [ ] T044 [P] [US6] Widget test do `SafeNetworkImage` (placeholder sem URL e em erro; sem
+- [x] T044 [P] [US6] Widget test do `SafeNetworkImage` (placeholder sem URL e em erro; sem
   esmaecimento quando o carregamento é síncrono) em
   `test/core/widgets/safe_network_image_test.dart`.
-- [ ] T045 [US6] Criar `SafeNetworkImage` em `lib/core/widgets/safe_network_image.dart` e trocar os
+- [x] T045 [US6] Criar `SafeNetworkImage` em `lib/core/widgets/safe_network_image.dart` e trocar os
   `Image.network` em `person_avatar.dart`, `news_card.dart`, `news_detail_header.dart`,
   `reels_carousel.dart`, `reel_view.dart`, `module_icon.dart`, `lesson_page.dart` e
   `account_card.dart`.
-- [ ] T046 [US6] Pré-carregar a imagem do Reel `index + 1` no `onPageChanged` e envolver a página
+- [x] T046 [US6] Pré-carregar a imagem do Reel `index + 1` no `onPageChanged` e envolver a página
   com `AnnotatedRegion<SystemUiOverlayStyle.light>` em
   `lib/modules/news/presentation/pages/reels_page.dart`.
-- [ ] T047 [US6] Nos botões redondos dos Reels, trocar `Opacity` + `BackdropFilter` pela cor com
+- [x] T047 [US6] Nos botões redondos dos Reels, trocar `Opacity` + `BackdropFilter` pela cor com
   alfa no estado desabilitado, em `lib/modules/news/presentation/widgets/reel_actions.dart`.
   Conferir também o esqueleto dos Reels: no emulador, os botões redondos saem como anéis pretos
   (visto na verificação da US4).
