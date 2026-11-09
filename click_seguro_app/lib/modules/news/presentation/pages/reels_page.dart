@@ -13,6 +13,7 @@ import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/reels_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/reels_status.dart';
@@ -32,10 +33,27 @@ import 'package:provider/provider.dart';
 /// Aba central: Reels em tela cheia, um por vez (RF-013, RF-019,
 /// specs/008-reels-curtir-salvar). Sem barra superior.
 class ReelsPage extends StatefulWidget {
-  const ReelsPage({super.key, this.startNewsId});
+  const ReelsPage({super.key, this.startNewsId, this.preview});
+
+  /// `/reels?start=` com o item tocado no carrossel como `extra`; um
+  /// `extra` de outra notícia é ignorado.
+  factory ReelsPage.fromState(GoRouterState state) {
+    final String? start = state.uri.queryParameters['start'];
+    return ReelsPage(
+      startNewsId: start,
+      preview: switch (state.extra) {
+        final NewsItemEntity item when item.id == start => item,
+        _ => null,
+      },
+    );
+  }
 
   /// Notícia em que os Reels começam (`/reels?start=`), se houver.
   final String? startNewsId;
+
+  /// O que o carrossel já tem do Reel tocado: a imagem aparece enquanto a
+  /// lista carrega (specs/022 FR-019).
+  final NewsItemEntity? preview;
 
   @override
   State<ReelsPage> createState() => _ReelsPageState();
@@ -207,7 +225,7 @@ class _ReelsPageState extends State<ReelsPage> {
     switch (controller.status) {
       case ReelsStatus.initial:
       case ReelsStatus.loading:
-        return const _ReelSkeleton();
+        return _ReelSkeleton(preview: widget.preview);
       case ReelsStatus.error:
         final Failure? failure = controller.failure;
         return _Dark(
@@ -342,7 +360,10 @@ class _Dark extends StatelessWidget {
 /// Primeira carga: um Reel em esqueleto, escuro como a tela, com o aviso de
 /// servidor acordando no topo (FR-011, FR-014).
 class _ReelSkeleton extends StatelessWidget {
-  const _ReelSkeleton();
+  const _ReelSkeleton({this.preview});
+
+  /// Com o item do carrossel, a imagem dele fica fora do esqueleto.
+  final NewsItemEntity? preview;
 
   @override
   Widget build(BuildContext context) {
@@ -366,8 +387,9 @@ class _ReelSkeleton extends StatelessWidget {
         children: [
           SafeSkeleton(
             enabled: true,
+            highlightColor: light.withValues(alpha: 0.28),
             child: ReelView(
-              reel: NewsPlaceholders.reel(),
+              reel: NewsPlaceholders.reel(news: preview),
               now: DateTime.now(),
               onReadFull: () {},
               actions: ReelActions(

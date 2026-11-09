@@ -13,7 +13,12 @@ import 'package:skeletonizer/skeletonizer.dart';
 /// movimento reduzido, fica estático. Desligar troca para o conteúdo com um
 /// esmaecimento de [AppMotion.medium].
 class SafeSkeleton extends StatelessWidget {
-  const SafeSkeleton({super.key, required this.enabled, required this.child});
+  const SafeSkeleton({
+    super.key,
+    required this.enabled,
+    required this.child,
+    this.highlightColor,
+  });
 
   static const Duration _shimmerCycle = Duration(milliseconds: 1500);
 
@@ -23,10 +28,18 @@ class SafeSkeleton extends StatelessWidget {
   final bool enabled;
   final Widget child;
 
+  /// Cor do brilho; sem ela, a do `card`. Num fundo escuro com contêineres
+  /// pretos, passe uma cor clara: o `card` preto desenharia uma faixa preta.
+  final Color? highlightColor;
+
   /// Marca [child] como uma barra só no esqueleto (um botão redondo vira um
   /// círculo, sem desenhar o que tem dentro). Fora do esqueleto, não muda
   /// nada.
   static Widget leaf(Widget child) => Skeleton.leaf(child: child);
+
+  /// Desenha [child] como é, mesmo no esqueleto (a imagem já conhecida de
+  /// um item). Fora do esqueleto, não muda nada.
+  static Widget keep(Widget child) => Skeleton.keep(child: child);
 
   /// Texto de exemplo com [words] palavras, para os dados de exemplo das
   /// telas: vira barras no esqueleto e nunca é lido.
@@ -75,7 +88,7 @@ class SafeSkeleton extends StatelessWidget {
               ? SolidColorEffect(color: colors.input)
               : ShimmerEffect(
                   baseColor: colors.input,
-                  highlightColor: colors.card,
+                  highlightColor: highlightColor ?? colors.card,
                   duration: _shimmerCycle,
                 ),
           child: child,

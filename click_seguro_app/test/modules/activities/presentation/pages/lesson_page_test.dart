@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
@@ -178,6 +179,44 @@ void main() {
 
       expect(find.byType(Image), findsNothing);
       expect(tester.takeException(), isNull);
+    });
+
+    // Achado da T058 (specs/022): a imagem chegava depois e empurrava as
+    // alternativas para baixo do dedo. Todas já vão ao cache na carga.
+    testWidgets('as imagens de todas as perguntas vão ao cache', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2340)
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      useModule(
+        lessons: [
+          lessonJson(imageUrl: 'https://img.test/a.png'),
+          lessonJson(id: 'l2', order: 2, imageUrl: 'https://img.test/b.png'),
+          lessonJson(id: 'l3', order: 3, imageUrl: null),
+        ],
+      );
+
+      // Imagens que nunca chegam: ficam no cache como pendentes.
+      debugNetworkImageHttpClientProvider = _HangingHttpClient.new;
+
+      await pumpLocalized(tester, router: router, settle: false);
+      await tester.pump();
+      await tester.pump();
+
+      // A chave do `SafeNetworkImage` da pergunta: largura da tela em pixels.
+      for (final String url in [
+        'https://img.test/a.png',
+        'https://img.test/b.png',
+      ]) {
+        final Object key = await ResizeImage(
+          NetworkImage(url),
+          width: 1080,
+        ).obtainKey(ImageConfiguration.empty);
+        expect(imageCache.statusForKey(key).tracked, isTrue, reason: url);
+      }
+      debugNetworkImageHttpClientProvider = null;
     });
 
     testWidgets('a explicação nunca aparece (FR-016)', (tester) async {
@@ -1403,4 +1442,17 @@ void main() {
       expect(find.text('Pergunta 1 de 2'), findsOneWidget);
     });
   });
+}
+
+/// Pedido de imagem que nunca responde (a imagem fica pendente no cache).
+class _HangingHttpClient implements HttpClient {
+  @override
+  bool autoUncompress = true;
+
+  @override
+  Future<HttpClientRequest> getUrl(Uri url) =>
+      Completer<HttpClientRequest>().future;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../helpers/localized_app.dart';
 
@@ -23,6 +24,7 @@ void main() {
     required bool enabled,
     bool reduce = false,
     ThemeData? theme,
+    Color? highlightColor,
   }) => pumpLocalized(
     tester,
     settle: false,
@@ -30,7 +32,11 @@ void main() {
     child: AppMotionScope(
       appReduceMotion: reduce,
       child: Scaffold(
-        body: SafeSkeleton(enabled: enabled, child: content()),
+        body: SafeSkeleton(
+          enabled: enabled,
+          highlightColor: highlightColor,
+          child: content(),
+        ),
       ),
     ),
   );
@@ -52,6 +58,20 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(tester.hasRunningAnimations, isTrue);
+  });
+
+  testWidgets('brilho com destaque próprio (fundo escuro)', (tester) async {
+    const Color light = Color(0x47FFFFFF);
+    await pumpSkeleton(tester, enabled: true, highlightColor: light);
+
+    final effect =
+        tester
+                .widget<Skeletonizer>(
+                  find.byWidgetPredicate((w) => w is Skeletonizer),
+                )
+                .effect
+            as ShimmerEffect;
+    expect(effect.colors[1], light);
   });
 
   testWidgets('com movimento reduzido: esqueleto estático', (tester) async {

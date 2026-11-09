@@ -15,8 +15,10 @@ abstract final class NewsPlaceholders {
     publishedAt: _date,
   );
 
-  static ReelEntity reel() => ReelEntity(
-    news: item(0),
+  /// Com [news], o Reel em esqueleto é o dessa notícia (a imagem fica de
+  /// fora do esqueleto, ver `ReelView`).
+  static ReelEntity reel({NewsItemEntity? news}) => ReelEntity(
+    news: news ?? item(0),
     content: SafeSkeleton.text(40),
     likesCount: 0,
     isSaved: false,

@@ -77,6 +77,9 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   /// aparelho, 2026-10-22); a mesma pergunta na tela não repete.
   bool _autoReadDone = false;
 
+  /// Módulo cujas imagens já foram para o cache.
+  Object? _precachedModule;
+
   @override
   void initState() {
     super.initState();
@@ -84,6 +87,8 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     _readAloud = GetIt.instance<ReadAloudController>();
     _controller.addListener(_onLessonChanged);
     _readAloud.addListener(_maybeAutoRead);
+    // Módulo já carregado antes da tela: o ouvinte não seria chamado.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _precacheImages());
   }
 
   /// O idioma da voz é o do app: prepara de novo se ele mudar.
@@ -106,6 +111,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
 
   void _onLessonChanged() {
     if (_controller.status != LessonStatus.loaded) return;
+    _precacheImages();
     final int index = _controller.currentIndex;
     if (_shownIndex != null && index != _shownIndex) {
       // Antes do parar: o aviso de "parado" já pode ler a pergunta nova.
@@ -115,6 +121,24 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     }
     _shownIndex = index;
     _maybeAutoRead();
+  }
+
+  /// As imagens de todas as perguntas vão ao cache na carga: a de cada
+  /// pergunta já está pronta quando ela aparece e não empurra as
+  /// alternativas para baixo do dedo (achado da T058, specs/022).
+  void _precacheImages() {
+    final module = _controller.module;
+    if (!mounted ||
+        _controller.status != LessonStatus.loaded ||
+        module == null ||
+        identical(module, _precachedModule)) {
+      return;
+    }
+    _precachedModule = module;
+    for (final LessonEntity lesson in module.lessons) {
+      final String? url = lesson.imageUrl;
+      if (url != null) unawaited(SafeNetworkImage.precache(context, url));
+    }
   }
 
   void _maybeAutoRead() {

@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/reel_presentation_extension.dart';
@@ -65,12 +66,15 @@ class ReelView extends StatelessWidget {
           if (image == null)
             const _NoImage()
           else
-            Opacity(
-              opacity: 0.7,
-              child: SafeNetworkImage(
-                url: image,
-                height: MediaQuery.sizeOf(context).height,
-                placeholder: const _NoImage(),
+            // No esqueleto, a imagem continua visível (specs/022 FR-019).
+            SafeSkeleton.keep(
+              Opacity(
+                opacity: 0.7,
+                child: SafeNetworkImage(
+                  url: image,
+                  height: MediaQuery.sizeOf(context).height,
+                  placeholder: const _NoImage(),
+                ),
               ),
             ),
           const DecoratedBox(

@@ -285,6 +285,25 @@ animações".
 - [ ] T059 `flutter analyze` limpo e `flutter test` verde; perfil (`--profile`) do feed e dos Reels
   sem travadas perceptíveis (SC-006).
 
+Achados da T058 (emulador, 2026-11-09):
+
+- [x] T063 [P] FR-019 não cumprido na primeira abertura dos Reels: o carrossel pré-carrega a
+  imagem, mas a tela mostra só o esqueleto até a lista chegar (~4 s com o servidor lento). Passar o
+  item tocado como `extra` de `/reels?start=` e, no esqueleto, mostrar a imagem dele
+  (`Skeleton.keep` na imagem do `ReelView`), em `reels_page.dart`, `reel_view.dart`,
+  `news_routes.dart` e `news_home_page.dart`.
+- [x] T064 [P] Lição: a imagem da pergunta chega depois e empurra as alternativas ~580 px para
+  baixo (o toque cai na imagem). Pré-carregar as imagens de todas as perguntas quando a lição
+  carrega, em `lib/modules/activities/presentation/pages/lesson_page.dart`.
+- [x] T065 [P] Esqueleto escuro dos Reels: o brilho usa `card` (preto) como destaque e desenha uma
+  faixa preta. Destaque claro próprio no `SafeSkeleton` (`highlightColor`), usado em
+  `_ReelSkeleton`.
+- [x] T066 [P] Feed: ao trocar de categoria vindo de "Todas", "Nenhuma notícia nesta categoria"
+  pisca enquanto a nova lista carrega (o vazio olha o filtro novo com a lista antiga). Não mostrar
+  o vazio durante `isRefreshing`, em `news_home_page.dart`.
+- [ ] T067 Reels com raster mediano de 14 ms e 6% dos quadros acima de 16,7 ms no emulador (feed:
+  3 ms, 0%). Medir sem os `BackdropFilter` (barra e botões) e decidir.
+
 ---
 
 ## Dependencies & Execution Order

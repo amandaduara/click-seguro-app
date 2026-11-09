@@ -25,8 +25,7 @@ final GoRoute newsHomeRoute = GoRoute(
 /// Raiz da aba Notícias/Reels (aba central).
 final GoRoute newsReelsRoute = GoRoute(
   path: '/reels',
-  builder: (context, state) =>
-      ReelsPage(startNewsId: state.uri.queryParameters['start']),
+  builder: (context, state) => ReelsPage.fromState(state),
 );
 
 /// Telas do módulo sobre as abas.

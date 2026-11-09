@@ -153,8 +153,12 @@ class _NewsHomePageState extends State<NewsHomePage> {
         child: _stateContent(context, controller),
       );
 
+  /// Durante a troca de filtro, a lista ainda é a antiga: o vazio só vale
+  /// com a resposta do filtro novo.
   bool _isEmptyResult(FeedController controller) =>
-      controller.items.isEmpty && !controller.filter.isEmpty;
+      !controller.isRefreshing &&
+      controller.items.isEmpty &&
+      !controller.filter.isEmpty;
 
   Widget _stateContent(BuildContext context, FeedController controller) {
     switch (controller.status) {
@@ -230,7 +234,9 @@ class _NewsHomePageState extends State<NewsHomePage> {
         SliverToBoxAdapter(
           child: ReelsCarousel(
             reels: controller.reels,
-            onOpen: (item) => context.go('/reels?start=${item.id}'),
+            // O item vai junto: a imagem aparece já na chegada (FR-019).
+            onOpen: (item) =>
+                context.go('/reels?start=${item.id}', extra: item),
           ),
         ),
       ],
