@@ -16,6 +16,7 @@ class NewsCard extends StatefulWidget {
     required this.now,
     required this.onTap,
     this.compact = true,
+    this.heroTag,
   });
 
   final NewsItemEntity item;
@@ -24,6 +25,9 @@ class NewsCard extends StatefulWidget {
   /// Abre a notícia; toques novos são ignorados até o futuro terminar.
   final Future<void> Function() onTap;
   final bool compact;
+
+  /// Tag do `Hero` da imagem, a mesma passada na prévia do detalhe.
+  final String? heroTag;
 
   @override
   State<NewsCard> createState() => _NewsCardState();
@@ -73,9 +77,11 @@ class _NewsCardState extends State<NewsCard> {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: _NewsImage(url: item.imageUrl, width: 80, height: 80),
+        _hero(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: _NewsImage(url: item.imageUrl, width: 80, height: 80),
+          ),
         ),
         const SizedBox(width: AppSpacing.s3),
         Expanded(child: _details(item)),
@@ -86,13 +92,20 @@ class _NewsCardState extends State<NewsCard> {
   Widget _full(NewsItemEntity item) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      _NewsImage(url: item.imageUrl, height: 176),
+      _hero(_NewsImage(url: item.imageUrl, height: 176)),
       Padding(
         padding: const EdgeInsets.all(AppSpacing.s4),
         child: _details(item),
       ),
     ],
   );
+
+  /// Só com imagem: sem ela o detalhe não tem para onde voar.
+  Widget _hero(Widget child) {
+    final String? tag = widget.heroTag;
+    if (tag == null || widget.item.imageUrl == null) return child;
+    return Hero(tag: tag, child: child);
+  }
 
   Widget _details(NewsItemEntity item) {
     final textTheme = Theme.of(context).textTheme;

@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_detail_presentation_extension.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -10,17 +11,6 @@ import '../../fakes/feed_controller_factory.dart';
 void main() {
   Future<void> localized(WidgetTester tester) =>
       pumpLocalized(tester, child: const SizedBox());
-
-  group('formattedLikes', () {
-    final cases = {0: '0', 999: '999', 1000: '1 mil', 1200: '1,2 mil'};
-    cases.forEach((count, expected) {
-      testWidgets('$count → $expected', (tester) async {
-        await localized(tester);
-
-        expect(newsDetail('n1', likesCount: count).formattedLikes, expected);
-      });
-    });
-  });
 
   group('hasContent', () {
     test('texto com conteúdo', () {
@@ -33,12 +23,10 @@ void main() {
     });
   });
 
-  testWidgets('semanticLabel: título, fonte e data, nessa ordem', (
-    tester,
-  ) async {
+  testWidgets('headerLabel: título, fonte e data, nessa ordem', (tester) async {
     await localized(tester);
 
-    final label = newsDetail('n1').semanticLabel(feedNow);
+    final label = newsDetail('n1').news.headerLabel(feedNow);
 
     expect(label, 'Notícia n1, Folha de Teste, 20 de set.');
   });

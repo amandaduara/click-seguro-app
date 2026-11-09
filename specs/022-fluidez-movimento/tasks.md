@@ -200,18 +200,18 @@ limpo, `flutter test` verde e o trecho correspondente do [quickstart](quickstart
 **Goal**: prévia no detalhe, saída da splash e carrossel → Reels.
 **Independent Test**: roteiro 1, 4 e 9 do quickstart.
 
-- [ ] T039 [P] [US4] Widget test: o detalhe aberto com a prévia mostra o título antes da carga
+- [x] T039 [P] [US4] Widget test: o detalhe aberto com a prévia mostra o título antes da carga
   terminar; sem a prévia, mostra o esqueleto completo. Em
   `test/modules/news/presentation/pages/news_detail_page_test.dart`.
-- [ ] T040 [US4] Criar `NewsDetailPreview` (`item`, `heroTag`) e ler `extra` na rota `/news/:id`
+- [x] T040 [US4] Criar `NewsDetailPreview` (`item`, `heroTag`) e ler `extra` na rota `/news/:id`
   em `lib/modules/news/presentation/routes/news_routes.dart`. Os cartões passam a prévia com a tag
   `news-image-<seção>-<id>` (`news_card.dart`, `news_home_page.dart`, `user_news_list_page.dart`).
-- [ ] T041 [US4] `NewsDetailPage`: cabeçalho da prévia durante o loading, esqueleto só do corpo,
+- [x] T041 [US4] `NewsDetailPage`: cabeçalho da prévia durante o loading, esqueleto só do corpo,
   `Hero` na imagem (`news_detail_header.dart`, `news_detail_page.dart`).
-- [ ] T042 [US4] Splash: entrada do logo e do título (fade + escala 0,9 → 1 com `AppMotion.long`)
+- [x] T042 [US4] Splash: entrada do logo e do título (fade + escala 0,9 → 1 com `AppMotion.long`)
   em `lib/modules/splash/presentation/pages/splash_page.dart`. A saída usa o `appFadePage` do
   shell (T028).
-- [ ] T043 [US4] Carrossel: `precacheImage` antes do `go('/reels?start=')` em
+- [x] T043 [US4] Carrossel: `precacheImage` antes do `go('/reels?start=')` em
   `lib/modules/news/presentation/widgets/reels_carousel.dart`/`news_home_page.dart`, e resposta
   de pressão no cartão.
 
@@ -234,6 +234,8 @@ limpo, `flutter test` verde e o trecho correspondente do [quickstart](quickstart
   `lib/modules/news/presentation/pages/reels_page.dart`.
 - [ ] T047 [US6] Nos botões redondos dos Reels, trocar `Opacity` + `BackdropFilter` pela cor com
   alfa no estado desabilitado, em `lib/modules/news/presentation/widgets/reel_actions.dart`.
+  Conferir também o esqueleto dos Reels: no emulador, os botões redondos saem como anéis pretos
+  (visto na verificação da US4).
 
 ---
 

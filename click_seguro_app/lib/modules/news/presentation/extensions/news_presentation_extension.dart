@@ -46,6 +46,10 @@ extension NewsItemPresentation on NewsItemEntity {
     if (categories.length > max) '+${categories.length - max}',
   ];
 
+  /// O que o leitor de tela lê no cabeçalho do detalhe: título, fonte e data.
+  String headerLabel(DateTime now) =>
+      [title, source, relativeDate(now)].join(', ');
+
   /// O que o leitor de tela lê no cartão.
   String semanticLabel(DateTime now) => [
     title,

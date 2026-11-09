@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
@@ -35,7 +38,7 @@ class ReelsCarousel extends StatelessWidget {
   }
 }
 
-class _ReelCard extends StatelessWidget {
+class _ReelCard extends StatefulWidget {
   const _ReelCard({
     required this.item,
     required this.width,
@@ -47,109 +50,140 @@ class _ReelCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_ReelCard> createState() => _ReelCardState();
+}
+
+class _ReelCardState extends State<_ReelCard> {
+  bool _pressed = false;
+
+  void _setPressed(bool pressed) {
+    if (_pressed != pressed) setState(() => _pressed = pressed);
+  }
+
+  /// A aba de Reels tem outro `Navigator`, então não há `Hero`: a imagem vai
+  /// para o cache antes, e o Reel já a encontra ao chegar (specs/022 R10).
+  void _open() {
+    final String? image = widget.item.imageUrl;
+    if (image != null) {
+      unawaited(
+        precacheImage(NetworkImage(image), context, onError: (_, _) {}),
+      );
+    }
+    widget.onTap();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final NewsItemEntity item = widget.item;
     final String? image = item.imageUrl;
     return Semantics(
       button: true,
       label: '${AppStrings.newsReelsBadge.tr()}: ${item.title}, ${item.source}',
       excludeSemantics: true,
       child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: width,
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: context.colors.secondary,
-            borderRadius: AppSpacing.radius3xl,
-            boxShadow: context.colors.shadowMd,
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (image != null)
-                Image.network(
-                  image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                ),
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Color(0xE6000000),
-                      Color(0x66000000),
-                      Color(0x1A000000),
-                    ],
+        onTap: _open,
+        onTapDown: (_) => _setPressed(true),
+        onTapUp: (_) => _setPressed(false),
+        onTapCancel: () => _setPressed(false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.97 : 1,
+          duration: AppMotion.of(context).short,
+          curve: AppMotion.standard,
+          child: Container(
+            width: widget.width,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: context.colors.secondary,
+              borderRadius: AppSpacing.radius3xl,
+              boxShadow: context.colors.shadowMd,
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (image != null)
+                  Image.network(
+                    image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
                   ),
-                ),
-              ),
-              Positioned(
-                top: AppSpacing.s3,
-                left: AppSpacing.s3,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
+                const DecoratedBox(
                   decoration: BoxDecoration(
-                    color: context.colors.primary,
-                    borderRadius: AppSpacing.radiusFull,
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Color(0xE6000000),
+                        Color(0x66000000),
+                        Color(0x1A000000),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                ),
+                Positioned(
+                  top: AppSpacing.s3,
+                  left: AppSpacing.s3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colors.primary,
+                      borderRadius: AppSpacing.radiusFull,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LucideIcons.sparkles,
+                          size: 10,
+                          color: context.colors.textPrimaryForeground,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          AppStrings.newsReelsBadge.tr().toUpperCase(),
+                          style: textTheme.bodySmall?.copyWith(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: context.colors.textPrimaryForeground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 14,
+                  right: 14,
+                  bottom: AppSpacing.s4,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        LucideIcons.sparkles,
-                        size: 10,
-                        color: context.colors.textPrimaryForeground,
-                      ),
-                      const SizedBox(width: 4),
                       Text(
-                        AppStrings.newsReelsBadge.tr().toUpperCase(),
-                        style: textTheme.bodySmall?.copyWith(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
+                        item.title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
                           color: context.colors.textPrimaryForeground,
                         ),
                       ),
+                      const SizedBox(height: AppSpacing.s1),
+                      Text(
+                        item.source,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: context.colors.textPrimaryForeground
+                              .withValues(alpha: 0.75),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-              Positioned(
-                left: 14,
-                right: 14,
-                bottom: AppSpacing.s4,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.title,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: context.colors.textPrimaryForeground,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.s1),
-                    Text(
-                      item.source,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: context.colors.textPrimaryForeground.withValues(
-                          alpha: 0.75,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

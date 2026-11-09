@@ -16,6 +16,7 @@ import 'package:click_seguro_app/modules/news/presentation/controller/feed_contr
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_message.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_placeholders.dart';
+import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/category_filter_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_footer.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_search_field.dart';
@@ -188,23 +189,35 @@ class _NewsHomePageState extends State<NewsHomePage> {
   List<Widget> _slivers(BuildContext context, FeedController controller) {
     final DateTime now = DateTime.now();
 
-    Future<void> openNews(NewsItemEntity item) =>
-        context.push<void>('/news/${item.id}');
-
-    Widget cards(List<NewsItemEntity> items, {bool compact = true}) =>
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          sliver: SliverList.separated(
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
-            itemBuilder: (_, index) => NewsCard(
-              item: items[index],
-              now: now,
-              compact: compact,
-              onTap: () => openNews(items[index]),
-            ),
-          ),
+    // A mesma notícia pode estar em duas seções: a tag leva a seção (R9).
+    Future<void> openNews(NewsItemEntity item, String heroTag) =>
+        context.push<void>(
+          '/news/${item.id}',
+          extra: NewsDetailPreview(item: item, heroTag: heroTag),
         );
+
+    Widget cards(
+      String section,
+      List<NewsItemEntity> items, {
+      bool compact = true,
+    }) => SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+      sliver: SliverList.separated(
+        itemCount: items.length,
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
+        itemBuilder: (_, index) {
+          final NewsItemEntity item = items[index];
+          final String tag = NewsDetailPreview.tagFor(section, item.id);
+          return NewsCard(
+            item: item,
+            now: now,
+            compact: compact,
+            heroTag: tag,
+            onTap: () => openNews(item, tag),
+          );
+        },
+      ),
+    );
 
     return [
       // Feed da cópia guardada (CB-001, FR-020).
@@ -225,13 +238,13 @@ class _NewsHomePageState extends State<NewsHomePage> {
         SliverToBoxAdapter(
           child: FeedSectionTitle(AppStrings.newsSectionHighlights.tr()),
         ),
-        cards(controller.highlights, compact: false),
+        cards('highlights', controller.highlights, compact: false),
       ],
       if (controller.recommended.isNotEmpty) ...[
         SliverToBoxAdapter(
           child: FeedSectionTitle(AppStrings.newsSectionRecommended.tr()),
         ),
-        cards(controller.recommended),
+        cards('recommended', controller.recommended),
       ],
       SliverToBoxAdapter(
         child: FeedSectionTitle(
@@ -240,7 +253,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
               : AppStrings.newsSectionRecent.tr(),
         ),
       ),
-      cards(controller.items),
+      cards('recent', controller.items),
       SliverToBoxAdapter(
         child: FeedListFooter(
           hasMore: controller.hasMore,
