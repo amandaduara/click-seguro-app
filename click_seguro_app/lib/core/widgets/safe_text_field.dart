@@ -148,6 +148,10 @@ class _SafeTextFieldState extends State<SafeTextField> {
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: context.colors.textForeground),
                           decoration: InputDecoration(
+                            // O fundo é o do contêiner arredondado; o
+                            // `filled` do tema desenhava um retângulo de
+                            // outro tom dentro dele (specs/022 T060).
+                            filled: false,
                             hintText: widget.placeholder,
                             hintStyle: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(

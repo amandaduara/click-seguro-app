@@ -273,15 +273,15 @@ animações".
 
 ## Phase 9: Polish & Cross-Cutting
 
-- [ ] T056 Procurar durações literais restantes
+- [x] T056 Procurar durações literais restantes
   (`grep "Duration(milliseconds" lib --include=*.dart`) e trocar pelos tokens.
-- [ ] T057 Atualizar a §6 (Movimento) de `.specify/memory/design-system.md` com os tokens, a opção
+- [x] T057 Atualizar a §6 (Movimento) de `.specify/memory/design-system.md` com os tokens, a opção
   "Reduzir animações" e os padrões (esqueleto, fade-through, volta preditiva).
 - [ ] T058 Rodar o [quickstart](quickstart.md) completo no emulador, com e sem "Reduzir
   animações", e com letra em 200% e alto contraste; registrar os achados.
-- [ ] T060 [P] `SafeTextField`: o preenchimento do `inputDecorationTheme` (`filled: true`) desenha um retângulo de outro tom dentro do campo arredondado (visto no login, no emulador); usar `filled: false` no `InputDecoration` interno em `lib/core/widgets/safe_text_field.dart`.
-- [ ] T061 [P] Chip "Todas" sai como círculo (largura mínima = altura com letra grande); conferir `lib/modules/news/presentation/widgets/category_filter_bar.dart`.
-- [ ] T062 [P] `SlowRequestNotice` sem margem lateral: o texto encosta nas bordas da tela; padding horizontal `AppSpacing.s5` em `lib/core/widgets/slow_request_notice.dart`.
+- [x] T060 [P] `SafeTextField`: o preenchimento do `inputDecorationTheme` (`filled: true`) desenha um retângulo de outro tom dentro do campo arredondado (visto no login, no emulador); usar `filled: false` no `InputDecoration` interno em `lib/core/widgets/safe_text_field.dart`.
+- [x] T061 [P] Chip "Todas" sai como círculo (largura mínima = altura com letra grande); conferir `lib/modules/news/presentation/widgets/category_filter_bar.dart`.
+- [x] T062 [P] `SlowRequestNotice` sem margem lateral: o texto encosta nas bordas da tela; padding horizontal `AppSpacing.s5` em `lib/core/widgets/slow_request_notice.dart`.
 - [ ] T059 `flutter analyze` limpo e `flutter test` verde; perfil (`--profile`) do feed e dos Reels
   sem travadas perceptíveis (SC-006).
 

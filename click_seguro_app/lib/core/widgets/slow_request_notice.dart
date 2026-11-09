@@ -58,7 +58,13 @@ class _SlowRequestNoticeState extends State<SlowRequestNotice> {
   Widget build(BuildContext context) {
     if (!_visible) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s3),
+      // Margem lateral: o texto não encosta nas bordas da tela (T062).
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s5,
+        AppSpacing.s3,
+        AppSpacing.s5,
+        0,
+      ),
       child: Semantics(
         liveRegion: true,
         child: Text(

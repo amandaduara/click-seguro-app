@@ -49,3 +49,22 @@ flutter test
 | 14 | Acessibilidade → Reduzir animações; repetir 1–13 | Nada desliza, aumenta ou brilha | FR-010 |
 | 15 | Servidor frio (primeira abertura do dia) | Esqueletos + aviso de lentidão após 5 s | FR-011, FR-014 |
 | 16 | TalkBack nos botões e cartões | Anunciados como botão | FR-007 |
+
+## Achados (2026-11-08, emulador `fuja_api36`, build debug, inglês)
+
+Coberto nesta passada:
+
+- Passos 1, 15: feed abre com esqueletos e o aviso de lentidão, agora com margem lateral (T062).
+- Passo 8: o círculo central abre os Reels.
+- Passo 10: dois toques na imagem, como visitante, abrem o convite de conta (sem curtir).
+- Passo 12: login sem o retângulo de outro tom dentro dos campos (T060), ícones Lucide; "Criar
+  conta" mostra nome e regras.
+- Achado e corrigido: o chip "All" (rótulo curto) saía como círculo; agora tem largura mínima de
+  80 (T061).
+
+Falta rodar: passos 2–7, 9, 11, 13, 14 e 16; letra em 200%, alto contraste e TalkBack; e o perfil
+(`--profile`) do feed e dos Reels (T059, SC-006).
+
+T056: as durações literais que sobraram não são de transição de interface (tempo-limite de rede,
+espera da busca, contagem do reenvio, tempo mínimo da splash, atraso do aviso de lentidão) ou são o
+período do brilho do esqueleto, que já fica parado com o movimento reduzido.
