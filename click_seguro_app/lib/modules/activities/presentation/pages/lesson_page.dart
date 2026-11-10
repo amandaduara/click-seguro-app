@@ -67,9 +67,8 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   Locale? _locale;
   int? _shownIndex;
 
-  /// A pergunta desenhada por último e se a troca para a atual foi para
-  /// trás: voltar desliza no sentido oposto a avançar (specs/022 FR-027).
-  int? _drawnIndex;
+  /// A troca para a pergunta atual foi para trás: voltar desliza no sentido
+  /// oposto a avançar (specs/022 FR-027).
   bool _backwards = false;
 
   /// A pergunta na tela já foi lida sozinha. Volta a `false` a cada troca de
@@ -114,6 +113,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     _precacheImages();
     final int index = _controller.currentIndex;
     if (_shownIndex != null && index != _shownIndex) {
+      _backwards = index < _shownIndex!;
       // Antes do parar: o aviso de "parado" já pode ler a pergunta nova.
       _shownIndex = index;
       _autoReadDone = false;
@@ -281,11 +281,6 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   Widget build(BuildContext context) {
     final LessonController controller = context.watch<LessonController>();
     final LessonEntity? lesson = controller.current;
-    final int index = controller.currentIndex;
-    if (index != _drawnIndex) {
-      _backwards = _drawnIndex != null && index < _drawnIndex!;
-      _drawnIndex = index;
-    }
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -330,7 +325,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
                     key: ValueKey(lesson.id),
                     lesson: lesson,
                     lessons: controller.module!.lessons,
-                    currentIndex: index,
+                    currentIndex: controller.currentIndex,
                     selectedOptionId: controller.selectedOptionId,
                     result: controller.currentResult,
                     onSelect: controller.canSelect ? controller.select : null,

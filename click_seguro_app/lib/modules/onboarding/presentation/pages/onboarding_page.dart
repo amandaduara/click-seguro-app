@@ -7,6 +7,7 @@ import 'package:click_seguro_app/modules/onboarding/presentation/models/onboardi
 import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_page_indicator.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_slide.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/utils/motion_scroll.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -40,15 +41,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       return;
     }
     if (!mounted) return;
-    final Duration duration = AppMotion.of(context).long;
-    if (duration == Duration.zero) {
-      _pageController.jumpToPage(controller.currentPage);
-      return;
-    }
-    await _pageController.animateToPage(
+    await _pageController.moveToPage(
       controller.currentPage,
-      duration: duration,
-      curve: AppMotion.standard,
+      duration: AppMotion.of(context).long,
     );
   }
 

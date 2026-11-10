@@ -27,10 +27,11 @@ class _AnimatedRevealState extends State<AnimatedReveal>
     super.initState();
     // Aqui, não num `late` preguiçoso: o valor inicial é o do primeiro
     // `child`, não o de quando o controlador for lido pela primeira vez.
+    _last = widget.child;
     _controller = AnimationController(
       vsync: this,
       value: widget.child == null ? 0 : 1,
-    )..addStatusListener((_) => setState(() {}));
+    )..addStatusListener(_onStatus);
     _curve = CurvedAnimation(
       parent: _controller,
       curve: AppMotion.enter,
@@ -38,9 +39,17 @@ class _AnimatedRevealState extends State<AnimatedReveal>
     );
   }
 
+  /// Terminada a saída, esquece o conteúdo que ficou à mostra.
+  void _onStatus(AnimationStatus status) {
+    setState(() {
+      if (status.isDismissed && widget.child == null) _last = null;
+    });
+  }
+
   @override
   void didUpdateWidget(AnimatedReveal oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.child != null) _last = widget.child;
     final bool shown = widget.child != null;
     if (shown == (oldWidget.child != null)) return;
     final Duration duration = AppMotion.of(context).medium;
@@ -63,9 +72,7 @@ class _AnimatedRevealState extends State<AnimatedReveal>
   @override
   Widget build(BuildContext context) {
     final Widget? child = widget.child ?? _last;
-    _last = child;
     if (child == null || _controller.isDismissed) {
-      if (widget.child == null) _last = null;
       return const SizedBox.shrink();
     }
     return SizeTransition(

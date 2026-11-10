@@ -218,6 +218,9 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   principal ao abrir o detalhe de uma notícia ou uma pergunta de atividade.
 - **RF-041**: As preferências de acessibilidade MUST ser salvas no aparelho e aplicadas já no
   splash da próxima abertura.
+- **RF-041a**: O usuário MUST poder ativar **Reduzir animações** (desligado por padrão), que
+  troca as animações de interface por mudança imediata de estado; o "remover animações" do
+  sistema tem o mesmo efeito (specs/022-fluidez-movimento).
 
 ---
 

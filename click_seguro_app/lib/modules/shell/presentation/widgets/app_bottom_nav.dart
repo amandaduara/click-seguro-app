@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
@@ -53,44 +51,36 @@ class AppBottomNav extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: overhang),
-            // Desfoque leve do conteúdo que passa por trás (specs/022 R12).
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: context.colors.background.withValues(alpha: 0.95),
-                    border: Border(
-                      top: BorderSide(color: context.colors.border),
-                    ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: context.colors.background,
+                border: Border(top: BorderSide(color: context.colors.border)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s2,
+                    AppSpacing.s2,
+                    AppSpacing.s2,
+                    AppSpacing.s3,
                   ),
-                  child: SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.s2,
-                        AppSpacing.s2,
-                        AppSpacing.s2,
-                        AppSpacing.s3,
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          for (final tab in AppTab.values)
-                            Expanded(
-                              // O espaço do círculo fica vazio aqui: ele é
-                              // desenhado na camada de cima.
-                              child: tab.isCenter
-                                  ? const SizedBox.shrink()
-                                  : _TabItem(
-                                      tab: tab,
-                                      selected: tab.index == currentIndex,
-                                      onTap: () => onSelected(tab.index),
-                                    ),
-                            ),
-                        ],
-                      ),
-                    ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      for (final tab in AppTab.values)
+                        Expanded(
+                          // O espaço do círculo fica vazio aqui: ele é
+                          // desenhado na camada de cima.
+                          child: tab.isCenter
+                              ? const SizedBox.shrink()
+                              : _TabItem(
+                                  tab: tab,
+                                  selected: tab.index == currentIndex,
+                                  onTap: () => onSelected(tab.index),
+                                ),
+                        ),
+                    ],
                   ),
                 ),
               ),

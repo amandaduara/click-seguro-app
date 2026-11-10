@@ -24,9 +24,6 @@ class AppShell extends StatelessWidget {
         if (!didPop) navigationShell.goBranch(AppTab.home.index);
       },
       child: Scaffold(
-        // O conteúdo passa por trás da faixa transparente do círculo central
-        // (specs/022 R12); as páginas já respeitam o padding inferior.
-        extendBody: true,
         body: navigationShell,
         bottomNavigationBar: AppBottomNav(
           currentIndex: navigationShell.currentIndex,

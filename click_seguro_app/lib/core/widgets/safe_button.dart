@@ -163,7 +163,7 @@ class _SafeButtonState extends State<SafeButton> {
       button: true,
       enabled: !_isDisabled && widget.onPressed != null,
       child: PressScale(
-        enabled: !_isDisabled,
+        enabled: !_isDisabled && widget.onPressed != null,
         pressedScale: 0.95,
         onTap: widget.onPressed,
         child: AnimatedOpacity(

@@ -428,5 +428,51 @@ void main() {
       expect(controller.reels[1].isSaved, isTrue);
       expect(controller.reels[0].isSaved, isFalse);
     });
+
+    test(
+      'com curtir em andamento, vale o resultado do próprio pedido',
+      () async {
+        firstPage(1);
+        await controller.open();
+        repository.likeGate = Completer<void>();
+
+        final Future<void> liking = controller.toggleLike('r1');
+        repository.interactions.add(
+          const NewsInteractionChange(
+            newsId: 'r1',
+            isLiked: false,
+            likesCount: 0,
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+        // Enquanto espera, o aviso de fora não desfaz o toque (sem piscar).
+        expect(controller.reels.single.isLiked, isTrue);
+        repository.likeGate!.complete();
+        await liking;
+
+        expect(controller.reels.single.isLiked, isTrue);
+        expect(controller.reels.single.likesCount, 4);
+      },
+    );
+
+    test(
+      'com salvar em andamento, vale o resultado do próprio pedido',
+      () async {
+        firstPage(1);
+        await controller.open();
+        repository.saveGate = Completer<void>();
+
+        final Future<void> saving = controller.toggleSave('r1');
+        repository.interactions.add(
+          const NewsInteractionChange(newsId: 'r1', isSaved: false),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(controller.reels.single.isSaved, isTrue);
+        repository.saveGate!.complete();
+        await saving;
+
+        expect(controller.reels.single.isSaved, isTrue);
+      },
+    );
   });
 }

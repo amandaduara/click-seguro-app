@@ -163,10 +163,11 @@ Referência de implementação: `fuja_app` (`lib/ui/core/motion/motion.dart`,
 ## R12 — Botão central da barra inferior (FR-006)
 
 - **Decision**: a barra inferior passa a ter uma faixa transparente de 16 dp no topo, que fica
-  dentro dos limites do widget, e o círculo é desenhado nessa faixa sem `Transform.translate`. O
-  `Scaffold` do shell usa `extendBody: true`, para o conteúdo aparecer por trás da faixa
-  transparente; as páginas já usam `SafeArea`/padding inferior, então nada fica escondido. O
-  fundo da barra ganha desfoque leve (`BackdropFilter`), aproveitando a transparência de 95%.
+  dentro dos limites do widget, e o círculo é desenhado nessa faixa sem `Transform.translate`.
+  *(Revisão do PR #28: o `extendBody: true` e o desfoque com `BackdropFilter` saíram. Com
+  `extendBody`, o `Scaffold` soma a altura da barra ao padding inferior e as abas usam
+  `SafeArea`, então o conteúdo nunca passava por trás da barra: o desfoque só custava
+  desempenho. A faixa mostra o fundo da tela, igual ao das páginas.)*
 - **Rationale**: o hit test do Flutter não alcança o que é desenhado fora dos limites do pai; com
   o círculo dentro da área, o toque funciona em toda a área visível.
 - **Alternatives considered**: aumentar a altura da barra (muda o visual aprovado); um

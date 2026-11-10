@@ -66,7 +66,7 @@ class _SafeCardState extends State<SafeCard> {
       button: true,
       enabled: widget.onTap != null,
       child: PressScale(
-        enabled: true,
+        enabled: widget.onTap != null,
         pressedScale: 0.99,
         onTap: widget.onTap,
         child: card,

@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-08
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Fluidez e movimento do app (motion, transições, estados de carregamento) + correções de UX encontradas na revisão: (1) fonte Montserrat não empacotada; (2) feed some/vira spinner no puxar-para-atualizar, na troca de categoria e na busca; (3) feed global não recarrega ao trocar de conta nem ao voltar do detalhe; (4) topo do botão central de Reels fora da área de toque; (5) SafeButton/SafeCard sem semântica de botão; (6) imagens sem cacheWidth/fade/pré-carregamento; (7) base de motion com tokens e 'reduzir animações' (sistema + opção do app), transições de página com volta preditiva, fade-through entre abas, troca animada entre carregando/erro/vazio/conteúdo com esqueletos; (8) polimento por tela: splash, feed, reels (curtir animado), login, onboarding, lição, assistente, barra inferior, botão. Público idoso: animações curtas e suaves. Inclui atualizar o toolchain Android para compilar com o JDK atual. Referência: fuja_app."
 
@@ -258,7 +258,8 @@ ausência de tela preta ao deslizar para o próximo Reel e o uso de memória est
   guardada no aparelho como as demais preferências, valendo também para o visitante.
 - **FR-010**: Com "Reduzir animações" ligado no app ou "remover animações" no sistema, todas as
   animações de interface MUST ser substituídas pela troca imediata de estado, e os esqueletos
-  ficam estáticos.
+  ficam estáticos. Exceção: os indicadores de carregamento (barra e círculo) continuam girando,
+  porque comunicam que algo está acontecendo e são essenciais (WCAG 2.3.3).
 
 **Estados de carregamento (US3)**
 

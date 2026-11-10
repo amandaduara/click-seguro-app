@@ -101,4 +101,27 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(SafeSkeleton), findsOneWidget);
   });
+
+  test('text(n): texto de exemplo com n palavras', () {
+    expect(SafeSkeleton.text(3).split(' '), hasLength(3));
+    expect(SafeSkeleton.text(1).split(' '), hasLength(1));
+  });
+
+  testWidgets('leaf e keep não mudam nada fora do esqueleto', (tester) async {
+    await pumpLocalized(
+      tester,
+      settle: false,
+      child: Scaffold(
+        body: Column(
+          children: [
+            SafeSkeleton.leaf(const Text('folha')),
+            SafeSkeleton.keep(const Text('mantido')),
+          ],
+        ),
+      ),
+    );
+
+    expect(find.text('folha'), findsOneWidget);
+    expect(find.text('mantido'), findsOneWidget);
+  });
 }

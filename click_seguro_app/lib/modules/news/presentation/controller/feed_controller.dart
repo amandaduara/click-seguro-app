@@ -177,8 +177,13 @@ class FeedController extends ChangeNotifier {
   }
 
   /// Outra conta (ou visitante): recarrega sem manter a lista, para não
-  /// mostrar as marcas da conta anterior (FR-004).
-  void _onSessionChanged() => unawaited(_loadFirst());
+  /// mostrar as marcas da conta anterior (FR-004). Ao sair da conta, não:
+  /// a pessoa já está no login, e o pedido seria inútil para um servidor
+  /// lento; quem entrar em seguida (conta ou visitante) recarrega.
+  void _onSessionChanged() {
+    if (_sessionStatus.value == UserSessionStatus.unauthenticated) return;
+    unawaited(_loadFirst());
+  }
 
   /// Leitura, curtida ou "salvar" confirmado em outra tela: corrige só o
   /// item, sem pedir ao servidor (FR-005).

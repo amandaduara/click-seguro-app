@@ -561,13 +561,34 @@ void main() {
       await controller.load();
       repository.feedGate = Completer<void>();
 
-      session.value = UserSessionStatus.unauthenticated;
+      session.value = UserSessionStatus.guest;
 
       expect(controller.status, FeedStatus.loading);
       repository.feedGate!.complete();
       await Future<void>.delayed(Duration.zero);
       expect(repository.feedCalls, 2);
       expect(controller.items.single.interaction.isRead, isFalse);
+    });
+  });
+
+  group('sessão: sair da conta', () {
+    test('não recarrega ao sair; recarrega quando alguém entra', () async {
+      final session = ValueNotifier<UserSessionStatus>(
+        UserSessionStatus.authenticated,
+      );
+      controller.dispose();
+      controller = buildFeedController(repository, sessionStatus: session);
+      await controller.load();
+      final int calls = repository.feedCalls;
+
+      session.value = UserSessionStatus.unauthenticated;
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.feedCalls, calls);
+      expect(controller.status, FeedStatus.loaded);
+
+      session.value = UserSessionStatus.authenticated;
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.feedCalls, calls + 1);
     });
   });
 

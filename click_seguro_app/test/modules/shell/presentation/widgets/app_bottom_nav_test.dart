@@ -70,7 +70,8 @@ void main() {
         tester.widget<Icon>(find.byIcon(icon)).color;
     final Color? muted = iconColor(AppTab.activities.icon);
     final Color? active = iconColor(AppTab.home.icon);
-    expect(find.byType(BackdropFilter), findsOneWidget);
+    // Sem desfoque: o conteúdo não passa por trás da barra (revisão do PR #28).
+    expect(find.byType(BackdropFilter), findsNothing);
 
     current.value = AppTab.activities.index;
     await tester.pump();

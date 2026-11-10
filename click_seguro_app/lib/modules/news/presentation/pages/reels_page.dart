@@ -23,6 +23,7 @@ import 'package:click_seguro_app/modules/news/presentation/widgets/reel_actions.
 import 'package:click_seguro_app/modules/news/presentation/widgets/reel_view.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/utils/motion_scroll.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
@@ -155,14 +156,7 @@ class _ReelsPageState extends State<ReelsPage> {
   void _goTo(int index) {
     final PageController? pages = _pageController;
     if (pages == null) return;
-    final Duration duration = AppMotion.of(context).medium;
-    if (duration == Duration.zero) {
-      pages.jumpToPage(index);
-      return;
-    }
-    unawaited(
-      pages.animateToPage(index, duration: duration, curve: AppMotion.standard),
-    );
+    unawaited(pages.moveToPage(index, duration: AppMotion.of(context).medium));
   }
 
   /// O `start` do carrossel muda o índice por fora do gesto: o `PageView`

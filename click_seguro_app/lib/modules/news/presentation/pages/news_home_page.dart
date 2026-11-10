@@ -201,7 +201,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
         );
 
     Widget cards(
-      String section,
+      _FeedSection section,
       List<NewsItemEntity> items, {
       bool compact = true,
     }) => SliverPadding(
@@ -211,7 +211,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
         separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
         itemBuilder: (_, index) {
           final NewsItemEntity item = items[index];
-          final String tag = NewsDetailPreview.tagFor(section, item.id);
+          final String tag = NewsDetailPreview.tagFor(section.name, item.id);
           return NewsCard(
             item: item,
             now: now,
@@ -244,13 +244,13 @@ class _NewsHomePageState extends State<NewsHomePage> {
         SliverToBoxAdapter(
           child: FeedSectionTitle(AppStrings.newsSectionHighlights.tr()),
         ),
-        cards('highlights', controller.highlights, compact: false),
+        cards(_FeedSection.highlights, controller.highlights, compact: false),
       ],
       if (controller.recommended.isNotEmpty) ...[
         SliverToBoxAdapter(
           child: FeedSectionTitle(AppStrings.newsSectionRecommended.tr()),
         ),
-        cards('recommended', controller.recommended),
+        cards(_FeedSection.recommended, controller.recommended),
       ],
       SliverToBoxAdapter(
         child: FeedSectionTitle(
@@ -259,7 +259,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
               : AppStrings.newsSectionRecent.tr(),
         ),
       ),
-      cards('recent', controller.items),
+      cards(_FeedSection.recent, controller.items),
       SliverToBoxAdapter(
         child: FeedListFooter(
           hasMore: controller.hasMore,
@@ -307,3 +307,7 @@ class _FeedSkeleton extends StatelessWidget {
     ],
   );
 }
+
+/// Seções do feed com cartões: entram na tag do `Hero`, porque a mesma
+/// notícia pode estar em duas delas (R9).
+enum _FeedSection { highlights, recommended, recent }
