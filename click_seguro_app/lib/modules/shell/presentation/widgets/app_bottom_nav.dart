@@ -107,6 +107,7 @@ class _TabItem extends StatelessWidget {
               // Indicador em pílula atrás do ícone (FR-009).
               AnimatedContainer(
                 duration: AppMotion.of(context).short,
+                curve: AppMotion.standard,
                 width: 60,
                 height: 34,
                 decoration: BoxDecoration(
@@ -116,10 +117,15 @@ class _TabItem extends StatelessWidget {
                       ? Border.all(color: colors.primary, width: 2)
                       : null,
                 ),
-                child: Icon(
-                  tab.icon,
-                  size: 26,
-                  color: selected ? colors.primary : colors.textMutedForeground,
+                // A cor do ícone muda com animação curta (specs/022 FR-025).
+                child: TweenAnimationBuilder<Color?>(
+                  tween: ColorTween(
+                    end: selected ? colors.primary : colors.textMutedForeground,
+                  ),
+                  duration: AppMotion.of(context).short,
+                  curve: AppMotion.standard,
+                  builder: (context, color, _) =>
+                      Icon(tab.icon, size: 26, color: color),
                 ),
               ),
               const SizedBox(height: AppSpacing.s1),

@@ -12,7 +12,7 @@ void main() {
       MaterialApp(
         home: ListView(
           controller: controller,
-          children: [for (int i = 0; i < 50; i++) SizedBox(height: 100)],
+          children: [for (int i = 0; i < 50; i++) const SizedBox(height: 100)],
         ),
       ),
     );

@@ -51,8 +51,8 @@ void main() {
   Future<void> cacheCardCover(WidgetTester tester) async {
     final ui.Image image =
         await tester.runAsync(() => createTestImage()) as ui.Image;
-    final Object key = await ResizeImage(
-      const NetworkImage(_url),
+    final Object key = await const ResizeImage(
+      NetworkImage(_url),
       width: 1080,
     ).obtainKey(ImageConfiguration.empty);
     imageCache.putIfAbsent(

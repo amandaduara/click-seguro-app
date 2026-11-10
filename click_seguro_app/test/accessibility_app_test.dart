@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/main.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
@@ -69,12 +70,12 @@ void main() {
     'reduzir animações do app desliga as animações (FR-021, FR-024)',
     (tester) async {
       await pumpApp(tester);
-      expect(MediaQuery.disableAnimationsOf(screen), isFalse);
+      expect(AppMotion.of(screen).reduced, isFalse);
 
       notifier.value = notifier.value.copyWith(reduceMotion: true);
       await tester.pumpAndSettle();
 
-      expect(MediaQuery.disableAnimationsOf(screen), isTrue);
+      expect(AppMotion.of(screen).reduced, isTrue);
     },
   );
 
@@ -87,7 +88,7 @@ void main() {
     await pumpApp(tester);
 
     expect(notifier.value.reduceMotion, isFalse);
-    expect(MediaQuery.disableAnimationsOf(screen), isTrue);
+    expect(AppMotion.of(screen).reduced, isTrue);
   });
 
   testWidgets('cada nível aumenta a letra na hora (US1, FR-006)', (

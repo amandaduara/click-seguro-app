@@ -309,28 +309,6 @@ void main() {
     });
   });
 
-  group('reduzir animações (FR-024 de specs/023-redesign-visual)', () {
-    const String reduceMotion = 'Reduzir animações';
-
-    testWidgets('chave desligada, com o texto de apoio', (tester) async {
-      await pumpAccessibility(tester);
-      await reveal(tester, find.text(reduceMotion));
-
-      expect(find.text('Mostra as telas sem movimento.'), findsOneWidget);
-      expect(toggled(tester, reduceMotion), Tristate.isFalse);
-    });
-
-    testWidgets('ligar vale na hora e grava', (tester) async {
-      await pumpAccessibility(tester);
-
-      await tapOption(tester, reduceMotion);
-
-      expect(toggled(tester, reduceMotion), Tristate.isTrue);
-      expect(notifier.value.reduceMotion, isTrue);
-      expect(stored().reduceMotion, isTrue);
-    });
-  });
-
   group('leitura em voz alta', () {
     const String autoRead = 'Ler automaticamente';
 

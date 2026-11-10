@@ -1036,9 +1036,6 @@ void main() {
     }
 
     /// Topo, na tela, do nó de acessibilidade com o rótulo.
-    double semanticsTop(WidgetTester tester, Pattern label) =>
-        tester.getTopLeft(find.bySemanticsLabel(label)).dy;
-
     testWidgets('padrão: todos os controles com 48×48 dp ou mais', (
       tester,
     ) async {
@@ -1116,18 +1113,30 @@ void main() {
       fullDetail();
       await pumpPage(tester, size: const Size(800, 3200));
 
-      final order = [
-        semanticsTop(tester, RegExp('^Notícia n1, Folha de Teste, ')),
-        semanticsTop(tester, 'Ouvir'),
-        semanticsTop(tester, 'Velocidade: normal'),
-        semanticsTop(tester, 'Salvar'),
-        semanticsTop(tester, 'Compartilhar'),
-        semanticsTop(tester, 'Abrir fonte'),
-        semanticsTop(tester, RegExp('^Texto completo da notícia')),
-        semanticsTop(tester, RegExp('^Pratique o que aprendeu')),
+      // Ordem de leitura: de cima para baixo e, na mesma linha (Ouvir e
+      // velocidade; salvar, compartilhar e fonte), da esquerda para a direita.
+      Offset at(Pattern label) =>
+          tester.getTopLeft(find.bySemanticsLabel(label));
+      final List<Offset> order = [
+        at(RegExp('^Notícia n1, Folha de Teste, ')),
+        at('Ouvir'),
+        at('Velocidade: normal'),
+        at('Salvar'),
+        at('Compartilhar'),
+        at('Abrir fonte'),
+        at(RegExp('^Texto completo da notícia')),
+        at(RegExp('^Pratique o que aprendeu')),
       ];
-      expect(order, orderedEquals([...order]..sort()));
-      expect(order.toSet(), hasLength(order.length));
+      for (int i = 1; i < order.length; i++) {
+        final Offset before = order[i - 1];
+        final Offset after = order[i];
+        expect(
+          after.dy > before.dy ||
+              (after.dy == before.dy && after.dx > before.dx),
+          isTrue,
+          reason: 'item $i ($after) deveria vir depois de $before',
+        );
+      }
       handle.dispose();
     });
 
