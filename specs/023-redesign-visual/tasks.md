@@ -296,7 +296,7 @@ das telas desenhadas.
 **Independent Test**: apagar os dados do app e percorrer splash → 3 slides → login (quickstart,
 passo 1).
 
-- [ ] T034 [P] [US2] Testes antes:
+- [X] T034 [P] [US2] Testes antes:
   - em `tmod/onboarding/presentation/pages/onboarding_page_test.dart`, cada slide mostra uma
     `SafeIllustration` (`onboardingProtect`/`News`/`Practice`), o botão "Ouvir" e "Pular", o
     indicador com a página atual e o botão "Continuar"/"Começar";
@@ -305,10 +305,10 @@ passo 1).
   - em `tmod/authentication/presentation/widgets/auth_header_test.dart`, o `AppLogo` e o nome.
 
   Rodar e ver falhar onde o visual muda.
-- [ ] T035 [US2] Splash em `mod/splash/presentation/pages/splash_page.dart`: fundo `surface`,
+- [X] T035 [US2] Splash em `mod/splash/presentation/pages/splash_page.dart`: fundo `surface`,
   `AppLogo` 92 num círculo branco de 168 com a sombra única, nome em `display` 36 e slogan em
   `bodyLarge`. O círculo pulsa (desligado com `reduceMotion`). A lógica de tempo da splash não muda.
-- [ ] T036 [US2] Onboarding:
+- [X] T036 [US2] Onboarding:
   - `mod/onboarding/presentation/widgets/onboarding_slide.dart`: ilustração de 300 com flutuação
     suave, desligada com `reduceMotion`; título `display`; texto `bodyLarge`;
   - `onboarding_page_indicator.dart`: atual 32×10 coral, os outros 10×10 em `#D6D2CA`;
@@ -316,11 +316,11 @@ passo 1).
     `compact`) no topo, botão primário com seta;
   - `mod/onboarding/presentation/models/onboarding_page_content.dart`: o slide aponta para a
     `AppIllustration`, e os textos não mudam.
-- [ ] T037 [US2] Login: `mod/authentication/presentation/widgets/auth_header.dart` com o
+- [X] T037 [US2] Login: `mod/authentication/presentation/widgets/auth_header.dart` com o
   `AppLogo` 40 num quadrado `primarySoft` de 64 (canto 20), "Bem-vindo ao" em `caption` e "Click
   Seguro" em `title1`. Em `login_page.dart` e `or_divider.dart`, os componentes novos. Textos,
   campos e fluxo não mudam ([FR-011](spec.md)).
-- [ ] T038 [US2] `flutter test` das pastas tocadas, com tudo verde. **Commit**:
+- [X] T038 [US2] `flutter test` das pastas tocadas, com tudo verde. **Commit**:
   `feat(022): US2 — splash, onboarding e login`.
 
 ---
@@ -334,7 +334,7 @@ passo 1).
 
 ### Testes da US3
 
-- [ ] T039 [P] [US3] Em `tmod/activities/presentation/pages/activities_dashboard_page_test.dart`:
+- [X] T039 [P] [US3] Em `tmod/activities/presentation/pages/activities_dashboard_page_test.dart`:
   - o painel mostra o `SafeProgressRing` com a porcentagem;
   - cada cartão tem a `SafeIllustration` do `IllustrationTheme.fromText(title)`;
   - o selo `SafeBadge.onImage` tem o texto do status;
@@ -346,13 +346,14 @@ passo 1).
   quatro aparências (padrão, selecionada com borda tinta, certa com check, errada com X), cada uma
   com semântica distinta além da cor. A errada balança, e não balança com `disableAnimations`.
   Rodar e ver falhar.
-- [ ] T041 [P] [US3] Em `tmod/activities/presentation/widgets/feedback_sheet_test.dart`:
+  > Pendente: falta o teste do balanço da opção errada (com e sem movimento reduzido).
+- [X] T041 [P] [US3] Em `tmod/activities/presentation/widgets/feedback_sheet_test.dart`:
   - certa → `SafeIllustration(answerCorrect)`, título em `success`;
   - errada → `answerWrong` e a resposta correta;
   - dentro do `SafeSheet`.
 
   Rodar e ver falhar.
-- [ ] T042 [P] [US3] Em `tmod/activities/presentation/pages/completion_page_test.dart`:
+- [X] T042 [P] [US3] Em `tmod/activities/presentation/pages/completion_page_test.dart`:
   - `stateTrophy`, título, nome do módulo, placar grande e mensagem;
   - os mesmos 3 botões da feature 020;
   - sem a linha de tempo/medalha;
@@ -363,18 +364,18 @@ passo 1).
 
 ### Implementação da US3
 
-- [ ] T043 [P] [US3] `mod/activities/presentation/widgets/overall_progress_card.dart`: cartão
+- [X] T043 [P] [US3] `mod/activities/presentation/widgets/overall_progress_card.dart`: cartão
   `flat` com `SafeProgressRing`, título "Seu progresso" e o texto atual. O selo "1 módulo
   completo" do Figma **não** entra, porque seria texto novo (FR-022).
-- [ ] T044 [US3] `mod/activities/presentation/widgets/module_card.dart`: `SafeCard` com capa de
+- [X] T044 [US3] `mod/activities/presentation/widgets/module_card.dart`: `SafeCard` com capa de
   150 (canto 16, fundo `theme.pastel`, `SafeIllustration(theme.illustration)`), selo sobre a capa,
   título `title3` em negrito, "X de Y lições", `SafeIconButton` de seta e `SafeProgressBar`
   (`success` quando concluído). Módulo indisponível (CB-012): capa com opacidade 0,5 e sem toque.
   `module_icon.dart` deixa de ser usado no cartão: remover o arquivo se ficar sem uso.
-- [ ] T045 [US3] `mod/activities/presentation/pages/activities_dashboard_page.dart`: título
+- [X] T045 [US3] `mod/activities/presentation/pages/activities_dashboard_page.dart`: título
   `display` e a lista com espaçamento de 20. Aviso do visitante e estados como hoje. O botão
   "Ouvir" do Figma **não** entra, porque o painel não tem leitura em voz alta hoje (FR-022).
-- [ ] T046 [P] [US3] Na pergunta:
+- [X] T046 [P] [US3] Na pergunta:
   - `lesson_progress_indicator.dart` vira `SafeSegmentedProgress`;
   - `lesson_option_card.dart` com as quatro aparências e o balanço (`AnimationController` de
     500 ms, ±6, duas vezes);
@@ -383,14 +384,14 @@ passo 1).
     maiúsculo e o enunciado em `title1` 25.
 
   T040 passa.
-- [ ] T047 [US3] `mod/activities/presentation/widgets/feedback_sheet.dart` dentro do `SafeSheet`.
+- [X] T047 [US3] `mod/activities/presentation/widgets/feedback_sheet.dart` dentro do `SafeSheet`.
   - Certa: `answerCorrect` 84, com escala de mola ao entrar.
   - Errada: `answerWrong`.
   - Título em `title1`, "Por quê?" num bloco `surface`, `ListenButton` e botão primário.
   - O `showModalBottomSheet` chamador usa o `AnimationStyle` de 400 ms.
 
   T041 passa.
-- [ ] T048 [US3] `mod/activities/presentation/pages/completion_page.dart`:
+- [X] T048 [US3] `mod/activities/presentation/pages/completion_page.dart`:
   - `stateTrophy` 300×190, com escala de mola;
   - um confete desenhado (`CustomPainter`, cerca de 30 retângulos, 1200 ms, uma vez, fora da
     semântica, ausente com `reduceMotion`);
@@ -400,7 +401,7 @@ passo 1).
   - "Voltar às atividades" primário e "Compartilhar"/"Refazer o módulo" secundários lado a lado.
 
   T042 passa.
-- [ ] T049 [US3] `guest_progress_alert.dart` e `guest_progress_notice.dart` com os componentes
+- [X] T049 [US3] `guest_progress_alert.dart` e `guest_progress_notice.dart` com os componentes
   novos, sem mudar texto. Depois, `flutter test tmod/activities` com tudo verde. **Commit**:
   `feat(022): US3 — atividades`.
 
@@ -420,6 +421,7 @@ passos 3 e 4).
   - sem imagem ou com erro de carga, usa a `SafeIllustration` do
     `IllustrationTheme.fromText(primeira categoria)` ou, se der `generic`, do título;
   - fundo pastel do tema.
+  > Pendente: `news_cover_test.dart` ainda não existe.
 
   Rodar e ver falhar.
 - [ ] T051 [P] [US4] Em `tmod/news/presentation/pages/news_home_page_test.dart`:
@@ -429,22 +431,23 @@ passos 3 e 4).
   - com escala total de texto acima de 1,3, 1 coluna;
   - a mesma lista gera sempre as mesmas alturas de capa (regra determinística do T053);
   - paginação e rodapé como antes.
+  > Pendente: faltam os testes da grade (2 colunas, 1 coluna com letra grande, ordem e alturas).
 
   Rodar e ver falhar.
 
 ### Implementação da US4
 
-- [ ] T052 [P] [US4] Criar `mod/news/presentation/widgets/news_cover.dart`: capa com canto 20,
+- [X] T052 [P] [US4] Criar `mod/news/presentation/widgets/news_cover.dart`: capa com canto 20,
   `Image.network` com `errorBuilder` para a ilustração, `SafeBadge.onImage` da categoria no canto
   de cima à esquerda e `SafeIconButton.onImage` de salvar à direita, quando a tela já tem a ação de
   salvar. T050 passa.
-- [ ] T053 [US4] `mod/news/presentation/widgets/news_card.dart`:
+- [X] T053 [US4] `mod/news/presentation/widgets/news_card.dart`:
   - versão grande: capa de 190, título `title3` em negrito e metadados `caption`;
   - versão compacta para a grade: capa com altura variável, título 17/600 e data.
 
   A variação de altura sai de uma regra determinística pelo índice ou id, sem aleatório, para os
   testes ficarem estáveis.
-- [ ] T054 [US4] `mod/news/presentation/pages/news_home_page.dart`:
+- [X] T054 [US4] `mod/news/presentation/pages/news_home_page.dart`:
   - "Recomendadas" e "Tudo recente" num sliver de 2 colunas que distribui os itens em ordem;
   - 1 coluna quando a escala de texto passar de 1,3;
   - busca em pílula (`feed_search_field.dart`) e chips (`category_filter_bar.dart` com
@@ -455,17 +458,17 @@ passos 3 e 4).
   - `feed_section_title.dart` em `title2`.
 
   T051 passa.
-- [ ] T055 [US4] Detalhe da notícia:
+- [X] T055 [US4] Detalhe da notícia:
   - `mod/news/presentation/widgets/news_detail_header.dart`: capa de 270 até a borda e
     `SafeIconButton.onImage` de voltar, compartilhar e salvar flutuando;
   - conteúdo numa folha branca com canto 28 em cima, sobreposta à capa;
   - `read_aloud_bar.dart`: bloco `surface` com o botão de tocar coral de 56, que pulsa enquanto lê;
   - `news_detail_actions.dart` com os componentes novos;
   - `mod/news/presentation/pages/news_detail_page.dart`: texto em `bodyLarge`.
-- [ ] T056 [US4] `mod/news/presentation/widgets/related_activity_card.dart` ("Pratique o que
+- [X] T056 [US4] `mod/news/presentation/widgets/related_activity_card.dart` ("Pratique o que
   aprendeu") com a mesma capa ilustrada do cartão de módulo, pelo `IllustrationTheme` do título do
   módulo sugerido. Ajustar `related_activity_card_test.dart`.
-- [ ] T057 [US4] Reels (`reel_view.dart`, `reel_actions.dart`, `reels_carousel.dart`): mesma tela
+- [X] T057 [US4] Reels (`reel_view.dart`, `reel_actions.dart`, `reels_carousel.dart`): mesma tela
   escura, com botões e selos novos. Em seguida, `flutter test tmod/news` com tudo verde.
   **Commit**: `feat(022): US4 — notícias`.
 
@@ -478,7 +481,7 @@ passos 3 e 4).
 **Independent Test**: trocar as abas do Assistente; na Ajuda, "Ligar para 190" chama a ação de
 ligar com 190 (quickstart, passos 6 e 7).
 
-- [ ] T058 [P] [US5] Testes antes, em `tmod/help/presentation/controller/help_controller_test.dart`:
+- [X] T058 [P] [US5] Testes antes, em `tmod/help/presentation/controller/help_controller_test.dart`:
   - `callNumber('190')` usa o launcher (pode ligar → liga; não pode → `false`);
   - `call(contact)` continua igual, delegando ao `callNumber`.
 
@@ -488,25 +491,26 @@ ligar com 190 (quickstart, passos 6 e 7).
   - o toque chama `callNumber('190')`;
   - se a chamada falhar, mostra o mesmo aviso dos contatos;
   - o leitor de tela lê título, texto e botão.
+  > Pendente: `emergency_call_card_test.dart` ainda não existe.
 
   Rodar e ver falhar.
-- [ ] T060 [US5] Em `mod/help/presentation/controller/help_controller.dart`, criar
+- [X] T060 [US5] Em `mod/help/presentation/controller/help_controller.dart`, criar
   `Future<bool> callNumber(String phone)` e fazer `call(ContactEntity)` delegar. Criar a constante
   `EmergencyNumbers.police = '190'` em `mod/help/domain/entities/emergency_numbers.dart` (ou
   `presentation/`, se for só de tela). T058 passa.
-- [ ] T061 [US5] Textos: `helpEmergencyTitle`, `helpEmergencyBody` e `helpEmergencyCall` em
+- [X] T061 [US5] Textos: `helpEmergencyTitle`, `helpEmergencyBody` e `helpEmergencyCall` em
   `core/i18n/app_strings.dart` e nos JSON.
   - pt-BR: "Caiu em um golpe?", "Ligue agora para a polícia e para o seu banco." e "Ligar para
     190".
   - en-US: "Fell for a scam?", "Call the police and your bank right now." e "Call 190".
 
   Atualizar os testes de chaves de i18n que conferem a lista.
-- [ ] T062 [US5] Criar `mod/help/presentation/widgets/emergency_call_card.dart` (cartão coral,
+- [X] T062 [US5] Criar `mod/help/presentation/widgets/emergency_call_card.dart` (cartão coral,
   canto 24, ícone de alerta, título `title2` branco, texto 17 e botão branco com texto coral e
   ícone de telefone) e colocá-lo no topo de `mod/help/presentation/pages/help_page.dart`, acima
   das abas. A falha da chamada usa o mesmo aviso de `_call`. Os contatos viram linhas com ícone em
   quadrado pastel e o botão de ligar em `successSoft`. T059 passa.
-- [ ] T063 [US5] Assistente:
+- [X] T063 [US5] Assistente:
   - `mod/assistant/presentation/pages/assistant_page.dart`: as 3 abas já em `SafePillTabs` (T030), balões
     (assistente em `surface` com avatar `primarySoft` de brilho, pessoa em tinta com texto branco)
     e barra de entrada com câmera, campo em pílula e botão coral;
@@ -515,7 +519,7 @@ ligar com 190 (quickstart, passos 6 e 7).
   - `assistant_history_tab.dart`: os componentes novos.
 
   Comportamento igual. Ajustar os testes do assistente só onde conferem aparência.
-- [ ] T064 [US5] `flutter test tmod/help tmod/assistant` com tudo verde. **Commit**:
+- [X] T064 [US5] `flutter test tmod/help tmod/assistant` com tudo verde. **Commit**:
   `feat(022): US5 — assistente e central de ajuda`.
 
 ---
@@ -527,7 +531,7 @@ ligar com 190 (quickstart, passos 6 e 7).
 **Independent Test**: forçar carregamento lento, erro, vazio e sem conexão nas Atividades e nas
 notícias salvas (quickstart, passo 8).
 
-- [ ] T065 [P] [US6] Testes antes, em `tcore/widgets/safe_states_test.dart` (da 021):
+- [X] T065 [P] [US6] Testes antes, em `tcore/widgets/safe_states_test.dart` (da 021):
   - `SafeLoadingState` mostra `SafeSkeleton` (sem `CircularProgressIndicator`) no layout pedido,
     com o mesmo anúncio de carregamento;
   - `SafeErrorState` usa `stateError`, ou `stateOffline` quando é falha de conexão;
@@ -536,7 +540,7 @@ notícias salvas (quickstart, passo 8).
   - `SlowRequestNotice` mostra a caixa `infoSoft`.
 
   Remover os casos do `SafeStateIllustration`. Rodar e ver falhar.
-- [ ] T066 [US6] Reescrever `core/widgets/safe_loading_state.dart` (layouts `list`/`cards`/`detail`
+- [X] T066 [US6] Reescrever `core/widgets/safe_loading_state.dart` (layouts `list`/`cards`/`detail`
   com `SafeSkeleton`), `safe_error_state.dart` e `safe_empty_state.dart` (`SafeIllustration` de
   200, título `title1`, texto `bodyLarge` centralizado, ações como hoje, rolagem em telas curtas),
   `safe_offline_banner.dart` e `slow_request_notice.dart`. Apagar
@@ -546,11 +550,12 @@ notícias salvas (quickstart, passo 8).
   - `cards`: painel de atividades e Início;
   - `list`: listas de notícias, alertas e histórico do assistente;
   - `detail`: detalhe da notícia e pergunta.
+  > Parcial: só a lista de notícias pede o `layout` certo, e ainda há indicadores de carregamento soltos (Assistente, Reels, Perfil, Conquistas, edição do perfil).
 
   Trocar os 9 `CircularProgressIndicator` soltos de carregamento de tela por `SafeLoadingState`.
   Os de botão carregando ficam. Atualizar os 12 testes que procuram `CircularProgressIndicator` ou
   `SafeLoadingState` para procurar o rótulo de carregamento.
-- [ ] T068 [US6] `flutter test` completo, com tudo verde. **Commit**:
+- [X] T068 [US6] `flutter test` completo, com tudo verde. **Commit**:
   `feat(022): US6 — estados de carregamento, erro, vazio e sem internet`.
 
 ---
