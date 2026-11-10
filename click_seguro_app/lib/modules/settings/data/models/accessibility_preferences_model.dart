@@ -8,6 +8,7 @@ abstract final class AccessibilityPreferencesModel {
   static const String highContrastKey = 'highContrast';
   static const String autoReadAloudKey = 'autoReadAloud';
   static const String readingSpeedKey = 'readingSpeed';
+  static const String reduceMotionKey = 'reduceMotion';
 
   static AccessibilityPreferences fromJson(Map<String, dynamic> json) {
     const defaults = AccessibilityPreferences.defaults();
@@ -24,6 +25,8 @@ abstract final class AccessibilityPreferencesModel {
         json[readingSpeedKey],
         defaults.readingSpeed,
       ),
+      // Ausente no que foi guardado antes da specs/022: lido como desligado.
+      reduceMotion: _bool(json[reduceMotionKey], defaults.reduceMotion),
     );
   }
 
@@ -32,6 +35,7 @@ abstract final class AccessibilityPreferencesModel {
     highContrastKey: preferences.highContrast,
     autoReadAloudKey: preferences.autoReadAloud,
     readingSpeedKey: preferences.readingSpeed.name,
+    reduceMotionKey: preferences.reduceMotion,
   };
 
   static bool _bool(Object? value, bool fallback) =>

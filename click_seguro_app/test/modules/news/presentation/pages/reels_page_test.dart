@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
@@ -9,13 +11,16 @@ import 'package:click_seguro_app/modules/news/presentation/controller/reels_cont
 import 'package:click_seguro_app/modules/news/presentation/pages/reels_page.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/reel_actions.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/reel_view.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../fakes/fake_external_launcher_service.dart';
 import '../../../../fakes/fake_secure_storage_service.dart';
@@ -48,13 +53,13 @@ void main() {
   void firstPage(int count, {String? next}) => repository.reelsResults[null] =
       Right(ReelsPageEntity(items: reels(count), nextCursor: next));
 
-  GoRouter router({String location = '/reels'}) => GoRouter(
+  GoRouter router({String location = '/reels', Object? extra}) => GoRouter(
     initialLocation: location,
+    initialExtra: extra,
     routes: [
       GoRoute(
         path: '/reels',
-        builder: (_, state) =>
-            ReelsPage(startNewsId: state.uri.queryParameters['start']),
+        builder: (_, state) => ReelsPage.fromState(state),
       ),
       GoRoute(
         path: '/news/:id',
@@ -72,6 +77,7 @@ void main() {
   Future<void> pumpPage(
     WidgetTester tester, {
     String location = '/reels',
+    Object? extra,
     bool preload = true,
   }) async {
     tester.view.physicalSize = const Size(800, 1600);
@@ -80,7 +86,7 @@ void main() {
     if (preload) await controller.open();
     await pumpLocalized(
       tester,
-      router: router(location: location),
+      router: router(location: location, extra: extra),
       providers: [
         ChangeNotifierProvider<ReelsController>.value(value: controller),
       ],
@@ -96,14 +102,29 @@ void main() {
   }
 
   group('navegação', () {
-    testWidgets('carregando mostra o indicador', (tester) async {
+    testWidgets('carregando mostra o esqueleto', (tester) async {
       firstPage(2);
       repository.reelsGate = Completer<void>();
 
       await pumpPage(tester, preload: false);
       await tester.pump();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsOneWidget,
+      );
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      // Sobre o preto, o brilho clareia; não escurece numa faixa preta.
+      final effect =
+          tester
+                  .widget<Skeletonizer>(
+                    find.byWidgetPredicate((w) => w is Skeletonizer),
+                  )
+                  .effect
+              as ShimmerEffect;
+      double onBlack(Color c) =>
+          Color.alphaBlend(c, Colors.black).computeLuminance();
+      expect(onBlack(effect.colors[1]), greaterThan(onBlack(effect.colors[0])));
       repository.reelsGate!.complete();
       await tester.pumpAndSettle();
       expect(title('r1'), findsOneWidget);
@@ -187,6 +208,60 @@ void main() {
 
       expect(title('r2'), findsOneWidget);
       expect(controller.currentIndex, 1);
+    });
+
+    // specs/022 FR-019: a imagem do Reel tocado no carrossel já aparece
+    // enquanto a lista carrega; só o texto fica em esqueleto.
+    testWidgets('pelo carrossel: carregando já mostra a imagem tocada', (
+      tester,
+    ) async {
+      const String url = 'https://img.test/r2.jpg';
+      firstPage(3);
+      repository.reelsGate = Completer<void>();
+
+      await pumpPage(
+        tester,
+        location: '/reels?start=r2',
+        extra: newsItem('r2', imageUrl: url),
+        preload: false,
+      );
+      await tester.pump();
+
+      final Finder image = find.byWidgetPredicate(
+        (w) => w is SafeNetworkImage && w.url == url,
+      );
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsOneWidget,
+      );
+      expect(image, findsOneWidget);
+      expect(
+        find.ancestor(
+          of: image,
+          matching: find.byWidgetPredicate((w) => w is Skeleton),
+        ),
+        findsOneWidget,
+      );
+      repository.reelsGate!.complete();
+      await tester.pumpAndSettle();
+      expect(title('r2'), findsOneWidget);
+    });
+
+    testWidgets('prévia de outra notícia é ignorada', (tester) async {
+      firstPage(3);
+      repository.reelsGate = Completer<void>();
+
+      await pumpPage(
+        tester,
+        location: '/reels?start=r2',
+        extra: newsItem('r9', imageUrl: 'https://img.test/r9.jpg'),
+        preload: false,
+      );
+      await tester.pump();
+
+      expect(find.byType(SafeNetworkImage), findsNothing);
+      repository.reelsGate!.complete();
+      await tester.pumpAndSettle();
     });
 
     testWidgets('"Ler notícia completa" abre o detalhe uma vez', (
@@ -321,6 +396,88 @@ void main() {
       expect(find.byType(SnackBar), findsOneWidget);
       expect(find.text('3'), findsOneWidget);
       expect(controller.reels.first.isLiked, isFalse);
+    });
+
+    group('microinterações (specs/022 FR-021)', () {
+      final List<Object?> vibrations = [];
+
+      setUp(() {
+        vibrations.clear();
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+              if (call.method == 'HapticFeedback.vibrate') {
+                vibrations.add(call.arguments);
+              }
+              return null;
+            });
+      });
+
+      tearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null),
+      );
+
+      Future<void> doubleTapImage(WidgetTester tester) async {
+        final Finder image = find.byKey(ReelView.doubleTapKey);
+        await tester.tap(image);
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.tap(image);
+        await tester.pumpAndSettle();
+      }
+
+      double pulse(WidgetTester tester) => tester
+          .widget<ScaleTransition>(find.byKey(ReelActions.likePulseKey))
+          .scale
+          .value;
+
+      testWidgets('curtir pulsa o coração e vibra uma vez', (tester) async {
+        await signIn();
+        onePage([reel('r1', likesCount: 3)]);
+        repository.likeResults.add(
+          const Right(LikeResultEntity(liked: true, likesCount: 4)),
+        );
+        await pumpPage(tester);
+
+        await tester.tap(find.byKey(ReelActions.likeKey));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(pulse(tester), greaterThan(1));
+
+        await tester.pumpAndSettle();
+        expect(pulse(tester), 1);
+        expect(vibrations, ['HapticFeedbackType.selectionClick']);
+      });
+
+      testWidgets('dois toques na imagem curtem; de novo, não descurtem', (
+        tester,
+      ) async {
+        await signIn();
+        onePage([reel('r1', likesCount: 3)]);
+        repository.likeResults.add(
+          const Right(LikeResultEntity(liked: true, likesCount: 4)),
+        );
+        await pumpPage(tester);
+
+        await doubleTapImage(tester);
+        expect(repository.likeCalls, ['r1']);
+        expect(controller.reels.first.isLiked, isTrue);
+
+        await doubleTapImage(tester);
+        expect(repository.likeCalls, ['r1']);
+        expect(controller.reels.first.isLiked, isTrue);
+        expect(vibrations, hasLength(2));
+      });
+
+      testWidgets('visitante: dois toques mostram o convite', (tester) async {
+        onePage([reel('r1')]);
+        await pumpPage(tester);
+
+        await doubleTapImage(tester);
+
+        expect(find.byType(AccountRequiredSheet), findsOneWidget);
+        expect(repository.likeCalls, isEmpty);
+        expect(vibrations, isEmpty);
+      });
     });
   });
 

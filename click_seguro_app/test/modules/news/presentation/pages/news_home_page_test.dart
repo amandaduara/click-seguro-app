@@ -2,8 +2,9 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/news_home_page.dart';
@@ -43,8 +44,12 @@ void main() {
         ),
         GoRoute(
           path: '/reels',
+          // A prévia (`extra`) leva o item tocado (specs/022 FR-019).
           builder: (_, state) => Scaffold(
-            body: Text('reels ${state.uri.queryParameters['start']}'),
+            body: Text(
+              'reels ${state.uri.queryParameters['start']} '
+              'prévia ${(state.extra as NewsItemEntity?)?.id}',
+            ),
           ),
         ),
       ],
@@ -94,7 +99,11 @@ void main() {
         settle: false,
       );
 
-      expect(find.byType(SafeLoadingState), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsOneWidget,
+      );
+      expect(find.byType(CircularProgressIndicator), findsNothing);
       await tester.pump(const Duration(seconds: 5));
       expect(
         find.text('Conectando ao servidor. Isso pode levar até um minuto.'),
@@ -208,7 +217,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.bySemanticsLabel(RegExp('Notícia reel1')));
       await tester.pumpAndSettle();
-      expect(find.text('reels reel1'), findsOneWidget);
+      expect(find.text('reels reel1 prévia reel1'), findsOneWidget);
     });
 
     testWidgets('chega ao fim: carrega mais e depois avisa o fim', (
@@ -319,6 +328,24 @@ void main() {
         find.text('Nenhuma notícia nesta categoria ainda.'),
         findsOneWidget,
       );
+    });
+
+    // Vindo de "Todas" sem "Últimas", a lista antiga é vazia: enquanto a
+    // categoria carrega, o vazio não pode piscar (specs/022, achado da T058).
+    testWidgets('trocando de categoria, o vazio não pisca', (tester) async {
+      repository.feedResults[0] = Right(
+        newsFeed(highlights: [newsItem('h1')], recent: const []),
+      );
+      repository.newsGate = Completer<void>();
+      await pumpPage(tester);
+
+      await tester.tap(chip('Phishing'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('Nenhuma notícia nesta categoria ainda.'), findsNothing);
+      repository.newsGate!.complete();
+      await tester.pumpAndSettle();
     });
 
     testWidgets('"Todas" volta às seções', (tester) async {

@@ -1,42 +1,61 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
-import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
-import 'package:click_seguro_app/modules/news/presentation/extensions/news_detail_presentation_extension.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Cabeçalho do detalhe: imagem (se houver), categorias, título, "fonte ·
 /// data" e curtidas (FR-001). O leitor de tela lê título, fonte e data.
+///
+/// Também mostra a prévia do cartão enquanto o detalhe carrega (specs/022
+/// R9): sem [likesCount], a linha de curtidas fica de fora até chegar.
 class NewsDetailHeader extends StatelessWidget {
-  const NewsDetailHeader({super.key, required this.detail, required this.now});
+  const NewsDetailHeader({
+    super.key,
+    required this.news,
+    required this.now,
+    this.likesCount,
+    this.heroTag,
+  });
 
   static const double _imageHeight = 200;
 
-  final NewsDetailEntity detail;
+  final NewsItemEntity news;
   final DateTime now;
+  final int? likesCount;
+
+  /// Tag do `Hero` da imagem, a mesma do cartão que abriu a notícia.
+  final String? heroTag;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final String? image = detail.news.imageUrl;
-    final List<String> categories = detail.news.categoryLabels();
+    final String? image = news.imageUrl;
+    final List<String> categories = news.categoryLabels();
+    final int? likes = likesCount;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (image != null) ...[
-          ClipRRect(
-            borderRadius: AppSpacing.radius3xl,
-            child: Image.network(
-              image,
-              height: _imageHeight,
-              fit: BoxFit.cover,
-              excludeFromSemantics: true,
-              errorBuilder: (context, _, _) => const _ImagePlaceholder(),
-              loadingBuilder: (_, child, progress) =>
-                  progress == null ? child : const _ImagePlaceholder(),
+          _hero(
+            context,
+            ClipRRect(
+              borderRadius: AppSpacing.radius3xl,
+              child: SafeNetworkImage(
+                url: image,
+                height: _imageHeight,
+                width: double.infinity,
+                // Vindo de um cartão, a miniatura dele já está no cache.
+                placeholder: heroTag == null
+                    ? const _ImagePlaceholder()
+                    : _CardThumbnail(url: image),
+              ),
             ),
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -51,13 +70,13 @@ class NewsDetailHeader extends StatelessWidget {
         ],
         Semantics(
           header: true,
-          label: detail.semanticLabel(now),
+          label: news.headerLabel(now),
           excludeSemantics: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                detail.news.title,
+                news.title,
                 style: textTheme.headlineSmall?.copyWith(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
@@ -66,7 +85,7 @@ class NewsDetailHeader extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.s2),
               Text(
-                '${detail.news.source} · ${detail.news.relativeDate(now)}',
+                '${news.source} · ${news.relativeDate(now)}',
                 style: textTheme.bodyMedium?.copyWith(
                   fontSize: 16,
                   color: context.colors.textMutedForeground,
@@ -75,29 +94,71 @@ class NewsDetailHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.s2),
-        Row(
-          children: [
-            Icon(
-              LucideIcons.heart,
-              size: 18,
-              color: context.colors.textMutedForeground,
-            ),
-            const SizedBox(width: AppSpacing.s2),
-            Flexible(
-              child: Text(
-                AppStrings.newsDetailLikes.tr(args: [detail.formattedLikes]),
-                style: textTheme.bodyMedium?.copyWith(
-                  fontSize: 16,
-                  color: context.colors.textMutedForeground,
+        if (likes != null) ...[
+          const SizedBox(height: AppSpacing.s2),
+          Row(
+            children: [
+              Icon(
+                LucideIcons.heart,
+                size: 18,
+                color: context.colors.textMutedForeground,
+              ),
+              const SizedBox(width: AppSpacing.s2),
+              Flexible(
+                child: Text(
+                  AppStrings.newsDetailLikes.tr(
+                    args: [formatLikesCount(likes)],
+                  ),
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 16,
+                    color: context.colors.textMutedForeground,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ],
     );
   }
+
+  /// A imagem voa do cartão só com movimento normal (specs/022 FR-010).
+  Widget _hero(BuildContext context, Widget child) {
+    final String? tag = heroTag;
+    return tag == null || AppMotion.of(context).reduced
+        ? child
+        : Hero(tag: tag, child: child);
+  }
+}
+
+/// A miniatura do cartão compacto, ampliada, enquanto a imagem grande
+/// carrega (specs/022 FR-017: o detalhe mostra na hora a imagem que o
+/// cartão já tinha). Sem ela, o quadro neutro.
+class _CardThumbnail extends StatelessWidget {
+  const _CardThumbnail({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    children: [
+      const _ImagePlaceholder(),
+      Positioned.fill(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          clipBehavior: Clip.hardEdge,
+          child: SafeNetworkImage(
+            url: url,
+            width: NewsCard.compactImageSize,
+            height: NewsCard.compactImageSize,
+            placeholder: const SizedBox.square(
+              dimension: NewsCard.compactImageSize,
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 /// Quadro neutro do feed para imagem que ainda carrega ou que falhou.

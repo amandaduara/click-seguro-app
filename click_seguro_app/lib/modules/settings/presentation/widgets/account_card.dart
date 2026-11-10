@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -62,13 +63,12 @@ class AccountCard extends StatelessWidget {
                     child: ClipOval(
                       child: SizedBox.square(
                         dimension: _avatarSize,
-                        child: url == null
-                            ? fallback
-                            : Image.network(
-                                url,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => fallback,
-                              ),
+                        child: SafeNetworkImage(
+                          url: url,
+                          width: _avatarSize,
+                          height: _avatarSize,
+                          placeholder: fallback,
+                        ),
                       ),
                     ),
                   ),

@@ -5,12 +5,14 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/refresh_on_return.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_summary_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/activities_dashboard_controller.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/activities_dashboard_status.dart';
+import 'package:click_seguro_app/modules/activities/presentation/extensions/activities_placeholders.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/guest_progress_notice.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/module_card.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/overall_progress_card.dart';
@@ -133,6 +135,17 @@ class _DashboardBodyState extends State<_DashboardBody>
     final ActivitiesDashboardController controller = context
         .watch<ActivitiesDashboardController>();
     final ActivitiesDashboardEntity? dashboard = controller.dashboard;
+    // Carregando, erro, vazio e painel trocam com um esmaecimento (R8).
+    return SafeStateSwitcher(
+      stateKey: controller.status,
+      child: _stateContent(controller, dashboard),
+    );
+  }
+
+  Widget _stateContent(
+    ActivitiesDashboardController controller,
+    ActivitiesDashboardEntity? dashboard,
+  ) {
     return switch (controller.status) {
       // O servidor gratuito leva até ~40 s para acordar (R7).
       ActivitiesDashboardStatus.loading => Column(
@@ -141,7 +154,15 @@ class _DashboardBodyState extends State<_DashboardBody>
             active: true,
             message: AppStrings.activitiesSlow.tr(),
           ),
-          const Expanded(child: SafeLoadingState()),
+          Expanded(
+            child: SafeSkeleton(
+              enabled: true,
+              child: _Dashboard(
+                dashboard: ActivitiesPlaceholders.dashboard(),
+                onOpen: (_) {},
+              ),
+            ),
+          ),
         ],
       ),
       ActivitiesDashboardStatus.error => SafeErrorState(

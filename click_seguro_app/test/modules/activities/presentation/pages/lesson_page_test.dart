@@ -18,7 +18,9 @@ import 'package:click_seguro_app/modules/common/accessibility/accessibility_pref
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
@@ -26,6 +28,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
+import '../../../../fakes/hanging_http_client.dart';
 import '../../../../fakes/fake_text_to_speech_service.dart';
 import '../../../../helpers/activities_dependencies.dart';
 import '../../../../helpers/localized_app.dart';
@@ -178,6 +181,44 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    // Achado da T058 (specs/022): a imagem chegava depois e empurrava as
+    // alternativas para baixo do dedo. Todas já vão ao cache na carga.
+    testWidgets('as imagens de todas as perguntas vão ao cache', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2340)
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      useModule(
+        lessons: [
+          lessonJson(imageUrl: 'https://img.test/a.png'),
+          lessonJson(id: 'l2', order: 2, imageUrl: 'https://img.test/b.png'),
+          lessonJson(id: 'l3', order: 3, imageUrl: null),
+        ],
+      );
+
+      // Imagens que nunca chegam: ficam no cache como pendentes.
+      debugNetworkImageHttpClientProvider = HangingHttpClient.new;
+
+      await pumpLocalized(tester, router: router, settle: false);
+      await tester.pump();
+      await tester.pump();
+
+      // A chave do `SafeNetworkImage` da pergunta: largura da tela em pixels.
+      for (final String url in [
+        'https://img.test/a.png',
+        'https://img.test/b.png',
+      ]) {
+        final Object key = await ResizeImage(
+          NetworkImage(url),
+          width: 1080,
+        ).obtainKey(ImageConfiguration.empty);
+        expect(imageCache.statusForKey(key).tracked, isTrue, reason: url);
+      }
+      debugNetworkImageHttpClientProvider = null;
+    });
+
     testWidgets('a explicação nunca aparece (FR-016)', (tester) async {
       await open(tester);
 
@@ -221,6 +262,30 @@ void main() {
       expect(find.text('Pergunta 2 de 3'), findsOneWidget);
 
       await tester.tap(find.text('Anterior'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+    });
+
+    testWidgets('a pergunta desliza: avançar e voltar em sentidos opostos '
+        '(specs/022 FR-027)', (tester) async {
+      useModule(answered: {'l1', 'l2', 'l3'});
+      await open(tester);
+      bool reverse() => tester
+          .widget<PageTransitionSwitcher>(find.byType(PageTransitionSwitcher))
+          .reverse;
+
+      await tester.tap(find.text('Próxima'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget, reason: 'saindo');
+      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
+      expect(reverse(), isFalse);
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 1 de 3'), findsNothing);
+
+      await tester.tap(find.text('Anterior'));
+      await tester.pump();
+      expect(reverse(), isTrue);
       await tester.pumpAndSettle();
       expect(find.text('Pergunta 1 de 3'), findsOneWidget);
     });
@@ -500,6 +565,47 @@ void main() {
             matching: find.byType(LessonOptionCard),
           ),
         );
+
+    testWidgets('acerto e erro vibram diferente, uma vez (specs/022 FR-022)', (
+      tester,
+    ) async {
+      final List<Object?> vibrations = [];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'HapticFeedback.vibrate') {
+            vibrations.add(call.arguments);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      repository.answerResults = [
+        Right(AnswerResultModel.fromJson(answerJson()).toEntity()),
+      ];
+      await open(tester);
+
+      await answer(tester, 'Ignorar e denunciar');
+      expect(vibrations, ['HapticFeedbackType.lightImpact']);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Responder de novo'));
+      await tester.pumpAndSettle();
+      repository.answerResults = [
+        Right(
+          AnswerResultModel.fromJson(answerJson(isCorrect: false)).toEntity(),
+        ),
+      ];
+      vibrations.clear();
+      await answer(tester, 'Enviar');
+      expect(vibrations, ['HapticFeedbackType.heavyImpact']);
+    });
 
     testWidgets('a explicação só aparece depois de confirmar (FR-018)', (
       tester,
@@ -1337,3 +1443,5 @@ void main() {
     });
   });
 }
+
+/// Pedido de imagem que nunca responde (a imagem fica pendente no cache).

@@ -46,6 +46,18 @@ void main() {
       expect(changed.fontScale, preferences.fontScale);
       expect(changed.autoReadAloud, preferences.autoReadAloud);
       expect(changed.readingSpeed, preferences.readingSpeed);
+      expect(changed.reduceMotion, preferences.reduceMotion);
+    });
+
+    test('"Reduzir animações" começa desligado e entra na igualdade', () {
+      const defaults = AccessibilityPreferences.defaults();
+      final reduced = defaults.copyWith(reduceMotion: true);
+
+      expect(defaults.reduceMotion, isFalse);
+      expect(reduced.reduceMotion, isTrue);
+      expect(reduced, isNot(defaults));
+      expect(reduced, defaults.copyWith(reduceMotion: true));
+      expect(reduced.hashCode, defaults.copyWith(reduceMotion: true).hashCode);
     });
 
     test('igualdade por valor', () {

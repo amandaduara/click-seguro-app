@@ -427,6 +427,10 @@ abstract class AppStrings {
       'settings_accessibility_high_contrast';
   static const String settingsAccessibilityHighContrastSub =
       'settings_accessibility_high_contrast_sub';
+  static const String settingsAccessibilityReduceMotion =
+      'settings_accessibility_reduce_motion';
+  static const String settingsAccessibilityReduceMotionSub =
+      'settings_accessibility_reduce_motion_sub';
   static const String settingsAccessibilitySectionVoice =
       'settings_accessibility_section_voice';
   static const String settingsAccessibilityAutoRead =
@@ -516,6 +520,7 @@ abstract class AppStrings {
   static const String assistantChatPlaceholder = 'assistant_chat_placeholder';
   static const String assistantChatSend = 'assistant_chat_send';
   static const String assistantChatRetry = 'assistant_chat_retry';
+  static const String assistantTyping = 'assistant_typing';
   static const String assistantNewConversation = 'assistant_new_conversation';
   static const String assistantNewConversationTitle =
       'assistant_new_conversation_title';

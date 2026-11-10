@@ -1,6 +1,8 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/news_counts_entity.dart';
 import 'package:click_seguro_app/modules/profile/presentation/pages/profile_page.dart';
@@ -278,6 +280,28 @@ void main() {
       semantics.dispose();
     });
 
+    testWidgets('primeira carga: esqueleto do perfil, lido como "Carregando"', (
+      tester,
+    ) async {
+      repository.profileGate = Completer<void>();
+      await pumpLocalized(tester, router: router, settle: false);
+
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('Carregando'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      repository.profileGate!.complete();
+      await tester.pumpAndSettle();
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsNothing,
+      );
+      expect(find.text('Maria da Silva'), findsOneWidget);
+    });
+
     testWidgets('trocar de aba e voltar atualiza sem mostrar carregando', (
       tester,
     ) async {
@@ -289,7 +313,10 @@ void main() {
       router.go('/profile');
       await tester.pump();
 
-      expect(find.byType(SafeLoadingState), findsNothing);
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsNothing,
+      );
       await tester.pumpAndSettle();
       expect(repository.countsCalls, before + 1);
     });

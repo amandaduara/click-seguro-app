@@ -5,13 +5,15 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/refresh_on_return.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/achievement_entity.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/news_counts_entity.dart';
 import 'package:click_seguro_app/modules/profile/presentation/controller/area_state.dart';
 import 'package:click_seguro_app/modules/profile/presentation/controller/profile_controller.dart';
 import 'package:click_seguro_app/modules/profile/presentation/controller/profile_status.dart';
+import 'package:click_seguro_app/modules/profile/presentation/extensions/profile_placeholders.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/achievements_section.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/area_notice.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/guest_invite.dart';
@@ -156,18 +158,61 @@ class _AccountProfileState extends State<_AccountProfile>
   Widget build(BuildContext context) {
     final ProfileController controller = context.watch<ProfileController>();
     return _WithHeader(
-      child: switch (controller.status) {
-        ProfileStatus.loading => const SafeLoadingState(),
-        ProfileStatus.error => SafeErrorState(
-          message: (controller.failure?.message ?? AppStrings.errorGeneric)
-              .tr(),
-          onRetry: controller.load,
-        ),
-        ProfileStatus.loaded => _LoadedProfile(
-          controller: controller,
-          open: pushAndRefresh,
-        ),
-      },
+      // Carregando, erro e perfil trocam com um esmaecimento (R8).
+      child: SafeStateSwitcher(
+        stateKey: controller.status,
+        child: _stateContent(controller),
+      ),
+    );
+  }
+
+  Widget _stateContent(ProfileController controller) {
+    return switch (controller.status) {
+      ProfileStatus.loading => const _ProfileSkeleton(),
+      ProfileStatus.error => SafeErrorState(
+        message: (controller.failure?.message ?? AppStrings.errorGeneric).tr(),
+        onRetry: controller.load,
+      ),
+      ProfileStatus.loaded => _LoadedProfile(
+        controller: controller,
+        open: pushAndRefresh,
+      ),
+    };
+  }
+}
+
+/// Primeira carga: o cartão do perfil e os atalhos em esqueleto (FR-011).
+class _ProfileSkeleton extends StatelessWidget {
+  const _ProfileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    return SafeSkeleton(
+      enabled: true,
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: _padding,
+        children: [
+          ProfileHeaderCard(
+            profile: ProfilePlaceholders.profile(),
+            onEdit: () {},
+            footer: const SizedBox(height: 88),
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          for (final Color background in [colors.secondary, colors.primary])
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+              child: ProfileCtaCard(
+                icon: LucideIcons.newspaper,
+                title: SafeSkeleton.text(3),
+                subtitle: SafeSkeleton.text(6),
+                background: background,
+                onTap: () {},
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

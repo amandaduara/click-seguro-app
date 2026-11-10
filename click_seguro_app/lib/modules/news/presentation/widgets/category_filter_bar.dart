@@ -72,7 +72,9 @@ class _FilterChip extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
+            // Largura mínima: um rótulo curto ("All") com a altura de 48
+            // virava círculo; assim continua pílula (specs/022 T061).
+            constraints: const BoxConstraints(minHeight: 48, minWidth: 80),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
               child: Center(

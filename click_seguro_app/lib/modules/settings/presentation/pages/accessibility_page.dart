@@ -66,6 +66,14 @@ class AccessibilityPage extends StatelessWidget {
                   value: preferences.highContrast,
                   onChanged: controller.setHighContrast,
                 ),
+                SettingsSwitchTile(
+                  icon: LucideIcons.pause,
+                  title: AppStrings.settingsAccessibilityReduceMotion.tr(),
+                  subtitle: AppStrings.settingsAccessibilityReduceMotionSub
+                      .tr(),
+                  value: preferences.reduceMotion,
+                  onChanged: controller.setReduceMotion,
+                ),
               ],
             ),
             SettingsSection(

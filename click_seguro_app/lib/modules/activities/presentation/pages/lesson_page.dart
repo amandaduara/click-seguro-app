@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/utils/app_haptics.dart';
 import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
@@ -24,6 +27,7 @@ import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:animations/animations.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -63,10 +67,17 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   Locale? _locale;
   int? _shownIndex;
 
+  /// A troca para a pergunta atual foi para trás: voltar desliza no sentido
+  /// oposto a avançar (specs/022 FR-027).
+  bool _backwards = false;
+
   /// A pergunta na tela já foi lida sozinha. Volta a `false` a cada troca de
   /// pergunta: voltar ou avançar para uma pergunta lê de novo (relato do
   /// aparelho, 2026-10-22); a mesma pergunta na tela não repete.
   bool _autoReadDone = false;
+
+  /// Módulo cujas imagens já foram para o cache.
+  Object? _precachedModule;
 
   @override
   void initState() {
@@ -75,6 +86,8 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     _readAloud = GetIt.instance<ReadAloudController>();
     _controller.addListener(_onLessonChanged);
     _readAloud.addListener(_maybeAutoRead);
+    // Módulo já carregado antes da tela: o ouvinte não seria chamado.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _precacheImages());
   }
 
   /// O idioma da voz é o do app: prepara de novo se ele mudar.
@@ -97,8 +110,10 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
 
   void _onLessonChanged() {
     if (_controller.status != LessonStatus.loaded) return;
+    _precacheImages();
     final int index = _controller.currentIndex;
     if (_shownIndex != null && index != _shownIndex) {
+      _backwards = index < _shownIndex!;
       // Antes do parar: o aviso de "parado" já pode ler a pergunta nova.
       _shownIndex = index;
       _autoReadDone = false;
@@ -106,6 +121,24 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     }
     _shownIndex = index;
     _maybeAutoRead();
+  }
+
+  /// As imagens de todas as perguntas vão ao cache na carga: a de cada
+  /// pergunta já está pronta quando ela aparece e não empurra as
+  /// alternativas para baixo do dedo (achado da T058, specs/022).
+  void _precacheImages() {
+    final module = _controller.module;
+    if (!mounted ||
+        _controller.status != LessonStatus.loaded ||
+        module == null ||
+        identical(module, _precachedModule)) {
+      return;
+    }
+    _precachedModule = module;
+    for (final LessonEntity lesson in module.lessons) {
+      final String? url = lesson.imageUrl;
+      if (url != null) unawaited(SafeNetworkImage.precache(context, url));
+    }
   }
 
   void _maybeAutoRead() {
@@ -137,7 +170,12 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(message)));
     }
-    if (attempt == AnswerAttempt.answered) await _showFeedback();
+    if (attempt == AnswerAttempt.answered) {
+      // Uma vibração, distinta para acerto e erro (specs/022 FR-022).
+      final bool correct = _controller.currentResult?.isCorrect ?? false;
+      unawaited(correct ? AppHaptics.success() : AppHaptics.error());
+      await _showFeedback();
+    }
   }
 
   /// Painel de feedback; seguir vai à próxima pergunta ou, na última, de
@@ -272,14 +310,27 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
           LessonStatus.loaded when lesson != null => Column(
             children: [
               Expanded(
-                child: _LessonBody(
-                  lesson: lesson,
-                  lessons: controller.module!.lessons,
-                  currentIndex: controller.currentIndex,
-                  selectedOptionId: controller.selectedOptionId,
-                  result: controller.currentResult,
-                  onSelect: controller.canSelect ? controller.select : null,
-                  listen: _listenButton(lesson.spokenText),
+                child: PageTransitionSwitcher(
+                  duration: AppMotion.of(context).long,
+                  reverse: _backwards,
+                  transitionBuilder: (child, primary, secondary) =>
+                      SharedAxisTransition(
+                        animation: primary,
+                        secondaryAnimation: secondary,
+                        transitionType: SharedAxisTransitionType.horizontal,
+                        fillColor: Colors.transparent,
+                        child: child,
+                      ),
+                  child: _LessonBody(
+                    key: ValueKey(lesson.id),
+                    lesson: lesson,
+                    lessons: controller.module!.lessons,
+                    currentIndex: controller.currentIndex,
+                    selectedOptionId: controller.selectedOptionId,
+                    result: controller.currentResult,
+                    onSelect: controller.canSelect ? controller.select : null,
+                    listen: _listenButton(lesson.spokenText),
+                  ),
                 ),
               ),
               // O envio também pode esperar o servidor acordar (FR-014).
@@ -299,6 +350,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
 
 class _LessonBody extends StatelessWidget {
   const _LessonBody({
+    super.key,
     required this.lesson,
     required this.lessons,
     required this.currentIndex,
@@ -348,16 +400,12 @@ class _LessonBody extends StatelessWidget {
               constraints: const BoxConstraints(maxHeight: maxImageHeight),
               child: ClipRRect(
                 borderRadius: AppSpacing.radius2xl,
-                // O espaço depois da imagem só existe com ela: o errorBuilder
-                // não passa pelo frameBuilder (FR-013).
-                child: Image.network(
-                  image,
+                // O espaço depois da imagem só existe com ela (FR-013).
+                child: SafeNetworkImage(
+                  url: image,
                   fit: BoxFit.contain,
-                  frameBuilder: (context, child, _, _) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-                    child: child,
-                  ),
-                  errorBuilder: (context, _, _) => const SizedBox.shrink(),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                  placeholder: const SizedBox.shrink(),
                 ),
               ),
             ),

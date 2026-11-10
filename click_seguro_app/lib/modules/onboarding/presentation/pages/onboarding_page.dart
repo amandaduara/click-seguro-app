@@ -1,4 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/controller/onboarding_controller.dart';
@@ -6,6 +7,7 @@ import 'package:click_seguro_app/modules/onboarding/presentation/models/onboardi
 import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_page_indicator.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_slide.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/utils/motion_scroll.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -38,10 +40,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (mounted) context.go('/login');
       return;
     }
-    await _pageController.animateToPage(
+    if (!mounted) return;
+    await _pageController.moveToPage(
       controller.currentPage,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
+      duration: AppMotion.of(context).long,
     );
   }
 
@@ -78,13 +80,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
             OnboardingPageIndicator(
               pageCount: OnboardingPageContent.pages.length,
               currentPage: controller.currentPage,
+              controller: _pageController,
             ),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.s6),
-              child: SafeButton(
-                label: currentContent.buttonLabelKey.tr(),
-                iconRight: const Icon(LucideIcons.chevronRight, size: 16),
-                onPressed: () => _handleNext(controller),
+              // "Continuar" vira "Começar" esmaecendo; o fundo é o mesmo,
+              // então só o rótulo parece trocar.
+              child: AnimatedSwitcher(
+                duration: AppMotion.of(context).medium,
+                switchInCurve: AppMotion.enter,
+                switchOutCurve: AppMotion.exit,
+                child: SafeButton(
+                  key: ValueKey(currentContent.buttonLabelKey),
+                  label: currentContent.buttonLabelKey.tr(),
+                  iconRight: const Icon(LucideIcons.chevronRight, size: 16),
+                  onPressed: () => _handleNext(controller),
+                ),
               ),
             ),
           ],

@@ -348,11 +348,16 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - `AccessibilityPage`: seletor de tamanho de fonte com prévia ao vivo, alto contraste e leitura
     automática. Usa a infraestrutura da F0.6.
   - Widget test: mudar a opção reflete no app e persiste (fake do `LocalCacheService`).
+  - Revisto pela specs/022-fluidez-movimento (2026-11-09): a tela ganhou "Reduzir animações"
+    (RF-038 a RF-041), desligada por padrão e válida também para o visitante.
   - Entregue (2026-10-15): a tela também escolhe a velocidade da voz (guardada pela F0.6, sem
     outro lugar para mudar). **Revê a B8:** a engrenagem aparece também para o visitante, e as
     Configurações dele mostram só Leitura e aparência (Acessibilidade, Idioma) e Sobre, sem
     convite e sem pedido ao serviço. Ler sozinho nas perguntas fica para a B2, que deve ler
     `autoReadAloud` como a notícia já faz e citar as atividades no subtítulo da chave.
+- [x] **Fluidez e movimento** (RF-038 a RF-041, RNF-003) (specs/022-fluidez-movimento)
+  - Durações e curvas únicas (`AppMotion`), esqueletos, trocas de estado animadas, transições
+    entre telas, toque com resposta e "Reduzir animações". Com testes.
 - [ ] **B10 Assistente de IA** (RF-043 a RF-045) (specs/016-assistente-ia)
   - Escopo aprovado em 2026-10-22 por Amanda Duara (dupla do TCC), incluindo registro,
     rota e acesso pelo cabeçalho compartilhado; substitui o adiamento de 2026-10-03.

@@ -7,6 +7,8 @@ import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.
 import 'package:click_seguro_app/modules/news/domain/usecases/get_reels_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/watch_news_interactions_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/reels_status.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
@@ -30,12 +32,16 @@ class ReelsController extends ChangeNotifier {
     required ToggleLikeUseCase toggleLike,
     required ToggleSaveUseCase toggleSave,
     required ValueListenable<UserSessionStatus> sessionStatus,
+    required WatchNewsInteractionsUseCase watchInteractions,
   }) : _getReels = getReels,
        _toggleLike = toggleLike,
        _toggleSave = toggleSave,
        _sessionStatus = sessionStatus {
     _sessionStatus.addListener(_onSessionChanged);
+    _interactions = watchInteractions().listen(_applyInteraction);
   }
+
+  late final StreamSubscription<NewsInteractionChange> _interactions;
 
   final GetReelsUseCase _getReels;
   final ToggleLikeUseCase _toggleLike;
@@ -220,6 +226,7 @@ class ReelsController extends ChangeNotifier {
   @override
   void dispose() {
     _sessionStatus.removeListener(_onSessionChanged);
+    unawaited(_interactions.cancel());
     unawaited(_messages.close());
     super.dispose();
   }
@@ -267,6 +274,30 @@ class ReelsController extends ChangeNotifier {
         _reels.length - 1 - _currentIndex <= prefetchThreshold) {
       unawaited(loadMore());
     }
+  }
+
+  /// Curtir ou salvar confirmado em outra tela (ex.: salvar no detalhe):
+  /// corrige o Reel (specs/022 FR-005). Com pedido próprio em andamento, o
+  /// resultado dele prevalece.
+  void _applyInteraction(NewsInteractionChange change) {
+    final ReelEntity? reel = _find(change.newsId);
+    if (reel == null ||
+        _likePending.contains(reel.id) ||
+        _savePending.contains(reel.id)) {
+      return;
+    }
+    final ReelEntity updated = reel.copyWith(
+      isLiked: change.isLiked,
+      likesCount: change.likesCount,
+      isSaved: change.isSaved,
+    );
+    if (updated.isLiked == reel.isLiked &&
+        updated.likesCount == reel.likesCount &&
+        updated.isSaved == reel.isSaved) {
+      return;
+    }
+    _replace(updated);
+    notifyListeners();
   }
 
   void _onSessionChanged() {

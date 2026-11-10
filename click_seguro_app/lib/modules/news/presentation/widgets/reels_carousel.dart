@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/reel_view.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/widgets/press_scale.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -35,7 +40,7 @@ class ReelsCarousel extends StatelessWidget {
   }
 }
 
-class _ReelCard extends StatelessWidget {
+class _ReelCard extends StatefulWidget {
   const _ReelCard({
     required this.item,
     required this.width,
@@ -47,17 +52,36 @@ class _ReelCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_ReelCard> createState() => _ReelCardState();
+}
+
+class _ReelCardState extends State<_ReelCard> {
+  /// A aba de Reels tem outro `Navigator`, então não há `Hero`: a imagem em
+  /// tela cheia vai para o cache quando o cartão aparece, e o Reel já a
+  /// encontra ao chegar (specs/022 R10). Só no toque não dava tempo de
+  /// baixá-la (achado da T058).
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    unawaited(ReelView.precache(context, widget.item.imageUrl));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final NewsItemEntity item = widget.item;
     final String? image = item.imageUrl;
     return Semantics(
       button: true,
       label: '${AppStrings.newsReelsBadge.tr()}: ${item.title}, ${item.source}',
       excludeSemantics: true,
-      child: GestureDetector(
-        onTap: onTap,
+      // O mesmo afundamento dos botões e cartões (FR-020).
+      child: PressScale(
+        enabled: true,
+        pressedScale: 0.97,
+        onTap: widget.onTap,
         child: Container(
-          width: width,
+          width: widget.width,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: context.colors.secondary,
@@ -67,12 +91,12 @@ class _ReelCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              if (image != null)
-                Image.network(
-                  image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                ),
+              SafeNetworkImage(
+                url: image,
+                width: widget.width,
+                height: widget.width * 16 / 9,
+                placeholder: const SizedBox.shrink(),
+              ),
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(

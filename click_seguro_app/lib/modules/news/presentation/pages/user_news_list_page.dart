@@ -15,6 +15,7 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dar
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/user_news_list_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_footer.dart';
+import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -126,8 +127,14 @@ class _UserNewsListState extends State<_UserNewsList> {
     });
   }
 
+  String _heroTag(NewsItemEntity item) =>
+      NewsDetailPreview.tagFor(widget.kind.name, item.id);
+
   Future<void> _openNews(NewsItemEntity item) async {
-    await context.push<void>('/news/${item.id}');
+    await context.push<void>(
+      '/news/${item.id}',
+      extra: NewsDetailPreview(item: item, heroTag: _heroTag(item)),
+    );
     if (mounted) unawaited(_controller.refresh());
   }
 
@@ -186,6 +193,7 @@ class _UserNewsListState extends State<_UserNewsList> {
               return NewsCard(
                 item: items[index],
                 now: now,
+                heroTag: _heroTag(items[index]),
                 onTap: () => _openNews(items[index]),
               );
             },

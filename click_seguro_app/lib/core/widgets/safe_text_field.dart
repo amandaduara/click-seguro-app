@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
@@ -107,7 +108,8 @@ class _SafeTextFieldState extends State<SafeTextField> {
               const SizedBox(height: AppSpacing.s1),
             ],
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: AppMotion.of(context).short,
+              curve: AppMotion.standard,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
               decoration: BoxDecoration(
                 color: context.colors.background,
@@ -146,6 +148,10 @@ class _SafeTextFieldState extends State<SafeTextField> {
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: context.colors.textForeground),
                           decoration: InputDecoration(
+                            // O fundo é o do contêiner arredondado; o
+                            // `filled` do tema desenhava um retângulo de
+                            // outro tom dentro dele (specs/022 T060).
+                            filled: false,
                             hintText: widget.placeholder,
                             hintStyle: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(

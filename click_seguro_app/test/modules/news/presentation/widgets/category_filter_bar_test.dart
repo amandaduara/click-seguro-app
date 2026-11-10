@@ -71,4 +71,27 @@ void main() {
     final list = tester.widget<ListView>(find.byType(ListView));
     expect(list.scrollDirection, Axis.horizontal);
   });
+
+  testWidgets('"All" curto continua pílula, não círculo (specs/022 T061)', (
+    tester,
+  ) async {
+    await pumpLocalized(
+      tester,
+      locale: const Locale('en', 'US'),
+      child: Scaffold(
+        body: CategoryFilterBar(
+          categories: const [],
+          selectedSlug: null,
+          onSelected: (_) {},
+        ),
+      ),
+    );
+
+    final Size chip = tester.getSize(
+      find
+          .ancestor(of: find.text('All'), matching: find.byType(Material))
+          .first,
+    );
+    expect(chip.width, greaterThanOrEqualTo(chip.height * 1.5));
+  });
 }

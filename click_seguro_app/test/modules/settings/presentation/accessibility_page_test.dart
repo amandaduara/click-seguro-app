@@ -1,5 +1,6 @@
 import 'dart:ui' show CheckedState, Tristate;
 
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/main.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
@@ -367,6 +368,61 @@ void main() {
 
       expect(toggled(tester, autoRead), Tristate.isTrue);
       expect(checked(tester, 'Rápida'), CheckedState.isTrue);
+    });
+  });
+
+  group('reduzir animações', () {
+    const String label = 'Reduzir animações';
+
+    testWidgets('na seção "Aparência", desligada por padrão', (tester) async {
+      await pumpAccessibility(tester);
+      await reveal(tester, find.text(label));
+
+      expect(
+        find.text('Troca de telas e efeitos sem movimento'),
+        findsOneWidget,
+      );
+      expect(toggled(tester, label), Tristate.isFalse);
+      expect(AppMotion.of(page(tester)).reduced, isFalse);
+    });
+
+    testWidgets('ligar zera as animações na hora e grava; desligar volta', (
+      tester,
+    ) async {
+      await pumpAccessibility(tester);
+
+      await tapOption(tester, label);
+
+      expect(toggled(tester, label), Tristate.isTrue);
+      expect(AppMotion.of(page(tester)).reduced, isTrue);
+      expect(AppMotion.of(page(tester)).medium, Duration.zero);
+      expect(stored().reduceMotion, isTrue);
+
+      await tapOption(tester, label);
+
+      expect(AppMotion.of(page(tester)).reduced, isFalse);
+      expect(stored().reduceMotion, isFalse);
+    });
+
+    testWidgets('na próxima abertura já abre sem animações', (tester) async {
+      store(
+        const AccessibilityPreferences.defaults().copyWith(reduceMotion: true),
+      );
+      await pumpAccessibility(tester);
+
+      expect(AppMotion.of(page(tester)).reduced, isTrue);
+      await reveal(tester, find.text(label));
+      expect(toggled(tester, label), Tristate.isTrue);
+    });
+
+    testWidgets('em inglês', (tester) async {
+      await pumpAccessibility(tester, locale: const Locale('en', 'US'));
+      await reveal(tester, find.text('Reduce motion'));
+
+      expect(
+        find.text('Screen changes and effects without movement'),
+        findsOneWidget,
+      );
     });
   });
 }

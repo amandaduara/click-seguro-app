@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
@@ -13,8 +14,6 @@ class AuthModeSwitch extends StatelessWidget {
     required this.isRegister,
     required this.onChanged,
   });
-
-  static const Duration _duration = Duration(milliseconds: 200);
 
   final String loginLabel;
   final String registerLabel;
@@ -35,8 +34,8 @@ class AuthModeSwitch extends StatelessWidget {
         children: [
           Positioned.fill(
             child: AnimatedAlign(
-              duration: _duration,
-              curve: Curves.easeOut,
+              duration: AppMotion.of(context).medium,
+              curve: AppMotion.standard,
               alignment: isRegister
                   ? Alignment.centerRight
                   : Alignment.centerLeft,
@@ -107,7 +106,8 @@ class _Segment extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 48),
             child: Center(
               child: AnimatedDefaultTextStyle(
-                duration: AuthModeSwitch._duration,
+                duration: AppMotion.of(context).medium,
+                curve: AppMotion.standard,
                 style: style ?? const TextStyle(),
                 child: Text(label, textAlign: TextAlign.center),
               ),

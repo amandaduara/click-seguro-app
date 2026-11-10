@@ -5,8 +5,9 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
 import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
@@ -15,9 +16,12 @@ import 'package:click_seguro_app/modules/common/services/external_launcher_servi
 import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_status.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_detail_presentation_extension.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_placeholders.dart';
+import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_actions.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_header.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
@@ -34,10 +38,14 @@ import 'package:provider/provider.dart';
 /// notícia completa, "Ouvir", "Salvar", "Compartilhar", "Abrir fonte" e a
 /// atividade relacionada. O [NewsDetailController] vem da rota (um por
 /// abertura).
+///
+/// Com [preview] (aberto por um cartão), o cabeçalho aparece na hora e só o
+/// corpo espera a carga (specs/022 R9); sem ela, a tela toda é esqueleto.
 class NewsDetailPage extends StatefulWidget {
-  const NewsDetailPage({super.key, required this.newsId});
+  const NewsDetailPage({super.key, required this.newsId, this.preview});
 
   final String newsId;
+  final NewsDetailPreview? preview;
 
   @override
   State<NewsDetailPage> createState() => _NewsDetailPageState();
@@ -172,97 +180,46 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
   }
 
   Widget _content(NewsDetailController controller) {
-    switch (controller.status) {
-      case NewsDetailStatus.loading:
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SafeLoadingState(),
-            SlowRequestNotice(
-              active: true,
-              message: AppStrings.newsSlowServer.tr(),
-            ),
-          ],
-        );
-      case NewsDetailStatus.error:
-        final Failure? failure = controller.failure;
-        return SafeErrorState(
-          message: (failure?.message ?? AppStrings.errorGeneric).tr(),
-          onRetry: controller.retry,
-        );
-      case NewsDetailStatus.notFound:
-        return const _NotFound();
-      case NewsDetailStatus.loaded:
-        final NewsDetailEntity? detail = controller.detail;
-        if (detail == null) return const SizedBox.shrink();
-        return _loaded(controller, detail);
+    if (controller.status == NewsDetailStatus.notFound) {
+      return const _NotFound();
     }
+    final NewsDetailEntity? detail =
+        controller.status == NewsDetailStatus.loaded ? controller.detail : null;
+    final NewsItemEntity? news = detail?.news ?? widget.preview?.item;
+    // Sem prévia, a troca é da tela inteira; com ela, o cabeçalho fica parado
+    // (e o `Hero`, que não pode aparecer duas vezes, não entra na troca).
+    return SafeStateSwitcher(
+      stateKey: news != null,
+      child: news == null
+          ? _withoutHeader(controller)
+          : _withHeader(controller, news, detail),
+    );
   }
 
-  Widget _loaded(NewsDetailController controller, NewsDetailEntity detail) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
+  /// Sem cabeçalho para mostrar: esqueleto da tela toda ou o erro.
+  Widget _withoutHeader(NewsDetailController controller) {
+    if (controller.status == NewsDetailStatus.error) return _error(controller);
     return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(AppSpacing.s5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (controller.isFromCache) const SafeOfflineBanner(),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.s5),
+          SlowRequestNotice(
+            active: true,
+            message: AppStrings.newsSlowServer.tr(),
+          ),
+          SafeSkeleton(
+            enabled: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                NewsDetailHeader(detail: detail, now: DateTime.now()),
-                ListenableBuilder(
-                  listenable: _readAloud,
-                  builder: (context, _) => ReadAloudBar(
-                    isAvailable: _readAloud.isAvailable,
-                    isSpeaking: _readAloud.isSpeaking,
-                    speed: _readAloud.speed,
-                    onToggle: () => _toggleListen(detail),
-                    onSpeedChanged: _readAloud.setSpeed,
-                  ),
+                NewsDetailHeader(
+                  news: NewsPlaceholders.item(0),
+                  now: DateTime.now(),
+                  likesCount: 0,
                 ),
-                ValueListenableBuilder<UserSessionStatus>(
-                  valueListenable:
-                      GetIt.instance<UserSessionService>().sessionStatus,
-                  // O visitante vê sempre o marcador vazio (FR-012).
-                  builder: (context, status, _) => NewsDetailActions(
-                    isSaved:
-                        status == UserSessionStatus.authenticated &&
-                        detail.isSaved,
-                    onSave: () => unawaited(_save()),
-                    onShare: () => unawaited(_share(detail)),
-                    onOpenSource: detail.hasSource
-                        ? () => unawaited(_openSource(detail))
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.s5),
-                if (detail.hasContent)
-                  Text(
-                    detail.content.trim(),
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontSize: 18,
-                      height: 1.5,
-                      color: context.colors.textForeground,
-                    ),
-                  )
-                else
-                  Text(
-                    AppStrings.newsDetailNoContent.tr(),
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontSize: 16,
-                      color: context.colors.textMutedForeground,
-                    ),
-                  ),
-                if (detail.suggestedModule case final module?) ...[
-                  const SizedBox(height: AppSpacing.s5),
-                  RelatedActivityCard(
-                    module: module,
-                    // Por caminho, sem importar `activities` (constituição I).
-                    onTap: () => context.push<void>('/activities/${module.id}'),
-                  ),
-                ],
+                const _BodyPlaceholder(),
               ],
             ),
           ),
@@ -270,6 +227,151 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
       ),
     );
   }
+
+  Widget _error(NewsDetailController controller) {
+    final Failure? failure = controller.failure;
+    return SafeErrorState(
+      message: (failure?.message ?? AppStrings.errorGeneric).tr(),
+      onRetry: controller.retry,
+    );
+  }
+
+  /// Cabeçalho (da prévia ou do detalhe) e, abaixo, o corpo, o esqueleto do
+  /// corpo ou o erro.
+  Widget _withHeader(
+    NewsDetailController controller,
+    NewsItemEntity news,
+    NewsDetailEntity? detail,
+  ) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (detail != null && controller.isFromCache)
+            const SafeOfflineBanner(),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.s5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                NewsDetailHeader(
+                  news: news,
+                  now: DateTime.now(),
+                  likesCount: detail?.likesCount,
+                  heroTag: widget.preview?.heroTag,
+                ),
+                SafeStateSwitcher(
+                  stateKey: controller.status,
+                  child: switch (controller.status) {
+                    NewsDetailStatus.error => _error(controller),
+                    _ when detail != null => _body(controller, detail),
+                    _ => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SafeSkeleton(
+                          enabled: true,
+                          child: _BodyPlaceholder(),
+                        ),
+                        SlowRequestNotice(
+                          active: true,
+                          message: AppStrings.newsSlowServer.tr(),
+                        ),
+                      ],
+                    ),
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// O que vem abaixo do cabeçalho: ouvir, ações, texto e atividade.
+  Widget _body(NewsDetailController controller, NewsDetailEntity detail) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListenableBuilder(
+          listenable: _readAloud,
+          builder: (context, _) => ReadAloudBar(
+            isAvailable: _readAloud.isAvailable,
+            isSpeaking: _readAloud.isSpeaking,
+            speed: _readAloud.speed,
+            onToggle: () => _toggleListen(detail),
+            onSpeedChanged: _readAloud.setSpeed,
+          ),
+        ),
+        ValueListenableBuilder<UserSessionStatus>(
+          valueListenable: GetIt.instance<UserSessionService>().sessionStatus,
+          // O visitante vê sempre o marcador vazio (FR-012).
+          builder: (context, status, _) => NewsDetailActions(
+            isSaved:
+                status == UserSessionStatus.authenticated && detail.isSaved,
+            onSave: () => unawaited(_save()),
+            onShare: () => unawaited(_share(detail)),
+            onOpenSource: detail.hasSource
+                ? () => unawaited(_openSource(detail))
+                : null,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s5),
+        if (detail.hasContent)
+          Text(
+            detail.content.trim(),
+            style: textTheme.bodyLarge?.copyWith(
+              fontSize: 18,
+              height: 1.5,
+              color: context.colors.textForeground,
+            ),
+          )
+        else
+          Text(
+            AppStrings.newsDetailNoContent.tr(),
+            style: textTheme.bodyLarge?.copyWith(
+              fontSize: 16,
+              color: context.colors.textMutedForeground,
+            ),
+          ),
+        if (detail.suggestedModule case final module?) ...[
+          const SizedBox(height: AppSpacing.s5),
+          RelatedActivityCard(
+            module: module,
+            // Por caminho, sem importar `activities` (constituição I).
+            onTap: () => context.push<void>('/activities/${module.id}'),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Corpo em esqueleto: as ações e algumas linhas de texto.
+class _BodyPlaceholder extends StatelessWidget {
+  const _BodyPlaceholder();
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const SizedBox(height: AppSpacing.s5),
+      NewsDetailActions(
+        isSaved: false,
+        onSave: () {},
+        onShare: () {},
+        onOpenSource: () {},
+      ),
+      const SizedBox(height: AppSpacing.s5),
+      Text(
+        SafeSkeleton.text(60),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(fontSize: 18, height: 1.5),
+      ),
+    ],
+  );
 }
 
 /// "Notícia não encontrada": sem "Tentar novamente"; a barra superior leva

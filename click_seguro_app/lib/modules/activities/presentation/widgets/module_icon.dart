@@ -1,4 +1,5 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -13,21 +14,16 @@ class ModuleIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? src = url;
     return ExcludeSemantics(
       child: SizedBox.square(
         dimension: size,
-        child: src == null
-            ? const _DefaultIcon()
-            : Image.network(
-                src,
-                width: size,
-                height: size,
-                fit: BoxFit.contain,
-                loadingBuilder: (context, child, progress) =>
-                    progress == null ? child : const _DefaultIcon(),
-                errorBuilder: (context, _, _) => const _DefaultIcon(),
-              ),
+        child: SafeNetworkImage(
+          url: url,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          placeholder: const _DefaultIcon(),
+        ),
       ),
     );
   }

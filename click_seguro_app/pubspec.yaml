@@ -26,6 +26,8 @@ dependencies:
   image_picker: ^1.2.3
   path_provider: ^2.1.6
   package_info_plus: ^10.2.2
+  animations: ^3.0.0
+  skeletonizer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
@@ -39,3 +41,19 @@ flutter:
     - assets/translations/
     - assets/data/official_contacts.json
     - assets/branding/click_seguro_logo.png
+
+  # Fonte da marca (design system §3), embutida para funcionar sem internet.
+  # Licença: assets/fonts/montserrat/OFL.txt.
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/montserrat/Montserrat-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/montserrat/Montserrat-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/montserrat/Montserrat-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/montserrat/Montserrat-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/montserrat/Montserrat-ExtraBold.ttf
+          weight: 800

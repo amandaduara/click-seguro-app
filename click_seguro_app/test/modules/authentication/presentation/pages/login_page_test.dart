@@ -6,6 +6,7 @@ import 'package:click_seguro_app/modules/authentication/domain/failures/auth_fai
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
+import 'package:click_seguro_app/core/widgets/animated_reveal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -167,6 +168,34 @@ void main() {
       expect(field('Seu nome'), findsOneWidget);
       expect(find.byType(PasswordRulesList), findsOneWidget);
       expect(find.text('maria@exemplo.com'), findsOneWidget);
+    });
+
+    testWidgets('nome e regras entram crescendo e saem encolhendo '
+        '(specs/022 FR-023)', (tester) async {
+      await pumpLogin(tester);
+      double nameHeight() => tester
+          .getSize(
+            find.ancestor(
+              of: field('Seu nome'),
+              matching: find.byType(AnimatedReveal),
+            ),
+          )
+          .height;
+
+      await tester.tap(find.text('Criar conta').first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
+      final double entering = nameHeight();
+      await tester.pumpAndSettle();
+      expect(entering, lessThan(nameHeight()));
+
+      await tester.tap(find.text('Entrar').first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(field('Seu nome'), findsOneWidget, reason: 'saindo');
+      await tester.pumpAndSettle();
+      expect(field('Seu nome'), findsNothing);
+      expect(find.byType(PasswordRulesList), findsNothing);
     });
 
     testWidgets('Criar conta só habilita com a senha cumprindo as regras', (

@@ -1,6 +1,8 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -16,7 +18,12 @@ class NewsCard extends StatefulWidget {
     required this.now,
     required this.onTap,
     this.compact = true,
+    this.heroTag,
   });
+
+  /// Lado da imagem do cartão compacto; o detalhe usa a mesma miniatura
+  /// enquanto a imagem grande carrega (specs/022 FR-017).
+  static const double compactImageSize = 80;
 
   final NewsItemEntity item;
   final DateTime now;
@@ -24,6 +31,9 @@ class NewsCard extends StatefulWidget {
   /// Abre a notícia; toques novos são ignorados até o futuro terminar.
   final Future<void> Function() onTap;
   final bool compact;
+
+  /// Tag do `Hero` da imagem, a mesma passada na prévia do detalhe.
+  final String? heroTag;
 
   @override
   State<NewsCard> createState() => _NewsCardState();
@@ -73,9 +83,15 @@ class _NewsCardState extends State<NewsCard> {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: _NewsImage(url: item.imageUrl, width: 80, height: 80),
+        _hero(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: _NewsImage(
+              url: item.imageUrl,
+              width: NewsCard.compactImageSize,
+              height: NewsCard.compactImageSize,
+            ),
+          ),
         ),
         const SizedBox(width: AppSpacing.s3),
         Expanded(child: _details(item)),
@@ -86,13 +102,25 @@ class _NewsCardState extends State<NewsCard> {
   Widget _full(NewsItemEntity item) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      _NewsImage(url: item.imageUrl, height: 176),
+      _hero(_NewsImage(url: item.imageUrl, height: 176)),
       Padding(
         padding: const EdgeInsets.all(AppSpacing.s4),
         child: _details(item),
       ),
     ],
   );
+
+  /// Só com imagem (sem ela o detalhe não tem para onde voar) e com
+  /// movimento normal (specs/022 FR-010).
+  Widget _hero(Widget child) {
+    final String? tag = widget.heroTag;
+    if (tag == null ||
+        widget.item.imageUrl == null ||
+        AppMotion.of(context).reduced) {
+      return child;
+    }
+    return Hero(tag: tag, child: child);
+  }
 
   Widget _details(NewsItemEntity item) {
     final textTheme = Theme.of(context).textTheme;
@@ -200,17 +228,10 @@ class _NewsImage extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
-    final String? source = url;
-    if (source == null) return _placeholder(context);
-    return Image.network(
-      source,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      errorBuilder: (context, _, _) => _placeholder(context),
-      loadingBuilder: (_, child, progress) =>
-          progress == null ? child : _placeholder(context),
-    );
-  }
+  Widget build(BuildContext context) => SafeNetworkImage(
+    url: url,
+    width: width,
+    height: height,
+    placeholder: _placeholder(context),
+  );
 }

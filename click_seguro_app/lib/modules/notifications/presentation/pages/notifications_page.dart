@@ -6,10 +6,13 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/notifications/domain/entities/alert_entity.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/alerts_status.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/notifications_controller.dart';
+import 'package:click_seguro_app/modules/notifications/presentation/extensions/alert_placeholders.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/extensions/alerts_grouping.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/widgets/alert_tile.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/widgets/alerts_notices.dart';
@@ -75,17 +78,33 @@ class _NotificationsPageState extends State<NotificationsPage> {
           valueListenable: GetIt.instance<UserSessionService>().sessionStatus,
           builder: (context, status, _) =>
               status == UserSessionStatus.authenticated
-              ? _buildAlerts(context.watch<NotificationsController>())
+              ? _alertsState(context.watch<NotificationsController>())
               : const _GuestInvite(),
         ),
       ),
     );
   }
 
+  /// Lendo os alertas guardados: a lista em esqueleto; depois, troca com um
+  /// esmaecimento (R8).
+  Widget _alertsState(NotificationsController controller) {
+    final bool loading = controller.status == AlertsStatus.loading;
+    return SafeStateSwitcher(
+      stateKey: loading,
+      child: loading
+          ? SafeSkeleton(
+              enabled: true,
+              child: _AlertsList(
+                alerts: AlertPlaceholders.alerts(controller.now),
+                now: controller.now,
+                onOpen: (_) {},
+              ),
+            )
+          : _buildAlerts(controller),
+    );
+  }
+
   Widget _buildAlerts(NotificationsController controller) {
-    if (controller.status == AlertsStatus.loading) {
-      return const SizedBox.shrink();
-    }
     final Widget header = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
