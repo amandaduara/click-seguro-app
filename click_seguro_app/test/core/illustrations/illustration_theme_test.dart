@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Tema da ilustração pelo título do módulo ou pela categoria da notícia
-/// (FR-014, R7 de specs/022-redesign-visual).
+/// (FR-014, R7 de specs/023-redesign-visual).
 void main() {
   group('IllustrationTheme.fromText', () {
     const Map<String, IllustrationTheme> cases = {

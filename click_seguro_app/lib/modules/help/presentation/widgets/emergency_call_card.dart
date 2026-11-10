@@ -13,7 +13,7 @@ abstract final class EmergencyNumbers {
 }
 
 /// "Caiu em um golpe?" no topo da Central de ajuda (FR-016 de
-/// specs/022-redesign-visual): cartão coral com o botão branco
+/// specs/023-redesign-visual): cartão coral com o botão branco
 /// "Ligar para 190".
 class EmergencyCallCard extends StatelessWidget {
   const EmergencyCallCard({super.key, required this.onCall});

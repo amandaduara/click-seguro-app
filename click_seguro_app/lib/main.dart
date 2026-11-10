@@ -114,7 +114,7 @@ class ClickSeguroApp extends StatelessWidget {
                 preferences.fontScale.totalScale(systemScale),
               ),
               // Um sinal só para toda animação: o do aparelho ou o do app
-              // (FR-021, FR-024; R8 de specs/022-redesign-visual).
+              // (FR-021, FR-024; R8 de specs/023-redesign-visual).
               disableAnimations:
                   media.disableAnimations || preferences.reduceMotion,
             ),

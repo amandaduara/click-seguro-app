@@ -1,8 +1,8 @@
 # Implementation Plan: Redesign visual 2.0
 
-**Branch**: `022-redesign-visual` | **Date**: 2026-11-08 | **Spec**: [spec.md](spec.md)
+**Branch**: `023-redesign-visual` | **Date**: 2026-11-08 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/022-redesign-visual/spec.md` · Figma
+**Input**: Feature specification from `specs/023-redesign-visual/spec.md` · Figma
 [Click Seguro · Redesign 2.0](https://www.figma.com/design/jr3QeiIsXvuWqJirZFFdYf) ·
 [especificação do produto](../../.specify/memory/specification.md) 2.4.0 ·
 [design system](../../.specify/memory/design-system.md) 1.1.1 ·
@@ -100,7 +100,7 @@ registrar é o `flutter_svg`, em Complexity Tracking.
 ### Documentation (this feature)
 
 ```text
-specs/022-redesign-visual/
+specs/023-redesign-visual/
 ├── plan.md              # Este arquivo
 ├── research.md          # Phase 0: decisões R0–R13
 ├── data-model.md        # Phase 1: tokens, preferência, ilustração e tema

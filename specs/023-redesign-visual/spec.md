@@ -1,6 +1,6 @@
 # Feature Specification: Redesign visual 2.0
 
-**Feature Branch**: `022-redesign-visual`
+**Feature Branch**: `023-redesign-visual`
 
 **Created**: 2026-11-08
 

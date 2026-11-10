@@ -34,7 +34,7 @@ void main() {
     ),
   );
 
-  // Sem imagem, a capa é a ilustração do tema (FR-015 de specs/022).
+  // Sem imagem, a capa é a ilustração do tema (FR-015 de specs/023).
   Finder placeholder() => find.byType(SafeIllustration);
 
   Finder cover() => find.byType(NewsCover);

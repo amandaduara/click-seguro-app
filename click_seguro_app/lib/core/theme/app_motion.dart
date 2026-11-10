@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Durações e curvas das animações do redesign (R8 e R9 de
-/// specs/022-redesign-visual).
+/// specs/023-redesign-visual).
 ///
 /// Toda animação consulta [AppMotionContext.reduceMotion]: o `main.dart` soma
 /// o "Reduzir animações" do app ao do aparelho em

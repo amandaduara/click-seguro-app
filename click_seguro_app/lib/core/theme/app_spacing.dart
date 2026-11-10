@@ -13,7 +13,7 @@ abstract class AppSpacing {
   static const double s7 = 32.0;
   static const double s8 = 48.0;
 
-  // Cantos (R4 de specs/022-redesign-visual)
+  // Cantos (R4 de specs/023-redesign-visual)
   /// Peças internas pequenas.
   static final BorderRadius radiusSm = BorderRadius.circular(12.0);
 

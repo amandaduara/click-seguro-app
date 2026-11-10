@@ -69,7 +69,7 @@ void main() {
     );
   }
 
-  group('cartão "Caiu em um golpe?" (FR-016 de specs/022)', () {
+  group('cartão "Caiu em um golpe?" (FR-016 de specs/023)', () {
     testWidgets('fica no topo, com título, texto e botão', (tester) async {
       final SemanticsHandle semantics = tester.ensureSemantics();
       await open(tester);

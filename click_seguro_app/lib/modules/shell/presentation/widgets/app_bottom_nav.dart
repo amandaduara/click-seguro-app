@@ -57,7 +57,7 @@ class AppBottomNav extends StatelessWidget {
               children: [
                 // Cinco abas iguais, sem o botão central de antes: ele
                 // confundia em qual aba a pessoa estava (FR-009 de
-                // specs/022-redesign-visual).
+                // specs/023-redesign-visual).
                 for (final tab in AppTab.values)
                   Expanded(
                     child: _TabItem(

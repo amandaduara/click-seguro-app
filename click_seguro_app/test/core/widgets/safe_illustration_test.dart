@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Ilustração decorativa em SVG, recolorida no alto contraste (FR-002,
-/// FR-017, R5 de specs/022-redesign-visual).
+/// FR-017, R5 de specs/023-redesign-visual).
 void main() {
   Future<SvgAssetLoader> pump(WidgetTester tester, ThemeData theme) async {
     await tester.pumpWidget(

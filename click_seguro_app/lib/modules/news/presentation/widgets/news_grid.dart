@@ -3,7 +3,7 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.d
 import 'package:flutter/material.dart';
 
 /// Grade de 2 colunas com capas de alturas variadas, estilo Pinterest
-/// (FR-025 de specs/022-redesign-visual). A ordem da API segue da esquerda
+/// (FR-025 de specs/023-redesign-visual). A ordem da API segue da esquerda
 /// para a direita e de cima para baixo: pares à esquerda, ímpares à
 /// direita. Com a letra muito grande (escala total acima de 1,3), vira uma
 /// coluna, para o título não ficar espremido.

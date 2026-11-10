@@ -50,7 +50,7 @@ void main() {
   callNumberTests();
 }
 
-// FR-016 de specs/022-redesign-visual: o cartão "Caiu em um golpe?" liga
+// FR-016 de specs/023-redesign-visual: o cartão "Caiu em um golpe?" liga
 // para um número, com a mesma regra dos contatos.
 void callNumberTests() {
   test('callNumber liga para o número pedido', () async {

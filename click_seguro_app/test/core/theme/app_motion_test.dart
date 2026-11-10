@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Durações e o sinal único de "reduzir animações" (R8 de
-/// specs/022-redesign-visual).
+/// specs/023-redesign-visual).
 void main() {
   test('durações do redesign', () {
     expect(AppMotion.fast, const Duration(milliseconds: 150));

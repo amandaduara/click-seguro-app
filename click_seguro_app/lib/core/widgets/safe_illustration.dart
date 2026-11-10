@@ -5,7 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 /// Ilustração decorativa do redesign (FR-017), fora da árvore de semântica.
 /// No alto contraste, as cores do desenho viram as da paleta AAA (FR-002,
-/// R5 de specs/022-redesign-visual).
+/// R5 de specs/023-redesign-visual).
 class SafeIllustration extends StatelessWidget {
   const SafeIllustration(this.illustration, {super.key, this.height});
 

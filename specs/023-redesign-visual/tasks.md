@@ -5,7 +5,7 @@ description: "Task list for feature 022: redesign visual 2.0"
 
 # Tasks: Redesign visual 2.0
 
-**Input**: Design documents from `/specs/022-redesign-visual/`
+**Input**: Design documents from `/specs/023-redesign-visual/`
 
 **Prerequisites**: [plan.md](plan.md), [spec.md](spec.md), [research.md](research.md),
 [data-model.md](data-model.md), [contracts/ui-components.md](contracts/ui-components.md),
@@ -570,7 +570,7 @@ notícias salvas (quickstart, passo 8).
   - cartão de emergência junto do RF-031;
   - "Reduzir animações" junto do RF-038 a RF-041;
   - changelog.
-- [ ] T072 Rodar o `/revisar-pr` na própria branch (diff `origin/develop...022-redesign-visual`,
+- [ ] T072 Rodar o `/revisar-pr` na própria branch (diff `origin/develop...023-redesign-visual`,
   por subagente independente). Corrigir os achados Alto e Médio, sobretudo código morto: tokens
   sem uso, `module_icon.dart`, campos removidos.
 - [ ] T073 Atualizar a branch com o `develop` (`git fetch` e merge) e resolver conflitos com o
@@ -579,7 +579,7 @@ notícias salvas (quickstart, passo 8).
 - [ ] T074 Validação da usuária no aparelho, seguindo o [quickstart](quickstart.md) inteiro (passos
   1 a 11). Mudanças de comportamento achadas viram clarificação na spec.
 - [ ] T075 Adicionar a tarefa R1 "Redesign visual 2.0" em `.specify/memory/tasks.md`, já marcada e
-  com o link para `specs/022-redesign-visual`,
+  com o link para `specs/023-redesign-visual`,
   marcar as tarefas deste arquivo e fazer o **commit** de docs:
   `docs(022): redesign validado no aparelho`. Push e PR para `develop` ("O que entra", "Como
   validar", "Fora do escopo").

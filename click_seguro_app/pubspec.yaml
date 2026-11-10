@@ -43,7 +43,7 @@ flutter:
     - assets/illustrations/
 
   # Inter (SIL OFL 1.1, assets/fonts/OFL.txt), empacotada para funcionar
-  # offline (specs/022-redesign-visual, R2).
+  # offline (specs/023-redesign-visual, R2).
   fonts:
     - family: Inter
       fonts:

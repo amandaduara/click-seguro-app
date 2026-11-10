@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/activities_fixtures.dart';
 
-// Redesign 2.0: a ilustração no lugar do ícone (specs/022, FR-017).
+// Redesign 2.0: a ilustração no lugar do ícone (specs/023, FR-017).
 AppIllustration illustration(WidgetTester tester) =>
     tester.widget<SafeIllustration>(find.byType(SafeIllustration)).illustration;
 

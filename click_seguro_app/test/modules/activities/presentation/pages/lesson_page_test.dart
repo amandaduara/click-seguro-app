@@ -35,7 +35,7 @@ import '../../fakes/fake_activities_remote_data_source.dart';
 import '../../fakes/fake_activities_repository.dart';
 
 /// Respondidas: os segmentos coral do progresso da pergunta (redesign 2.0,
-/// specs/022).
+/// specs/023).
 int answeredSegments(WidgetTester tester) => tester
     .widgetList<Container>(
       find.descendant(

@@ -4,7 +4,7 @@ import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Cartões do redesign 2.0 (FR-004; contrato de specs/022-redesign-visual).
+/// Cartões do redesign 2.0 (FR-004; contrato de specs/023-redesign-visual).
 void main() {
   Future<void> pump(
     WidgetTester tester,

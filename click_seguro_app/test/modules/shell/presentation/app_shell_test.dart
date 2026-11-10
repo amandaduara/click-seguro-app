@@ -68,7 +68,7 @@ void main() {
     await openHome(tester);
 
     // Sem botão central: as cinco mostram o rótulo (FR-009 de
-    // specs/022-redesign-visual).
+    // specs/023-redesign-visual).
     for (final label in [
       'Início',
       'Atividades',

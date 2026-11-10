@@ -431,7 +431,7 @@ class _AssistantTabs extends StatelessWidget {
     (AssistantTab.history, AppStrings.assistantTabHistory),
   ];
 
-  // Abas em pílula do redesign 2.0 (T030 de specs/022-redesign-visual).
+  // Abas em pílula do redesign 2.0 (T030 de specs/023-redesign-visual).
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(

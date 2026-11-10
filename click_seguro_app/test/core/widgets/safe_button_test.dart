@@ -4,7 +4,7 @@ import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Botões do redesign 2.0 (FR-006; contrato de specs/022-redesign-visual).
+/// Botões do redesign 2.0 (FR-006; contrato de specs/023-redesign-visual).
 void main() {
   Future<void> pump(
     WidgetTester tester,

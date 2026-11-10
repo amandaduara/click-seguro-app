@@ -49,7 +49,7 @@ class AccessibilityPreferences {
   final ReadingSpeed readingSpeed;
 
   /// Mostrar as telas sem animação, além do "remover animações" do aparelho
-  /// (FR-024 de specs/022-redesign-visual).
+  /// (FR-024 de specs/023-redesign-visual).
   final bool reduceMotion;
 
   AccessibilityPreferences copyWith({

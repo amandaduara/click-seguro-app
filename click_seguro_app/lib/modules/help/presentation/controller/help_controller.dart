@@ -61,7 +61,7 @@ class HelpController extends ChangeNotifier {
 
   Future<bool> call(ContactEntity contact) => callNumber(contact.phone);
 
-  /// Liga para um número, como os contatos (FR-016 de specs/022: o cartão
+  /// Liga para um número, como os contatos (FR-016 de specs/023: o cartão
   /// "Caiu em um golpe?"). `false` quando não há discador ou ele não abre.
   Future<bool> callNumber(String phone) async {
     return await _launcher.canCall() && await _launcher.call(phone);

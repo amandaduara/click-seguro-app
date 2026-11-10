@@ -21,7 +21,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Guia de estilo do redesign 2.0 (specs/022-redesign-visual), montado com
+/// Guia de estilo do redesign 2.0 (specs/023-redesign-visual), montado com
 /// os componentes reais do `core`, na ordem da prancha "Componentes" do
 /// Figma. Rodar com `flutter run -t lib/style_guide/style_guide.dart`.
 Future<void> main() async {

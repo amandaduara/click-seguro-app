@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'component_test_app.dart';
 
 /// Moldura da folha inferior: alça e conteúdo (contrato de
-/// specs/022-redesign-visual).
+/// specs/023-redesign-visual).
 void main() {
   testWidgets('mostra a alça e o conteúdo', (tester) async {
     await pumpComponent(tester, const SafeSheet(child: Text('Conteúdo')));

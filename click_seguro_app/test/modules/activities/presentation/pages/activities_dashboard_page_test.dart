@@ -186,7 +186,7 @@ void main() {
     expect(find.text('Seu progresso'), findsNothing);
   });
 
-  testWidgets('capa com a ilustração do tema do título (FR-014 de specs/022)', (
+  testWidgets('capa com a ilustração do tema do título (FR-014 de specs/023)', (
     tester,
   ) async {
     await open(tester);

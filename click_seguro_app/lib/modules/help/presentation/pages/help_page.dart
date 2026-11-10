@@ -31,7 +31,7 @@ class HelpPage extends StatelessWidget {
 }
 
 /// "Oficiais" / "Meus contatos" em pílula (T030 de
-/// specs/022-redesign-visual), ligadas ao `TabController` da tela, que
+/// specs/023-redesign-visual), ligadas ao `TabController` da tela, que
 /// continua aceitando o deslize entre as listas.
 class _HelpTabs extends StatelessWidget {
   const _HelpTabs();
@@ -183,7 +183,7 @@ class _HelpPageContent extends StatelessWidget {
   }
 
   /// Liga; sem discador, mostra o número para copiar (CB-009). Vale para
-  /// os contatos e para o "Ligar para 190" (FR-016 de specs/022).
+  /// os contatos e para o "Ligar para 190" (FR-016 de specs/023).
   Future<void> _callNumber(
     BuildContext context,
     HelpController controller,

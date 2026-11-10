@@ -308,7 +308,7 @@ void main() {
     });
   });
 
-  group('reduzir animações (FR-024 de specs/022-redesign-visual)', () {
+  group('reduzir animações (FR-024 de specs/023-redesign-visual)', () {
     const String reduceMotion = 'Reduzir animações';
 
     testWidgets('chave desligada, com o texto de apoio', (tester) async {
