@@ -4,6 +4,7 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/settings/domain/failures/settings_failures.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/change_password_page.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
@@ -142,12 +143,12 @@ void main() {
     await open(tester);
 
     expect(find.text('De 8 a 64 caracteres'), findsOneWidget);
-    expect(find.byIcon(Icons.check_circle), findsNothing);
+    expect(find.byIcon(LucideIcons.circleCheck), findsNothing);
 
     await tester.enterText(field('Nova senha'), 'NovaSenha@456');
     await tester.pump();
 
-    expect(find.byIcon(Icons.check_circle), findsNWidgets(5));
+    expect(find.byIcon(LucideIcons.circleCheck), findsNWidgets(5));
   });
 
   testWidgets('confirmação diferente → aviso, sem pedido', (tester) async {

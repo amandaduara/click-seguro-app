@@ -15,7 +15,9 @@ import 'package:click_seguro_app/modules/authentication/presentation/widgets/or_
 import 'package:click_seguro_app/modules/common/presentation/extensions/password_rule_presentation.dart';
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -162,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
                     onChanged: _onFormChanged,
                     placeholder: AppStrings.authNamePlaceholder.tr(),
                     semanticsLabel: AppStrings.authNamePlaceholder.tr(),
-                    leftIcon: const Icon(Icons.person_outline),
+                    leftIcon: const Icon(LucideIcons.user),
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.name],
                     onSubmitted: (_) => _emailFocus.requestFocus(),
@@ -176,7 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                   onChanged: _onFormChanged,
                   placeholder: AppStrings.authEmailPlaceholder.tr(),
                   semanticsLabel: AppStrings.authEmailPlaceholder.tr(),
-                  leftIcon: const Icon(Icons.mail_outline),
+                  leftIcon: const Icon(LucideIcons.mail),
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.email],
@@ -189,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
                   focusNode: _passwordFocus,
                   placeholder: AppStrings.authPasswordPlaceholder.tr(),
                   semanticsLabel: AppStrings.authPasswordPlaceholder.tr(),
-                  leftIcon: const Icon(Icons.lock_outline),
+                  leftIcon: const Icon(LucideIcons.lock),
                   obscureText: !controller.isPasswordVisible,
                   textInputAction: TextInputAction.done,
                   autofillHints: [
@@ -207,8 +209,8 @@ class _LoginPageState extends State<LoginPage> {
                         : AppStrings.authPasswordShow.tr(),
                     icon: Icon(
                       controller.isPasswordVisible
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
+                          ? LucideIcons.eyeOff
+                          : LucideIcons.eye,
                     ),
                   ),
                 ),
@@ -226,12 +228,16 @@ class _LoginPageState extends State<LoginPage> {
                 ],
                 if (!isRegister)
                   Align(
-                    alignment: Alignment.centerRight,
+                    alignment: Alignment.centerLeft,
                     child: TextButton(
                       onPressed: _openForgotPassword,
                       style: TextButton.styleFrom(
-                        foregroundColor: context.colors.primary,
+                        foregroundColor: context.colors.textForeground,
                         minimumSize: const Size(48, 48),
+                        padding: EdgeInsets.zero,
+                        textStyle: AppTypography.label.copyWith(
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                       child: Text(AppStrings.authForgotPassword.tr()),
                     ),
@@ -267,7 +273,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: AppSpacing.s6),
                 SafeButton(
                   label: AppStrings.authContinueAsGuest.tr(),
-                  tone: SafeButtonTone.ghost,
+                  tone: SafeButtonTone.secondary,
                   onPressed: controller.continueAsGuest,
                 ),
               ],

@@ -109,7 +109,6 @@ class _HistoryContent extends StatelessWidget {
       return _scrollableState(
         controller,
         SafeEmptyState(
-          icon: LucideIcons.clock3,
           message:
               (controller.historyFilter == AssistantHistoryFilter.all
                       ? AppStrings.assistantHistoryEmpty

@@ -3,6 +3,8 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_detail_presentation_extension.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_chip.dart';
 import 'package:flutter/material.dart';
 
 /// Botão "Ouvir"/"Parar" e seletor de velocidade (lenta, normal, rápida) do
@@ -34,44 +36,57 @@ class ReadAloudBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!isAvailable) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: AppSpacing.s5),
-        ListenButton(
-          key: listenKey,
-          isSpeaking: isSpeaking,
-          onPressed: onToggle,
+    final AppPalette colors = context.colors;
+    // Redesign 2.0: um bloco com o "Ouvir" e as velocidades.
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s5),
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.s4),
+        // Branco com borda: os chips creme das velocidades aparecem nele.
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: AppSpacing.radiusLg,
+          border: Border.all(color: colors.border, width: 1.5),
         ),
-        const SizedBox(height: AppSpacing.s3),
-        Semantics(
-          container: true,
-          label: speedSemanticLabel(speed),
-          child: ExcludeSemantics(
-            child: Text(
-              speedSemanticLabel(speed),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 16,
-                color: context.colors.textMutedForeground,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListenButton(
+              key: listenKey,
+              isSpeaking: isSpeaking,
+              onPressed: onToggle,
+            ),
+            const SizedBox(height: AppSpacing.s3),
+            Semantics(
+              container: true,
+              label: speedSemanticLabel(speed),
+              child: ExcludeSemantics(
+                child: Text(
+                  speedSemanticLabel(speed),
+                  style: AppTypography.caption.copyWith(
+                    fontSize: 16,
+                    color: colors.textMutedForeground,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s2),
-        Wrap(
-          spacing: AppSpacing.s2,
-          runSpacing: AppSpacing.s2,
-          children: [
-            for (final option in ReadingSpeed.values)
-              _SpeedOption(
-                key: speedKey(option),
-                speed: option,
-                selected: option == speed,
-                onTap: () => onSpeedChanged(option),
-              ),
+            const SizedBox(height: AppSpacing.s2),
+            Wrap(
+              spacing: AppSpacing.s2,
+              runSpacing: AppSpacing.s2,
+              children: [
+                for (final option in ReadingSpeed.values)
+                  _SpeedOption(
+                    key: speedKey(option),
+                    speed: option,
+                    selected: option == speed,
+                    onTap: () => onSpeedChanged(option),
+                  ),
+              ],
+            ),
           ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -91,45 +106,9 @@ class _SpeedOption extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final String name = readingSpeedName(speed);
-    final ButtonStyle style = ButtonStyle(
-      minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
-      shape: const WidgetStatePropertyAll(StadiumBorder()),
-      textStyle: WidgetStatePropertyAll(
-        Theme.of(context).textTheme.labelLarge?.copyWith(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: name,
-      excludeSemantics: true,
-      child: selected
-          ? FilledButton(
-              onPressed: onTap,
-              style: style.copyWith(
-                backgroundColor: WidgetStatePropertyAll(
-                  context.colors.secondary,
-                ),
-                foregroundColor: WidgetStatePropertyAll(
-                  context.colors.textPrimaryForeground,
-                ),
-              ),
-              child: Text(name),
-            )
-          : OutlinedButton(
-              onPressed: onTap,
-              style: style.copyWith(
-                foregroundColor: WidgetStatePropertyAll(
-                  context.colors.secondary,
-                ),
-              ),
-              child: Text(name),
-            ),
-    );
-  }
+  Widget build(BuildContext context) => SafeChip(
+    label: readingSpeedName(speed),
+    selected: selected,
+    onTap: onTap,
+  );
 }

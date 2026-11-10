@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/widgets/safe_badge.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_status.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:flutter/widgets.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -19,6 +20,14 @@ extension ModuleStatusPresentation on ModuleStatus {
     ModuleStatus.inProgress => SafeBadgeTone.primary,
     ModuleStatus.completed => SafeBadgeTone.success,
     ModuleStatus.unavailable => SafeBadgeTone.neutral,
+  };
+
+  /// Cor do ícone no selo sobre a capa do cartão (redesign 2.0).
+  Color iconColor(AppPalette colors) => switch (this) {
+    ModuleStatus.notStarted => colors.textMutedForeground,
+    ModuleStatus.inProgress => colors.warning,
+    ModuleStatus.completed => colors.success,
+    ModuleStatus.unavailable => colors.textMutedForeground,
   };
 
   IconData get icon => switch (this) {

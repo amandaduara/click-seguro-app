@@ -4,7 +4,6 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
-import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
@@ -21,6 +20,9 @@ import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_a
 import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/related_activity_card.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -144,7 +146,7 @@ void main() {
 
       expect(find.byType(AppBar), findsOneWidget);
       expect(find.byType(BackButton), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(SafeLoadingState), findsOneWidget);
       repository.detailGate!.complete();
       await tester.pumpAndSettle();
     });
@@ -194,7 +196,9 @@ void main() {
       expect(find.byType(BackButton), findsOneWidget);
       expect(
         find.byWidgetPredicate(
-          (widget) => widget is SafeStateIllustration && !widget.isError,
+          (widget) =>
+              widget is SafeIllustration &&
+              widget.illustration == AppIllustration.stateEmpty,
         ),
         findsOneWidget,
       );
@@ -1066,7 +1070,9 @@ void main() {
       expect(context.colors, AppPalette.highContrast);
       expect(
         tester.widget<Text>(find.text('Notícia n1')).style?.color,
-        AppPalette.highContrast.secondary,
+        // Redesign 2.0: títulos na cor de texto principal (preto no alto
+        // contraste).
+        AppPalette.highContrast.textForeground,
       );
       expect(
         tester.widget<Text>(find.text(longContent)).style?.color,

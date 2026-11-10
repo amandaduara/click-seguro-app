@@ -18,12 +18,13 @@ import 'package:click_seguro_app/modules/common/accessibility/accessibility_pref
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_progress_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../../../fakes/fake_text_to_speech_service.dart';
@@ -32,6 +33,21 @@ import '../../../../helpers/localized_app.dart';
 import '../../fakes/activities_fixtures.dart';
 import '../../fakes/fake_activities_remote_data_source.dart';
 import '../../fakes/fake_activities_repository.dart';
+
+/// Respondidas: os segmentos coral do progresso da pergunta (redesign 2.0,
+/// specs/022).
+int answeredSegments(WidgetTester tester) => tester
+    .widgetList<Container>(
+      find.descendant(
+        of: find.byType(LessonProgressIndicator),
+        matching: find.byType(Container),
+      ),
+    )
+    .where(
+      (c) =>
+          (c.decoration as BoxDecoration?)?.color == AppPalette.light.primary,
+    )
+    .length;
 
 void main() {
   late UserSessionService session;
@@ -240,7 +256,7 @@ void main() {
       useModule(answered: {'l1'});
       await open(tester);
 
-      expect(find.byIcon(LucideIcons.check), findsOneWidget);
+      expect(answeredSegments(tester), 1);
       expect(
         find.bySemanticsLabel('Pergunta 2 de 3, 1 concluídas'),
         findsOneWidget,
@@ -540,7 +556,7 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('Pergunta 1 de 3'), findsOneWidget);
-      expect(find.byIcon(LucideIcons.check), findsOneWidget);
+      expect(answeredSegments(tester), 1);
       expect(card(tester, 'Enviar').state, LessonOptionState.wrong);
       expect(card(tester, 'Enviar').onTap, isNull);
       await reveal(tester, find.text('Ignorar e denunciar'));

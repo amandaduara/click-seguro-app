@@ -13,6 +13,7 @@ import 'package:click_seguro_app/modules/settings/presentation/controller/change
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_guest_invite.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -147,9 +148,7 @@ class _Form extends StatelessWidget {
         tooltip: visible
             ? AppStrings.settingsPasswordHide.tr()
             : AppStrings.settingsPasswordShow.tr(),
-        icon: Icon(
-          visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-        ),
+        icon: Icon(visible ? LucideIcons.eyeOff : LucideIcons.eye),
       ),
     );
   }

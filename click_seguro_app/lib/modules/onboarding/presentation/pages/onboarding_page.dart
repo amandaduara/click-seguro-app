@@ -6,6 +6,7 @@ import 'package:click_seguro_app/modules/onboarding/presentation/models/onboardi
 import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_page_indicator.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_slide.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/widgets/safe_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -52,17 +53,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final OnboardingPageContent currentContent =
         OnboardingPageContent.pages[controller.currentPage];
 
+    // Redesign 2.0 (Figma, quadro 02): "Pular" em pílula no topo, o slide,
+    // o indicador alinhado ao texto e o botão principal embaixo.
     return Scaffold(
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s4),
-                child: TextButton(
-                  onPressed: () => _handleSkip(controller),
-                  child: Text(AppStrings.onboardingSkip.tr()),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s5,
+                AppSpacing.s3,
+                AppSpacing.s5,
+                0,
+              ),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: SafeChip(
+                  label: AppStrings.onboardingSkip.tr(),
+                  selected: false,
+                  onTap: () => _handleSkip(controller),
                 ),
               ),
             ),
@@ -75,15 +85,28 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     .toList(),
               ),
             ),
-            OnboardingPageIndicator(
-              pageCount: OnboardingPageContent.pages.length,
-              currentPage: controller.currentPage,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s6 + 4,
+                AppSpacing.s4,
+                AppSpacing.s6,
+                0,
+              ),
+              child: OnboardingPageIndicator(
+                pageCount: OnboardingPageContent.pages.length,
+                currentPage: controller.currentPage,
+              ),
             ),
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.s6),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s6,
+                AppSpacing.s6,
+                AppSpacing.s6,
+                AppSpacing.s7,
+              ),
               child: SafeButton(
                 label: currentContent.buttonLabelKey.tr(),
-                iconRight: const Icon(LucideIcons.chevronRight, size: 16),
+                iconRight: const Icon(LucideIcons.arrowRight),
                 onPressed: () => _handleNext(controller),
               ),
             ),

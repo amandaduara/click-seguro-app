@@ -5,6 +5,7 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/notifications/notifications.dart';
 import 'package:click_seguro_app/modules/shell/presentation/require_account.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -59,90 +60,74 @@ class _AppTopBarState extends State<AppTopBar> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    // Redesign 2.0: a saudação e os botões na primeira linha; o título da
+    // aba embaixo, grande e inteiro, sem dividir espaço com os botões.
+    final Widget greeting = ListenableBuilder(
+      // O nome muda também quando o perfil é editado (SC-003).
+      listenable: Listenable.merge([
+        _session.sessionStatus,
+        _session.profileVersion,
+      ]),
+      builder: (context, _) => Text(
+        widget.subtitle ?? _greeting(),
+        style: AppTypography.caption.copyWith(
+          fontSize: 16,
+          color: context.colors.textMutedForeground,
+        ),
+      ),
+    );
+    final Widget actions = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        NotificationBellButton(onPressed: _openNotifications),
+        Padding(
+          padding: const EdgeInsets.only(left: AppSpacing.s2),
+          child: _CircleActionButton(
+            label: AppStrings.assistantTitle.tr(),
+            icon: LucideIcons.messageCircle,
+            onPressed: _openAssistant,
+          ),
+        ),
+        // Também para o visitante, que ajusta acessibilidade e idioma
+        // (specs/014, R6).
+        Padding(
+          padding: const EdgeInsets.only(left: AppSpacing.s2),
+          child: _CircleActionButton(
+            label: AppStrings.shellSettings.tr(),
+            icon: LucideIcons.settings,
+            onPressed: () => _open('/settings'),
+          ),
+        ),
+      ],
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s5,
-        AppSpacing.s6,
+        AppSpacing.s4,
         AppSpacing.s5,
-        AppSpacing.s3,
+        AppSpacing.s4,
       ),
-      child: Builder(
-        builder: (context) {
-          final title = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              // O nome muda também quando o perfil é editado (SC-003).
-              ListenableBuilder(
-                listenable: Listenable.merge([
-                  _session.sessionStatus,
-                  _session.profileVersion,
-                ]),
-                builder: (context, _) => Text(
-                  widget.subtitle ?? _greeting(),
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: context.colors.textMutedForeground,
-                  ),
-                ),
-              ),
-              Semantics(
-                header: true,
-                child: Text(
-                  widget.title,
-                  style: textTheme.titleLarge?.copyWith(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: context.colors.secondary,
-                  ),
-                ),
-              ),
-            ],
-          );
-          final actions = Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              NotificationBellButton(onPressed: _openNotifications),
-              Padding(
-                padding: const EdgeInsets.only(left: AppSpacing.s2),
-                child: _CircleActionButton(
-                  label: AppStrings.assistantTitle.tr(),
-                  icon: LucideIcons.messageCircle,
-                  onPressed: _openAssistant,
-                ),
-              ),
-              // Também para o visitante, que ajusta acessibilidade e idioma
-              // (specs/014, R6).
-              Padding(
-                padding: const EdgeInsets.only(left: AppSpacing.s2),
-                child: _CircleActionButton(
-                  label: AppStrings.shellSettings.tr(),
-                  icon: LucideIcons.settings,
-                  onPressed: () => _open('/settings'),
-                ),
-              ),
-            ],
-          );
-          final compact = MediaQuery.textScalerOf(context).scale(24) > 30;
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                title,
-                const SizedBox(height: AppSpacing.s2),
-                Align(alignment: Alignment.centerRight, child: actions),
-              ],
-            );
-          }
-          return Row(
-            children: [
-              Expanded(child: title),
+              Expanded(child: greeting),
               const SizedBox(width: AppSpacing.s2),
               actions,
             ],
-          );
-        },
+          ),
+          const SizedBox(height: AppSpacing.s2),
+          Semantics(
+            header: true,
+            child: Text(
+              widget.title,
+              style: AppTypography.display.copyWith(
+                color: context.colors.textForeground,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

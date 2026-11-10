@@ -8,6 +8,7 @@ import 'package:click_seguro_app/modules/help/presentation/pages/contact_form_pa
 import 'package:click_seguro_app/modules/help/presentation/routes/help_routes.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_top_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -53,6 +54,13 @@ void main() {
   });
 
   Future<void> open(WidgetTester tester, {ThemeData? theme}) async {
+    // Tela de celular (como os quadros do Figma), a não ser que o teste já
+    // tenha escolhido outra: com o cartão de emergência no topo, a tela
+    // padrão de 800×600 deixa as listas abaixo da dobra.
+    if (tester.view.physicalSize == const Size(2400, 1800)) {
+      tester.view.physicalSize = const Size(1170, 2532);
+      addTearDown(tester.view.resetPhysicalSize);
+    }
     await pumpLocalized(
       tester,
       router: router,
@@ -60,6 +68,62 @@ void main() {
       theme: theme,
     );
   }
+
+  group('cartão "Caiu em um golpe?" (FR-016 de specs/022)', () {
+    testWidgets('fica no topo, com título, texto e botão', (tester) async {
+      final SemanticsHandle semantics = tester.ensureSemantics();
+      await open(tester);
+
+      expect(find.text('Caiu em um golpe?'), findsOneWidget);
+      expect(
+        find.text('Ligue agora para a polícia e para o seu banco.'),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('Ligar para 190'), findsOneWidget);
+      final double card = tester.getTopLeft(find.text('Caiu em um golpe?')).dy;
+      final double tabs = tester.getTopLeft(find.text('Oficiais')).dy;
+      expect(card, lessThan(tabs));
+      semantics.dispose();
+    });
+
+    testWidgets('"Ligar para 190" abre o discador com 190', (tester) async {
+      await open(tester);
+
+      await tester.tap(find.text('Ligar para 190'));
+      await tester.pumpAndSettle();
+
+      expect(launcher.calledNumbers, ['190']);
+    });
+
+    testWidgets('sem discador, mostra o número para copiar', (tester) async {
+      launcher.canCallResult = false;
+      await open(tester);
+
+      await tester.tap(find.text('Ligar para 190'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('190'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('em inglês, o texto traduzido e o mesmo 190', (tester) async {
+      await pumpLocalized(
+        tester,
+        router: router,
+        providers: [fakeNotificationsProvider()],
+        locale: const Locale('en', 'US'),
+      );
+
+      expect(find.text('Fell for a scam?'), findsOneWidget);
+      expect(find.text('Call 190'), findsOneWidget);
+    });
+  });
 
   testWidgets('abas oficiais/pessoais, cria, edita e confirma remoção', (
     tester,
@@ -73,7 +137,10 @@ void main() {
 
     await tester.tap(find.text('Meus contatos'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Adicionar contato'));
+    // Com o cartão de emergência no topo, o botão pode ficar abaixo da dobra.
+    await tester.ensureVisible(find.text('Adicionar contato').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Adicionar contato').last);
     await tester.pumpAndSettle();
     expect(find.byType(ContactFormPage), findsOneWidget);
 
@@ -155,11 +222,19 @@ void main() {
       () => Future<void>.delayed(const Duration(milliseconds: 100)),
     );
     await tester.pumpAndSettle();
+    // Letra em 200%: o topo (com o cartão de emergência) é alto; rola até
+    // o contato.
+    await tester.dragUntilVisible(
+      find.text('P'),
+      find.byType(NestedScrollView),
+      const Offset(0, -200),
+    );
+    await tester.pumpAndSettle();
     expect(find.text('P'), findsOneWidget);
 
-    await tester.ensureVisible(find.byIcon(Icons.call));
+    await tester.ensureVisible(find.byIcon(LucideIcons.phone));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.call));
+    await tester.tap(find.byIcon(LucideIcons.phone));
     await tester.pumpAndSettle();
     expect(
       find.descendant(of: find.byType(AlertDialog), matching: find.text('190')),
@@ -197,7 +272,10 @@ void main() {
     await open(tester);
     await tester.tap(find.text('Meus contatos'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Adicionar contato'));
+    // Com o cartão de emergência no topo, o botão pode ficar abaixo da dobra.
+    await tester.ensureVisible(find.text('Adicionar contato').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Adicionar contato').last);
     await tester.pumpAndSettle();
     // O formulário ficou mais alto (campos de 60): rola até o botão.
     await tester.ensureVisible(find.text('Salvar contato'));

@@ -17,6 +17,7 @@ import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dar
 import 'package:click_seguro_app/modules/news/presentation/widgets/reels_carousel.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -81,17 +82,18 @@ class NewsHomePage extends StatelessWidget {
   Widget _content(BuildContext context, FeedController controller) {
     switch (controller.status) {
       case FeedStatus.loading:
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SafeLoadingState(),
-              SlowRequestNotice(
-                active: true,
-                message: AppStrings.newsSlowServer.tr(),
-              ),
-            ],
-          ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SlowRequestNotice(
+              active: true,
+              message: AppStrings.newsSlowServer.tr(),
+            ),
+            // Blocos com brilho no formato do conteúdo (FR-018).
+            const Expanded(
+              child: SafeLoadingState(layout: SafeLoadingLayout.cards),
+            ),
+          ],
         );
       case FeedStatus.error:
         return SafeErrorState(
@@ -125,20 +127,36 @@ class NewsHomePage extends StatelessWidget {
     Future<void> openNews(NewsItemEntity item) =>
         context.push<void>('/news/${item.id}');
 
-    Widget cards(List<NewsItemEntity> items, {bool compact = true}) =>
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          sliver: SliverList.separated(
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
-            itemBuilder: (_, index) => NewsCard(
-              item: items[index],
-              now: now,
-              compact: compact,
-              onTap: () => openNews(items[index]),
-            ),
+    // Destaques: cartões grandes, um por linha.
+    Widget large(List<NewsItemEntity> items) => SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+      sliver: SliverList.separated(
+        itemCount: items.length,
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s6),
+        itemBuilder: (_, index) => NewsCard(
+          item: items[index],
+          now: now,
+          compact: false,
+          onTap: () => openNews(items[index]),
+        ),
+      ),
+    );
+
+    // Recomendadas e Tudo recente: grade de 2 colunas (FR-025).
+    Widget cards(List<NewsItemEntity> items) => SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+      sliver: SliverToBoxAdapter(
+        child: NewsGrid(
+          items: items,
+          itemBuilder: (item, coverHeight) => NewsCard(
+            item: item,
+            now: now,
+            coverHeight: coverHeight,
+            onTap: () => openNews(item),
           ),
-        );
+        ),
+      ),
+    );
 
     return [
       // Feed da cópia guardada (CB-001, FR-020).
@@ -159,7 +177,7 @@ class NewsHomePage extends StatelessWidget {
         SliverToBoxAdapter(
           child: FeedSectionTitle(AppStrings.newsSectionHighlights.tr()),
         ),
-        cards(controller.highlights, compact: false),
+        large(controller.highlights),
       ],
       if (controller.recommended.isNotEmpty) ...[
         SliverToBoxAdapter(

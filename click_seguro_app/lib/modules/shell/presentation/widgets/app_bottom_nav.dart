@@ -126,18 +126,21 @@ class _TabItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.s1),
-              // Rótulo de 15 (mínimo do FR-003); com fonte grande quebra em
-              // até duas linhas em vez de sumir.
-              Text(
-                label,
-                maxLines: 2,
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.caption.copyWith(
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected
-                      ? colors.textForeground
-                      : colors.textMutedForeground,
+              // Rótulo de 15 (mínimo do FR-003) numa linha só: palavras como
+              // "Atividades" não cabem inteiras numa coluna estreita e
+              // quebravam no meio; com fonte grande, encolhem o necessário.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.caption.copyWith(
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected
+                        ? colors.textForeground
+                        : colors.textMutedForeground,
+                  ),
                 ),
               ),
             ],

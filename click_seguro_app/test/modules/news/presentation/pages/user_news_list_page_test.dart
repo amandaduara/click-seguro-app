@@ -4,7 +4,6 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
-import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
@@ -14,6 +13,9 @@ import 'package:click_seguro_app/modules/news/presentation/controller/user_news_
 import 'package:click_seguro_app/modules/news/presentation/pages/user_news_list_page.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -193,7 +195,9 @@ void main() {
       );
       expect(
         find.byWidgetPredicate(
-          (widget) => widget is SafeStateIllustration && !widget.isError,
+          (widget) =>
+              widget is SafeIllustration &&
+              widget.illustration == AppIllustration.stateEmpty,
         ),
         findsOneWidget,
       );
@@ -231,7 +235,7 @@ void main() {
 
       await pumpPage(tester, settle: false);
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(SafeLoadingState), findsOneWidget);
       expect(find.text(slow), findsNothing);
       await tester.pump(SlowRequestNotice.delay);
       expect(find.text(slow), findsOneWidget);

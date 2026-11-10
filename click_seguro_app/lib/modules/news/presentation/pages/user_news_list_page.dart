@@ -7,7 +7,6 @@ import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
-import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
@@ -18,6 +17,8 @@ import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_foo
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -140,17 +141,18 @@ class _UserNewsListState extends State<_UserNewsList> {
         .watch<UserNewsListController>();
     switch (controller.status) {
       case FeedStatus.loading:
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SafeLoadingState(),
-              SlowRequestNotice(
-                active: true,
-                message: AppStrings.newsSlowServer.tr(),
-              ),
-            ],
-          ),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SlowRequestNotice(
+              active: true,
+              message: AppStrings.newsSlowServer.tr(),
+            ),
+            // Blocos com brilho no formato do conteúdo (FR-018).
+            const Expanded(
+              child: SafeLoadingState(layout: SafeLoadingLayout.list),
+            ),
+          ],
         );
       case FeedStatus.error:
         return SafeErrorState(
@@ -216,8 +218,8 @@ class _EmptyList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SafeStateIllustration(isError: false, icon: _iconOf(kind)),
-            const SizedBox(height: AppSpacing.s3),
+            const SafeIllustration(AppIllustration.stateEmpty, height: 180),
+            const SizedBox(height: AppSpacing.s5),
             Text(
               kind.empty.tr(),
               textAlign: TextAlign.center,

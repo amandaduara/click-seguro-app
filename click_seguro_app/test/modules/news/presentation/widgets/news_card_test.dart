@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_news_repository.dart';
@@ -33,11 +34,10 @@ void main() {
     ),
   );
 
-  // Quadro neutro no lugar da imagem: o ícone de jornal.
-  Finder placeholder() => find.ancestor(
-    of: find.byIcon(LucideIcons.newspaper),
-    matching: find.byType(Container),
-  );
+  // Sem imagem, a capa é a ilustração do tema (FR-015 de specs/022).
+  Finder placeholder() => find.byType(SafeIllustration);
+
+  Finder cover() => find.byType(NewsCover);
 
   NewsCategoryEntity category(String name) =>
       NewsCategoryEntity(id: name, name: name, slug: name);
@@ -71,7 +71,7 @@ void main() {
     expect(find.text('Phishing'), findsNothing);
   });
 
-  testWidgets('sem imagem mostra o quadro neutro', (tester) async {
+  testWidgets('sem imagem mostra a capa ilustrada', (tester) async {
     await pumpCard(tester, newsItem('n1'));
 
     expect(placeholder(), findsOneWidget);
@@ -96,7 +96,7 @@ void main() {
   testWidgets('completo mostra a imagem grande', (tester) async {
     await pumpCard(tester, newsItem('n1'), compact: false);
 
-    expect(tester.getSize(placeholder().first).height, 176);
+    expect(tester.getSize(cover()).height, 190);
   });
 
   testWidgets('dois toques rápidos abrem uma vez', (tester) async {

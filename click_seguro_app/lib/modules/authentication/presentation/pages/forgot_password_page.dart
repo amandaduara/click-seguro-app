@@ -16,6 +16,7 @@ import 'package:click_seguro_app/modules/common/presentation/extensions/password
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -110,7 +111,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           leading: IconButton(
             onPressed: _goBack,
             tooltip: AppStrings.authBack.tr(),
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(LucideIcons.arrowLeft),
           ),
           title: Text(AppStrings.authResetTitle.tr()),
         ),
@@ -164,7 +165,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       controller: _emailController,
       placeholder: AppStrings.authEmailPlaceholder.tr(),
       semanticsLabel: AppStrings.authEmailPlaceholder.tr(),
-      leftIcon: const Icon(Icons.mail_outline),
+      leftIcon: const Icon(LucideIcons.mail),
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.done,
       autofillHints: const [AutofillHints.email],
@@ -194,7 +195,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       controller: _codeController,
       placeholder: AppStrings.authResetCodePlaceholder.tr(),
       semanticsLabel: AppStrings.authResetCodePlaceholder.tr(),
-      leftIcon: const Icon(Icons.pin_outlined),
+      leftIcon: const Icon(LucideIcons.hash),
       textInputAction: TextInputAction.done,
       autofillHints: const [AutofillHints.oneTimeCode],
       onSubmitted: (_) => controller.submitCode(_codeController.text),
@@ -220,7 +221,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       controller: _passwordController,
       placeholder: AppStrings.authResetNewPasswordPlaceholder.tr(),
       semanticsLabel: AppStrings.authResetNewPasswordPlaceholder.tr(),
-      leftIcon: const Icon(Icons.lock_outline),
+      leftIcon: const Icon(LucideIcons.lock),
       obscureText: !controller.isPasswordVisible,
       textInputAction: TextInputAction.next,
       autofillHints: const [AutofillHints.newPassword],
@@ -233,9 +234,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ? AppStrings.authPasswordHide.tr()
             : AppStrings.authPasswordShow.tr(),
         icon: Icon(
-          controller.isPasswordVisible
-              ? Icons.visibility_off_outlined
-              : Icons.visibility_outlined,
+          controller.isPasswordVisible ? LucideIcons.eyeOff : LucideIcons.eye,
         ),
       ),
     ),
@@ -255,7 +254,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       focusNode: _confirmationFocus,
       placeholder: AppStrings.authResetConfirmPasswordPlaceholder.tr(),
       semanticsLabel: AppStrings.authResetConfirmPasswordPlaceholder.tr(),
-      leftIcon: const Icon(Icons.lock_outline),
+      leftIcon: const Icon(LucideIcons.lock),
       obscureText: !controller.isPasswordVisible,
       textInputAction: TextInputAction.done,
       onSubmitted: (_) => _saveNewPassword(controller),

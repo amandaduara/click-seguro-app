@@ -19,6 +19,7 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
@@ -56,7 +57,6 @@ class _AssistantGuestView extends StatelessWidget {
       const _AssistantHeader(),
       Expanded(
         child: SafeEmptyState(
-          icon: LucideIcons.shieldCheck,
           message: AppStrings.assistantGuestTitle.tr(),
           actionLabel: AppStrings.assistantGuestAction.tr(),
           onAction: () => requireAccount(context),
@@ -407,12 +407,13 @@ class _AssistantShield extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     width: size,
     height: size,
+    // Avatar redondo em coral suave com o brilho (redesign 2.0).
     decoration: BoxDecoration(
-      color: context.colors.primary.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(16),
+      color: context.colors.primarySoft,
+      shape: BoxShape.circle,
     ),
     child: Icon(
-      LucideIcons.shieldCheck,
+      LucideIcons.sparkles,
       size: size * 0.5,
       color: context.colors.primary,
     ),
@@ -483,56 +484,100 @@ class _ChatBubble extends StatelessWidget {
   const _ChatBubble({required this.message});
   final AiChatTurn message;
 
+  // Redesign 2.0: a pessoa em tinta, à direita; o assistente em creme, à
+  // esquerda, com o avatar de brilho.
   @override
   Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
     final bool user = message.role == AiChatRole.user;
-    return Align(
-      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.86,
-        ),
-        child: user
-            ? DecoratedBox(
-                decoration: BoxDecoration(
-                  color: context.colors.primary,
-                  borderRadius: AppSpacing.radiusLg,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.s4),
-                  child: SelectableText(
-                    message.content,
-                    style: TextStyle(
-                      color: context.colors.textPrimaryForeground,
-                    ),
-                  ),
-                ),
-              )
-            : SafeCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const _AssistantShield(size: 32),
-                        const SizedBox(width: AppSpacing.s2),
-                        Text(
-                          AppIdentity.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: context.colors.secondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s2),
-                    SelectableText(
-                      message.content,
-                      style: TextStyle(color: context.colors.textForeground),
-                    ),
-                  ],
+    final double maxWidth = MediaQuery.sizeOf(context).width * 0.84;
+    if (user) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.secondary,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(6),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s4,
+                vertical: 14,
+              ),
+              child: SelectableText(
+                message.content,
+                style: AppTypography.body.copyWith(
+                  fontSize: 17,
+                  height: 1.5,
+                  color: colors.textPrimaryForeground,
                 ),
               ),
+            ),
+          ),
+        ),
+      );
+    }
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth + 50),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            const _AssistantShield(size: 40),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppIdentity.name,
+                    style: AppTypography.caption.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.textMutedForeground,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s1),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      border: colors.shadow.isEmpty
+                          ? Border.all(color: colors.border)
+                          : null,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                        bottomLeft: Radius.circular(6),
+                        bottomRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s4,
+                        vertical: 14,
+                      ),
+                      child: SelectableText(
+                        message.content,
+                        style: AppTypography.body.copyWith(
+                          fontSize: 17,
+                          height: 1.5,
+                          color: colors.textForeground,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -565,8 +610,8 @@ class _ChatComposer extends StatelessWidget {
           padding: const EdgeInsets.all(AppSpacing.s2),
           decoration: BoxDecoration(
             color: context.colors.card,
-            border: Border.all(color: context.colors.border),
-            borderRadius: AppSpacing.radiusLg,
+            border: Border.all(color: context.colors.inputBorder, width: 1.5),
+            borderRadius: BorderRadius.circular(28),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -584,6 +629,9 @@ class _ChatComposer extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText: AppStrings.assistantChatPlaceholder.tr(),
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
                     counterText: '',
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.s2,

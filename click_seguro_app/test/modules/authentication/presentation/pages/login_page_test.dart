@@ -7,6 +7,7 @@ import 'package:click_seguro_app/modules/authentication/presentation/controller/
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
@@ -198,7 +199,7 @@ void main() {
       await tester.enterText(field('Senha'), 'Senha@123');
       await tester.pump();
 
-      expect(find.byIcon(Icons.check_circle), findsNWidgets(5));
+      expect(find.byIcon(LucideIcons.circleCheck), findsNWidgets(5));
     });
 
     testWidgets('cadastro válido leva ao Início', (tester) async {
@@ -257,14 +258,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Continuar sem login'), findsOneWidget);
 
-      // Visual do wireframe: fundo claro, borda fina e texto azul-escuro.
+      // Redesign 2.0 (Figma, quadro 03): o botão creme.
       expect(
         tester
             .widget<SafeButton>(
               find.widgetWithText(SafeButton, 'Continuar sem login'),
             )
             .tone,
-        SafeButtonTone.ghost,
+        SafeButtonTone.secondary,
       );
 
       await tapPrimary(tester, 'Continuar sem login');

@@ -121,7 +121,9 @@ void main() {
       expect(find.text('Olá, Maria'), findsOneWidget);
     });
 
-    testWidgets('subtítulo com 14 px e título com 24 px', (tester) async {
+    testWidgets('saudação com 16 e título com 32 (redesign 2.0)', (
+      tester,
+    ) async {
       await signIn();
       await pumpLocalized(
         tester,
@@ -129,10 +131,10 @@ void main() {
         providers: [fakeNotificationsProvider()],
       );
 
-      expect(tester.widget<Text>(find.text('Olá, Maria')).style?.fontSize, 14);
+      expect(tester.widget<Text>(find.text('Olá, Maria')).style?.fontSize, 16);
       expect(
         tester.widget<Text>(find.text('Notícias seguras')).style?.fontSize,
-        24,
+        32,
       );
     });
   });
@@ -336,9 +338,8 @@ void main() {
     });
 
     for (final width in [320.0, 360.0, 412.0]) {
-      testWidgets('fonte padrão mantém ações ao lado do título em $width dp', (
-        tester,
-      ) async {
+      testWidgets('ações na linha da saudação, título inteiro embaixo, em '
+          '$width dp', (tester) async {
         tester.view.physicalSize = Size(width, 800);
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
@@ -350,9 +351,13 @@ void main() {
           providers: [fakeNotificationsProvider()],
         );
 
+        // Redesign 2.0: os botões dividem a linha com a saudação, e o
+        // título fica embaixo, sem ser espremido por eles.
+        final greeting = tester.getRect(find.text('Olá, Maria'));
         final title = tester.getRect(find.text('Notícias seguras'));
         final assistant = tester.getRect(find.bySemanticsLabel('Assistente'));
-        expect(assistant.left, greaterThan(title.right));
+        expect(assistant.left, greaterThan(greeting.right));
+        expect(title.top, greaterThan(assistant.bottom));
         expect(tester.takeException(), isNull);
       });
     }

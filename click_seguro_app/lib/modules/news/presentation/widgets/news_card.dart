@@ -4,11 +4,14 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Cartão de notícia do design system §7.8: compacto (listas) ou completo
-/// (destaques). Curtir e salvar ficam para A4/A5; aqui só os sinais.
+/// Cartão de notícia do redesign 2.0 (FR-015): capa com o selo da categoria
+/// e, abaixo, título e fonte. Compacto (grade) ou completo (destaques).
 class NewsCard extends StatefulWidget {
   const NewsCard({
     super.key,
@@ -16,6 +19,7 @@ class NewsCard extends StatefulWidget {
     required this.now,
     required this.onTap,
     this.compact = true,
+    this.coverHeight,
   });
 
   final NewsItemEntity item;
@@ -25,12 +29,16 @@ class NewsCard extends StatefulWidget {
   final Future<void> Function() onTap;
   final bool compact;
 
+  /// Altura da capa na grade de 2 colunas (alturas variadas, FR-025).
+  final double? coverHeight;
+
   @override
   State<NewsCard> createState() => _NewsCardState();
 }
 
 class _NewsCardState extends State<NewsCard> {
   bool _opening = false;
+  bool _pressed = false;
 
   Future<void> _open() async {
     if (_opening) return;
@@ -45,172 +53,100 @@ class _NewsCardState extends State<NewsCard> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
+    final AppPalette colors = context.colors;
+    final List<String> labels = item.categoryLabels();
+    final bool reduceMotion = context.reduceMotion;
+    // Redesign 2.0 (estilo Pinterest): a capa é o cartão; título e fonte
+    // ficam logo abaixo, sem caixa em volta.
     return Semantics(
       button: true,
       label: item.semanticLabel(widget.now),
       excludeSemantics: true,
-      child: Material(
-        color: context.colors.card,
-        borderRadius: AppSpacing.radiusXl,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _open,
-          child: Ink(
-            decoration: BoxDecoration(
-              border: Border.all(color: context.colors.border),
-              borderRadius: AppSpacing.radiusXl,
-              boxShadow: context.colors.shadow,
-            ),
-            child: widget.compact ? _compact(item) : _full(item),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _compact(NewsItemEntity item) => Padding(
-    padding: const EdgeInsets.all(AppSpacing.s3),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: _NewsImage(url: item.imageUrl, width: 80, height: 80),
-        ),
-        const SizedBox(width: AppSpacing.s3),
-        Expanded(child: _details(item)),
-      ],
-    ),
-  );
-
-  Widget _full(NewsItemEntity item) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      _NewsImage(url: item.imageUrl, height: 176),
-      Padding(
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: _details(item),
-      ),
-    ],
-  );
-
-  Widget _details(NewsItemEntity item) {
-    final textTheme = Theme.of(context).textTheme;
-    final labels = item.categoryLabels();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (labels.isNotEmpty) ...[
-          Wrap(
-            spacing: AppSpacing.s1,
-            runSpacing: AppSpacing.s1,
-            children: [for (final label in labels) _CategoryChip(label)],
-          ),
-          const SizedBox(height: AppSpacing.s2),
-        ],
-        Text(
-          item.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.bodyLarge?.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: context.colors.secondary,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s2),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTap: _open,
+        child: AnimatedScale(
+          scale: _pressed && !reduceMotion ? 0.98 : 1,
+          duration: AppMotion.duration(AppMotion.fast, reduce: reduceMotion),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              NewsCover(
+                imageUrl: item.imageUrl,
+                themeText: item.categories.isEmpty
+                    ? item.title
+                    : '${item.categories.first.name} ${item.title}',
+                height: widget.coverHeight ?? (widget.compact ? 150 : 190),
+                radius: widget.compact ? 20 : 24,
+                labels: labels,
+                trailing: _signals(item, colors),
+              ),
+              const SizedBox(height: AppSpacing.s3),
+              Text(
+                item.title,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    (widget.compact
+                            ? AppTypography.label.copyWith(fontSize: 17)
+                            : AppTypography.title3.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ))
+                        .copyWith(color: colors.textForeground, height: 1.3),
+              ),
+              const SizedBox(height: AppSpacing.s1),
+              Text(
                 '${item.source} · ${item.relativeDate(widget.now)}',
-                style: textTheme.bodySmall?.copyWith(
-                  color: context.colors.textMutedForeground,
-                ),
-              ),
-            ),
-            if (item.interaction.isRead)
-              Tooltip(
-                message: AppStrings.newsCardRead.tr(),
-                child: Icon(
-                  LucideIcons.circleCheck,
-                  size: 16,
-                  color: context.colors.success,
-                ),
-              ),
-            if (item.interaction.isSaved) ...[
-              const SizedBox(width: AppSpacing.s1),
-              Tooltip(
-                message: AppStrings.newsCardSaved.tr(),
-                child: Icon(
-                  LucideIcons.bookmarkCheck,
-                  size: 16,
-                  color: context.colors.secondary,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.caption.copyWith(
+                  color: colors.textMutedForeground,
                 ),
               ),
             ],
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  /// Lida e salva, em círculos brancos sobre a capa.
+  Widget? _signals(NewsItemEntity item, AppPalette colors) {
+    final List<(IconData, String, Color)> signals = [
+      if (item.interaction.isRead)
+        (LucideIcons.circleCheck, AppStrings.newsCardRead.tr(), colors.success),
+      if (item.interaction.isSaved)
+        (
+          LucideIcons.bookmarkCheck,
+          AppStrings.newsCardSaved.tr(),
+          colors.textForeground,
+        ),
+    ];
+    if (signals.isEmpty) return null;
+    return Column(
+      children: [
+        for (final (icon, message, color) in signals)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Tooltip(
+              message: message,
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  shape: BoxShape.circle,
+                  boxShadow: colors.shadow,
+                ),
+                child: Icon(icon, size: 18, color: color),
+              ),
+            ),
+          ),
       ],
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: context.colors.primary.withValues(alpha: 0.1),
-        borderRadius: AppSpacing.radiusFull,
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: context.colors.primary,
-        ),
-      ),
-    );
-  }
-}
-
-/// Imagem da notícia, com quadro neutro sem imagem ou se falhar (R8).
-class _NewsImage extends StatelessWidget {
-  const _NewsImage({required this.url, required this.height, this.width});
-
-  final String? url;
-  final double height;
-  final double? width;
-
-  Widget _placeholder(BuildContext context) => Container(
-    width: width,
-    height: height,
-    color: context.colors.input,
-    alignment: Alignment.center,
-    child: Icon(
-      LucideIcons.newspaper,
-      color: context.colors.textMutedForeground,
-    ),
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final String? source = url;
-    if (source == null) return _placeholder(context);
-    return Image.network(
-      source,
-      width: width,
-      height: height,
-      fit: BoxFit.cover,
-      errorBuilder: (context, _, _) => _placeholder(context),
-      loadingBuilder: (_, child, progress) =>
-          progress == null ? child : _placeholder(context),
     );
   }
 }

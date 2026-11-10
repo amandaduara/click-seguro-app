@@ -275,10 +275,7 @@ class _EmptyAlertsContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SafeEmptyState(
-          icon: LucideIcons.bell,
-          message: AppStrings.notificationsEmpty.tr(),
-        ),
+        SafeEmptyState(message: AppStrings.notificationsEmpty.tr()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6),
           child: Text(

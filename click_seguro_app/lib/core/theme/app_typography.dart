@@ -10,6 +10,7 @@ abstract final class AppTypography {
 
   /// Título de tela.
   static const TextStyle display = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 32,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.8,
@@ -18,6 +19,7 @@ abstract final class AppTypography {
 
   /// Títulos fortes: conclusão, estados, enunciado.
   static const TextStyle title1 = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 28,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.5,
@@ -26,6 +28,7 @@ abstract final class AppTypography {
 
   /// Seções.
   static const TextStyle title2 = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 22,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.2,
@@ -34,6 +37,7 @@ abstract final class AppTypography {
 
   /// Cartões.
   static const TextStyle title3 = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 20,
     fontWeight: FontWeight.w600,
     height: 1.3,
@@ -41,6 +45,7 @@ abstract final class AppTypography {
 
   /// Leitura longa (notícia, explicações).
   static const TextStyle bodyLarge = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 20,
     fontWeight: FontWeight.w400,
     height: 1.5,
@@ -48,6 +53,7 @@ abstract final class AppTypography {
 
   /// Padrão.
   static const TextStyle body = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 18,
     fontWeight: FontWeight.w400,
     height: 1.55,
@@ -55,6 +61,7 @@ abstract final class AppTypography {
 
   /// Rótulos, links, chips e botões compactos.
   static const TextStyle label = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.3,
@@ -62,6 +69,7 @@ abstract final class AppTypography {
 
   /// Metadados: o menor tamanho do app.
   static const TextStyle caption = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 15,
     fontWeight: FontWeight.w500,
     height: 1.35,
@@ -69,6 +77,7 @@ abstract final class AppTypography {
 
   /// Botões grandes.
   static const TextStyle button = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 18,
     fontWeight: FontWeight.w700,
     height: 1.25,
@@ -76,6 +85,7 @@ abstract final class AppTypography {
 
   /// Placar da conclusão do módulo.
   static const TextStyle score = TextStyle(
+    fontFamily: fontFamily,
     fontSize: 72,
     fontWeight: FontWeight.w800,
     letterSpacing: -2,

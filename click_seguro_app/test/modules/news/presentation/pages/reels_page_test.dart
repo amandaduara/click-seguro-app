@@ -10,6 +10,7 @@ import 'package:click_seguro_app/modules/news/presentation/pages/reels_page.dart
 import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/reel_actions.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
+import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -103,7 +104,7 @@ void main() {
       await pumpPage(tester, preload: false);
       await tester.pump();
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(SafeLoadingState), findsOneWidget);
       repository.reelsGate!.complete();
       await tester.pumpAndSettle();
       expect(title('r1'), findsOneWidget);

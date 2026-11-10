@@ -12,7 +12,7 @@ void main() {
   BoxDecoration box(WidgetTester tester) =>
       tester.widget<Ink>(find.byType(Ink)).decoration! as BoxDecoration;
 
-  testWidgets('não selecionado: creme, texto tinta, 44 de altura', (
+  testWidgets('não selecionado: creme, texto tinta, 48 de altura (RNF-003)', (
     tester,
   ) async {
     await pumpComponent(
@@ -27,7 +27,7 @@ void main() {
     );
     expect(
       tester.getSize(find.byType(SafeChip)).height,
-      greaterThanOrEqualTo(44),
+      greaterThanOrEqualTo(48),
     );
   });
 

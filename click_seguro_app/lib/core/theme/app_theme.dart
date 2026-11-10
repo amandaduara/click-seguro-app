@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'app_motion.dart';
 import 'app_palette.dart';
@@ -33,6 +34,23 @@ abstract class AppTheme {
       ),
       textTheme: AppTypography.textTheme(palette),
       iconTheme: IconThemeData(color: palette.textForeground, size: 24),
+      // Ícone de voltar da Lucide em todo o app (FR-005).
+      actionIconTheme: ActionIconThemeData(
+        backButtonIconBuilder: (_) => const Icon(LucideIcons.arrowLeft),
+        closeButtonIconBuilder: (_) => const Icon(LucideIcons.x),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: palette.background,
+        foregroundColor: palette.textForeground,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleTextStyle: AppTypography.title3.copyWith(
+          fontWeight: FontWeight.w700,
+          color: palette.textForeground,
+        ),
+      ),
       dividerTheme: DividerThemeData(color: palette.border, thickness: 1),
       cardTheme: CardThemeData(
         color: palette.card,

@@ -46,6 +46,38 @@ void main() {
     expect(await controller.call(official), isFalse);
     controller.dispose();
   });
+
+  callNumberTests();
+}
+
+// FR-016 de specs/022-redesign-visual: o cartão "Caiu em um golpe?" liga
+// para um número, com a mesma regra dos contatos.
+void callNumberTests() {
+  test('callNumber liga para o número pedido', () async {
+    final launcher = FakeExternalLauncherService();
+    final controller = HelpController(
+      getOfficialContacts: GetOfficialContactsUseCase(FakeHelpRepository()),
+      getPersonalContacts: GetPersonalContactsUseCase(FakeHelpRepository()),
+      launcher: launcher,
+    );
+
+    expect(await controller.callNumber('190'), isTrue);
+    expect(launcher.calledNumbers, ['190']);
+    controller.dispose();
+  });
+
+  test('callNumber sem discador devolve false e não liga', () async {
+    final launcher = FakeExternalLauncherService()..canCallResult = false;
+    final controller = HelpController(
+      getOfficialContacts: GetOfficialContactsUseCase(FakeHelpRepository()),
+      getPersonalContacts: GetPersonalContactsUseCase(FakeHelpRepository()),
+      launcher: launcher,
+    );
+
+    expect(await controller.callNumber('190'), isFalse);
+    expect(launcher.calledNumbers, isEmpty);
+    controller.dispose();
+  });
 }
 
 const official = ContactEntity(

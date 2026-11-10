@@ -21,7 +21,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Aba central: Reels em tela cheia, um por vez (RF-013, RF-019,
@@ -160,12 +159,15 @@ class _ReelsPageState extends State<ReelsPage> {
         _resetPages();
         return _Dark(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SafeLoadingState(),
               SlowRequestNotice(
                 active: true,
                 message: AppStrings.newsSlowServer.tr(),
+              ),
+              // Blocos com brilho no formato do conteúdo (FR-018).
+              const Expanded(
+                child: SafeLoadingState(layout: SafeLoadingLayout.detail),
               ),
             ],
           ),
@@ -184,7 +186,6 @@ class _ReelsPageState extends State<ReelsPage> {
           _resetPages();
           return _Dark(
             child: SafeEmptyState(
-              icon: LucideIcons.newspaper,
               message: AppStrings.newsReelsEmpty.tr(),
               actionLabel: AppStrings.newsReelsRefresh.tr(),
               onAction: controller.refresh,

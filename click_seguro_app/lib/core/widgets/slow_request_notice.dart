@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 
 /// Aviso que aparece quando um pedido demora mais que [delay] (ex.: o
@@ -57,15 +59,43 @@ class _SlowRequestNoticeState extends State<SlowRequestNotice> {
   @override
   Widget build(BuildContext context) {
     if (!_visible) return const SizedBox.shrink();
+    final AppPalette colors = context.colors;
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s3),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s5,
+        AppSpacing.s3,
+        AppSpacing.s5,
+        0,
+      ),
       child: Semantics(
         liveRegion: true,
-        child: Text(
-          widget.message,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: context.colors.textMutedForeground,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.s4),
+          decoration: BoxDecoration(
+            color: colors.infoSoft,
+            borderRadius: AppSpacing.radiusMd,
+            border: colors.shadow.isEmpty
+                ? Border.all(color: colors.info)
+                : null,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ExcludeSemantics(
+                child: Icon(LucideIcons.clock, size: 24, color: colors.info),
+              ),
+              const SizedBox(width: AppSpacing.s3),
+              Expanded(
+                child: Text(
+                  widget.message,
+                  style: AppTypography.label.copyWith(
+                    fontWeight: FontWeight.w500,
+                    height: 1.45,
+                    color: colors.info,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

@@ -37,14 +37,17 @@ class NewsDetailActions extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.s3),
       // Wrap: com fonte 2× os botões passam para a linha de baixo.
+      // Redesign 2.0: botões compactos e creme lado a lado, mais leves que
+      // três botões grandes empilhados.
       child: Wrap(
+        spacing: AppSpacing.s2,
         runSpacing: AppSpacing.s2,
         children: [
           _action(
             key: saveKey,
             label: saveLabel,
             selected: isSaved,
-            tone: isSaved ? SafeButtonTone.secondary : SafeButtonTone.ghost,
+            tone: isSaved ? SafeButtonTone.ghost : SafeButtonTone.secondary,
             icon: isSaved ? LucideIcons.bookmarkCheck : LucideIcons.bookmark,
             onPressed: onSave,
           ),
@@ -72,7 +75,7 @@ class NewsDetailActions extends StatelessWidget {
     required IconData icon,
     required VoidCallback onPressed,
     bool selected = false,
-    SafeButtonTone tone = SafeButtonTone.ghost,
+    SafeButtonTone tone = SafeButtonTone.secondary,
   }) => Semantics(
     button: true,
     selected: selected,
@@ -82,6 +85,7 @@ class NewsDetailActions extends StatelessWidget {
       key: key,
       label: label,
       tone: tone,
+      size: SafeButtonSize.compact,
       icon: Icon(icon),
       onPressed: onPressed,
     ),

@@ -281,6 +281,9 @@ abstract class AppStrings {
       'activities_guest_alert_continue';
 
   // --- help ---
+  static const String helpEmergencyTitle = 'help_emergency_title';
+  static const String helpEmergencyBody = 'help_emergency_body';
+  static const String helpEmergencyCall = 'help_emergency_call';
   static const String helpTitle = 'help_title';
   static const String helpTabOfficial = 'help_tab_official';
   static const String helpTabPersonal = 'help_tab_personal';

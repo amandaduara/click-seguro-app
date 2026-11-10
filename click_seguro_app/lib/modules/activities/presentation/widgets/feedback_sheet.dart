@@ -7,6 +7,11 @@ import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entit
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/answer_presentation.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -32,6 +37,14 @@ Future<FeedbackAction?> showFeedbackSheet(
   isScrollControlled: true,
   useSafeArea: true,
   backgroundColor: context.colors.card,
+  // Sobe em 400 ms (FR-020); sem animação com reduzir animações.
+  sheetAnimationStyle: AnimationStyle(
+    duration: AppMotion.duration(
+      AppMotion.emphasis,
+      reduce: context.reduceMotion,
+    ),
+    curve: AppMotion.enter,
+  ),
   builder: (_) => FeedbackSheet(
     lesson: lesson,
     result: result,
@@ -82,7 +95,6 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
-    final TextTheme textTheme = Theme.of(context).textTheme;
     final AnswerResultEntity result = widget.result;
     final Color accent = result.isCorrect ? colors.success : colors.destructive;
     final LessonOptionEntity? correct = widget.lesson.correctOption(result);
@@ -99,111 +111,145 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
       ),
       _ => (FeedbackAction.finish, AppStrings.activitiesFeedbackFinish),
     };
+    // Redesign 2.0 (Figma, quadro 08): ilustração do acerto (com mola) ou a
+    // lâmpada do erro, o título forte e o "Por quê?" num bloco creme.
     return ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.85,
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.s5,
-          AppSpacing.s6,
-          AppSpacing.s5,
-          AppSpacing.s5,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                ExcludeSemantics(
-                  child: Icon(
-                    result.isCorrect
-                        ? LucideIcons.circleCheck
-                        : LucideIcons.circleX,
-                    size: 32,
-                    color: accent,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s3),
-                Expanded(
-                  child: Semantics(
-                    liveRegion: true,
-                    header: true,
-                    child: Text(
-                      (result.isCorrect
-                              ? AppStrings.activitiesFeedbackCorrect
-                              : AppStrings.activitiesFeedbackWrong)
-                          .tr(),
-                      style: textTheme.titleLarge?.copyWith(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: accent,
-                      ),
+        child: SafeSheet(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  _SpringIn(
+                    child: SafeIllustration(
+                      result.isCorrect
+                          ? AppIllustration.answerCorrect
+                          : AppIllustration.answerWrong,
+                      height: 84,
                     ),
+                  ),
+                  const SizedBox(width: AppSpacing.s4),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Semantics(
+                          liveRegion: true,
+                          header: true,
+                          child: Text(
+                            (result.isCorrect
+                                    ? AppStrings.activitiesFeedbackCorrect
+                                    : AppStrings.activitiesFeedbackWrong)
+                                .tr(),
+                            style: AppTypography.title1.copyWith(color: accent),
+                          ),
+                        ),
+                        if (score != null) ...[
+                          const SizedBox(height: AppSpacing.s1),
+                          Text(
+                            AppStrings.activitiesFeedbackScore.tr(
+                              args: ['${score.score}', '${score.total}'],
+                            ),
+                            style: AppTypography.caption.copyWith(
+                              color: colors.textMutedForeground,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (correct != null) ...[
+                const SizedBox(height: AppSpacing.s4),
+                Text(
+                  AppStrings.activitiesFeedbackCorrectOption.tr(
+                    args: [correct.text],
+                  ),
+                  style: AppTypography.body.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colors.textForeground,
                   ),
                 ),
               ],
-            ),
-            if (correct != null) ...[
-              const SizedBox(height: AppSpacing.s4),
-              Text(
-                AppStrings.activitiesFeedbackCorrectOption.tr(
-                  args: [correct.text],
-                ),
-                style: textTheme.bodyLarge?.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: colors.textForeground,
-                ),
-              ),
-            ],
-            if (explanation != null) ...[
-              const SizedBox(height: AppSpacing.s4),
-              Semantics(
-                header: true,
-                child: Text(
-                  AppStrings.activitiesFeedbackExplanation.tr(),
-                  style: textTheme.titleSmall?.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: colors.secondary,
+              if (explanation != null) ...[
+                const SizedBox(height: AppSpacing.s4),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.s4),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: AppSpacing.radiusMd,
+                    border: colors.shadow.isEmpty
+                        ? Border.all(color: colors.border)
+                        : null,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          AppStrings.activitiesFeedbackExplanation.tr(),
+                          style: AppTypography.label.copyWith(
+                            fontSize: 17,
+                            color: colors.textForeground,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.s1),
+                      Text(
+                        explanation,
+                        style: AppTypography.body.copyWith(
+                          fontSize: 17,
+                          height: 1.5,
+                          color: colors.textBody,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.s2),
-              Text(
-                explanation,
-                style: textTheme.bodyLarge?.copyWith(
-                  fontSize: 16,
-                  color: colors.textForeground,
-                ),
-              ),
-            ],
-            if (score != null) ...[
-              const SizedBox(height: AppSpacing.s4),
-              Text(
-                AppStrings.activitiesFeedbackScore.tr(
-                  args: ['${score.score}', '${score.total}'],
-                ),
-                style: textTheme.bodyLarge?.copyWith(
-                  fontSize: 16,
-                  color: colors.textMutedForeground,
-                ),
+              ],
+              if (widget.listen case final Widget listen) ...[
+                const SizedBox(height: AppSpacing.s4),
+                listen,
+              ],
+              const SizedBox(height: AppSpacing.s5),
+              SafeButton(
+                label: label.tr(),
+                iconRight: action == FeedbackAction.next
+                    ? const Icon(LucideIcons.arrowRight)
+                    : null,
+                onPressed: _closing ? null : () => _close(action),
               ),
             ],
-            if (widget.listen case final Widget listen) ...[
-              const SizedBox(height: AppSpacing.s4),
-              listen,
-            ],
-            const SizedBox(height: AppSpacing.s5),
-            SafeButton(
-              label: label.tr(),
-              onPressed: _closing ? null : () => _close(action),
-            ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// Entra com uma mola leve (FR-020); direto com reduzir animações.
+class _SpringIn extends StatelessWidget {
+  const _SpringIn({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (context.reduceMotion) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.6, end: 1),
+      duration: AppMotion.emphasis,
+      curve: AppMotion.spring,
+      builder: (context, scale, child) =>
+          Transform.scale(scale: scale, child: child),
+      child: child,
     );
   }
 }

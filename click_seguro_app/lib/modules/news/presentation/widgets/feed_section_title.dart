@@ -1,8 +1,10 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
-/// Título de seção do feed ("Novidades", "Destaques"…), 18/700 secondary.
+/// Título de seção do feed ("Novidades", "Destaques"…), título 2 do
+/// redesign 2.0.
 class FeedSectionTitle extends StatelessWidget {
   const FeedSectionTitle(this.text, {super.key});
 
@@ -21,10 +23,8 @@ class FeedSectionTitle extends StatelessWidget {
         header: true,
         child: Text(
           text,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: context.colors.secondary,
+          style: AppTypography.title2.copyWith(
+            color: context.colors.textForeground,
           ),
         ),
       ),

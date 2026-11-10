@@ -25,10 +25,10 @@ import 'package:click_seguro_app/modules/common/accessibility/accessibility_pref
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Perguntas de um módulo, uma por vez (B2, specs/017-perguntas-atividades).
@@ -266,7 +266,6 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
             onRetry: () => controller.load(widget.moduleId),
           ),
           LessonStatus.empty => SafeEmptyState(
-            icon: LucideIcons.graduationCap,
             message: AppStrings.activitiesModuleUnavailable.tr(),
           ),
           LessonStatus.loaded when lesson != null => Column(
@@ -328,7 +327,6 @@ class _LessonBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
-    final TextTheme textTheme = Theme.of(context).textTheme;
     final String? image = lesson.imageUrl;
     return ListView(
       // Cada pergunta que aparece começa no topo, com o enunciado.
@@ -366,14 +364,14 @@ class _LessonBody extends StatelessWidget {
           header: true,
           child: Text(
             lesson.question,
-            style: textTheme.titleMedium?.copyWith(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: colors.secondary,
+            style: AppTypography.title1.copyWith(
+              fontSize: 25,
+              height: 1.3,
+              color: colors.textForeground,
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.s4),
+        const SizedBox(height: AppSpacing.s5),
         for (final (index, option) in lesson.options.indexed)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s3),

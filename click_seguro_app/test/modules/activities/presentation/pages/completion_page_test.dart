@@ -7,11 +7,12 @@ import 'package:click_seguro_app/modules/common/accessibility/accessibility_pref
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../fakes/fake_share_service.dart';
 import '../../../../fakes/fake_text_to_speech_service.dart';
@@ -98,7 +99,12 @@ void main() {
       await open(tester);
 
       expect(find.text('Golpes Digitais'), findsOneWidget);
-      expect(find.byIcon(LucideIcons.trophy), findsOneWidget);
+      expect(
+        tester
+            .widget<SafeIllustration>(find.byType(SafeIllustration))
+            .illustration,
+        AppIllustration.stateTrophy,
+      );
       expect(find.text('Módulo concluído!'), findsOneWidget);
       expect(
         tester.getSemantics(find.text('Módulo concluído!')),

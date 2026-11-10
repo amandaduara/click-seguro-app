@@ -2,7 +2,9 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
-import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,7 +37,7 @@ void main() {
       final semantics = tester.ensureSemantics();
       await pump(tester, const SafeLoadingState());
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(SafeSkeleton), findsWidgets);
       expect(find.bySemanticsLabel('Carregando'), findsOneWidget);
       semantics.dispose();
     });
@@ -58,7 +60,9 @@ void main() {
       expect(find.text('Falhou'), findsOneWidget);
       expect(
         find.byWidgetPredicate(
-          (widget) => widget is SafeStateIllustration && widget.isError,
+          (widget) =>
+              widget is SafeIllustration &&
+              widget.illustration == AppIllustration.stateError,
         ),
         findsOneWidget,
       );
@@ -91,7 +95,9 @@ void main() {
       expect(find.text('Nada por aqui ainda.'), findsOneWidget);
       expect(
         find.byWidgetPredicate(
-          (widget) => widget is SafeStateIllustration && !widget.isError,
+          (widget) =>
+              widget is SafeIllustration &&
+              widget.illustration == AppIllustration.stateEmpty,
         ),
         findsOneWidget,
       );

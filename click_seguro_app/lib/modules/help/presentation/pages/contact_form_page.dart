@@ -13,6 +13,7 @@ import 'package:click_seguro_app/modules/help/presentation/controller/contact_fo
 import 'package:click_seguro_app/core/widgets/person_avatar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -125,7 +126,7 @@ class _ContactFormContentState extends State<_ContactFormContent> {
           Center(
             child: TextButton.icon(
               onPressed: _showPhotoOptions,
-              icon: const Icon(Icons.photo_camera_outlined),
+              icon: const Icon(LucideIcons.camera),
               label: Text(AppStrings.helpChoosePhoto.tr()),
             ),
           ),

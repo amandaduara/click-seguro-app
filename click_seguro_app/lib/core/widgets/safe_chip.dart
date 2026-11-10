@@ -3,7 +3,7 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
-/// Chip de filtro do redesign 2.0 (FR-007): pílula creme; selecionado fica
+/// Chip de filtro do redesign 2.0 (FR-007): pílula creme de 48 de altura; selecionado fica
 /// invertido em tinta. A seleção também vai para o leitor de tela.
 class SafeChip extends StatelessWidget {
   const SafeChip({
@@ -42,16 +42,21 @@ class SafeChip extends StatelessWidget {
             borderRadius: AppSpacing.radiusFull,
             onTap: onTap,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 44),
+              // 48: alvo de toque mínimo (RNF-003).
+              constraints: const BoxConstraints(minHeight: 48),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 8,
                 ),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: AppTypography.label.copyWith(color: fg),
+                child: Center(
+                  widthFactor: 1,
+                  heightFactor: 1,
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.label.copyWith(color: fg),
+                  ),
                 ),
               ),
             ),

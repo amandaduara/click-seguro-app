@@ -43,7 +43,8 @@ class SafeButton extends StatefulWidget {
 class _SafeButtonState extends State<SafeButton> {
   bool _pressed = false;
 
-  bool get _isDisabled => widget.disabled || widget.loading;
+  bool get _isDisabled =>
+      widget.disabled || widget.loading || widget.onPressed == null;
   bool get _large => widget.size == SafeButtonSize.large;
 
   ({Color bg, Color fg, BorderSide? border}) _style(AppPalette colors) {
@@ -163,7 +164,9 @@ class _SafeButtonState extends State<SafeButton> {
                     ? null
                     : Border.fromBorderSide(style.border!),
               ),
-              alignment: Alignment.center,
+              // Só o grande se estica; o compacto fica do tamanho do texto
+              // (com `alignment`, o Container ocuparia a largura toda).
+              alignment: _large ? Alignment.center : null,
               child: content,
             ),
           ),

@@ -12,7 +12,9 @@ import 'package:click_seguro_app/core/widgets/person_avatar.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
+import 'package:click_seguro_app/modules/help/presentation/widgets/emergency_call_card.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -67,21 +69,40 @@ class _HelpPageContent extends StatelessWidget {
     length: 2,
     child: Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            AppTopBar(title: AppStrings.helpTitle.tr()),
-            const _HelpTabs(),
-            Expanded(
-              child: Consumer<HelpController>(
-                builder: (context, controller, _) => TabBarView(
-                  children: [
-                    _contactList(context, controller, official: true),
-                    _contactList(context, controller, official: false),
-                  ],
+        // O topo (barra, cartão de emergência e abas) rola junto com as
+        // listas: com a letra grande, ele sozinho passa da altura da tela.
+        child: NestedScrollView(
+          headerSliverBuilder: (context, _) => [
+            SliverToBoxAdapter(
+              child: AppTopBar(title: AppStrings.helpTitle.tr()),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s5,
+                  0,
+                  AppSpacing.s5,
+                  AppSpacing.s2,
+                ),
+                child: EmergencyCallCard(
+                  onCall: () => _callNumber(
+                    context,
+                    context.read<HelpController>(),
+                    EmergencyNumbers.police,
+                  ),
                 ),
               ),
             ),
+            const SliverToBoxAdapter(child: _HelpTabs()),
           ],
+          body: Consumer<HelpController>(
+            builder: (context, controller, _) => TabBarView(
+              children: [
+                _contactList(context, controller, official: true),
+                _contactList(context, controller, official: false),
+              ],
+            ),
+          ),
         ),
       ),
     ),
@@ -117,7 +138,7 @@ class _HelpPageContent extends StatelessWidget {
               child: FilledButton.icon(
                 key: const ValueKey('help_add_contact'),
                 onPressed: () => _openForm(context, controller),
-                icon: const Icon(Icons.add),
+                icon: const Icon(LucideIcons.plus),
                 label: Text(AppStrings.helpAddContact.tr()),
               ),
             ),
@@ -135,7 +156,7 @@ class _HelpPageContent extends StatelessWidget {
                 padding: const EdgeInsets.only(top: AppSpacing.s3),
                 child: _ContactCard(
                   contact: contact,
-                  onCall: () => _call(context, controller, contact),
+                  onCall: () => _callNumber(context, controller, contact.phone),
                   onEdit: official
                       ? null
                       : () => _openForm(
@@ -161,13 +182,14 @@ class _HelpPageContent extends StatelessWidget {
     if (saved == true && context.mounted) await controller.refresh();
   }
 
-  Future<void> _call(
+  /// Liga; sem discador, mostra o número para copiar (CB-009). Vale para
+  /// os contatos e para o "Ligar para 190" (FR-016 de specs/022).
+  Future<void> _callNumber(
     BuildContext context,
     HelpController controller,
-    ContactEntity contact,
+    String phone,
   ) async {
-    if (await controller.call(contact) || !context.mounted) return;
-    final phone = contact.phone;
+    if (await controller.callNumber(phone) || !context.mounted) return;
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -195,7 +217,7 @@ class _HelpPageContent extends StatelessWidget {
                 );
               }
             },
-            icon: const Icon(Icons.copy),
+            icon: const Icon(LucideIcons.copy),
             label: Text(AppStrings.helpCopyNumber.tr()),
           ),
         ],
@@ -249,13 +271,13 @@ class _ContactCard extends StatelessWidget {
             IconButton(
               tooltip: AppStrings.helpCall.tr(args: [contact.name]),
               onPressed: onCall,
-              icon: const Icon(Icons.call),
+              icon: const Icon(LucideIcons.phone),
             ),
             if (onEdit != null)
               IconButton(
                 tooltip: AppStrings.helpEditContact.tr(),
                 onPressed: onEdit,
-                icon: const Icon(Icons.edit_outlined),
+                icon: const Icon(LucideIcons.pencil),
               ),
           ],
         ),

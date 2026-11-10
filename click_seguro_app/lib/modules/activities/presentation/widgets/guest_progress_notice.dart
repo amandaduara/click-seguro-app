@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -12,48 +13,54 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 class GuestProgressNotice extends StatelessWidget {
   const GuestProgressNotice({super.key});
 
+  // Redesign 2.0: faixa creme compacta, com o convite como link (a ação
+  // principal da tela continua sendo abrir um módulo).
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.06),
-        borderRadius: AppSpacing.radiusLg,
-        border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+        color: colors.surface,
+        borderRadius: AppSpacing.radiusMd,
+        border: colors.shadow.isEmpty ? Border.all(color: colors.border) : null,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s4,
+          AppSpacing.s3,
+          AppSpacing.s2,
+          AppSpacing.s1,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ExcludeSemantics(
-                  child: Icon(
-                    LucideIcons.info,
-                    size: 22,
-                    color: colors.primary,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s3),
-                Expanded(
-                  child: Text(
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: ExcludeSemantics(
+                child: Icon(LucideIcons.info, size: 22, color: colors.info),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
                     AppStrings.activitiesGuestNotice.tr(),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    style: AppTypography.body.copyWith(
                       fontSize: 16,
+                      height: 1.4,
                       color: colors.textForeground,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s3),
-            SafeButton(
-              label: AppStrings.activitiesGuestAction.tr(),
-              size: SafeButtonSize.compact,
-              tone: SafeButtonTone.secondary,
-              onPressed: () => context.go('/login'),
+                  SafeButton(
+                    label: AppStrings.activitiesGuestAction.tr(),
+                    size: SafeButtonSize.compact,
+                    tone: SafeButtonTone.link,
+                    onPressed: () => context.go('/login'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

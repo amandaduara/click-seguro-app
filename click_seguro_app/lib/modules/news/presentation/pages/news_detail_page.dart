@@ -7,7 +7,6 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
-import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
@@ -24,10 +23,12 @@ import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_ba
 import 'package:click_seguro_app/modules/news/presentation/widgets/related_activity_card.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Detalhe da notícia (RF-014, RF-015, RF-019, specs/010-detalhe-noticia):
@@ -175,12 +176,15 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     switch (controller.status) {
       case NewsDetailStatus.loading:
         return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SafeLoadingState(),
             SlowRequestNotice(
               active: true,
               message: AppStrings.newsSlowServer.tr(),
+            ),
+            // Blocos com brilho no formato do conteúdo (FR-018).
+            const Expanded(
+              child: SafeLoadingState(layout: SafeLoadingLayout.detail),
             ),
           ],
         );
@@ -241,9 +245,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
                 if (detail.hasContent)
                   Text(
                     detail.content.trim(),
-                    style: textTheme.bodyLarge?.copyWith(
-                      fontSize: 18,
-                      height: 1.5,
+                    style: AppTypography.bodyLarge.copyWith(
                       color: context.colors.textForeground,
                     ),
                   )
@@ -284,11 +286,8 @@ class _NotFound extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SafeStateIllustration(
-            isError: false,
-            icon: LucideIcons.newspaper,
-          ),
-          const SizedBox(height: AppSpacing.s3),
+          const SafeIllustration(AppIllustration.stateEmpty, height: 180),
+          const SizedBox(height: AppSpacing.s5),
           Text(
             AppStrings.newsErrorNotFound.tr(),
             textAlign: TextAlign.center,

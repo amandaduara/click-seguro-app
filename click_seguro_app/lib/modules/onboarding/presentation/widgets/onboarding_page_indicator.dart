@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingPageIndicator extends StatelessWidget {
@@ -15,14 +16,16 @@ class OnboardingPageIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(pageCount, (index) {
         final bool isActive = index == currentPage;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s1),
-          width: isActive ? 24 : 8,
-          height: 8,
+          duration: AppMotion.duration(
+            AppMotion.standard,
+            reduce: context.reduceMotion,
+          ),
+          margin: const EdgeInsets.only(right: AppSpacing.s2),
+          width: isActive ? 32 : 10,
+          height: 10,
           decoration: BoxDecoration(
             color: isActive ? context.colors.primary : context.colors.border,
             borderRadius: AppSpacing.radiusFull,
