@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/utils/person_initials.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// Foto circular com iniciais de fallback para pessoas do perfil e contatos.
@@ -51,10 +52,11 @@ class PersonAvatar extends StatelessWidget {
             errorBuilder: (_, _, _) => fallback,
           )
         : url != null
-        ? Image.network(
-            url,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => fallback,
+        ? SafeNetworkImage(
+            url: url,
+            width: size,
+            height: size,
+            placeholder: fallback,
           )
         : fallback;
     return ExcludeSemantics(

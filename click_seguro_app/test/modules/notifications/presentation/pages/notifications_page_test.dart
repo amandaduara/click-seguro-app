@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/notifications/domain/entities/alert_entity.dart';
 import 'package:click_seguro_app/modules/notifications/domain/entities/alerts_snapshot.dart';
@@ -98,6 +101,37 @@ void main() {
       find.descendant(of: inScroll, matching: find.text(text));
 
   group('lista', () {
+    testWidgets('lendo os alertas guardados: esqueleto da lista', (
+      tester,
+    ) async {
+      repository
+        ..stored = snapshot(alerts: [alertAt('a', noon(0))])
+        ..snapshotGate = Completer<void>();
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await pumpLocalized(
+        tester,
+        router: router,
+        providers: [fakeNotificationsProvider(repository)],
+        settle: false,
+      );
+
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('Carregando'), findsOneWidget);
+
+      repository.snapshotGate!.complete();
+      await tester.pumpAndSettle();
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsNothing,
+      );
+      expect(find.byKey(const ValueKey('alert-a')), findsOneWidget);
+    });
+
     testWidgets('abrir a tela confere de novo, sem esperar o intervalo', (
       tester,
     ) async {

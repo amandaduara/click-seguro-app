@@ -61,6 +61,7 @@ class _SlowRequestNoticeState extends State<SlowRequestNotice> {
     if (!_visible) return const SizedBox.shrink();
     final AppPalette colors = context.colors;
     return Padding(
+      // Margem lateral: o texto não encosta nas bordas da tela (T062).
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s5,
         AppSpacing.s3,

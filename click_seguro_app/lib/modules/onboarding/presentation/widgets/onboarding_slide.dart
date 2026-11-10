@@ -74,7 +74,7 @@ class _FloatingState extends State<_Floating>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (context.reduceMotion) {
+    if (AppMotion.of(context).reduced) {
       _controller.stop();
     } else if (!_controller.isAnimating) {
       // Poucas voltas, para a tela poder "assentar" (como o "Ouvir").

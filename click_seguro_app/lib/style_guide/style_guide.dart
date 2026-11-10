@@ -248,8 +248,8 @@ class _StyleGuideScreenState extends State<_StyleGuideScreen> {
           const SafeOfflineBanner(),
           const SizedBox(height: AppSpacing.s3),
           const SafeSkeleton(
-            height: 120,
-            radius: BorderRadius.all(Radius.circular(16)),
+            enabled: true,
+            child: SafeCard(child: Text('Cartão carregando')),
           ),
           _section('Ilustrações'),
           Wrap(

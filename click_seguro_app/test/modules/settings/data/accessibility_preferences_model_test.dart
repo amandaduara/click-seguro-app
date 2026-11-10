@@ -75,4 +75,25 @@ void main() {
       isTrue,
     );
   });
+
+  test('registro sem "Reduzir animações" (versão anterior) → desligado', () {
+    final preferences = AccessibilityPreferencesModel.fromJson({
+      'fontScale': 'large',
+      'highContrast': true,
+      'autoReadAloud': true,
+      'readingSpeed': 'fast',
+    });
+
+    expect(preferences.reduceMotion, isFalse);
+    expect(preferences.fontScale, FontScaleLevel.large);
+  });
+
+  test('"Reduzir animações" ilegível cai em desligado', () {
+    expect(
+      AccessibilityPreferencesModel.fromJson({
+        'reduceMotion': 'sim',
+      }).reduceMotion,
+      isFalse,
+    );
+  });
 }

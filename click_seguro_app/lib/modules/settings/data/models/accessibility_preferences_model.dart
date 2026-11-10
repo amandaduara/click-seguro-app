@@ -25,6 +25,7 @@ abstract final class AccessibilityPreferencesModel {
         json[readingSpeedKey],
         defaults.readingSpeed,
       ),
+      // Ausente no que foi guardado antes da specs/022: lido como desligado.
       reduceMotion: _bool(json[reduceMotionKey], defaults.reduceMotion),
     );
   }

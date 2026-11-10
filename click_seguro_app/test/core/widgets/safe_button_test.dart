@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
@@ -162,7 +164,15 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale,
+        tester
+            .widget<ScaleTransition>(
+              find.descendant(
+                of: find.byType(SafeButton),
+                matching: find.byType(ScaleTransition),
+              ),
+            )
+            .scale
+            .value,
         0.98,
       );
 
@@ -171,7 +181,9 @@ void main() {
       expect(taps, 1);
     });
 
-    testWidgets('com reduzir animações, não encolhe (FR-021)', (tester) async {
+    testWidgets('com reduzir animações, não anima a escala (FR-021)', (
+      tester,
+    ) async {
       await pump(
         tester,
         SafeButton(label: 'Botão', onPressed: () {}),
@@ -182,7 +194,7 @@ void main() {
         tester.getCenter(find.byType(SafeButton)),
       );
       await tester.pump();
-      expect(tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale, 1);
+      expect(tester.hasRunningAnimations, isFalse);
       await gesture.up();
     });
 
@@ -209,5 +221,86 @@ void main() {
 
     expect(find.bySemanticsLabel('Botão'), findsOneWidget);
     handle.dispose();
+  });
+
+  group('leitor de tela (specs/022 FR-007)', () {
+    Future<void> pumpButton(
+      WidgetTester tester, {
+      bool disabled = false,
+      bool loading = false,
+    }) => tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SafeButton(
+            label: 'Entrar',
+            disabled: disabled,
+            loading: loading,
+            onPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('é anunciado como botão habilitado, com o rótulo', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpButton(tester);
+
+      expect(
+        tester.getSemantics(find.byType(SafeButton)),
+        matchesSemantics(
+          label: 'Entrar',
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          hasTapAction: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('desabilitado ou carregando: botão desabilitado', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      for (final (disabled, loading) in [(true, false), (false, true)]) {
+        await pumpButton(tester, disabled: disabled, loading: loading);
+
+        final data = tester
+            .getSemantics(find.byType(SafeButton))
+            .getSemanticsData();
+        expect(data.flagsCollection.isButton, isTrue);
+        expect(data.flagsCollection.isEnabled, Tristate.isFalse);
+      }
+      handle.dispose();
+    });
+  });
+
+  testWidgets('o ícone dá lugar ao spinner com troca animada (R13)', (
+    tester,
+  ) async {
+    Widget button({required bool loading}) => MaterialApp(
+      home: Scaffold(
+        body: SafeButton(
+          label: 'Entrar',
+          icon: const Icon(Icons.login),
+          loading: loading,
+          onPressed: () {},
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(button(loading: false));
+    expect(find.byType(AnimatedSwitcher), findsOneWidget);
+    expect(find.byIcon(Icons.login), findsOneWidget);
+
+    await tester.pumpWidget(button(loading: true));
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byIcon(Icons.login), findsOneWidget, reason: 'saindo');
+
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.byIcon(Icons.login), findsNothing);
   });
 }

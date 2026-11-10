@@ -1,76 +1,97 @@
+import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
-/// Bloco de carregamento com um brilho que corre a cada 1,4 s, no formato do
-/// conteúdo que vai chegar (FR-018). Decorativo para o leitor de tela: quem
-/// anuncia o carregamento é o `SafeLoadingState`. Parado com reduzir
-/// animações (FR-021).
-class SafeSkeleton extends StatefulWidget {
+/// Esqueleto no formato do conteúdo (specs/022 R8, FR-011 a FR-014): a tela
+/// passa os próprios widgets com dados de exemplo em [child].
+///
+/// Ligado, é lido como "Carregando" e não expõe o texto de exemplo; com o
+/// movimento reduzido, fica estático. Desligar troca para o conteúdo com um
+/// esmaecimento de [AppMotion.medium].
+class SafeSkeleton extends StatelessWidget {
   const SafeSkeleton({
     super.key,
-    this.width,
-    required this.height,
-    this.radius = const BorderRadius.all(Radius.circular(12)),
+    required this.enabled,
+    required this.child,
+    this.highlightColor,
   });
 
-  final double? width;
-  final double height;
-  final BorderRadius radius;
+  static const Duration _shimmerCycle = Duration(milliseconds: 1500);
 
-  @override
-  State<SafeSkeleton> createState() => _SafeSkeletonState();
-}
+  // Chave que o Skeletonizer dá à cópia em esqueleto dentro da troca.
+  static const ValueKey<String> _skeletonKey = ValueKey('skeletonizer');
 
-class _SafeSkeletonState extends State<SafeSkeleton>
-    with SingleTickerProviderStateMixin {
-  static const Duration _period = Duration(milliseconds: 1400);
+  final bool enabled;
+  final Widget child;
 
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: _period,
-  );
+  /// Cor do brilho; sem ela, a do `card`. Num fundo escuro com contêineres
+  /// pretos, passe uma cor clara: o `card` preto desenharia uma faixa preta.
+  final Color? highlightColor;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (context.reduceMotion) {
-      _controller.stop();
-    } else if (!_controller.isAnimating) {
-      _controller.repeat();
-    }
-  }
+  /// Marca [child] como uma barra só no esqueleto (um botão redondo vira um
+  /// círculo, sem desenhar o que tem dentro). Fora do esqueleto, não muda
+  /// nada.
+  static Widget leaf(Widget child) => Skeleton.leaf(child: child);
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  /// Desenha [child] como é, mesmo no esqueleto (a imagem já conhecida de
+  /// um item). Fora do esqueleto, não muda nada.
+  static Widget keep(Widget child) => Skeleton.keep(child: child);
+
+  /// Texto de exemplo com [words] palavras, para os dados de exemplo das
+  /// telas: vira barras no esqueleto e nunca é lido.
+  static String text(int words) =>
+      List<String>.filled(words, BoneMock.words(1)).join(' ');
+
+  // A cópia em esqueleto que sai não é lida: o texto de exemplo ficaria
+  // exposto ao leitor de tela durante a troca.
+  static Widget _fade(Widget child, Animation<double> animation) =>
+      FadeTransition(
+        key: ValueKey<Key?>(child.key),
+        opacity: animation,
+        child: child.key == _skeletonKey
+            ? ExcludeSemantics(child: child)
+            : child,
+      );
 
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
-    final Color base = colors.surfaceStrong;
-    final Color shine = Color.lerp(base, colors.card, 0.6)!;
-    return ExcludeSemantics(
-      child: SizedBox(
-        width: widget.width,
-        height: widget.height,
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            final double t = _controller.value * 2 - 1; // -1 → 1
-            return DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: widget.radius,
-                gradient: LinearGradient(
-                  begin: Alignment(t - 1, 0),
-                  end: Alignment(t + 1, 0),
-                  colors: [base, shine, base],
+    final AppMotion motion = AppMotion.of(context);
+
+    // Estrutura fixa: trocar os wrappers ao ligar e desligar perderia a
+    // animação de troca. Desligado, não é contêiner, para não juntar os
+    // textos do conteúdo num nó só.
+    return Semantics(
+      container: enabled,
+      liveRegion: enabled,
+      label: enabled ? AppStrings.commonLoading.tr() : null,
+      child: ExcludeSemantics(
+        excluding: enabled,
+        child: Skeletonizer(
+          enabled: enabled,
+          enableSwitchAnimation: !motion.reduced,
+          switchAnimationConfig: SwitchAnimationConfig(
+            duration: motion.medium,
+            switchInCurve: AppMotion.standard,
+            switchOutCurve: AppMotion.standard,
+            transitionBuilder: _fade,
+            layoutBuilder: topAlignedSwitcherLayout,
+          ),
+          // Sem isso, caixas com tom (selo, chip) aparecem coloridas por
+          // baixo das barras.
+          containersColor: colors.card,
+          effect: motion.reduced
+              ? SolidColorEffect(color: colors.input)
+              : ShimmerEffect(
+                  baseColor: colors.input,
+                  highlightColor: highlightColor ?? colors.card,
+                  duration: _shimmerCycle,
                 ),
-              ),
-            );
-          },
+          child: child,
         ),
       ),
     );

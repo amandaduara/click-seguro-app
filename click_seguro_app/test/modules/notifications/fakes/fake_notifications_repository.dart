@@ -18,6 +18,9 @@ class FakeNotificationsRepository implements NotificationsRepository {
   bool receiveAlerts = true;
   Failure? receiveAlertsError;
 
+  /// Quando definido, [getSnapshot] só responde depois de concluído.
+  Completer<void>? snapshotGate;
+
   /// Quando definido, [fetchNewAlerts] só responde depois de concluído.
   Completer<void>? fetchGate;
 
@@ -32,6 +35,7 @@ class FakeNotificationsRepository implements NotificationsRepository {
   @override
   Future<Either<Failure, AlertsSnapshot>> getSnapshot() async {
     getSnapshotCalls++;
+    await snapshotGate?.future;
     if (getSnapshotError case final error?) return Left(error);
     return Right(stored);
   }

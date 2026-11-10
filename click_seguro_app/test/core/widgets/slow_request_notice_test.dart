@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,5 +38,17 @@ void main() {
     await tester.pump(SlowRequestNotice.delay * 2);
 
     expect(find.text('Acordando'), findsNothing);
+  });
+
+  testWidgets('o texto tem margem lateral (specs/022 T062)', (tester) async {
+    await pump(tester, active: true);
+    await tester.pump(SlowRequestNotice.delay);
+
+    final double left = tester.getTopLeft(find.text('Acordando')).dx;
+    final double right =
+        tester.view.physicalSize.width / tester.view.devicePixelRatio -
+        tester.getTopRight(find.text('Acordando')).dx;
+    expect(left, greaterThanOrEqualTo(AppSpacing.s5));
+    expect(right, greaterThanOrEqualTo(AppSpacing.s5));
   });
 }

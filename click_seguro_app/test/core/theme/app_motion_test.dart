@@ -2,45 +2,76 @@ import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Durações e o sinal único de "reduzir animações" (R8 de
-/// specs/023-redesign-visual).
-void main() {
-  test('durações do redesign', () {
-    expect(AppMotion.fast, const Duration(milliseconds: 150));
-    expect(AppMotion.standard, const Duration(milliseconds: 250));
-    expect(AppMotion.emphasis, const Duration(milliseconds: 400));
-    expect(AppMotion.celebration, const Duration(milliseconds: 1200));
-  });
-
-  Future<bool> readReduceMotion(
-    WidgetTester tester, {
-    required bool disable,
-  }) async {
-    late bool value;
-    await tester.pumpWidget(
-      MediaQuery(
-        data: MediaQueryData(disableAnimations: disable),
+/// Monta [AppMotionScope] e devolve o [AppMotion] lido abaixo dele.
+Future<AppMotion> _motionUnder(
+  WidgetTester tester, {
+  required bool appReduceMotion,
+  bool disableAnimations = false,
+}) async {
+  late AppMotion motion;
+  await tester.pumpWidget(
+    MediaQuery(
+      data: MediaQueryData(disableAnimations: disableAnimations),
+      child: AppMotionScope(
+        appReduceMotion: appReduceMotion,
         child: Builder(
           builder: (context) {
-            value = context.reduceMotion;
-            return const SizedBox();
+            motion = AppMotion.of(context);
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    ),
+  );
+  return motion;
+}
+
+void main() {
+  testWidgets('com animações, usa as durações do design system', (
+    tester,
+  ) async {
+    final motion = await _motionUnder(tester, appReduceMotion: false);
+
+    expect(motion.reduced, isFalse);
+    expect(motion.short, const Duration(milliseconds: 150));
+    expect(motion.medium, const Duration(milliseconds: 250));
+    expect(motion.long, const Duration(milliseconds: 350));
+  });
+
+  testWidgets('"Reduzir animações" do app zera as durações', (tester) async {
+    final motion = await _motionUnder(tester, appReduceMotion: true);
+
+    expect(motion.reduced, isTrue);
+    expect(motion.short, Duration.zero);
+    expect(motion.medium, Duration.zero);
+    expect(motion.long, Duration.zero);
+  });
+
+  testWidgets('"remover animações" do sistema também zera', (tester) async {
+    final motion = await _motionUnder(
+      tester,
+      appReduceMotion: false,
+      disableAnimations: true,
+    );
+
+    expect(motion.reduced, isTrue);
+    expect(motion.medium, Duration.zero);
+  });
+
+  testWidgets('sem escopo, segue a opção do sistema', (tester) async {
+    late AppMotion motion;
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(disableAnimations: true),
+        child: Builder(
+          builder: (context) {
+            motion = AppMotion.of(context);
+            return const SizedBox.shrink();
           },
         ),
       ),
     );
-    return value;
-  }
 
-  testWidgets('context.reduceMotion segue o MediaQuery', (tester) async {
-    expect(await readReduceMotion(tester, disable: true), isTrue);
-    expect(await readReduceMotion(tester, disable: false), isFalse);
-  });
-
-  test('duração efetiva: zero com reduzir animações', () {
-    expect(AppMotion.duration(AppMotion.standard, reduce: true), Duration.zero);
-    expect(
-      AppMotion.duration(AppMotion.standard, reduce: false),
-      AppMotion.standard,
-    );
+    expect(motion.reduced, isTrue);
   });
 }

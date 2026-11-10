@@ -68,6 +68,30 @@ void main() {
     expect(find.text('Começar'), findsOneWidget);
   });
 
+  testWidgets('o indicador acompanha o arraste (specs/022 FR-024)', (
+    tester,
+  ) async {
+    await pumpLocalized(tester, router: buildRouter());
+    // Sem a margem de 4 de cada lado.
+    double width(int index) =>
+        tester.getSize(find.byKey(ValueKey('onboarding-dot-$index'))).width - 8;
+    expect(width(0), 24);
+    expect(width(1), 8);
+
+    final double half = tester.getSize(find.byType(PageView)).width / 2;
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(PageView)),
+    );
+    await gesture.moveBy(Offset(-half, 0));
+    await tester.pump();
+
+    expect(width(0), inExclusiveRange(8, 24));
+    expect(width(1), inExclusiveRange(8, 24));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(width(1), 24);
+  });
+
   testWidgets('"Começar" abre o login', (tester) async {
     await pumpLocalized(tester, router: buildRouter());
 

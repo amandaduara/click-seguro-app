@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
+import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
@@ -16,13 +18,13 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.d
 import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/news_detail_page.dart';
+import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_actions.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/related_activity_card.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
 import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
 import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -105,7 +107,10 @@ void main() {
               session.sessionStatus,
               newsId: id,
             )..load(),
-            child: NewsDetailPage(newsId: id),
+            child: NewsDetailPage(
+              newsId: id,
+              preview: state.extra as NewsDetailPreview?,
+            ),
           );
         },
       ),
@@ -120,13 +125,14 @@ void main() {
     Locale locale = const Locale('pt', 'BR'),
     Size size = const Size(800, 1600),
     ThemeData? theme,
+    NewsDetailPreview? preview,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     router = buildRouter();
     await pumpLocalized(tester, router: router, locale: locale, theme: theme);
-    unawaited(router.push<void>('/news/n1'));
+    unawaited(router.push<void>('/news/n1', extra: preview));
     if (settle) {
       await tester.pumpAndSettle();
     } else {
@@ -146,9 +152,74 @@ void main() {
 
       expect(find.byType(AppBar), findsOneWidget);
       expect(find.byType(BackButton), findsOneWidget);
-      expect(find.byType(SafeLoadingState), findsOneWidget);
+      expect(find.byType(SafeSkeleton), findsOneWidget);
       repository.detailGate!.complete();
       await tester.pumpAndSettle();
+    });
+
+    group('prévia (specs/022 FR-017)', () {
+      final preview = NewsDetailPreview(
+        item: newsItem('n1', imageUrl: 'https://img.test/n.jpg'),
+        heroTag: 'news-image-recent-n1',
+      );
+
+      testWidgets('com a prévia: título, fonte e imagem antes da carga; '
+          'esqueleto só do corpo', (tester) async {
+        repository.detailGate = Completer<void>();
+
+        await pumpPage(tester, settle: false, preview: preview);
+
+        expect(find.text('Notícia n1'), findsOneWidget);
+        expect(find.text('Folha de Teste · 20 de set.'), findsOneWidget);
+        expect(find.text('Phishing'), findsOneWidget);
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is Hero && w.tag == 'news-image-recent-n1',
+          ),
+          findsOneWidget,
+        );
+        final Finder skeleton = find.byType(SafeSkeleton);
+        expect(skeleton, findsOneWidget);
+        expect(
+          find.descendant(of: skeleton, matching: find.text('Notícia n1')),
+          findsNothing,
+        );
+        repository.detailGate!.complete();
+        await tester.pumpAndSettle();
+        expect(find.text('Notícia n1'), findsOneWidget);
+        expect(find.byType(SafeSkeleton), findsNothing);
+        expect(find.text('Texto'), findsOneWidget);
+      });
+
+      testWidgets('sem a prévia: esqueleto completo, sem título', (
+        tester,
+      ) async {
+        repository.detailGate = Completer<void>();
+
+        await pumpPage(tester, settle: false);
+
+        expect(find.byType(SafeSkeleton), findsOneWidget);
+        expect(find.text('Notícia n1'), findsNothing);
+        expect(find.byType(Hero), findsNothing);
+        repository.detailGate!.complete();
+        await tester.pumpAndSettle();
+        expect(find.text('Notícia n1'), findsOneWidget);
+      });
+
+      testWidgets('falha com a prévia: o erro aparece abaixo do título', (
+        tester,
+      ) async {
+        repository.detailResults.add(const Left(ConnectionFailure()));
+
+        await pumpPage(tester, preview: preview);
+
+        expect(find.text('Notícia n1'), findsOneWidget);
+        expect(find.byType(SafeErrorState), findsOneWidget);
+        expect(
+          tester.getTopLeft(find.byType(SafeErrorState)).dy,
+          greaterThan(tester.getTopLeft(find.text('Notícia n1')).dy),
+        );
+      });
     });
 
     testWidgets('"Conectando ao servidor…" depois de alguns segundos', (

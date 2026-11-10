@@ -1,14 +1,22 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
 import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
+import 'package:click_seguro_app/modules/news/presentation/controller/feed_message.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_placeholders.dart';
+import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/category_filter_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_footer.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_search_field.dart';
@@ -24,8 +32,49 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 /// Aba Início: o feed de notícias (specs/006-feed-inicio).
-class NewsHomePage extends StatelessWidget {
+class NewsHomePage extends StatefulWidget {
   const NewsHomePage({super.key});
+
+  @override
+  State<NewsHomePage> createState() => _NewsHomePageState();
+}
+
+class _NewsHomePageState extends State<NewsHomePage> {
+  StreamSubscription<FeedMessage>? _messages;
+
+  /// Puxar para atualizar em andamento: o indicador do gesto já basta, sem
+  /// a barra de progresso (specs/022 US1).
+  bool _pulling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _messages = context.read<FeedController>().messages.listen(_showMessage);
+  }
+
+  @override
+  void dispose() {
+    unawaited(_messages?.cancel());
+    super.dispose();
+  }
+
+  /// Falha ao atualizar com a lista na tela: a lista fica e um aviso
+  /// explica (FR-003).
+  void _showMessage(FeedMessage message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message.failureKey.tr())));
+  }
+
+  Future<void> _pullToRefresh(FeedController controller) async {
+    setState(() => _pulling = true);
+    try {
+      await controller.refresh();
+    } finally {
+      if (mounted) setState(() => _pulling = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +107,26 @@ class NewsHomePage extends StatelessWidget {
                 onSelected: controller.selectCategory,
               ),
             ),
-            Expanded(child: _content(context, controller)),
+            // Troca de categoria ou busca: a lista anterior fica esmaecida
+            // com uma barra fina até a nova chegar (FR-002).
+            SizedBox(
+              height: 2,
+              child: controller.isRefreshing && !_pulling
+                  ? LinearProgressIndicator(
+                      minHeight: 2,
+                      color: context.colors.primary,
+                      backgroundColor: Colors.transparent,
+                    )
+                  : null,
+            ),
+            Expanded(
+              child: AnimatedOpacity(
+                opacity: controller.isRefreshing && !_pulling ? 0.5 : 1,
+                duration: AppMotion.of(context).short,
+                curve: AppMotion.standard,
+                child: _content(context, controller),
+              ),
+            ),
           ],
         ),
       ),
@@ -79,22 +147,24 @@ class NewsHomePage extends StatelessWidget {
     return '$greeting $count';
   }
 
-  Widget _content(BuildContext context, FeedController controller) {
+  /// Carregando, erro, vazio e lista trocam com um esmaecimento (R8).
+  Widget _content(BuildContext context, FeedController controller) =>
+      SafeStateSwitcher(
+        stateKey: (controller.status, _isEmptyResult(controller)),
+        child: _stateContent(context, controller),
+      );
+
+  /// Durante a troca de filtro, a lista ainda é a antiga: o vazio só vale
+  /// com a resposta do filtro novo.
+  bool _isEmptyResult(FeedController controller) =>
+      !controller.isRefreshing &&
+      controller.items.isEmpty &&
+      !controller.filter.isEmpty;
+
+  Widget _stateContent(BuildContext context, FeedController controller) {
     switch (controller.status) {
       case FeedStatus.loading:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SlowRequestNotice(
-              active: true,
-              message: AppStrings.newsSlowServer.tr(),
-            ),
-            // Blocos com brilho no formato do conteúdo (FR-018).
-            const Expanded(
-              child: SafeLoadingState(layout: SafeLoadingLayout.cards),
-            ),
-          ],
-        );
+        return _FeedSkeleton(now: DateTime.now());
       case FeedStatus.error:
         return SafeErrorState(
           message: (controller.failure?.message ?? AppStrings.errorGeneric)
@@ -102,7 +172,7 @@ class NewsHomePage extends StatelessWidget {
           onRetry: controller.load,
         );
       case FeedStatus.loaded:
-        if (controller.items.isEmpty && !controller.filter.isEmpty) {
+        if (_isEmptyResult(controller)) {
           return SafeEmptyState(
             message: controller.isSearching
                 ? AppStrings.newsEmptySearch.tr(
@@ -112,7 +182,7 @@ class NewsHomePage extends StatelessWidget {
           );
         }
         return RefreshIndicator(
-          onRefresh: controller.refresh,
+          onRefresh: () => _pullToRefresh(controller),
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: _slivers(context, controller),
@@ -124,39 +194,54 @@ class NewsHomePage extends StatelessWidget {
   List<Widget> _slivers(BuildContext context, FeedController controller) {
     final DateTime now = DateTime.now();
 
-    Future<void> openNews(NewsItemEntity item) =>
-        context.push<void>('/news/${item.id}');
+    // A mesma notícia pode estar em duas seções: a tag leva a seção (R9).
+    Future<void> openNews(NewsItemEntity item, String heroTag) =>
+        context.push<void>(
+          '/news/${item.id}',
+          extra: NewsDetailPreview(item: item, heroTag: heroTag),
+        );
+
+    Widget card(
+      _FeedSection section,
+      NewsItemEntity item, {
+      bool compact = true,
+      double? coverHeight,
+    }) {
+      final String tag = NewsDetailPreview.tagFor(section.name, item.id);
+      return NewsCard(
+        item: item,
+        now: now,
+        compact: compact,
+        coverHeight: coverHeight,
+        heroTag: tag,
+        onTap: () => openNews(item, tag),
+      );
+    }
 
     // Destaques: cartões grandes, um por linha.
-    Widget large(List<NewsItemEntity> items) => SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      sliver: SliverList.separated(
-        itemCount: items.length,
-        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s6),
-        itemBuilder: (_, index) => NewsCard(
-          item: items[index],
-          now: now,
-          compact: false,
-          onTap: () => openNews(items[index]),
-        ),
-      ),
-    );
+    Widget large(_FeedSection section, List<NewsItemEntity> items) =>
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+          sliver: SliverList.separated(
+            itemCount: items.length,
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s6),
+            itemBuilder: (_, index) =>
+                card(section, items[index], compact: false),
+          ),
+        );
 
     // Recomendadas e Tudo recente: grade de 2 colunas (FR-025).
-    Widget cards(List<NewsItemEntity> items) => SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      sliver: SliverToBoxAdapter(
-        child: NewsGrid(
-          items: items,
-          itemBuilder: (item, coverHeight) => NewsCard(
-            item: item,
-            now: now,
-            coverHeight: coverHeight,
-            onTap: () => openNews(item),
+    Widget cards(_FeedSection section, List<NewsItemEntity> items) =>
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+          sliver: SliverToBoxAdapter(
+            child: NewsGrid(
+              items: items,
+              itemBuilder: (item, coverHeight) =>
+                  card(section, item, coverHeight: coverHeight),
+            ),
           ),
-        ),
-      ),
-    );
+        );
 
     return [
       // Feed da cópia guardada (CB-001, FR-020).
@@ -169,7 +254,9 @@ class NewsHomePage extends StatelessWidget {
         SliverToBoxAdapter(
           child: ReelsCarousel(
             reels: controller.reels,
-            onOpen: (item) => context.go('/reels?start=${item.id}'),
+            // O item vai junto: a imagem aparece já na chegada (FR-019).
+            onOpen: (item) =>
+                context.go('/reels?start=${item.id}', extra: item),
           ),
         ),
       ],
@@ -177,13 +264,13 @@ class NewsHomePage extends StatelessWidget {
         SliverToBoxAdapter(
           child: FeedSectionTitle(AppStrings.newsSectionHighlights.tr()),
         ),
-        large(controller.highlights),
+        large(_FeedSection.highlights, controller.highlights),
       ],
       if (controller.recommended.isNotEmpty) ...[
         SliverToBoxAdapter(
           child: FeedSectionTitle(AppStrings.newsSectionRecommended.tr()),
         ),
-        cards(controller.recommended),
+        cards(_FeedSection.recommended, controller.recommended),
       ],
       SliverToBoxAdapter(
         child: FeedSectionTitle(
@@ -192,7 +279,7 @@ class NewsHomePage extends StatelessWidget {
               : AppStrings.newsSectionRecent.tr(),
         ),
       ),
-      cards(controller.items),
+      cards(_FeedSection.recent, controller.items),
       SliverToBoxAdapter(
         child: FeedListFooter(
           hasMore: controller.hasMore,
@@ -206,3 +293,57 @@ class NewsHomePage extends StatelessWidget {
     ];
   }
 }
+
+/// Primeira carga: os cartões do feed em esqueleto, com o aviso de servidor
+/// acordando acima deles (FR-011, FR-014).
+class _FeedSkeleton extends StatelessWidget {
+  const _FeedSkeleton({required this.now});
+
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    physics: const NeverScrollableScrollPhysics(),
+    children: [
+      SlowRequestNotice(active: true, message: AppStrings.newsSlowServer.tr()),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s5,
+          AppSpacing.s4,
+          AppSpacing.s5,
+          0,
+        ),
+        child: SafeSkeleton(
+          enabled: true,
+          child: Column(
+            children: [
+              NewsCard(
+                item: NewsPlaceholders.item(0),
+                now: now,
+                compact: false,
+                onTap: () async {},
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              NewsGrid(
+                items: [
+                  for (int index = 1; index < 5; index++)
+                    NewsPlaceholders.item(index),
+                ],
+                itemBuilder: (item, coverHeight) => NewsCard(
+                  item: item,
+                  now: now,
+                  coverHeight: coverHeight,
+                  onTap: () async {},
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+/// Seções do feed com cartões: entram na tag do `Hero`, porque a mesma
+/// notícia pode estar em duas delas (R9).
+enum _FeedSection { highlights, recommended, recent }

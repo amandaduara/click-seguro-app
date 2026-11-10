@@ -48,8 +48,8 @@ class AccessibilityPreferences {
   final bool autoReadAloud;
   final ReadingSpeed readingSpeed;
 
-  /// Mostrar as telas sem animação, além do "remover animações" do aparelho
-  /// (FR-024 de specs/023-redesign-visual).
+  /// "Reduzir animações": troca imediata em vez de movimento (specs/022
+  /// FR-009, FR-010). Desligado por padrão: a animação curta orienta.
   final bool reduceMotion;
 
   AccessibilityPreferences copyWith({

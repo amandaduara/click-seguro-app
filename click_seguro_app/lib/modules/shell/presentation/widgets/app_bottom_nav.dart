@@ -106,10 +106,7 @@ class _TabItem extends StatelessWidget {
             children: [
               // Indicador em pílula atrás do ícone (FR-009).
               AnimatedContainer(
-                duration: AppMotion.duration(
-                  AppMotion.fast,
-                  reduce: context.reduceMotion,
-                ),
+                duration: AppMotion.of(context).short,
                 width: 60,
                 height: 34,
                 decoration: BoxDecoration(

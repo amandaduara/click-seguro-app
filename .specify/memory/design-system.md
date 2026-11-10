@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 1.1.1
+**Versão**: 1.2.0
 
 **Criado em**: 2026-10-04
 
@@ -223,18 +223,54 @@ O wireframe deriva os raios de `--radius = 14px` (Tailwind v4: `xl` = 18, `2xl` 
 
 ## 6. Movimento
 
-| Interação | Efeito | Duração |
-|---|---|---|
-| Pressionar botão | escala para 95% | 200 ms, ease-out |
-| Pressionar cartão interativo | escala para 99% | 200 ms, ease-out |
-| Hover no botão (web) | `primary` 90% (ou opacidade 90% no gradiente) | transição padrão |
-| Foco em campo | borda de `input` para `primary` | transição padrão |
-| Troca de slide do onboarding | deslizar | 300 ms, ease-out |
-| Seletor "Entrar / Criar conta" | uma pílula branca desliza até a opção tocada | transição padrão |
-| Indicador de página | o ponto ativo alonga (8 → 32 px) | transição padrão |
+Movimento curto e suave, para quem usa o app com calma (RNF-003). Toda animação de interface lê
+as durações e curvas de `AppMotion.of(context)` (`core/theme/app_motion.dart`), nunca de um
+`Duration` literal. Assim a opção "Reduzir animações" cobre o app inteiro.
 
-Respeitar "reduzir movimento" do sistema (`prefers-reduced-motion` no web): sem escalas nem
-deslizes, só troca de estado.
+### 6.1 Tokens
+
+| Token | Duração | Uso |
+|---|---|---|
+| `short` | 150 ms | pressão de botão e cartão, cor do ícone da aba ativa |
+| `medium` | 250 ms | troca de estado, de aba, entrada de mensagens e campos |
+| `long` | 350 ms | entrada de tela, troca de pergunta, pulso do curtir (teto: 400 ms) |
+
+| Curva | Uso |
+|---|---|
+| `AppMotion.enter` (*emphasized decelerate*) | o que entra na tela |
+| `AppMotion.exit` (*emphasized accelerate*) | o que sai da tela |
+| `AppMotion.standard` | troca no lugar (cor, opacidade, tamanho) |
+| `AppMotion.emphasis` (*ease out back*) | ênfase curta, com um leve passar do ponto |
+
+### 6.2 "Reduzir animações"
+
+Em Configurações → Acessibilidade, "Reduzir animações" (ou "remover animações" do aparelho)
+zera todas as durações: o código é o mesmo e a troca fica imediata. `AppMotionScope`, no
+`builder` do `MaterialApp`, junta as duas fontes. Animações em laço (brilho do esqueleto, pontos
+do "digitando") ficam paradas.
+
+### 6.3 Padrões
+
+| Situação | Efeito |
+|---|---|
+| Abrir e fechar telas | transição do sistema com voltar preditivo no Android (`PredictiveBackPageTransitionsBuilder`); `appFadePage` (esmaecer) nas rotas que trocam a pilha, como a saída da splash |
+| Troca de abas | *fade-through* na aba que entra (`TabBranchContainer`), mantendo estado e rolagem |
+| Carregando | esqueleto no formato do conteúdo (`SafeSkeleton`), lido como "Carregando"; troca de estado com `SafeStateSwitcher` (esmaecer) |
+| Detalhe da notícia | prévia imediata com `Hero` na imagem do cartão |
+| Pressionar botão / cartão | escala para 95% / 99% (`PressScale`); o afundamento vai até o fim mesmo num toque curto |
+| Ícone ⇄ carregando no botão | `AnimatedSwitcher` |
+| Campos, regras e mensagens que aparecem e somem | crescer e esmaecer (`AnimatedReveal`) |
+| Troca de pergunta da lição | deslizar lateral (`SharedAxisTransition`), voltar no sentido oposto |
+| Resultado da resposta | borda e ícone animados; vibração leve no acerto, forte no erro |
+| Curtir um Reel | pulso no coração (1 → 1,3 → 1) e vibração leve; dois toques na imagem curtem |
+| Indicador do onboarding | o ponto ativo alonga (8 → 24 px) acompanhando o arraste |
+| Aba ativa da barra inferior | cor e escala do ícone animadas; fundo com desfoque leve |
+| Assistente | balão "digitando" (três pontos) e mensagens novas subindo e esmaecendo |
+| Seletor "Entrar / Criar conta" | uma pílula branca desliza até a opção tocada |
+| Foco em campo | borda de `input` para `primary` |
+
+Vibrações passam por `AppHaptics` (`core/utils`): no máximo uma por ação, e o aparelho as
+ignora quando estão desligadas nele. No web, respeitar `prefers-reduced-motion` do mesmo jeito.
 
 ---
 
@@ -483,6 +519,8 @@ Valores em que o app Flutter (canônico) difere do wireframe. Na versão web, us
 
 ## Histórico de versões
 
+- **1.2.0 (2026-11-08)**: §6 Movimento reescrita com os tokens de `AppMotion`, a opção
+  "Reduzir animações" e os padrões de transição, esqueleto e microinterações (feature 022).
 - **1.1.1 (2026-10-09)**: contador do sino com círculo mínimo de 24 px e texto 14/700, no lugar
   de 20 px e 10/700 (feature 011, RNF-003).
 - **1.1.0 (2026-10-08)**: alto contraste (`AppPalette`), token `input-border`, regra de leitura

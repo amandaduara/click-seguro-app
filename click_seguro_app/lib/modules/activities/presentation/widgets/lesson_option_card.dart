@@ -50,7 +50,7 @@ class _LessonOptionCardState extends State<LessonOptionCard>
     super.didUpdateWidget(old);
     if (widget.state == LessonOptionState.wrong &&
         old.state != LessonOptionState.wrong &&
-        !context.reduceMotion) {
+        !AppMotion.of(context).reduced) {
       _shake.forward(from: 0);
     }
   }
@@ -64,6 +64,7 @@ class _LessonOptionCardState extends State<LessonOptionCard>
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
+    final AppMotion motion = AppMotion.of(context);
     final LessonOptionState state = widget.state;
     final ({
       Color border,
@@ -117,76 +118,110 @@ class _LessonOptionCardState extends State<LessonOptionCard>
         statusColor: colors.destructive,
       ),
     };
-    final Widget card = Material(
-      color: look.background,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: look.border, width: look.width),
+    const BorderRadius radius = BorderRadius.all(Radius.circular(18));
+    // Borda e fundo trocam de cor com animação ao escolher e ao corrigir
+    // (specs/022 R13).
+    final Widget card = AnimatedContainer(
+      duration: motion.medium,
+      curve: AppMotion.standard,
+      decoration: BoxDecoration(
+        color: look.background,
+        borderRadius: radius,
+        border: Border.all(color: look.border, width: look.width),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: widget.onTap,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 76),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s4,
-              vertical: 14,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: look.circle,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '${widget.number}',
-                    textScaler: TextScaler.noScaling,
-                    style: AppTypography.label.copyWith(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: look.circleText,
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: widget.onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 76),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s4,
+                vertical: 14,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: look.circle,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${widget.number}',
+                      textScaler: TextScaler.noScaling,
+                      style: AppTypography.label.copyWith(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: look.circleText,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.text,
-                        style: AppTypography.body.copyWith(
-                          height: 1.4,
-                          fontWeight: FontWeight.w500,
-                          color: colors.textForeground,
-                        ),
-                      ),
-                      if (look.status != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.s1),
-                          child: Text(
-                            look.status!,
-                            style: AppTypography.label.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: look.statusColor,
-                            ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.text,
+                          style: AppTypography.body.copyWith(
+                            height: 1.4,
+                            fontWeight: FontWeight.w500,
+                            color: colors.textForeground,
                           ),
                         ),
-                    ],
+                        AnimatedSize(
+                          duration: motion.medium,
+                          curve: AppMotion.standard,
+                          alignment: Alignment.topLeft,
+                          child: look.status == null
+                              ? const SizedBox(width: double.infinity)
+                              : Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: AppSpacing.s1,
+                                  ),
+                                  child: Text(
+                                    look.status!,
+                                    style: AppTypography.label.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: look.statusColor,
+                                    ),
+                                  ),
+                                ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                if (look.icon != null) ...[
-                  const SizedBox(width: AppSpacing.s3),
+                  // O ícone do estado entra crescendo (escolha, acerto, erro).
                   ExcludeSemantics(
-                    child: Icon(look.icon, size: 26, color: look.statusColor),
+                    child: AnimatedSwitcher(
+                      duration: motion.medium,
+                      switchInCurve: AppMotion.emphasis,
+                      switchOutCurve: AppMotion.exit,
+                      transitionBuilder: (child, animation) =>
+                          ScaleTransition(scale: animation, child: child),
+                      child: look.icon == null
+                          ? const SizedBox.shrink()
+                          : Padding(
+                              key: ValueKey(look.icon),
+                              padding: const EdgeInsets.only(
+                                left: AppSpacing.s3,
+                              ),
+                              child: Icon(
+                                look.icon,
+                                size: 26,
+                                color: look.statusColor,
+                              ),
+                            ),
+                    ),
                   ),
                 ],
-              ],
+              ),
             ),
           ),
         ),

@@ -1,7 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import 'app_motion.dart';
+import 'app_page_transitions.dart';
 import 'app_palette.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
@@ -24,6 +25,31 @@ abstract class AppTheme {
       extensions: [palette],
       fontFamily: AppTypography.fontFamily,
       scaffoldBackgroundColor: palette.background,
+
+      // Telas empilhadas: volta preditiva no Android, deslize no iOS; corte
+      // seco com o movimento reduzido (specs/022 R4).
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: MotionAwareTransitionsBuilder(
+            PredictiveBackPageTransitionsBuilder(),
+          ),
+          TargetPlatform.iOS: MotionAwareTransitionsBuilder(
+            CupertinoPageTransitionsBuilder(),
+          ),
+          TargetPlatform.macOS: MotionAwareTransitionsBuilder(
+            CupertinoPageTransitionsBuilder(),
+          ),
+          TargetPlatform.windows: MotionAwareTransitionsBuilder(
+            ZoomPageTransitionsBuilder(),
+          ),
+          TargetPlatform.linux: MotionAwareTransitionsBuilder(
+            ZoomPageTransitionsBuilder(),
+          ),
+          TargetPlatform.fuchsia: MotionAwareTransitionsBuilder(
+            ZoomPageTransitionsBuilder(),
+          ),
+        },
+      ),
       colorScheme: ColorScheme.light(
         primary: palette.primary,
         onPrimary: palette.textPrimaryForeground,
@@ -116,54 +142,6 @@ abstract class AppTheme {
           (states) => states.contains(WidgetState.selected)
               ? palette.primary
               : palette.surfaceStrong,
-        ),
-      ),
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: FadeSlidePageTransitionsBuilder(),
-          TargetPlatform.iOS: FadeSlidePageTransitionsBuilder(),
-          TargetPlatform.linux: FadeSlidePageTransitionsBuilder(),
-          TargetPlatform.macOS: FadeSlidePageTransitionsBuilder(),
-          TargetPlatform.windows: FadeSlidePageTransitionsBuilder(),
-          TargetPlatform.fuchsia: FadeSlidePageTransitionsBuilder(),
-        },
-      ),
-    );
-  }
-}
-
-/// Troca de tela do redesign: a nova aparece e desliza 24 px (FR-020); com
-/// "reduzir animações", troca direto (FR-021).
-class FadeSlidePageTransitionsBuilder extends PageTransitionsBuilder {
-  const FadeSlidePageTransitionsBuilder();
-
-  static const double _offset = 24;
-
-  @override
-  Duration get transitionDuration => AppMotion.standard;
-
-  @override
-  Widget buildTransitions<T>(
-    PageRoute<T> route,
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    if (context.reduceMotion) return child;
-    final Animation<double> curved = CurvedAnimation(
-      parent: animation,
-      curve: AppMotion.enter,
-      reverseCurve: AppMotion.exit,
-    );
-    return FadeTransition(
-      opacity: curved,
-      child: AnimatedBuilder(
-        animation: curved,
-        child: child,
-        builder: (context, child) => Transform.translate(
-          offset: Offset(_offset * (1 - curved.value), 0),
-          child: child,
         ),
       ),
     );

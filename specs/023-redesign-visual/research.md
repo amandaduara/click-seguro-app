@@ -288,3 +288,25 @@ sai o teste do botão central.
 - `.specify/memory/tasks.md`: tarefa R1 marcada, com o link para esta spec.
 
 **Rationale**: FR-023. O design system é a fonte para quem for reproduzir o visual na web.
+
+## R14. Junção com a 022-fluidez-movimento (PR #28, 2026-11-10)
+
+A 022 entrou no `develop` antes do redesign e resolveu parte do mesmo problema. Na junção:
+
+- **Movimento:** fica o `AppMotion.of(context)` (`short`, `medium`, `long`, `reduced`) com o
+  `AppMotionScope` da 022, no lugar do R8/R9 daqui. O `main.dart` não soma mais a preferência ao
+  `MediaQuery.disableAnimations`. A comemoração da conclusão (confete e placar, 1,2 s) usa uma
+  constante local, porque passa do teto de 400 ms das animações de interface e toca uma vez.
+- **"Reduzir animações":** uma preferência só (a da 022), com as chaves de tradução dela.
+- **Esqueletos:** fica o `SafeSkeleton` da 022 (skeletonizer). O `SafeLoadingState` do redesign
+  monta os blocos com `Bone` dentro dele, para as telas sem dados de exemplo.
+- **Toque:** `SafeButton`, `SafeCard` e `NewsCard` usam o `PressScale`; o botão primário ainda
+  escurece enquanto o dedo está em cima.
+- **Transições:** ficam as da 022 (volta preditiva no Android); o `FadeSlidePageTransitionsBuilder`
+  saiu.
+- **Feed e detalhe:** grade e capa do redesign, com a prévia e o `Hero` da 022. A capa do detalhe
+  pede a imagem com a mesma chave de cache do cartão, então a miniatura da 022 não é mais
+  necessária.
+- **Barra inferior:** sem o botão central (R10); a cor da aba ativa muda com animação curta
+  (FR-025 da 022).
+- **Fonte:** fica a Inter (R2); a Montserrat da 022 saiu do app.

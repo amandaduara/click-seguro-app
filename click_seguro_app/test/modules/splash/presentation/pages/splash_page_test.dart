@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/widgets/app_logo.dart';
 
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -22,19 +23,22 @@ void main() {
     validateSession = FakeValidateStoredSessionUseCase();
   });
 
-  GoRouter buildRouter() {
+  GoRouter buildRouter({bool reduceMotion = false}) {
     Widget stub(String name) => Scaffold(body: Text('tela $name'));
     return GoRouter(
       routes: [
         GoRoute(
           path: '/',
-          builder: (context, state) => ChangeNotifierProvider(
-            create: (_) => SplashController(
-              checkOnboarding,
-              validateSession,
-              minimumDisplayDuration: Duration.zero,
+          builder: (context, state) => AppMotionScope(
+            appReduceMotion: reduceMotion,
+            child: ChangeNotifierProvider(
+              create: (_) => SplashController(
+                checkOnboarding,
+                validateSession,
+                minimumDisplayDuration: Duration.zero,
+              ),
+              child: const SplashPage(),
             ),
-            child: const SplashPage(),
           ),
         ),
         GoRoute(path: '/onboarding', builder: (_, _) => stub('onboarding')),
@@ -101,5 +105,25 @@ void main() {
     await pumpLocalized(tester, router: buildRouter());
 
     expect(find.text('tela onboarding'), findsOneWidget);
+  });
+
+  testWidgets('com movimento reduzido, a marca aparece sem entrada animada '
+      '(specs/022 FR-010)', (tester) async {
+    validateSession.completer = Completer<UserSessionStatus>();
+    await pumpLocalized(
+      tester,
+      router: buildRouter(reduceMotion: true),
+      settle: false,
+    );
+    await tester.pump();
+
+    final Opacity entrance = tester.widget(
+      find
+          .ancestor(of: find.byType(AppLogo), matching: find.byType(Opacity))
+          .first,
+    );
+    expect(entrance.opacity, 1);
+    validateSession.completer!.complete(UserSessionStatus.authenticated);
+    await tester.pumpAndSettle();
   });
 }

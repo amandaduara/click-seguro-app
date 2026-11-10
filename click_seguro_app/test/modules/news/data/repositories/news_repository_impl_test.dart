@@ -3,6 +3,7 @@ import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/news/data/datasources/news_local_data_source.dart';
 import 'package:click_seguro_app/modules/news/data/repositories/news_repository_impl.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -360,6 +361,44 @@ void main() {
       final result = await repository.markAsRead('n1');
 
       expect(result.getLeft().toNullable(), isA<ConnectionFailure>());
+    });
+  });
+
+  group('interactionChanges (specs/022)', () {
+    test('publica depois de ler, salvar e curtir com sucesso', () async {
+      final changes = <NewsInteractionChange>[];
+      final sub = repository.interactionChanges.listen(changes.add);
+      remote.likeResult = likeJson(liked: true, likesCount: 8);
+
+      await repository.markAsRead('n1');
+      await repository.toggleSave('n2');
+      await repository.toggleLike('n3');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(changes.map((c) => c.newsId), ['n1', 'n2', 'n3']);
+      expect(changes[0].isRead, isTrue);
+      expect(changes[0].isSaved, isNull);
+      expect(changes[1].isSaved, isNotNull);
+      expect(changes[2].isLiked, isTrue);
+      expect(changes[2].likesCount, 8);
+      await sub.cancel();
+    });
+
+    test('não publica quando o servidor falha', () async {
+      final changes = <NewsInteractionChange>[];
+      final sub = repository.interactionChanges.listen(changes.add);
+      remote
+        ..markAsReadError = apiError(ApiErrorType.connection)
+        ..saveError = apiError(ApiErrorType.server)
+        ..likeError = apiError(ApiErrorType.server);
+
+      await repository.markAsRead('n1');
+      await repository.toggleSave('n1');
+      await repository.toggleLike('n1');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(changes, isEmpty);
+      await sub.cancel();
     });
   });
 

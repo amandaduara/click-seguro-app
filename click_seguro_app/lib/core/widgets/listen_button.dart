@@ -39,7 +39,7 @@ class _ListenButtonState extends State<ListenButton>
   static const int _pulses = 3;
 
   void _syncPulse() {
-    if (widget.isSpeaking && !context.reduceMotion) {
+    if (widget.isSpeaking && !AppMotion.of(context).reduced) {
       if (!_pulse.isAnimating && _pulse.value == 0) {
         _pulse.repeat(count: _pulses);
       }

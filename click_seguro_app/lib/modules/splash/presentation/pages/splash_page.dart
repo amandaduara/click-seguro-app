@@ -1,4 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/app_logo.dart';
@@ -45,45 +46,67 @@ class _SplashPageState extends State<SplashPage> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.s6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 168,
-                  height: 168,
-                  decoration: BoxDecoration(
-                    color: colors.card,
-                    shape: BoxShape.circle,
-                    boxShadow: colors.shadow,
-                    border: colors.shadow.isEmpty
-                        ? Border.all(color: colors.border)
-                        : null,
+            child: _Entrance(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 168,
+                    height: 168,
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      shape: BoxShape.circle,
+                      boxShadow: colors.shadow,
+                      border: colors.shadow.isEmpty
+                          ? Border.all(color: colors.border)
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: const AppLogo(size: 96),
                   ),
-                  alignment: Alignment.center,
-                  child: const AppLogo(size: 96),
-                ),
-                const SizedBox(height: AppSpacing.s7),
-                Text(
-                  AppStrings.appTitle.tr(),
-                  textAlign: TextAlign.center,
-                  style: AppTypography.display.copyWith(
-                    fontSize: 36,
-                    color: colors.textForeground,
+                  const SizedBox(height: AppSpacing.s7),
+                  Text(
+                    AppStrings.appTitle.tr(),
+                    textAlign: TextAlign.center,
+                    style: AppTypography.display.copyWith(
+                      fontSize: 36,
+                      color: colors.textForeground,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.s3),
-                Text(
-                  AppStrings.splashTagline.tr(),
-                  textAlign: TextAlign.center,
-                  style: AppTypography.bodyLarge.copyWith(
-                    color: colors.textBody,
+                  const SizedBox(height: AppSpacing.s3),
+                  Text(
+                    AppStrings.splashTagline.tr(),
+                    textAlign: TextAlign.center,
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: colors.textBody,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Entrada do logo e do título: esmaece e cresce de 0,9 a 1 (specs/022
+/// FR-018). Com o movimento reduzido, a duração é zero e aparece pronto.
+class _Entrance extends StatelessWidget {
+  const _Entrance({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
+    tween: Tween<double>(begin: 0, end: 1),
+    duration: AppMotion.of(context).long,
+    curve: AppMotion.enter,
+    child: child,
+    builder: (context, value, child) => Opacity(
+      opacity: value,
+      child: Transform.scale(scale: 0.9 + 0.1 * value, child: child),
+    ),
+  );
 }

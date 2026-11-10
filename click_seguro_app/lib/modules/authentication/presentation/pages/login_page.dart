@@ -1,6 +1,8 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/animated_reveal.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
@@ -17,8 +19,8 @@ import 'package:click_seguro_app/modules/common/validators/password_policy.dart'
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Login, cadastro e visitante (wireframe: LoginScreen).
@@ -157,21 +159,31 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
                 const SizedBox(height: AppSpacing.s6),
-                if (isRegister) ...[
-                  SafeTextField(
-                    controller: _nameController,
-                    focusNode: _nameFocus,
-                    onChanged: _onFormChanged,
-                    placeholder: AppStrings.authNamePlaceholder.tr(),
-                    semanticsLabel: AppStrings.authNamePlaceholder.tr(),
-                    leftIcon: const Icon(LucideIcons.user),
-                    textInputAction: TextInputAction.next,
-                    autofillHints: const [AutofillHints.name],
-                    onSubmitted: (_) => _emailFocus.requestFocus(),
-                    error: _errorFor(controller, AuthField.name),
-                  ),
-                  const SizedBox(height: AppSpacing.s3),
-                ],
+                // Campos, regras e mensagens entram e saem crescendo e
+                // esmaecendo (specs/022 FR-023).
+                AnimatedReveal(
+                  child: isRegister
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SafeTextField(
+                              controller: _nameController,
+                              focusNode: _nameFocus,
+                              onChanged: _onFormChanged,
+                              placeholder: AppStrings.authNamePlaceholder.tr(),
+                              semanticsLabel: AppStrings.authNamePlaceholder
+                                  .tr(),
+                              leftIcon: const Icon(LucideIcons.user),
+                              textInputAction: TextInputAction.next,
+                              autofillHints: const [AutofillHints.name],
+                              onSubmitted: (_) => _emailFocus.requestFocus(),
+                              error: _errorFor(controller, AuthField.name),
+                            ),
+                            const SizedBox(height: AppSpacing.s3),
+                          ],
+                        )
+                      : null,
+                ),
                 SafeTextField(
                   controller: _emailController,
                   focusNode: _emailFocus,
@@ -214,47 +226,65 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                if (isRegister) ...[
-                  const SizedBox(height: AppSpacing.s2),
-                  PasswordRulesList(
-                    rules: [
-                      for (final rule in PasswordRule.values)
-                        (
-                          label: rule.labelKey.tr(),
-                          met: controller.passwordRules.contains(rule),
+                AnimatedReveal(
+                  child: isRegister
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: AppSpacing.s2),
+                            PasswordRulesList(
+                              rules: [
+                                for (final rule in PasswordRule.values)
+                                  (
+                                    label: rule.labelKey.tr(),
+                                    met: controller.passwordRules.contains(
+                                      rule,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : null,
+                ),
+                AnimatedReveal(
+                  child: isRegister
+                      ? null
+                      : Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: _openForgotPassword,
+                            style: TextButton.styleFrom(
+                              foregroundColor: context.colors.textForeground,
+                              minimumSize: const Size(48, 48),
+                              padding: EdgeInsets.zero,
+                              textStyle: AppTypography.label.copyWith(
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                            child: Text(AppStrings.authForgotPassword.tr()),
+                          ),
                         ),
-                    ],
-                  ),
-                ],
-                if (!isRegister)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: _openForgotPassword,
-                      style: TextButton.styleFrom(
-                        foregroundColor: context.colors.textForeground,
-                        minimumSize: const Size(48, 48),
-                        padding: EdgeInsets.zero,
-                        textStyle: AppTypography.label.copyWith(
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                      child: Text(AppStrings.authForgotPassword.tr()),
-                    ),
-                  ),
-                if (_passwordWasReset) ...[
-                  const SizedBox(height: AppSpacing.s2),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      AppStrings.authResetSuccess.tr(),
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: context.colors.success,
-                      ),
-                    ),
-                  ),
-                ],
-                ..._failureMessage(controller),
+                ),
+                AnimatedReveal(
+                  child: _passwordWasReset
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: AppSpacing.s2),
+                            Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                AppStrings.authResetSuccess.tr(),
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(color: context.colors.success),
+                              ),
+                            ),
+                          ],
+                        )
+                      : null,
+                ),
+                AnimatedReveal(child: _failureMessage(controller)),
                 const SizedBox(height: AppSpacing.s5),
                 SafeButton(
                   label: primaryLabel,
@@ -284,35 +314,50 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  List<Widget> _failureMessage(AuthenticationController controller) {
+  /// `null` sem falha. Uma mensagem dá lugar a outra esmaecendo.
+  Widget? _failureMessage(AuthenticationController controller) {
     final failure = controller.failure;
-    if (failure == null) return const [];
+    if (failure == null) return null;
     final isInfo = failure is AccountCreatedFailure;
-    return [
-      const SizedBox(height: AppSpacing.s4),
-      Semantics(
-        liveRegion: true,
-        child: Text(
-          failure.message.tr(),
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: isInfo
-                ? context.colors.secondary
-                : context.colors.destructive,
+    final AppMotion motion = AppMotion.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: AppSpacing.s4),
+        AnimatedSwitcher(
+          duration: motion.medium,
+          switchInCurve: AppMotion.enter,
+          switchOutCurve: AppMotion.exit,
+          layoutBuilder: (current, previous) => Stack(
+            alignment: Alignment.topLeft,
+            children: [...previous, ?current],
+          ),
+          child: Semantics(
+            key: ValueKey(failure.message),
+            liveRegion: true,
+            child: Text(
+              failure.message.tr(),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: isInfo
+                    ? context.colors.secondary
+                    : context.colors.destructive,
+              ),
+            ),
           ),
         ),
-      ),
-      if (failure is EmailAlreadyExistsFailure) ...[
-        const SizedBox(height: AppSpacing.s2),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: SafeButton(
-            label: AppStrings.authActionSignInWithEmail.tr(),
-            size: SafeButtonSize.compact,
-            tone: SafeButtonTone.ghost,
-            onPressed: () => controller.setMode(AuthMode.login),
+        if (failure is EmailAlreadyExistsFailure) ...[
+          const SizedBox(height: AppSpacing.s2),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SafeButton(
+              label: AppStrings.authActionSignInWithEmail.tr(),
+              size: SafeButtonSize.compact,
+              tone: SafeButtonTone.ghost,
+              onPressed: () => controller.setMode(AuthMode.login),
+            ),
           ),
-        ),
+        ],
       ],
-    ];
+    );
   }
 }

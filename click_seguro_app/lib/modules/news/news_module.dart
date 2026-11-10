@@ -20,6 +20,7 @@ import 'package:click_seguro_app/modules/news/domain/usecases/get_user_news_list
 import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/watch_news_interactions_usecase.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/reels_controller.dart';
 import 'package:flutter/foundation.dart';
@@ -56,6 +57,9 @@ class NewsModule implements ModuleInterface {
       )
       ..registerLazySingleton(() => GetReelsUseCase(injector<NewsRepository>()))
       ..registerLazySingleton(
+        () => WatchNewsInteractionsUseCase(injector<NewsRepository>()),
+      )
+      ..registerLazySingleton(
         () => ToggleLikeUseCase(injector<NewsRepository>()),
       )
       ..registerLazySingleton(
@@ -91,6 +95,8 @@ class NewsModule implements ModuleInterface {
         getFeedPage: injector<GetFeedPageUseCase>(),
         getNews: injector<GetNewsUseCase>(),
         getCategories: injector<GetCategoriesUseCase>(),
+        watchInteractions: injector<WatchNewsInteractionsUseCase>(),
+        sessionStatus: injector<UserSessionService>().sessionStatus,
       )..load(),
     ),
     // Sem carga aqui: a aba de Reels carrega ao aparecer (research R4 de
@@ -101,6 +107,7 @@ class NewsModule implements ModuleInterface {
         toggleLike: injector<ToggleLikeUseCase>(),
         toggleSave: injector<ToggleSaveUseCase>(),
         sessionStatus: injector<UserSessionService>().sessionStatus,
+        watchInteractions: injector<WatchNewsInteractionsUseCase>(),
       ),
     ),
   ];

@@ -39,10 +39,7 @@ Future<FeedbackAction?> showFeedbackSheet(
   backgroundColor: context.colors.card,
   // Sobe em 400 ms (FR-020); sem animação com reduzir animações.
   sheetAnimationStyle: AnimationStyle(
-    duration: AppMotion.duration(
-      AppMotion.emphasis,
-      reduce: context.reduceMotion,
-    ),
+    duration: AppMotion.of(context).long,
     curve: AppMotion.enter,
   ),
   builder: (_) => FeedbackSheet(
@@ -242,11 +239,11 @@ class _SpringIn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (context.reduceMotion) return child;
+    if (AppMotion.of(context).reduced) return child;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.6, end: 1),
-      duration: AppMotion.emphasis,
-      curve: AppMotion.spring,
+      duration: AppMotion.of(context).long,
+      curve: AppMotion.emphasis,
       builder: (context, scale, child) =>
           Transform.scale(scale: scale, child: child),
       child: child,

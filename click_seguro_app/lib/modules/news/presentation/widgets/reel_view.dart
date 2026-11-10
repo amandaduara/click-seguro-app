@@ -1,6 +1,8 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/reel_presentation_extension.dart';
@@ -19,9 +21,22 @@ class ReelView extends StatelessWidget {
     required this.actions,
     required this.onReadFull,
     this.footer,
+    this.onDoubleTap,
   });
 
   static const double _actionsWidth = 64;
+  static const Key doubleTapKey = ValueKey('reel-double-tap');
+
+  /// Põe a imagem do Reel no cache no tamanho em que ele a mostra, para
+  /// aparecer sem tela preta (specs/022 R10, R11).
+  static Future<void> precache(BuildContext context, String? url) async {
+    if (url == null) return;
+    await SafeNetworkImage.precache(
+      context,
+      url,
+      height: MediaQuery.sizeOf(context).height,
+    );
+  }
 
   final ReelEntity reel;
   final DateTime now;
@@ -30,6 +45,10 @@ class ReelView extends StatelessWidget {
 
   /// Aviso no último Reel: fim da lista ou falha ao carregar mais.
   final Widget? footer;
+
+  /// Dois toques na imagem: curtir (specs/022 FR-021). Só o fundo responde;
+  /// textos e botões por cima ficam com os próprios toques.
+  final VoidCallback? onDoubleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +66,15 @@ class ReelView extends StatelessWidget {
           if (image == null)
             const _NoImage()
           else
-            Opacity(
-              opacity: 0.7,
-              child: Image.network(
-                image,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const _NoImage(),
+            // No esqueleto, a imagem continua visível (specs/022 FR-019).
+            SafeSkeleton.keep(
+              Opacity(
+                opacity: 0.7,
+                child: SafeNetworkImage(
+                  url: image,
+                  height: MediaQuery.sizeOf(context).height,
+                  placeholder: const _NoImage(),
+                ),
               ),
             ),
           const DecoratedBox(
@@ -64,6 +86,14 @@ class ReelView extends StatelessWidget {
               ),
             ),
           ),
+          if (onDoubleTap != null)
+            ExcludeSemantics(
+              child: GestureDetector(
+                key: doubleTapKey,
+                behavior: HitTestBehavior.opaque,
+                onDoubleTap: onDoubleTap,
+              ),
+            ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(

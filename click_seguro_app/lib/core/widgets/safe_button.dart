@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/press_scale.dart';
 import 'package:flutter/material.dart';
 
 /// Altura mínima: `large` 60, `compact` 48 (RNF-003, FR-006).
@@ -84,7 +85,7 @@ class _SafeButtonState extends State<SafeButton> {
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
     final style = _style(colors);
-    final bool reduceMotion = context.reduceMotion;
+    final AppMotion motion = AppMotion.of(context);
     final TextStyle labelStyle =
         (_large ? AppTypography.button : AppTypography.label).copyWith(
           color: style.fg,
@@ -99,21 +100,30 @@ class _SafeButtonState extends State<SafeButton> {
       mainAxisSize: _large ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (widget.loading)
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              valueColor: AlwaysStoppedAnimation<Color>(style.fg),
-            ),
-          )
-        else if (widget.icon != null)
-          IconTheme(
-            data: IconThemeData(color: style.fg, size: 22),
-            child: widget.icon!,
+        if (widget.loading || widget.icon != null) ...[
+          // O ícone dá lugar ao spinner com esmaecimento (specs/022 R13).
+          AnimatedSwitcher(
+            duration: motion.short,
+            switchInCurve: AppMotion.enter,
+            switchOutCurve: AppMotion.exit,
+            child: widget.loading
+                ? SizedBox(
+                    key: const ValueKey('spinner'),
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(style.fg),
+                    ),
+                  )
+                : IconTheme(
+                    key: const ValueKey('icon'),
+                    data: IconThemeData(color: style.fg, size: 22),
+                    child: widget.icon!,
+                  ),
           ),
-        if (widget.loading || widget.icon != null) const SizedBox(width: 10),
+          const SizedBox(width: 10),
+        ],
         // Flexible: com fonte ampliada (RNF-003) o rótulo quebra a linha em
         // vez de estourar a largura do botão.
         Flexible(
@@ -133,19 +143,21 @@ class _SafeButtonState extends State<SafeButton> {
       ],
     );
 
+    // Leitor de tela: um botão com o rótulo, desabilitado quando carrega ou
+    // está bloqueado (specs/022 FR-007). A escala vem do [PressScale]; o
+    // [Listener] só escurece o coral enquanto o dedo está em cima.
     return Semantics(
+      container: true,
       button: true,
       enabled: !_isDisabled,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: _isDisabled ? null : (_) => _setPressed(true),
-        onTapUp: _isDisabled ? null : (_) => _setPressed(false),
-        onTapCancel: _isDisabled ? null : () => _setPressed(false),
-        onTap: _isDisabled ? null : widget.onPressed,
-        child: AnimatedScale(
-          scale: _pressed && !reduceMotion ? 0.98 : 1.0,
-          duration: AppMotion.duration(AppMotion.fast, reduce: reduceMotion),
-          curve: AppMotion.enter,
+      child: Listener(
+        onPointerDown: _isDisabled ? null : (_) => _setPressed(true),
+        onPointerUp: (_) => _setPressed(false),
+        onPointerCancel: (_) => _setPressed(false),
+        child: PressScale(
+          enabled: !_isDisabled,
+          pressedScale: 0.98,
+          onTap: widget.onPressed,
           child: Opacity(
             opacity: _isDisabled && !widget.loading ? 0.45 : 1.0,
             child: Container(

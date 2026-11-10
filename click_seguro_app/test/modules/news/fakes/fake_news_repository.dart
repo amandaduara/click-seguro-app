@@ -6,6 +6,7 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_category_enti
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_feed_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
@@ -122,6 +123,12 @@ NewsFeedEntity newsFeed({
 /// Repository em memória: cada método tem uma fila de respostas (a última se
 /// repete) e um `Completer` opcional para segurar a resposta.
 class FakeNewsRepository implements NewsRepository {
+  final StreamController<NewsInteractionChange> interactions =
+      StreamController<NewsInteractionChange>.broadcast();
+
+  @override
+  Stream<NewsInteractionChange> get interactionChanges => interactions.stream;
+
   final List<Either<Failure, NewsFeedEntity>> feedResults = [Right(newsFeed())];
   final Map<int, Either<Failure, NewsPageEntity>> feedPages = {};
   final List<Either<Failure, NewsPageEntity>> newsResults = [

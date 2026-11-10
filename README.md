@@ -29,7 +29,8 @@ O projeto foi construído utilizando o ecossistema **Flutter & Dart**, adotando 
 | **Dio** | Cliente HTTP avançado (Controle de Interceptors, rotas e timeouts) |
 | **Lucide Icons** (`lucide_icons_flutter`) | Biblioteca moderna e minimalista de ícones vetoriais |
 | **Flutter Secure Storage** | Armazenamento criptografado de dados sensíveis (Tokens JWT) |
-| **Shimmer** | Esqueletos de carregamento visuais para otimizar a UX |
+| **Skeletonizer** (`skeletonizer`) | Esqueletos de carregamento no formato do conteúdo (specs/022) |
+| **Animations** (`animations`) | Transições do Material (fade-through, eixo compartilhado) do time do Flutter (specs/022) |
 | **Flutter Localizations** (`easy_localization`) | Sistema oficial de suporte a internacionalização (i18n) |
 | **Flutter SVG** | Biblioteca quer permite desenhar e exibir arquivos Scalable Vector Graphics |
 | **Flutter Lints** | Pacote que fornece um conjunto recomendado de regras, visando incentivar boas práticas de programação e manter a consistência do código |

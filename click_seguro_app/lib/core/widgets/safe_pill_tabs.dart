@@ -68,10 +68,7 @@ class _Tab extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: AnimatedContainer(
-          duration: AppMotion.duration(
-            AppMotion.fast,
-            reduce: context.reduceMotion,
-          ),
+          duration: AppMotion.of(context).short,
           constraints: const BoxConstraints(minHeight: 46),
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

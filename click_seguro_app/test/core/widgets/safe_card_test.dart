@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Cartões do redesign 2.0 (FR-004; contrato de specs/023-redesign-visual).
@@ -31,6 +32,16 @@ void main() {
               )
               .decoration!
           as BoxDecoration;
+
+  double scale(WidgetTester tester) => tester
+      .widget<ScaleTransition>(
+        find.descendant(
+          of: find.byType(SafeCard),
+          matching: find.byType(ScaleTransition),
+        ),
+      )
+      .scale
+      .value;
 
   testWidgets('branco, canto 20 e a sombra única', (tester) async {
     await pump(tester, const SafeCard(child: Text('Cartão')));
@@ -79,16 +90,16 @@ void main() {
       tester.getCenter(find.text('Cartão')),
     );
     await tester.pumpAndSettle();
-    expect(
-      tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale,
-      0.98,
-    );
+    expect(scale(tester), 0.98);
     await gesture.up();
     await tester.pumpAndSettle();
     expect(taps, 1);
+    expect(scale(tester), 1);
   });
 
-  testWidgets('com reduzir animações, não encolhe (FR-021)', (tester) async {
+  testWidgets('com reduzir animações, não anima a escala (FR-021)', (
+    tester,
+  ) async {
     await pump(
       tester,
       SafeCard(interactive: true, onTap: () {}, child: const Text('Cartão')),
@@ -99,7 +110,45 @@ void main() {
       tester.getCenter(find.text('Cartão')),
     );
     await tester.pump();
-    expect(tester.widget<AnimatedScale>(find.byType(AnimatedScale)).scale, 1);
+    expect(tester.hasRunningAnimations, isFalse);
     await gesture.up();
+    await tester.pump();
+    expect(scale(tester), 1);
+  });
+
+  group('leitor de tela (specs/022 FR-007)', () {
+    Future<SemanticsData> semanticsOf(
+      WidgetTester tester, {
+      required bool interactive,
+    }) async {
+      await pump(
+        tester,
+        SafeCard(
+          interactive: interactive,
+          onTap: interactive ? () {} : null,
+          child: const Text('Golpe do Pix'),
+        ),
+      );
+      return tester.getSemantics(find.text('Golpe do Pix')).getSemanticsData();
+    }
+
+    testWidgets('cartão tocável é anunciado como botão', (tester) async {
+      final handle = tester.ensureSemantics();
+
+      final data = await semanticsOf(tester, interactive: true);
+
+      expect(data.flagsCollection.isButton, isTrue);
+      expect(data.label, 'Golpe do Pix');
+      handle.dispose();
+    });
+
+    testWidgets('cartão só de leitura não é botão', (tester) async {
+      final handle = tester.ensureSemantics();
+
+      final data = await semanticsOf(tester, interactive: false);
+
+      expect(data.flagsCollection.isButton, isFalse);
+      handle.dispose();
+    });
   });
 }

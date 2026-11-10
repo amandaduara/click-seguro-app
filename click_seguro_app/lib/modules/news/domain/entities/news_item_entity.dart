@@ -43,4 +43,18 @@ class NewsItemEntity {
   final bool isHighlight;
   final List<NewsCategoryEntity> categories;
   final NewsInteraction interaction;
+
+  /// A mesma notícia com outra [interaction].
+  NewsItemEntity withInteraction(NewsInteraction interaction) => NewsItemEntity(
+    id: id,
+    title: title,
+    source: source,
+    sourceUrl: sourceUrl,
+    originalPublishedAt: originalPublishedAt,
+    imageUrl: imageUrl,
+    publishedAt: publishedAt,
+    isHighlight: isHighlight,
+    categories: categories,
+    interaction: interaction,
+  );
 }

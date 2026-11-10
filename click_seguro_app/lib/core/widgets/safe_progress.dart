@@ -18,10 +18,10 @@ class _AnimatedValue extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double target = value.clamp(0, 1).toDouble();
-    if (context.reduceMotion) return builder(context, target);
+    if (AppMotion.of(context).reduced) return builder(context, target);
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: target),
-      duration: AppMotion.emphasis,
+      duration: AppMotion.of(context).long,
       curve: AppMotion.enter,
       builder: (context, current, _) => builder(context, current),
     );

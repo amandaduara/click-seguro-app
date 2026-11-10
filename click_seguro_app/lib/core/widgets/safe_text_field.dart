@@ -1,6 +1,6 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
-import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -111,10 +111,8 @@ class _SafeTextFieldState extends State<SafeTextField> {
               const SizedBox(height: AppSpacing.s2),
             ],
             AnimatedContainer(
-              duration: AppMotion.duration(
-                AppMotion.fast,
-                reduce: context.reduceMotion,
-              ),
+              duration: AppMotion.of(context).short,
+              curve: AppMotion.standard,
               constraints: const BoxConstraints(minHeight: 60),
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
               decoration: BoxDecoration(
@@ -155,6 +153,10 @@ class _SafeTextFieldState extends State<SafeTextField> {
                             color: context.colors.textForeground,
                           ),
                           decoration: InputDecoration(
+                            // O fundo é o do contêiner arredondado; o
+                            // `filled` do tema desenhava um retângulo de
+                            // outro tom dentro dele (specs/022 T060).
+                            filled: false,
                             hintText: widget.placeholder,
                             hintStyle: AppTypography.body.copyWith(
                               color: context.colors.textMutedForeground,
@@ -162,7 +164,6 @@ class _SafeTextFieldState extends State<SafeTextField> {
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
-                            filled: false,
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(
                               vertical: 16,

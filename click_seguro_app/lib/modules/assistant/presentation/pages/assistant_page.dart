@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'dart:io';
 
 import 'package:click_seguro_app/core/constants/app_identity.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
@@ -14,12 +17,15 @@ import 'package:click_seguro_app/modules/assistant/presentation/controller/assis
 import 'package:click_seguro_app/modules/assistant/presentation/controller/assistant_controller_status.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_analysis_card.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_history_tab.dart';
+import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_typing_bubble.dart';
+import 'package:click_seguro_app/modules/assistant/presentation/widgets/chat_message_entrance.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/utils/motion_scroll.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
@@ -80,6 +86,9 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
   final ScrollController _chatScroll = ScrollController();
   AssistantController? _controller;
 
+  /// Quantas mensagens já estavam na tela: só as seguintes entram animadas.
+  int? _shownMessages;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -100,13 +109,13 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
 
   void _scrollChatToEnd() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _chatScroll.hasClients) {
-        _chatScroll.animateTo(
+      if (!mounted || !_chatScroll.hasClients) return;
+      unawaited(
+        _chatScroll.moveTo(
           _chatScroll.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-        );
-      }
+          duration: AppMotion.of(context).medium,
+        ),
+      );
     });
   }
 
@@ -133,6 +142,9 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
 
   Widget _chatArea(AssistantController controller) => LayoutBuilder(
     builder: (context, constraints) {
+      final int count = controller.chatMessages.length;
+      final int animateFrom = _shownMessages ?? count;
+      _shownMessages = count;
       final messages = ListView(
         controller: _chatScroll,
         padding: const EdgeInsets.fromLTRB(
@@ -205,10 +217,24 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
               ],
             ),
           ],
-          for (final message in controller.chatMessages) ...[
-            const SizedBox(height: AppSpacing.s3),
-            _ChatBubble(message: message),
-          ],
+          for (final (index, message) in controller.chatMessages.indexed)
+            ChatMessageEntrance(
+              key: ObjectKey(message),
+              animate: index >= animateFrom,
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s3),
+                child: _ChatBubble(message: message),
+              ),
+            ),
+          if (controller.isSendingChat)
+            const ChatMessageEntrance(
+              key: ValueKey('assistant-typing'),
+              animate: true,
+              child: Padding(
+                padding: EdgeInsets.only(top: AppSpacing.s3),
+                child: AssistantTypingBubble(),
+              ),
+            ),
           if (controller.chatFailure != null) ...[
             const SizedBox(height: AppSpacing.s3),
             SafeCard(

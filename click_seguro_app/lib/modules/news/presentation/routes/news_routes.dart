@@ -11,6 +11,7 @@ import 'package:click_seguro_app/modules/news/presentation/pages/news_detail_pag
 import 'package:click_seguro_app/modules/news/presentation/pages/news_home_page.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/reels_page.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/user_news_list_page.dart';
+import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -24,8 +25,7 @@ final GoRoute newsHomeRoute = GoRoute(
 /// Raiz da aba Notícias/Reels (aba central).
 final GoRoute newsReelsRoute = GoRoute(
   path: '/reels',
-  builder: (context, state) =>
-      ReelsPage(startNewsId: state.uri.queryParameters['start']),
+  builder: (context, state) => ReelsPage.fromState(state),
 );
 
 /// Telas do módulo sobre as abas.
@@ -61,7 +61,16 @@ final List<RouteBase> newsRoutes = [
           sessionStatus: injector<UserSessionService>().sessionStatus,
           newsId: id,
         )..load(),
-        child: NewsDetailPage(newsId: id),
+        // A prévia só vale para a mesma notícia (um `extra` antigo, numa
+        // restauração, não pode trocar o título).
+        child: NewsDetailPage(
+          newsId: id,
+          preview: switch (state.extra) {
+            final NewsDetailPreview preview when preview.item.id == id =>
+              preview,
+            _ => null,
+          },
+        ),
       );
     },
   ),

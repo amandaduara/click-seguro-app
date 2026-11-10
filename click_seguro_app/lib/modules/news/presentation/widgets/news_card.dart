@@ -6,6 +6,7 @@ import 'package:click_seguro_app/modules/news/presentation/extensions/news_prese
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/press_scale.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -20,6 +21,7 @@ class NewsCard extends StatefulWidget {
     required this.onTap,
     this.compact = true,
     this.coverHeight,
+    this.heroTag,
   });
 
   final NewsItemEntity item;
@@ -32,13 +34,15 @@ class NewsCard extends StatefulWidget {
   /// Altura da capa na grade de 2 colunas (alturas variadas, FR-025).
   final double? coverHeight;
 
+  /// Tag do `Hero` da capa, a mesma passada na prévia do detalhe.
+  final String? heroTag;
+
   @override
   State<NewsCard> createState() => _NewsCardState();
 }
 
 class _NewsCardState extends State<NewsCard> {
   bool _opening = false;
-  bool _pressed = false;
 
   Future<void> _open() async {
     if (_opening) return;
@@ -55,26 +59,21 @@ class _NewsCardState extends State<NewsCard> {
     final item = widget.item;
     final AppPalette colors = context.colors;
     final List<String> labels = item.categoryLabels();
-    final bool reduceMotion = context.reduceMotion;
     // Redesign 2.0 (estilo Pinterest): a capa é o cartão; título e fonte
     // ficam logo abaixo, sem caixa em volta.
     return Semantics(
       button: true,
       label: item.semanticLabel(widget.now),
       excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
+      child: PressScale(
+        enabled: true,
+        pressedScale: 0.98,
         onTap: _open,
-        child: AnimatedScale(
-          scale: _pressed && !reduceMotion ? 0.98 : 1,
-          duration: AppMotion.duration(AppMotion.fast, reduce: reduceMotion),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _hero(
               NewsCover(
                 imageUrl: item.imageUrl,
                 themeText: item.categories.isEmpty
@@ -85,33 +84,45 @@ class _NewsCardState extends State<NewsCard> {
                 labels: labels,
                 trailing: _signals(item, colors),
               ),
-              const SizedBox(height: AppSpacing.s3),
-              Text(
-                item.title,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style:
-                    (widget.compact
-                            ? AppTypography.label.copyWith(fontSize: 17)
-                            : AppTypography.title3.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ))
-                        .copyWith(color: colors.textForeground, height: 1.3),
+            ),
+            const SizedBox(height: AppSpacing.s3),
+            Text(
+              item.title,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style:
+                  (widget.compact
+                          ? AppTypography.label.copyWith(fontSize: 17)
+                          : AppTypography.title3.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ))
+                      .copyWith(color: colors.textForeground, height: 1.3),
+            ),
+            const SizedBox(height: AppSpacing.s1),
+            Text(
+              '${item.source} · ${item.relativeDate(widget.now)}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.caption.copyWith(
+                color: colors.textMutedForeground,
               ),
-              const SizedBox(height: AppSpacing.s1),
-              Text(
-                '${item.source} · ${item.relativeDate(widget.now)}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.caption.copyWith(
-                  color: colors.textMutedForeground,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  /// Só com imagem (sem ela o detalhe não tem para onde voar) e com
+  /// movimento normal (specs/022 FR-010).
+  Widget _hero(Widget child) {
+    final String? tag = widget.heroTag;
+    if (tag == null ||
+        widget.item.imageUrl == null ||
+        AppMotion.of(context).reduced) {
+      return child;
+    }
+    return Hero(tag: tag, child: child);
   }
 
   /// Lida e salva, em círculos brancos sobre a capa.

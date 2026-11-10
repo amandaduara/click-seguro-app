@@ -220,6 +220,12 @@ class _CompletionPageState extends State<CompletionPage> {
   }
 }
 
+/// Duração do confete e da contagem do placar (FR-020 de
+/// specs/023-redesign-visual). Fica fora do teto de 400 ms das animações de
+/// interface (specs/022 FR-008) porque é uma comemoração que toca uma vez; com
+/// o movimento reduzido, nenhuma das duas acontece.
+const Duration _celebration = Duration(milliseconds: 1200);
+
 /// Entra com uma mola leve (FR-020); direto com reduzir animações.
 class _SpringIn extends StatelessWidget {
   const _SpringIn({required this.child});
@@ -228,11 +234,11 @@ class _SpringIn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (context.reduceMotion) return child;
+    if (AppMotion.of(context).reduced) return child;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.6, end: 1),
-      duration: AppMotion.emphasis,
-      curve: AppMotion.spring,
+      duration: AppMotion.of(context).long,
+      curve: AppMotion.emphasis,
       builder: (context, scale, child) =>
           Transform.scale(scale: scale, child: child),
       child: child,
@@ -252,11 +258,11 @@ class _CountUp extends StatelessWidget {
     final TextStyle style = AppTypography.score.copyWith(
       color: context.colors.textForeground,
     );
-    final Widget number = context.reduceMotion
+    final Widget number = AppMotion.of(context).reduced
         ? Text('$value', textAlign: TextAlign.center, style: style)
         : TweenAnimationBuilder<int>(
             tween: IntTween(begin: 0, end: value),
-            duration: AppMotion.celebration,
+            duration: _celebration,
             curve: AppMotion.enter,
             builder: (context, current, _) =>
                 Text('$current', textAlign: TextAlign.center, style: style),
@@ -278,14 +284,14 @@ class _ConfettiState extends State<_Confetti>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: AppMotion.celebration,
+    duration: _celebration,
   );
   bool _started = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_started && !context.reduceMotion) {
+    if (!_started && !AppMotion.of(context).reduced) {
       _started = true;
       _controller.forward();
     }

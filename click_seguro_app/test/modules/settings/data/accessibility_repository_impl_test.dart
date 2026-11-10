@@ -47,7 +47,7 @@ void main() {
       'highContrast': true,
       'autoReadAloud': false,
       'readingSpeed': 'fast',
-      'reduceMotion': true,
+      'reduceMotion': false,
     });
     expect(await repository.getPreferences(), custom);
   });

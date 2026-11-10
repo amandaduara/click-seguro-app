@@ -1,5 +1,5 @@
-import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
@@ -16,8 +16,6 @@ class AuthModeSwitch extends StatelessWidget {
     required this.onChanged,
   });
 
-  static const Duration _duration = Duration(milliseconds: 200);
-
   final String loginLabel;
   final String registerLabel;
   final bool isRegister;
@@ -29,10 +27,6 @@ class AuthModeSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     // Mesmo visual do `SafePillTabs` (redesign 2.0); a pílula desliza, ou
     // troca direto com reduzir animações (FR-021).
-    final Duration duration = AppMotion.duration(
-      _duration,
-      reduce: context.reduceMotion,
-    );
     return Container(
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
@@ -46,8 +40,8 @@ class AuthModeSwitch extends StatelessWidget {
         children: [
           Positioned.fill(
             child: AnimatedAlign(
-              duration: duration,
-              curve: Curves.easeOut,
+              duration: AppMotion.of(context).medium,
+              curve: AppMotion.standard,
               alignment: isRegister
                   ? Alignment.centerRight
                   : Alignment.centerLeft,
@@ -121,10 +115,8 @@ class _Segment extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 46),
             child: Center(
               child: AnimatedDefaultTextStyle(
-                duration: AppMotion.duration(
-                  AuthModeSwitch._duration,
-                  reduce: context.reduceMotion,
-                ),
+                duration: AppMotion.of(context).medium,
+                curve: AppMotion.standard,
                 style: style,
                 child: Text(label, textAlign: TextAlign.center),
               ),

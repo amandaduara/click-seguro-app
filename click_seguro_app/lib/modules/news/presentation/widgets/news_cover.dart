@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/illustrations/illustration_theme.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/widgets/safe_badge.dart';
 import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// Capa de notícia do redesign 2.0 (FR-015): a imagem da notícia, ou, sem
@@ -42,7 +43,6 @@ class NewsCover extends StatelessWidget {
         child: SafeIllustration(theme.illustration),
       ),
     );
-    final String? source = imageUrl;
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: SizedBox(
@@ -51,17 +51,13 @@ class NewsCover extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (source == null)
-              illustration
-            else
-              Image.network(
-                source,
-                fit: BoxFit.cover,
-                excludeFromSemantics: true,
-                errorBuilder: (context, _, _) => illustration,
-                loadingBuilder: (context, child, progress) =>
-                    progress == null ? child : illustration,
-              ),
+            // Decodifica no tamanho mostrado e esmaece ao chegar (specs/022
+            // R11); a ilustração cobre a espera e a falha.
+            SafeNetworkImage(
+              url: imageUrl,
+              height: height,
+              placeholder: illustration,
+            ),
             if (labels.isNotEmpty)
               Positioned(
                 left: 10,
