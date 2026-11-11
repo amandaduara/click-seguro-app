@@ -7,6 +7,8 @@ import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dar
 import 'package:click_seguro_app/modules/help/presentation/pages/contact_form_page.dart';
 import 'package:click_seguro_app/modules/help/presentation/routes/help_routes.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_top_bar.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
@@ -68,6 +70,71 @@ void main() {
       theme: theme,
     );
   }
+
+  // Validação da usuária (specs/023): a rolagem termina no fim da lista,
+  // sem uma área vazia enorme embaixo quando há poucos contatos.
+  testWidgets('a rolagem para no fim da lista, sem tela vazia', (tester) async {
+    repository.official = [
+      for (int i = 0; i < 6; i++)
+        ContactEntity(
+          id: 'o$i',
+          name: 'Contato $i',
+          phone: '19$i',
+          type: ContactType.official,
+        ),
+    ];
+    await open(tester);
+    // A lista carrega fora do relógio de teste, como no teste do discador.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Contato 0'), findsOneWidget);
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -5000));
+    await tester.pumpAndSettle();
+
+    final ScrollPosition position = tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position;
+    final RenderBox lastCard = tester.renderObject(find.byType(SafeCard).last);
+    final double lastBottom =
+        lastCard.localToGlobal(Offset.zero).dy + lastCard.size.height;
+    final double viewportBottom = tester
+        .getBottomLeft(find.byType(CustomScrollView))
+        .dy;
+    // Ou a lista cabe e nem rola, ou o último cartão fica no pé da tela
+    // (mais a margem), não lá em cima com vazio embaixo.
+    expect(
+      position.maxScrollExtent == 0 || viewportBottom - lastBottom < 80,
+      isTrue,
+      reason: 'sobra ${viewportBottom - lastBottom} abaixo do último cartão',
+    );
+  });
+
+  // As duas abas rolam do mesmo jeito: "Meus contatos" vazio não ganha uma
+  // rolagem própria nem espaço da tela inteira (validação da usuária).
+  testWidgets('"Meus contatos" vazio rola como "Oficiais"', (tester) async {
+    await open(tester);
+    await tester.tap(find.text('Meus contatos'));
+    await tester.pumpAndSettle();
+
+    final ScrollPosition outer = tester
+        .state<ScrollableState>(find.byType(Scrollable).first)
+        .position;
+    final double contentBottom =
+        tester.getBottomLeft(find.text('Adicionar contato').last).dy +
+        outer.pixels;
+    // O fim da rolagem é o fim do conteúdo, sem uma tela extra embaixo.
+    expect(
+      outer.maxScrollExtent,
+      lessThanOrEqualTo(
+        (contentBottom - outer.viewportDimension).clamp(0, double.infinity) +
+            80,
+      ),
+    );
+    expect(find.byType(SafeEmptyState), findsOneWidget);
+  });
 
   group('cartão "Caiu em um golpe?" (FR-016 de specs/023)', () {
     testWidgets('fica no topo, com título, texto e botão', (tester) async {
@@ -226,15 +293,17 @@ void main() {
     // o contato.
     await tester.dragUntilVisible(
       find.text('P'),
-      find.byType(NestedScrollView),
+      find.byType(CustomScrollView),
       const Offset(0, -200),
     );
     await tester.pumpAndSettle();
     expect(find.text('P'), findsOneWidget);
 
-    await tester.ensureVisible(find.byIcon(LucideIcons.phone));
+    // O último telefone é o do contato (o primeiro é o do cartão de
+    // emergência, na mesma rolagem).
+    await tester.ensureVisible(find.byIcon(LucideIcons.phone).last);
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(LucideIcons.phone));
+    await tester.tap(find.byIcon(LucideIcons.phone).last);
     await tester.pumpAndSettle();
     expect(
       find.descendant(of: find.byType(AlertDialog), matching: find.text('190')),
@@ -258,6 +327,9 @@ void main() {
     repository
       ..readFailure = null
       ..official = [];
+    // O erro tem a altura natural, abaixo do topo: rola até o botão.
+    await tester.ensureVisible(find.text('Tentar novamente'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Tentar novamente'));
     await tester.pumpAndSettle();
     expect(

@@ -173,7 +173,7 @@ class _CompletionPageState extends State<CompletionPage> {
                   completion.messageKey.tr(),
                   textAlign: TextAlign.center,
                   style: AppTypography.bodyLarge.copyWith(
-                    fontSize: 19,
+                    fontSize: 17,
                     color: colors.textForeground,
                   ),
                 ),

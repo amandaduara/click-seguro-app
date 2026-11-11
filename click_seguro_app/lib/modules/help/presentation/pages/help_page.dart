@@ -30,127 +30,156 @@ class HelpPage extends StatelessWidget {
   );
 }
 
-/// "Oficiais" / "Meus contatos" em pílula (T030 de
-/// specs/023-redesign-visual), ligadas ao `TabController` da tela, que
-/// continua aceitando o deslize entre as listas.
-class _HelpTabs extends StatelessWidget {
-  const _HelpTabs();
-
-  @override
-  Widget build(BuildContext context) {
-    final TabController controller = DefaultTabController.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s5,
-        AppSpacing.s2,
-        AppSpacing.s5,
-        AppSpacing.s2,
-      ),
-      child: AnimatedBuilder(
-        animation: controller,
-        builder: (context, _) => SafePillTabs(
-          tabs: [
-            AppStrings.helpTabOfficial.tr(),
-            AppStrings.helpTabPersonal.tr(),
-          ],
-          selectedIndex: controller.index,
-          onChanged: controller.animateTo,
-        ),
-      ),
-    );
-  }
-}
-
-class _HelpPageContent extends StatelessWidget {
+/// Aba Ajuda: emergência e contatos oficiais/pessoais.
+///
+/// Uma rolagem só, que termina no fim da lista: o topo (barra, cartão de
+/// emergência e abas) rola junto, e não sobra tela vazia embaixo quando a
+/// lista é curta (validação da usuária, specs/023). As abas em pílula
+/// (T030) trocam a lista; deslizar para o lado também troca.
+class _HelpPageContent extends StatefulWidget {
   const _HelpPageContent();
 
   @override
-  Widget build(BuildContext context) => DefaultTabController(
-    length: 2,
-    child: Scaffold(
+  State<_HelpPageContent> createState() => _HelpPageContentState();
+}
+
+class _HelpPageContentState extends State<_HelpPageContent> {
+  /// 0 = Oficiais, 1 = Meus contatos.
+  int _tab = 0;
+
+  void _select(int tab) {
+    if (tab != _tab) setState(() => _tab = tab);
+  }
+
+  /// Deslize rápido para o lado troca de aba, como antes no `TabBarView`.
+  void _onSwipe(DragEndDetails details) {
+    final double velocity = details.primaryVelocity ?? 0;
+    if (velocity < -300) _select(1);
+    if (velocity > 300) _select(0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final HelpController controller = context.watch<HelpController>();
+    final bool official = _tab == 0;
+    return Scaffold(
       body: SafeArea(
-        // O topo (barra, cartão de emergência e abas) rola junto com as
-        // listas: com a letra grande, ele sozinho passa da altura da tela.
-        child: NestedScrollView(
-          headerSliverBuilder: (context, _) => [
-            SliverToBoxAdapter(
-              child: AppTopBar(title: AppStrings.helpTitle.tr()),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.s5,
-                  0,
-                  AppSpacing.s5,
-                  AppSpacing.s2,
+        child: GestureDetector(
+          onHorizontalDragEnd: _onSwipe,
+          child: RefreshIndicator(
+            onRefresh: controller.refresh,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: AppTopBar(title: AppStrings.helpTitle.tr()),
                 ),
-                child: EmergencyCallCard(
-                  onCall: () => _callNumber(
-                    context,
-                    context.read<HelpController>(),
-                    EmergencyNumbers.police,
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s5,
+                      0,
+                      AppSpacing.s5,
+                      AppSpacing.s2,
+                    ),
+                    child: EmergencyCallCard(
+                      onCall: () => _callNumber(
+                        context,
+                        controller,
+                        EmergencyNumbers.police,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: _HelpTabs()),
-          ],
-          body: Consumer<HelpController>(
-            builder: (context, controller, _) => TabBarView(
-              children: [
-                _contactList(context, controller, official: true),
-                _contactList(context, controller, official: false),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s5,
+                      AppSpacing.s2,
+                      AppSpacing.s5,
+                      AppSpacing.s2,
+                    ),
+                    child: SafePillTabs(
+                      tabs: [
+                        AppStrings.helpTabOfficial.tr(),
+                        AppStrings.helpTabPersonal.tr(),
+                      ],
+                      selectedIndex: _tab,
+                      onChanged: _select,
+                    ),
+                  ),
+                ),
+                ..._contactSlivers(context, controller, official: official),
               ],
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _contactList(
+  /// A lista da aba, ou o estado dela (carregando, erro, vazio).
+  List<Widget> _contactSlivers(
     BuildContext context,
     HelpController controller, {
     required bool official,
   }) {
+    // Carregando, erro e vazio com a altura natural, como os cartões: a
+    // rolagem termina no fim deles, igual nas duas abas. Ocupando o resto
+    // da tela, o estado vazio de "Meus contatos" rolava sozinho e deixava
+    // o topo sumir (validação da usuária, specs/023).
+    Widget fill(Widget child) => SliverToBoxAdapter(child: child);
+
     final failure = official
         ? controller.officialFailure
         : controller.personalFailure;
-    if (controller.isLoading) return const SafeLoadingState();
+    if (controller.isLoading) return [fill(const SafeLoadingState())];
     if (failure != null) {
-      return SafeErrorState(
-        message: failure.message.tr(),
-        onRetry: controller.refresh,
-      );
+      return [
+        fill(
+          SafeErrorState(
+            message: failure.message.tr(),
+            onRetry: controller.refresh,
+          ),
+        ),
+      ];
     }
     final contacts = official
         ? controller.officialContacts
         : controller.personalContacts;
-    return RefreshIndicator(
-      onRefresh: controller.refresh,
-      child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.s5),
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          if (!official && contacts.isNotEmpty)
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.icon(
-                key: const ValueKey('help_add_contact'),
-                onPressed: () => _openForm(context, controller),
-                icon: const Icon(LucideIcons.plus),
-                label: Text(AppStrings.helpAddContact.tr()),
+    if (contacts.isEmpty) {
+      return [
+        fill(
+          official
+              ? SafeEmptyState(message: AppStrings.helpOfficialUnavailable.tr())
+              : SafeEmptyState(
+                  message: AppStrings.helpPersonalEmpty.tr(),
+                  actionLabel: AppStrings.helpAddContact.tr(),
+                  onAction: () => _openForm(context, controller),
+                ),
+        ),
+      ];
+    }
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s5,
+          AppSpacing.s2,
+          AppSpacing.s5,
+          AppSpacing.s5,
+        ),
+        sliver: SliverList.list(
+          children: [
+            if (!official)
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  key: const ValueKey('help_add_contact'),
+                  onPressed: () => _openForm(context, controller),
+                  icon: const Icon(LucideIcons.plus),
+                  label: Text(AppStrings.helpAddContact.tr()),
+                ),
               ),
-            ),
-          if (contacts.isEmpty && official)
-            SafeEmptyState(message: AppStrings.helpOfficialUnavailable.tr())
-          else if (contacts.isEmpty)
-            SafeEmptyState(
-              message: AppStrings.helpPersonalEmpty.tr(),
-              actionLabel: AppStrings.helpAddContact.tr(),
-              onAction: () => _openForm(context, controller),
-            )
-          else
             for (final contact in contacts)
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.s3),
@@ -166,9 +195,10 @@ class _HelpPageContent extends StatelessWidget {
                         ),
                 ),
               ),
-        ],
+          ],
+        ),
       ),
-    );
+    ];
   }
 
   Future<void> _openForm(

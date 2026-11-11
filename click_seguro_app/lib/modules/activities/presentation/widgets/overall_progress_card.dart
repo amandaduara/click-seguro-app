@@ -53,7 +53,7 @@ class OverallProgressCard extends StatelessWidget {
                     ],
                   ),
                   style: AppTypography.body.copyWith(
-                    fontSize: 17,
+                    fontSize: 16,
                     height: 1.4,
                     color: colors.textBody,
                   ),

@@ -193,7 +193,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                         child: Text(
                           AppStrings.activitiesFeedbackExplanation.tr(),
                           style: AppTypography.label.copyWith(
-                            fontSize: 17,
+                            fontSize: 16,
                             color: colors.textForeground,
                           ),
                         ),
@@ -202,7 +202,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                       Text(
                         explanation,
                         style: AppTypography.body.copyWith(
-                          fontSize: 17,
+                          fontSize: 16,
                           height: 1.5,
                           color: colors.textBody,
                         ),

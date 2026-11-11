@@ -7,7 +7,6 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_summary_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/activities_dashboard_controller.dart';
@@ -33,33 +32,40 @@ class ActivitiesDashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            AppTopBar(title: AppStrings.activitiesTitle.tr()),
-            // Só no modo visitante; não na sessão expirada (specs/015).
-            ValueListenableBuilder<UserSessionStatus>(
-              valueListenable:
-                  GetIt.instance<UserSessionService>().sessionStatus,
-              builder: (context, status, _) => status == UserSessionStatus.guest
-                  ? const Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        AppSpacing.s5,
-                        0,
-                        AppSpacing.s5,
-                        AppSpacing.s3,
-                      ),
-                      child: GuestProgressNotice(),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            Expanded(
-              child: ChangeNotifierProvider<ActivitiesDashboardController>(
-                create: (_) =>
-                    GetIt.instance<ActivitiesDashboardController>()..load(),
-                child: const _DashboardBody(),
+        // O topo sobe junto com os cartões; só o Início prende os filtros
+        // (validação da usuária, specs/023).
+        child: NestedScrollView(
+          headerSliverBuilder: (context, _) => [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  AppTopBar(title: AppStrings.activitiesTitle.tr()),
+                  // Só no modo visitante; não na sessão expirada (specs/015).
+                  ValueListenableBuilder<UserSessionStatus>(
+                    valueListenable:
+                        GetIt.instance<UserSessionService>().sessionStatus,
+                    builder: (context, status, _) =>
+                        status == UserSessionStatus.guest
+                        ? const Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              AppSpacing.s5,
+                              0,
+                              AppSpacing.s5,
+                              AppSpacing.s3,
+                            ),
+                            child: GuestProgressNotice(),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
               ),
             ),
           ],
+          body: ChangeNotifierProvider<ActivitiesDashboardController>(
+            create: (_) =>
+                GetIt.instance<ActivitiesDashboardController>()..load(),
+            child: const _DashboardBody(),
+          ),
         ),
       ),
     );
@@ -84,9 +90,15 @@ class _DashboardBodyState extends State<_DashboardBody>
   @override
   String get tabPath => ActivitiesDashboardPage.path;
 
+  /// Muda a cada volta à aba: recria o progresso, que enche de novo até
+  /// o valor atual (validação da usuária, specs/023).
+  int _entrance = 0;
+
   @override
-  void onReturn() =>
-      unawaited(context.read<ActivitiesDashboardController>().refresh());
+  void onReturn() {
+    setState(() => _entrance++);
+    unawaited(context.read<ActivitiesDashboardController>().refresh());
+  }
 
   @override
   void initState() {
@@ -146,23 +158,12 @@ class _DashboardBodyState extends State<_DashboardBody>
     ActivitiesDashboardEntity? dashboard,
   ) {
     return switch (controller.status) {
-      // O servidor gratuito leva até ~40 s para acordar (R7).
-      ActivitiesDashboardStatus.loading => Column(
-        children: [
-          SlowRequestNotice(
-            active: true,
-            message: AppStrings.activitiesSlow.tr(),
-          ),
-          Expanded(
-            child: SafeSkeleton(
-              enabled: true,
-              child: _Dashboard(
-                dashboard: ActivitiesPlaceholders.dashboard(),
-                onOpen: (_) {},
-              ),
-            ),
-          ),
-        ],
+      ActivitiesDashboardStatus.loading => SafeSkeleton(
+        enabled: true,
+        child: _Dashboard(
+          dashboard: ActivitiesPlaceholders.dashboard(),
+          onOpen: (_) {},
+        ),
       ),
       ActivitiesDashboardStatus.error => SafeErrorState(
         message: AppStrings.activitiesErrorTitle.tr(),
@@ -176,16 +177,24 @@ class _DashboardBodyState extends State<_DashboardBody>
       ActivitiesDashboardStatus.loaded => _Dashboard(
         dashboard: dashboard!,
         onOpen: _openModule,
+        entrance: _entrance,
       ),
     };
   }
 }
 
 class _Dashboard extends StatelessWidget {
-  const _Dashboard({required this.dashboard, required this.onOpen});
+  const _Dashboard({
+    required this.dashboard,
+    required this.onOpen,
+    this.entrance = 0,
+  });
 
   final ActivitiesDashboardEntity dashboard;
   final ValueChanged<ModuleSummaryEntity> onOpen;
+
+  /// Nova chave do progresso a cada volta à aba.
+  final int entrance;
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +211,10 @@ class _Dashboard extends StatelessWidget {
       ),
       children: [
         if (dashboard.hasOverallProgress) ...[
-          OverallProgressCard(dashboard: dashboard),
+          OverallProgressCard(
+            key: ValueKey('overall-progress-$entrance'),
+            dashboard: dashboard,
+          ),
           const SizedBox(height: AppSpacing.s5),
         ],
         for (final ModuleSummaryEntity module in dashboard.modules)
@@ -217,6 +229,7 @@ class _Dashboard extends StatelessWidget {
   /// Módulo indisponível não abre (CB-012).
   Widget _card(ModuleSummaryEntity module, {required bool compact}) =>
       ModuleCard(
+        key: ValueKey('module-${module.id}-$entrance'),
         module: module,
         compact: compact,
         onTap: module.isAvailable ? () => onOpen(module) : null,

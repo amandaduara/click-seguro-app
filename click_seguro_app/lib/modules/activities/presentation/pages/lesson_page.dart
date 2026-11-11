@@ -10,7 +10,6 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
@@ -289,15 +288,8 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       ),
       body: SafeArea(
         child: switch (controller.status) {
-          // O servidor gratuito leva até ~40 s para acordar.
-          LessonStatus.loading => Column(
-            children: [
-              SlowRequestNotice(
-                active: true,
-                message: AppStrings.activitiesSlow.tr(),
-              ),
-              const Expanded(child: SafeLoadingState()),
-            ],
+          LessonStatus.loading => const SafeLoadingState(
+            layout: SafeLoadingLayout.detail,
           ),
           LessonStatus.error => SafeErrorState(
             message: AppStrings.activitiesErrorTitle.tr(),
@@ -331,11 +323,6 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
                     listen: _listenButton(lesson.spokenText),
                   ),
                 ),
-              ),
-              // O envio também pode esperar o servidor acordar (FR-014).
-              SlowRequestNotice(
-                active: controller.isSubmitting,
-                message: AppStrings.activitiesSlow.tr(),
               ),
               ConfirmAnswerFooter(controller: controller, onConfirm: _confirm),
             ],
@@ -413,7 +400,7 @@ class _LessonBody extends StatelessWidget {
           child: Text(
             lesson.question,
             style: AppTypography.title1.copyWith(
-              fontSize: 25,
+              fontSize: 22,
               height: 1.3,
               color: colors.textForeground,
             ),

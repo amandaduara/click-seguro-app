@@ -304,8 +304,11 @@ void main() {
     });
   });
 
+  // Sem aviso de servidor lento (validação da usuária, specs/023).
   group('servidor lento', () {
-    testWidgets('mostra o aviso depois de 5 s esperando', (tester) async {
+    testWidgets('esperando, sem aviso de servidor; o botão carrega', (
+      tester,
+    ) async {
       repository.gate = Completer<void>();
       await pumpLogin(tester);
       await fillLogin(tester);
@@ -316,7 +319,7 @@ void main() {
 
       expect(
         find.text('Conectando ao servidor. Isso pode levar até um minuto.'),
-        findsOneWidget,
+        findsNothing,
       );
       repository.gate!.complete();
       await tester.pumpAndSettle();

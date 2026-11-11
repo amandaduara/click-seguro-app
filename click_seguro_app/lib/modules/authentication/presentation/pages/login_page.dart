@@ -6,7 +6,6 @@ import 'package:click_seguro_app/core/widgets/animated_reveal.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
@@ -293,10 +292,6 @@ class _LoginPageState extends State<LoginPage> {
                   // cumprindo as 5 regras).
                   disabled: !controller.canSubmit && !controller.isSubmitting,
                   onPressed: _submit,
-                ),
-                SlowRequestNotice(
-                  active: controller.isSubmitting,
-                  message: AppStrings.authSlowServer.tr(),
                 ),
                 const SizedBox(height: AppSpacing.s6),
                 const OrDivider(),

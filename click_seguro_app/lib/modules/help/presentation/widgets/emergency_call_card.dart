@@ -58,7 +58,7 @@ class EmergencyCallCard extends StatelessWidget {
           Text(
             AppStrings.helpEmergencyBody.tr(),
             style: AppTypography.body.copyWith(
-              fontSize: 17,
+              fontSize: 16,
               height: 1.45,
               color: onCoral,
             ),

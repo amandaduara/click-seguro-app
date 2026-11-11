@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
@@ -394,6 +393,33 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('1 de 9 lições concluídas'), findsOneWidget);
     });
+
+    // Validação da usuária (specs/023): a cada volta, o progresso enche de
+    // novo, de 0 até o valor atual.
+    testWidgets('voltar à aba enche o progresso de novo', (tester) async {
+      await open(tester);
+      final Finder ring = find.byType(SafeProgressRing);
+      final Element before = tester.element(ring);
+
+      await tester.tap(find.text('Golpes Digitais'));
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pump();
+      await tester.pump();
+
+      expect(tester.element(ring), isNot(same(before)));
+      final double start = tester
+          .widget<TweenAnimationBuilder<double>>(
+            find.descendant(
+              of: ring,
+              matching: find.byType(TweenAnimationBuilder<double>),
+            ),
+          )
+          .tween
+          .begin!;
+      expect(start, 0);
+      await tester.pumpAndSettle();
+    });
   });
 
   group('visitante (US3)', () {
@@ -538,7 +564,8 @@ void main() {
   });
 
   group('estados (US4)', () {
-    testWidgets('carregando e, depois de 5 s, o aviso de servidor acordando', (
+    // Sem o aviso de servidor acordando (validação da usuária, specs/023).
+    testWidgets('carregando: só o esqueleto, sem aviso de servidor', (
       tester,
     ) async {
       repository = FakeActivitiesRepository()..gate = Completer<void>();
@@ -549,9 +576,8 @@ void main() {
         findsOneWidget,
       );
       expect(find.bySemanticsLabel('Carregando'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 6));
       expect(find.textContaining('O serviço está acordando'), findsNothing);
-      await tester.pump(SlowRequestNotice.delay);
-      expect(find.textContaining('O serviço está acordando'), findsOneWidget);
 
       repository.gate!.complete();
       await tester.pumpAndSettle();

@@ -156,7 +156,7 @@ class _LessonOptionCardState extends State<LessonOptionCard>
                       '${widget.number}',
                       textScaler: TextScaler.noScaling,
                       style: AppTypography.label.copyWith(
-                        fontSize: 17,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: look.circleText,
                       ),

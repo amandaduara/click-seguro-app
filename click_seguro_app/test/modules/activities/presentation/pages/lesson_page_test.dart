@@ -4,7 +4,6 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
@@ -1300,16 +1299,16 @@ void main() {
       expect(find.text('Pergunta 1 de 3'), findsOneWidget);
     });
 
-    testWidgets('envio demorado: aviso de serviço acordando', (tester) async {
+    // Sem aviso de serviço acordando (validação da usuária, specs/023).
+    testWidgets('envio demorado: sem aviso de serviço', (tester) async {
       await open(tester);
       await chooseSecond(tester);
       repository.answerGate = Completer<void>();
 
       await tester.tap(find.text('Confirmar resposta'));
       await tester.pump();
+      await tester.pump(const Duration(seconds: 6));
       expect(find.textContaining('O serviço está acordando'), findsNothing);
-      await tester.pump(SlowRequestNotice.delay);
-      expect(find.textContaining('O serviço está acordando'), findsOneWidget);
 
       repository.answerGate!.complete();
       await tester.pumpAndSettle();
@@ -1392,16 +1391,13 @@ void main() {
   });
 
   group('estados (US4)', () {
-    testWidgets('carregando e, depois de 5 s, o aviso de serviço acordando', (
-      tester,
-    ) async {
+    testWidgets('carregando: sem aviso de serviço acordando', (tester) async {
       repository.moduleDetailGate = Completer<void>();
       await pumpLocalized(tester, router: router, settle: false);
 
       expect(find.byType(SafeLoadingState), findsOneWidget);
+      await tester.pump(const Duration(seconds: 6));
       expect(find.textContaining('O serviço está acordando'), findsNothing);
-      await tester.pump(SlowRequestNotice.delay);
-      expect(find.textContaining('O serviço está acordando'), findsOneWidget);
 
       repository.moduleDetailGate!.complete();
       await tester.pumpAndSettle();
