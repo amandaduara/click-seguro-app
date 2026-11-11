@@ -6,6 +6,7 @@ class AlertEntity {
     required this.title,
     required this.source,
     required this.publishedAt,
+    this.imageUrl,
     this.isRead = false,
   });
 
@@ -16,6 +17,9 @@ class AlertEntity {
 
   /// Quando a notícia entrou no app, em UTC.
   final DateTime publishedAt;
+
+  /// Capa da notícia, mostrada ao lado do texto; `null` sem imagem.
+  final String? imageUrl;
   final bool isRead;
 
   AlertEntity copyWith({bool? isRead}) => AlertEntity(
@@ -23,6 +27,7 @@ class AlertEntity {
     title: title,
     source: source,
     publishedAt: publishedAt,
+    imageUrl: imageUrl,
     isRead: isRead ?? this.isRead,
   );
 
