@@ -5,6 +5,7 @@ import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.
 import 'package:click_seguro_app/core/widgets/person_avatar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -50,12 +51,7 @@ class ProfileHeaderCard extends StatelessWidget {
             AppSpacing.s4,
             AppSpacing.s4,
           ),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: AppSpacing.radiusXl,
-            border: Border.all(color: colors.border),
-            boxShadow: colors.shadow,
-          ),
+          decoration: SafeCard.decoration(colors),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

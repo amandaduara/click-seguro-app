@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
 
 /// Título de seção e as linhas dela num cartão branco (quadro
@@ -67,21 +68,23 @@ class SettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
-    return Material(
-      color: colors.card,
-      shape: RoundedRectangleBorder(
+    // A caixa padrão dos cartões (SafeCard); o Material por dentro dá o
+    // efeito de toque das linhas, recortado no canto.
+    return DecoratedBox(
+      decoration: SafeCard.decoration(colors),
+      child: Material(
+        type: MaterialType.transparency,
         borderRadius: AppSpacing.radiusLg,
-        side: BorderSide(color: colors.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (final (index, child) in children.indexed) ...[
-            if (index > 0)
-              Divider(height: 1, thickness: 1, color: colors.border),
-            child,
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            for (final (index, child) in children.indexed) ...[
+              if (index > 0)
+                Divider(height: 1, thickness: 1, color: colors.border),
+              child,
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

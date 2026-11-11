@@ -7,6 +7,7 @@ import 'package:click_seguro_app/modules/profile/presentation/widgets/area_notic
 import 'package:click_seguro_app/modules/profile/presentation/widgets/medal_card.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -31,12 +32,7 @@ class AchievementsSection extends StatelessWidget {
     final AreaState<List<AchievementEntity>> current = state;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s4),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: AppSpacing.radiusXl,
-        border: Border.all(color: colors.border),
-        boxShadow: colors.shadow,
-      ),
+      decoration: SafeCard.decoration(colors),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

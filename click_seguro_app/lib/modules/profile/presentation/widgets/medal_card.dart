@@ -5,6 +5,7 @@ import 'package:click_seguro_app/modules/profile/domain/entities/achievement_ent
 import 'package:click_seguro_app/modules/profile/presentation/extensions/achievement_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -30,11 +31,7 @@ class MedalCard extends StatelessWidget {
       child: Container(
         width: width,
         padding: const EdgeInsets.all(AppSpacing.s3),
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: AppSpacing.radiusLg,
-          border: Border.all(color: colors.border),
-        ),
+        decoration: SafeCard.decoration(colors),
         child: Column(
           children: [
             _Medal(achievement: achievement),

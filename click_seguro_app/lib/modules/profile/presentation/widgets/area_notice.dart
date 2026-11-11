@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -19,11 +20,7 @@ class AreaNotice extends StatelessWidget {
     final AppPalette colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s4),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: AppSpacing.radiusLg,
-        border: Border.all(color: colors.border),
-      ),
+      decoration: SafeCard.decoration(colors),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
