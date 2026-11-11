@@ -6,7 +6,11 @@ import 'package:flutter/material.dart';
 
 /// Abas em pílula do redesign 2.0 (FR-007): trilho creme e a aba atual
 /// branca com a sombra única. Cada aba diz ao leitor de tela se está
-/// selecionada. Com fonte grande, o rótulo quebra a linha.
+/// selecionada. Com fonte grande, o rótulo encolhe.
+///
+/// O fundo branco é um indicador só, que desliza para a aba nova: com um
+/// fundo animado por aba, as duas ficavam meio preenchidas na troca e
+/// pareciam piscar (validação da usuária, specs/023).
 class SafePillTabs extends StatelessWidget {
   const SafePillTabs({
     super.key,
@@ -15,6 +19,9 @@ class SafePillTabs extends StatelessWidget {
     required this.onChanged,
   });
 
+  /// O indicador da aba atual (para os testes acharem).
+  static const Key indicatorKey = ValueKey('safe-pill-tabs-indicator');
+
   final List<String> tabs;
   final int selectedIndex;
   final ValueChanged<int> onChanged;
@@ -22,7 +29,10 @@ class SafePillTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
+    final AppMotion motion = AppMotion.of(context);
     final bool highContrast = colors.shadow.isEmpty;
+    final int count = tabs.length;
+    final double x = count < 2 ? 0 : -1 + 2 * selectedIndex / (count - 1);
     return Container(
       constraints: const BoxConstraints(minHeight: 56),
       padding: const EdgeInsets.all(5),
@@ -31,16 +41,42 @@ class SafePillTabs extends StatelessWidget {
         borderRadius: AppSpacing.radiusFull,
         border: highContrast ? Border.all(color: colors.border) : null,
       ),
-      child: Row(
+      child: Stack(
         children: [
-          for (int i = 0; i < tabs.length; i++)
-            Expanded(
-              child: _Tab(
-                label: tabs[i],
-                selected: i == selectedIndex,
-                onTap: () => onChanged(i),
+          Positioned.fill(
+            child: AnimatedAlign(
+              alignment: Alignment(x, 0),
+              duration: motion.medium,
+              curve: AppMotion.standard,
+              child: FractionallySizedBox(
+                widthFactor: 1 / count,
+                heightFactor: 1,
+                child: DecoratedBox(
+                  key: indicatorKey,
+                  decoration: BoxDecoration(
+                    color: colors.card,
+                    borderRadius: AppSpacing.radiusFull,
+                    boxShadow: colors.shadow,
+                    border: highContrast
+                        ? Border.all(color: colors.border, width: 2)
+                        : null,
+                  ),
+                ),
               ),
             ),
+          ),
+          Row(
+            children: [
+              for (int i = 0; i < count; i++)
+                Expanded(
+                  child: _Tab(
+                    label: tabs[i],
+                    selected: i == selectedIndex,
+                    onTap: () => onChanged(i),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
@@ -67,34 +103,24 @@ class _Tab extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: AnimatedContainer(
-          duration: AppMotion.of(context).short,
+        child: Container(
           constraints: const BoxConstraints(minHeight: 46),
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          decoration: BoxDecoration(
-            color: selected ? colors.card : Colors.transparent,
-            borderRadius: AppSpacing.radiusFull,
-            boxShadow: selected ? colors.shadow : null,
-            border: selected && colors.shadow.isEmpty
-                ? Border.all(color: colors.border, width: 2)
-                : null,
-          ),
           // Numa linha só: em telas estreitas com fonte muito grande, o
           // rótulo encolhe o necessário em vez de quebrar no meio da palavra.
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(
-              label,
-              maxLines: 1,
-              textAlign: TextAlign.center,
+            child: AnimatedDefaultTextStyle(
+              duration: AppMotion.of(context).medium,
+              curve: AppMotion.standard,
               style: AppTypography.label.copyWith(
-                fontSize: 17,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                 color: selected
                     ? colors.textForeground
                     : colors.textMutedForeground,
               ),
+              child: Text(label, maxLines: 1, textAlign: TextAlign.center),
             ),
           ),
         ),

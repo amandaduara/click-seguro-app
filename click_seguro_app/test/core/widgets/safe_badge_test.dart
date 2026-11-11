@@ -52,12 +52,12 @@ void main() {
     });
   }
 
-  testWidgets('texto de 15 em negrito, o mínimo do app (FR-003)', (
+  testWidgets('texto de 14 em negrito, o mínimo do app (FR-003)', (
     tester,
   ) async {
     await pumpBadge(tester, SafeBadgeTone.success);
 
-    expect(textStyle(tester).fontSize, 15);
+    expect(textStyle(tester).fontSize, 14);
     expect(textStyle(tester).fontWeight, FontWeight.w700);
   });
 

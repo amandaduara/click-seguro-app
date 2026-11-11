@@ -123,7 +123,7 @@ abstract class AppTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor: palette.secondary,
         contentTextStyle: AppTypography.label.copyWith(
-          fontSize: 17,
+          fontSize: 16,
           color: palette.textPrimaryForeground,
         ),
         shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusMd),

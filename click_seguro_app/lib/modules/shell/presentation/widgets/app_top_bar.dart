@@ -88,16 +88,6 @@ class _AppTopBarState extends State<AppTopBar> {
             onPressed: _openAssistant,
           ),
         ),
-        // Também para o visitante, que ajusta acessibilidade e idioma
-        // (specs/014, R6).
-        Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.s2),
-          child: _CircleActionButton(
-            label: AppStrings.shellSettings.tr(),
-            icon: LucideIcons.settings,
-            onPressed: () => _open('/settings'),
-          ),
-        ),
       ],
     );
     return Padding(

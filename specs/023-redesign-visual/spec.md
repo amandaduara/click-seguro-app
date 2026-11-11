@@ -307,9 +307,10 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
   MUST atender WCAG 2.1 AA (RNF-004).
 - **FR-002**: O tema de alto contraste (RF-039) MUST continuar existindo, com contraste AAA, sem
   sombras e com bordas visíveis, aplicado também aos componentes e às ilustrações novas.
-- **FR-003**: O app MUST usar a fonte Inter em toda a interface, com corpo de 18, nada abaixo de
-  15 (acima do mínimo de 16 do RNF-003 para o texto base) e títulos entre 20 e 32, escalando com a
-  preferência de fonte do app (RF-038) e com a do sistema (RNF-004).
+- **FR-003**: O app MUST usar a fonte Inter em toda a interface, com corpo de 16 (o mínimo do
+  RNF-003 para o texto base), nada abaixo de 14 e títulos entre 18 e 28, escalando com a
+  preferência de fonte do app (RF-038) e com a do sistema (RNF-004). *Revisto na validação da
+  usuária (2026-11-10): a escala de 18 ficou grande demais.*
 - **FR-004**: Os cantos MUST seguir a escala 12, 16, 20, 24, 32 e pílula, e o app MUST ter um só
   nível de sombra, usado em cartões e botões sobre imagem.
 - **FR-005**: Todo ícone da interface MUST ser de traço, da biblioteca de ícones já usada no app,
@@ -327,8 +328,9 @@ conexão nas Atividades e nas notícias salvas, e comparar com os quadros "13" a
 - **FR-008**: As alternativas do quiz MUST ter quatro aparências distintas, padrão, selecionada
   (borda tinta), certa (verde com check) e errada (coral com X), que não dependam só de cor.
 - **FR-009**: A barra inferior MUST ter cinco abas de mesmo tamanho ("Início", "Atividades",
-  "Notícias", "Ajuda", "Perfil"), com rótulo sempre visível e a aba atual marcada por ícone coral
-  sobre pílula coral-suave e rótulo em negrito. Ela substitui o botão central redondo da feature
+  "Notícias", "Ajuda", "Perfil"), só com ícones (o nome de cada aba fica no leitor de tela e na
+  dica do toque longo) e a aba atual marcada por um círculo coral de 44 com o ícone branco.
+  *Revisto na validação da usuária (2026-11-10).* Ela substitui o botão central redondo da feature
   005, e o destino e o comportamento de cada aba continuam os mesmos.
 
 **Telas**

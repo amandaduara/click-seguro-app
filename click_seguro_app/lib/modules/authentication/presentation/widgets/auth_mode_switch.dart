@@ -98,7 +98,7 @@ class _Segment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final TextStyle style = AppTypography.label.copyWith(
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
       color: selected
           ? context.colors.textForeground

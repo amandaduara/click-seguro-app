@@ -2,7 +2,6 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
-import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -22,7 +21,8 @@ enum AppTab {
   final IconData icon;
 }
 
-/// Barra inferior do redesign 2.0 (FR-009; design system §7.12).
+/// Barra inferior do redesign 2.0 (FR-009; design system §7.12): só os
+/// ícones, com a aba ativa num círculo coral.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -50,10 +50,9 @@ class AppBottomNav extends StatelessWidget {
               AppSpacing.s2,
               AppSpacing.s2,
               AppSpacing.s2,
-              AppSpacing.s3,
+              AppSpacing.s2,
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 // Cinco abas iguais, sem o botão central de antes: ele
                 // confundia em qual aba a pessoa estava (FR-009 de
@@ -82,6 +81,9 @@ class _TabItem extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Diâmetro do círculo coral da aba ativa.
+  static const double _circle = 44;
+
   final AppTab tab;
   final bool selected;
   final VoidCallback onTap;
@@ -89,64 +91,49 @@ class _TabItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
+    final AppMotion motion = AppMotion.of(context);
+    // Só o ícone na barra; o nome da aba fica para o leitor de tela e para
+    // o toque longo (dica).
     final String label = tab.labelKey.tr();
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      excludeSemantics: true,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 56),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Indicador em pílula atrás do ícone (FR-009).
-              AnimatedContainer(
-                duration: AppMotion.of(context).short,
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        excludeSemantics: true,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 32,
+          child: SizedBox(
+            height: 56,
+            child: Center(
+              // A aba ativa fica num círculo coral com o ícone branco, como o
+              // antigo botão central, só que menor.
+              child: AnimatedContainer(
+                duration: motion.short,
                 curve: AppMotion.standard,
-                width: 60,
-                height: 34,
+                width: _circle,
+                height: _circle,
                 decoration: BoxDecoration(
-                  color: selected ? colors.primarySoft : Colors.transparent,
-                  borderRadius: AppSpacing.radiusFull,
-                  border: selected && colors.shadow.isEmpty
-                      ? Border.all(color: colors.primary, width: 2)
-                      : null,
+                  color: selected ? colors.primary : Colors.transparent,
+                  shape: BoxShape.circle,
+                  boxShadow: selected ? colors.shadow : null,
                 ),
                 // A cor do ícone muda com animação curta (specs/022 FR-025).
                 child: TweenAnimationBuilder<Color?>(
                   tween: ColorTween(
-                    end: selected ? colors.primary : colors.textMutedForeground,
-                  ),
-                  duration: AppMotion.of(context).short,
-                  curve: AppMotion.standard,
-                  builder: (context, color, _) =>
-                      Icon(tab.icon, size: 26, color: color),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s1),
-              // Rótulo de 15 (mínimo do FR-003) numa linha só: palavras como
-              // "Atividades" não cabem inteiras numa coluna estreita e
-              // quebravam no meio; com fonte grande, encolhem o necessário.
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  textAlign: TextAlign.center,
-                  style: AppTypography.caption.copyWith(
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: selected
-                        ? colors.textForeground
+                    end: selected
+                        ? colors.textPrimaryForeground
                         : colors.textMutedForeground,
                   ),
+                  duration: motion.short,
+                  curve: AppMotion.standard,
+                  builder: (context, color, _) =>
+                      Icon(tab.icon, size: 24, color: color),
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

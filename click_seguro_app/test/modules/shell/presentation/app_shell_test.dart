@@ -67,8 +67,8 @@ void main() {
     final semantics = tester.ensureSemantics();
     await openHome(tester);
 
-    // Sem botão central: as cinco mostram o rótulo (FR-009 de
-    // specs/023-redesign-visual).
+    // Sem botão central e só com ícones: o nome de cada aba fica no leitor
+    // de tela (FR-009 de specs/023-redesign-visual).
     for (final label in [
       'Início',
       'Atividades',
@@ -76,14 +76,7 @@ void main() {
       'Ajuda',
       'Perfil',
     ]) {
-      expect(
-        find.descendant(
-          of: find.byType(AppBottomNav),
-          matching: find.text(label),
-        ),
-        findsOneWidget,
-        reason: label,
-      );
+      expect(navItem(label), findsOneWidget, reason: label);
     }
     expect(navItem('Notícias'), findsOneWidget);
     expect(

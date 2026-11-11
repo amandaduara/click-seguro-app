@@ -29,6 +29,10 @@ class SafeIconButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: semanticLabel,
+      enabled: onPressed != null,
+      // Sem isto o excludeSemantics tira a ação do InkWell e o leitor de
+      // tela não consegue tocar no botão.
+      onTap: onPressed,
       excludeSemantics: true,
       child: SizedBox.square(
         dimension: size,

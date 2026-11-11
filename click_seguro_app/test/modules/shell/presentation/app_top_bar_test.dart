@@ -37,10 +37,6 @@ void main() {
         ),
       ),
       GoRoute(
-        path: '/settings',
-        builder: (_, _) => const Scaffold(body: Text('tela configurações')),
-      ),
-      GoRoute(
         path: '/notifications',
         builder: (_, _) => const Scaffold(body: Text('tela alertas')),
       ),
@@ -134,31 +130,19 @@ void main() {
       expect(tester.widget<Text>(find.text('Olá, Maria')).style?.fontSize, 16);
       expect(
         tester.widget<Text>(find.text('Notícias seguras')).style?.fontSize,
-        32,
+        28,
       );
     });
   });
 
   group('botões', () {
-    testWidgets('conectada: "Configurações" abre /settings', (tester) async {
-      await signIn();
-      await pumpLocalized(
-        tester,
-        router: buildRouter(),
-        providers: [fakeNotificationsProvider()],
-      );
-
-      await tester.tap(find.bySemanticsLabel('Configurações'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('tela configurações'), findsOneWidget);
-    });
-
     for (final (label, enter) in [
+      ('conectada', (UserSessionService s) async {}),
       ('visitante', (UserSessionService s) => s.startGuestSession()),
-      ('desconectada', (UserSessionService s) => s.logout()),
     ]) {
-      testWidgets('$label: a engrenagem abre /settings', (tester) async {
+      // A engrenagem fica só no Perfil (validação da usuária, specs/023).
+      testWidgets('$label: sem a engrenagem das configurações', (tester) async {
+        if (label == 'conectada') await signIn();
         await enter(session);
         await pumpLocalized(
           tester,
@@ -166,10 +150,7 @@ void main() {
           providers: [fakeNotificationsProvider()],
         );
 
-        await tester.tap(find.bySemanticsLabel('Configurações'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('tela configurações'), findsOneWidget);
+        expect(find.bySemanticsLabel('Configurações'), findsNothing);
       });
     }
 
@@ -266,7 +247,7 @@ void main() {
       expect(find.text('Notícias seguras'), findsOneWidget);
     });
 
-    testWidgets('os três botões medem pelo menos 48×48', (tester) async {
+    testWidgets('os dois botões medem pelo menos 48×48', (tester) async {
       await signIn();
       await pumpLocalized(
         tester,
@@ -274,7 +255,7 @@ void main() {
         providers: [fakeNotificationsProvider()],
       );
 
-      for (final label in ['Alertas', 'Assistente', 'Configurações']) {
+      for (final label in ['Alertas', 'Assistente']) {
         final size = tester.getSize(find.bySemanticsLabel(label));
         expect(size.width, greaterThanOrEqualTo(48), reason: label);
         expect(size.height, greaterThanOrEqualTo(48), reason: label);
@@ -298,7 +279,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Notícias seguras'), findsOneWidget);
-      for (final label in ['Alertas', 'Assistente', 'Configurações']) {
+      for (final label in ['Alertas', 'Assistente']) {
         final button = find.bySemanticsLabel(label);
         expect(button, findsOneWidget, reason: label);
         final size = tester.getSize(button);

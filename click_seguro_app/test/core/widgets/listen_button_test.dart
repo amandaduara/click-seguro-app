@@ -86,4 +86,56 @@ void main() {
 
     expect(tester.hasRunningAnimations, isFalse);
   });
+
+  group('redondo (cartão "Ouvir notícia")', () {
+    Future<void> pumpRound(WidgetTester tester, {required bool isSpeaking}) =>
+        pumpLocalized(
+          tester,
+          settle: !isSpeaking,
+          child: Scaffold(
+            body: ListenButton(
+              round: true,
+              isSpeaking: isSpeaking,
+              onPressed: () => taps++,
+            ),
+          ),
+        );
+
+    testWidgets('círculo de 56 com tocar, sem texto, lido como "Ouvir"', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpRound(tester, isSpeaking: false);
+
+      expect(
+        tester.getSize(
+          find.descendant(
+            of: find.byType(ListenButton),
+            matching: find.byType(InkWell),
+          ),
+        ),
+        const Size(56, 56),
+      );
+      expect(find.byIcon(LucideIcons.play), findsOneWidget);
+      expect(find.text('Ouvir'), findsNothing);
+      expect(find.bySemanticsLabel('Ouvir'), findsOneWidget);
+
+      await tester.tap(find.byType(ListenButton));
+      expect(taps, 1);
+      handle.dispose();
+    });
+
+    testWidgets('lendo: ícone de parar, lido como "Parar", e o halo pulsa', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpRound(tester, isSpeaking: true);
+
+      expect(find.byIcon(LucideIcons.square), findsOneWidget);
+      expect(find.bySemanticsLabel('Parar'), findsOneWidget);
+      expect(tester.hasRunningAnimations, isTrue);
+      await tester.pump(const Duration(seconds: 6));
+      handle.dispose();
+    });
+  });
 }

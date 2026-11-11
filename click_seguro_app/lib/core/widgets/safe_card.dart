@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 
 enum SafeCardElevation { flat, sm, md }
 
-/// SafeCard — cartão do redesign 2.0 (FR-004): branco, canto 20 e a sombra
-/// única; `flat` é creme e sem sombra. No alto contraste, borda no lugar da
-/// sombra. Tocável: encolhe para 98% (FR-020), sem movimento com reduzir
+/// SafeCard — cartão do redesign 2.0 (FR-004): branco, borda de 1 px, canto
+/// 20 e a sombra única; `flat` é creme e sem sombra. É o padrão de todo
+/// cartão do app (notícias, perfil, configurações, alertas): quem desenha a
+/// própria caixa usa [SafeCard.decoration]. Tocável: encolhe para 98% (FR-020), sem movimento com reduzir
 /// animações (FR-021), e é lido como botão (specs/022 FR-007).
 class SafeCard extends StatelessWidget {
   const SafeCard({
@@ -26,22 +27,27 @@ class SafeCard extends StatelessWidget {
   final bool interactive;
   final VoidCallback? onTap;
 
+  /// A caixa do cartão: branca (creme se [flat]), borda, canto 20 e sombra.
+  static BoxDecoration decoration(AppPalette colors, {bool flat = false}) =>
+      BoxDecoration(
+        color: flat ? colors.surface : colors.card,
+        borderRadius: AppSpacing.radiusLg,
+        border: Border.all(color: colors.border),
+        boxShadow: flat ? null : colors.shadow,
+      );
+
   @override
   Widget build(BuildContext context) {
-    final AppPalette colors = context.colors;
-    final bool flat = elevation == SafeCardElevation.flat;
-    final bool highContrast = colors.shadow.isEmpty;
-
     final Widget card = AnimatedContainer(
       duration: AppMotion.of(context).short,
       curve: AppMotion.standard,
       padding: padded ? const EdgeInsets.all(AppSpacing.s5) : EdgeInsets.zero,
-      decoration: BoxDecoration(
-        color: flat ? colors.surface : colors.card,
-        borderRadius: AppSpacing.radiusLg,
-        border: highContrast ? Border.all(color: colors.border) : null,
-        boxShadow: flat ? null : colors.shadow,
+      decoration: decoration(
+        context.colors,
+        flat: elevation == SafeCardElevation.flat,
       ),
+      // Conteúdo sem margem (capa de notícia) respeita o canto.
+      clipBehavior: padded ? Clip.none : Clip.antiAlias,
       child: child,
     );
 

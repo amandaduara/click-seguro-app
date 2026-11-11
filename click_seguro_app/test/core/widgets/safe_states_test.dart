@@ -134,12 +134,12 @@ void main() {
   });
 
   group('SafeOfflineBanner', () {
-    testWidgets('faixa de largura total com o aviso em 16 px', (tester) async {
+    testWidgets('faixa de largura total com o aviso em 15 px', (tester) async {
       await pump(tester, const Column(children: [SafeOfflineBanner()]));
 
       const text = 'Você está sem internet. Mostrando o conteúdo salvo.';
       expect(find.text(text), findsOneWidget);
-      expect(fontSizeOf(tester, text), greaterThanOrEqualTo(16));
+      expect(fontSizeOf(tester, text), greaterThanOrEqualTo(15));
       expect(
         tester.getSize(find.byType(SafeOfflineBanner)).width,
         tester.view.physicalSize.width / tester.view.devicePixelRatio,

@@ -43,12 +43,26 @@ void main() {
       .scale
       .value;
 
-  testWidgets('branco, canto 20 e a sombra única', (tester) async {
+  testWidgets('branco, borda, canto 20 e a sombra única', (tester) async {
     await pump(tester, const SafeCard(child: Text('Cartão')));
 
     expect(box(tester).color, AppPalette.light.card);
     expect(box(tester).borderRadius, BorderRadius.circular(20));
+    expect((box(tester).border! as Border).top.color, AppPalette.light.border);
+    expect((box(tester).border! as Border).top.width, 1);
     expect(box(tester).boxShadow, AppPalette.light.shadow);
+  });
+
+  test('decoration: a mesma caixa para quem desenha a própria', () {
+    expect(
+      SafeCard.decoration(AppPalette.light),
+      BoxDecoration(
+        color: AppPalette.light.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppPalette.light.border),
+        boxShadow: AppPalette.light.shadow,
+      ),
+    );
   });
 
   testWidgets('plano: creme, sem sombra', (tester) async {

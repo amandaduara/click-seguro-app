@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -30,6 +31,17 @@ void main() {
 
     await tester.tap(find.byType(SafeIconButton));
     expect(taps, 1);
+
+    // O leitor de tela também toca no botão.
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Alertas')),
+      isSemantics(isButton: true, isEnabled: true, hasTapAction: true),
+    );
+    final SemanticsNode node = tester.getSemantics(
+      find.bySemanticsLabel('Alertas'),
+    );
+    node.owner!.performAction(node.id, SemanticsAction.tap);
+    expect(taps, 2);
     handle.dispose();
   });
 

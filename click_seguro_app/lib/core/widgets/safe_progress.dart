@@ -106,7 +106,7 @@ class SafeProgressRing extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: 26,
+                  fontSize: 22,
                   fontWeight: FontWeight.w800,
                   color: colors.textForeground,
                 ),

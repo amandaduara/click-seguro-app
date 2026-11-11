@@ -40,6 +40,47 @@ void main() {
     handle.dispose();
   });
 
+  // Validação da usuária (specs/023): ao trocar, as duas opções piscavam
+  // porque cada uma animava o próprio fundo. Agora um único indicador
+  // desliza da aba antiga para a nova.
+  testWidgets('a troca move um só indicador, sem fundo nas abas', (
+    tester,
+  ) async {
+    final ValueNotifier<int> selected = ValueNotifier(0);
+    addTearDown(selected.dispose);
+    await pumpComponent(
+      tester,
+      SizedBox(
+        width: 300,
+        child: ValueListenableBuilder<int>(
+          valueListenable: selected,
+          builder: (_, index, _) => SafePillTabs(
+            tabs: const ['Conversar', 'Verificar'],
+            selectedIndex: index,
+            onChanged: (value) => selected.value = value,
+          ),
+        ),
+      ),
+    );
+    final Finder indicator = find.byKey(SafePillTabs.indicatorKey);
+    expect(indicator, findsOneWidget);
+    final double start = tester.getCenter(indicator).dx;
+    expect(start, closeTo(tester.getCenter(find.text('Conversar')).dx, 1));
+
+    await tester.tap(find.text('Verificar'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 75));
+    expect(indicator, findsOneWidget);
+    final double midway = tester.getCenter(indicator).dx;
+    expect(midway, greaterThan(start));
+
+    await tester.pumpAndSettle();
+    expect(
+      tester.getCenter(indicator).dx,
+      closeTo(tester.getCenter(find.text('Verificar')).dx, 1),
+    );
+  });
+
   testWidgets('com fonte 2x em 320 px não estoura', (tester) async {
     await pumpComponent(
       tester,

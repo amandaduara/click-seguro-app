@@ -310,3 +310,71 @@ A 022 entrou no `develop` antes do redesign e resolveu parte do mesmo problema. 
 - **Barra inferior:** sem o botão central (R10); a cor da aba ativa muda com animação curta
   (FR-025 da 022).
 - **Fonte:** fica a Inter (R2); a Montserrat da 022 saiu do app.
+
+## R15. Ajustes da validação da usuária (2026-11-10)
+
+Pedidos depois de ver a primeira versão no aparelho:
+
+1. **Barra inferior**: só ícones; a aba ativa ganha um círculo coral de 44 com o ícone branco
+   (o estilo do antigo botão central, menor). O nome de cada aba continua no `Semantics` e no
+   `Tooltip` (FR-009 revisto).
+2. **Texto**: escala menor, perto da anterior ao redesign. Corpo 16, leitura longa 17, rótulo 15,
+   legenda 14, títulos 18/20/24, título de tela 28 (FR-003 revisto). Quem precisa de letra maior
+   aumenta em Acessibilidade.
+3. **Início**: a saudação e a busca sobem junto com as notícias (`NestedScrollView`); os filtros
+   ficam presos no topo (`PinnedHeaderSliver`).
+4. **Configurações**: a engrenagem sai da barra de cima das abas e fica só no Perfil (que já a
+   mostra também para o visitante). A chave `shell_settings` foi removida.
+5. **Cartões**: um padrão só, o do `SafeCard`: branco, borda de 1 px, canto 20 e a sombra única.
+   Quem desenha a própria caixa (cartão de notícia, Perfil, Configurações, resultado do Assistente)
+   usa `SafeCard.decoration`. O cartão de notícia deixa de ser só a capa: a capa ocupa o topo da
+   caixa e o título e a fonte ficam dentro.
+6. **Alertas**: cartão no estilo do Início, com a capa da notícia à esquerda do texto. O alerta
+   passa a guardar a `imageUrl` do item de `GET /app/news` (registros antigos, sem ela, mostram a
+   ilustração do tema).
+7. **Detalhe da notícia e Assistente**: refeitos conforme os quadros "05 Notícia" e
+   "10 Assistente". No Assistente, o histórico saiu das abas para um botão no topo.
+8. **`SafeIconButton`**: passa a expor a ação de toque ao leitor de tela.
+
+
+## R16. Segunda rodada de ajustes da usuária (2026-11-10)
+
+1. **Assistente mais limpo**: saíram textos de apoio fixos (subtítulo, título da verificação,
+   limite da imagem, cabeçalhos do resultado). O aviso de privacidade ficou curto e só aparece
+   com a conversa vazia; "Nova conversa" virou ícone no topo; o contador só aparece perto do
+   limite; o resultado mostra selo, explicação e cuidados, com risco e confiança numa linha
+   discreta no fim (a spec 016 pede os dois).
+2. **Topo das abas**: só o Início prende algo no topo (os filtros). Atividades e Ajuda rolam o
+   topo junto com o conteúdo.
+3. **Velocidade da leitura**: um chip dentro do cartão "Ouvir notícia", que alterna as três
+   velocidades do app (rótulos 1x, 2x e 0,5x para normal, rápida e lenta).
+4. **Detalhe sem barra inferior**: curtir sobe para o topo, junto com salvar e compartilhar; a
+   atividade relacionada fica só no cartão do corpo.
+5. **Ajuda sem tela vazia no fim**: uma `CustomScrollView` só (topo, cartão de emergência,
+   abas e a lista da aba). O `NestedScrollView` dava à lista a altura da tela inteira. Deslizar
+   para o lado continua trocando de aba.
+6. **Abas em pílula sem piscar**: o `SafePillTabs` tem um indicador só, que desliza; antes cada
+   aba animava o próprio fundo e as duas ficavam meio preenchidas na troca.
+7. **Reels**: só curtir, salvar e compartilhar na lateral; tocar no texto ou na imagem abre a
+   notícia, e os três botões voam (`Hero`) até o topo do detalhe. Sem voo com movimento
+   reduzido.
+8. **Progresso das Atividades**: enche de novo a cada volta à aba (a chave do cartão muda no
+   `onReturn`).
+9. **Busca**: espaço no começo é descartado e um toast curto avisa; buscar com menos de 2 letras
+   também avisa (`news_search_invalid`).
+10. **Sem aviso de servidor lento**: `SlowRequestNotice` e as chaves `auth_slow_server`,
+    `news_slow_server` e `activities_slow` foram removidos. O carregamento continua com os
+    esqueletos e os botões carregando.
+
+## R17. Terceira rodada (2026-11-10)
+
+1. **Leitura automática no Assistente**: com "Leitura automática" ligada na Acessibilidade, a
+   resposta nova do assistente e o resultado da verificação são lidos (selo, explicação e
+   cuidados; numa falha, a mensagem). A regra do selo saiu do cartão para a extensão
+   `AiAnalysisPresentation`, usada pelo cartão e pela voz.
+2. **Voo dos botões do Reel**: o `Hero` desenhava o curtir do detalhe (pílula com o número) no
+   quadro do botão redondo do Reel, e a linha estourava. O voo agora cruza os dois botões, cada
+   um encolhido para caber (`flightShuttleBuilder`).
+3. **Ajuda**: carregando, erro e vazio ficam com a altura natural (`SliverToBoxAdapter`). Antes o
+   vazio de "Meus contatos" ocupava a tela inteira abaixo do topo e rolava sozinho, diferente da
+   lista de "Oficiais".
