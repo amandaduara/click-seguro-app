@@ -391,4 +391,113 @@ void main() {
       await expectLater(pending, completes);
     });
   });
+
+  group('curtir', () {
+    late List<NewsDetailMessage> messages;
+
+    Future<void> loadWith({bool isLiked = false, int likesCount = 2}) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail('n1', isLiked: isLiked, likesCount: likesCount),
+            isFromCache: false,
+          ),
+        ),
+      );
+      await controller.load();
+      messages = [];
+      controller.messages.listen(messages.add);
+    }
+
+    test(
+      'na hora curte (+1) e marca isLiking; depois mostra o do servidor',
+      () async {
+        await loadWith();
+        repository.likeGate = Completer<void>();
+
+        final pending = controller.toggleLike();
+
+        expect(controller.detail?.isLiked, isTrue);
+        expect(controller.detail?.likesCount, 3);
+        expect(controller.isLiking, isTrue);
+        repository.likeGate!.complete();
+        await pending;
+        await pumpEventQueue();
+
+        // O fake devolve {liked: true, likesCount: 4}.
+        expect(controller.detail?.isLiked, isTrue);
+        expect(controller.detail?.likesCount, 4);
+        expect(controller.isLiking, isFalse);
+        expect(messages, isEmpty);
+        expect(repository.likeCalls, ['n1']);
+      },
+    );
+
+    test('descurtir tira 1 na hora, sem ficar negativo', () async {
+      await loadWith(isLiked: true, likesCount: 0);
+      repository.likeGate = Completer<void>();
+
+      final pending = controller.toggleLike();
+
+      expect(controller.detail?.isLiked, isFalse);
+      expect(controller.detail?.likesCount, 0);
+      repository.likeGate!.complete();
+      await pending;
+    });
+
+    test('segundo toque durante o pedido é ignorado', () async {
+      await loadWith();
+      repository.likeGate = Completer<void>();
+
+      final first = controller.toggleLike();
+      await controller.toggleLike();
+      repository.likeGate!.complete();
+      await first;
+
+      expect(repository.likeCalls, ['n1']);
+    });
+
+    test('falha volta ao estado anterior e avisa com a falha', () async {
+      await loadWith();
+      repository.likeResults.add(const Left(ConnectionFailure()));
+
+      await controller.toggleLike();
+      await pumpEventQueue();
+
+      expect(controller.detail?.isLiked, isFalse);
+      expect(controller.detail?.likesCount, 2);
+      expect(controller.isLiking, isFalse);
+      expect(messages.single.type, NewsDetailMessageType.likeFailed);
+      expect(messages.single.failureKey, const ConnectionFailure().message);
+    });
+
+    test('404 vira notFound', () async {
+      await loadWith();
+      repository.likeResults.add(const Left(NewsNotFoundFailure()));
+
+      await controller.toggleLike();
+      await pumpEventQueue();
+
+      expect(controller.status, NewsDetailStatus.notFound);
+      expect(messages.single.type, NewsDetailMessageType.notFound);
+    });
+
+    test('sem detalhe carregado o toque é ignorado', () async {
+      await controller.toggleLike();
+
+      expect(repository.likeCalls, isEmpty);
+    });
+
+    test('dispose durante o pedido não dispara erro', () async {
+      final other = buildNewsDetailController(repository, session);
+      await other.load();
+      repository.likeGate = Completer<void>();
+
+      final pending = other.toggleLike();
+      other.dispose();
+      repository.likeGate!.complete();
+
+      await expectLater(pending, completes);
+    });
+  });
 }

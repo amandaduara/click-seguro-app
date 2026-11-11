@@ -5,17 +5,20 @@ import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_action_hero.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Coluna de botões redondos à direita do Reel (design system §7.10):
-/// navegação, curtir, salvar e abrir a fonte.
+/// curtir, salvar e compartilhar. Trocar de Reel é arrastando.
+///
+/// Com [heroTags], cada botão voa para o mesmo botão no topo do detalhe
+/// quando a notícia completa abre.
 class ReelActions extends StatelessWidget {
   const ReelActions({
     super.key,
-    required this.onPrevious,
-    required this.onNext,
     required this.isLiked,
     required this.likesText,
     required this.likeLabel,
@@ -23,20 +26,15 @@ class ReelActions extends StatelessWidget {
     required this.isSaved,
     required this.saveLabel,
     required this.onSave,
-    required this.onOpenSource,
+    required this.onShare,
     this.likePulse = 0,
+    this.heroTags,
   });
 
-  static const Key previousKey = ValueKey('reels-previous');
-  static const Key nextKey = ValueKey('reels-next');
   static const Key likeKey = ValueKey('reels-like');
   static const Key saveKey = ValueKey('reels-save');
-  static const Key sourceKey = ValueKey('reels-source');
+  static const Key shareKey = ValueKey('reels-share');
   static const Key likePulseKey = ValueKey('reels-like-pulse');
-
-  /// `null` desabilita (primeiro ou último Reel).
-  final VoidCallback? onPrevious;
-  final VoidCallback? onNext;
 
   final bool isLiked;
 
@@ -53,41 +51,32 @@ class ReelActions extends StatelessWidget {
   final bool isSaved;
   final String saveLabel;
   final VoidCallback onSave;
+  final VoidCallback onShare;
 
-  /// `null` esconde o botão: Reel sem endereço válido (FR-020).
-  final VoidCallback? onOpenSource;
+  /// `null` no esqueleto: nada voa.
+  final NewsActionTags? heroTags;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final VoidCallback? openSource = onOpenSource;
+    final NewsActionTags? tags = heroTags;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _RoundButton(
-          key: previousKey,
-          icon: LucideIcons.chevronUp,
-          label: AppStrings.newsReelsPrevious.tr(),
-          onTap: onPrevious,
-        ),
-        _RoundButton(
-          key: nextKey,
-          icon: LucideIcons.chevronDown,
-          label: AppStrings.newsReelsNext.tr(),
-          onTap: onNext,
-        ),
-        const SizedBox(height: AppSpacing.s3),
-        _LikePulse(
-          liked: isLiked,
-          pulse: likePulse,
-          child: _RoundButton(
-            key: likeKey,
-            icon: LucideIcons.heart,
-            selectedIcon: Icons.favorite,
-            label: likeLabel,
-            onTap: onLike,
-            selected: isLiked,
-            selectedColor: context.colors.primary,
+        NewsActionHero(
+          tag: tags?.like,
+          child: _LikePulse(
+            liked: isLiked,
+            pulse: likePulse,
+            child: _RoundButton(
+              key: likeKey,
+              icon: LucideIcons.heart,
+              selectedIcon: Icons.favorite,
+              label: likeLabel,
+              onTap: onLike,
+              selected: isLiked,
+              selectedColor: context.colors.primary,
+            ),
           ),
         ),
         ExcludeSemantics(
@@ -100,22 +89,28 @@ class ReelActions extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s2),
-        _RoundButton(
-          key: saveKey,
-          icon: LucideIcons.bookmark,
-          selectedIcon: LucideIcons.bookmarkCheck,
-          label: saveLabel,
-          onTap: onSave,
-          selected: isSaved,
-          selectedColor: context.colors.textPrimaryForeground,
-        ),
-        if (openSource != null)
-          _RoundButton(
-            key: sourceKey,
-            icon: LucideIcons.externalLink,
-            label: AppStrings.newsReelsOpenSource.tr(),
-            onTap: openSource,
+        NewsActionHero(
+          tag: tags?.save,
+          child: _RoundButton(
+            key: saveKey,
+            icon: LucideIcons.bookmark,
+            selectedIcon: LucideIcons.bookmarkCheck,
+            label: saveLabel,
+            onTap: onSave,
+            selected: isSaved,
+            selectedColor: context.colors.textPrimaryForeground,
           ),
+        ),
+        const SizedBox(height: AppSpacing.s2),
+        NewsActionHero(
+          tag: tags?.share,
+          child: _RoundButton(
+            key: shareKey,
+            icon: LucideIcons.share2,
+            label: AppStrings.newsDetailShare.tr(),
+            onTap: onShare,
+          ),
+        ),
       ],
     );
   }
@@ -205,7 +200,7 @@ class _RoundButton extends StatelessWidget {
   /// Ícone no estado selecionado; sem ele, o mesmo [icon].
   final IconData? selectedIcon;
   final String label;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
   final bool selected;
 
   /// `null` usa a cor do ícone sem seleção.
@@ -213,31 +208,9 @@ class _RoundButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool enabled = onTap != null;
     final Color onDark = context.colors.textPrimaryForeground;
-    final Color color = selected ? selectedColor ?? onDark : onDark;
-    // Desabilitado: cor com alfa, sem desfoque nem `Opacity`, que pesam por
-    // cima da imagem (specs/022 T047). No esqueleto, o círculo vira uma barra
-    // só.
-    final Widget circle = SafeSkeleton.leaf(
-      Container(
-        width: _visualSize,
-        height: _visualSize,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: enabled ? const Color(0x33FFFFFF) : const Color(0x14FFFFFF),
-        ),
-        alignment: Alignment.center,
-        child: Icon(
-          selected ? selectedIcon ?? icon : icon,
-          size: 20,
-          color: enabled ? color : color.withValues(alpha: 0.4),
-        ),
-      ),
-    );
     return Semantics(
       button: true,
-      enabled: enabled,
       selected: selected,
       label: label,
       excludeSemantics: true,
@@ -247,14 +220,28 @@ class _RoundButton extends StatelessWidget {
         child: SizedBox.square(
           dimension: _touchSize,
           child: Center(
-            child: enabled
-                ? ClipOval(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                      child: circle,
+            child: ClipOval(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                // No esqueleto, o círculo vira uma barra só.
+                child: SafeSkeleton.leaf(
+                  Container(
+                    width: _visualSize,
+                    height: _visualSize,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0x33FFFFFF),
                     ),
-                  )
-                : circle,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      selected ? selectedIcon ?? icon : icon,
+                      size: 20,
+                      color: selected ? selectedColor ?? onDark : onDark,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

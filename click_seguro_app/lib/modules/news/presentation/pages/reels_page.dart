@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/utils/app_haptics.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
@@ -10,8 +9,7 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
-import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
+import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
@@ -19,11 +17,11 @@ import 'package:click_seguro_app/modules/news/presentation/controller/reels_cont
 import 'package:click_seguro_app/modules/news/presentation/controller/reels_status.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_placeholders.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/reel_presentation_extension.dart';
+import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/reel_actions.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/reel_view.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:click_seguro_app/core/utils/motion_scroll.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
@@ -31,7 +29,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 /// Aba central: Reels em tela cheia, um por vez (RF-013, RF-019,
-/// specs/008-reels-curtir-salvar). Sem barra superior.
+/// specs/008-reels-curtir-salvar). Sem barra superior; ao lado, só curtir,
+/// salvar e compartilhar, e trocar de Reel é arrastando.
 class ReelsPage extends StatefulWidget {
   const ReelsPage({super.key, this.startNewsId, this.preview});
 
@@ -64,6 +63,7 @@ class _ReelsPageState extends State<ReelsPage> {
   StreamSubscription<ReelsMessage>? _messages;
   PageController? _pageController;
   bool _isOpeningDetail = false;
+  bool _isSharing = false;
 
   @override
   void initState() {
@@ -114,11 +114,24 @@ class _ReelsPageState extends State<ReelsPage> {
       ..showSnackBar(SnackBar(content: Text(text)));
   }
 
+  /// O detalhe abre já com o cabeçalho e os botões do Reel, que voam para
+  /// o topo dele ([NewsActionsPreview]).
   Future<void> _openDetail(ReelEntity reel) async {
     if (_isOpeningDetail) return;
     _isOpeningDetail = true;
     try {
-      await context.push<void>('/news/${reel.id}');
+      await context.push<void>(
+        '/news/${reel.id}',
+        extra: NewsDetailPreview(
+          item: reel.news,
+          actions: NewsActionsPreview(
+            newsId: reel.id,
+            isLiked: reel.isLiked,
+            likesCount: reel.likesCount,
+            isSaved: _isAuthenticated && reel.isSaved,
+          ),
+        ),
+      );
     } finally {
       _isOpeningDetail = false;
     }
@@ -145,17 +158,19 @@ class _ReelsPageState extends State<ReelsPage> {
     }
   }
 
-  Future<void> _openSource(ReelEntity reel) async {
-    final bool opened = await GetIt.instance<ExternalLauncherService>().openUrl(
-      reel.news.sourceUrl,
-    );
-    if (!opened && mounted) _snack(AppStrings.newsReelsOpenSourceFailed.tr());
-  }
-
-  void _goTo(int index) {
-    final PageController? pages = _pageController;
-    if (pages == null) return;
-    unawaited(pages.moveToPage(index, duration: AppMotion.of(context).medium));
+  /// Menu do aparelho; cancelar ou falhar não mostra aviso. Sem conta
+  /// também vale (RN-003).
+  Future<void> _share(ReelEntity reel) async {
+    if (_isSharing) return;
+    _isSharing = true;
+    try {
+      await GetIt.instance<ShareService>().shareText(
+        reel.shareText,
+        subject: reel.news.title,
+      );
+    } finally {
+      _isSharing = false;
+    }
   }
 
   /// O `start` do carrossel muda o índice por fora do gesto: o `PageView`
@@ -266,8 +281,7 @@ class _ReelsPageState extends State<ReelsPage> {
           footer: index == reels.length - 1 ? _footer(controller) : null,
           onDoubleTap: () => unawaited(_like(reel, onlyLike: true)),
           actions: ReelActions(
-            onPrevious: index > 0 ? () => _goTo(index - 1) : null,
-            onNext: index < reels.length - 1 ? () => _goTo(index + 1) : null,
+            heroTags: NewsActionsPreview.tagsFor(reel.id),
             isLiked: reel.isLiked,
             likesText: reel.formattedLikes,
             likeLabel: reel.likeSemanticLabel,
@@ -276,9 +290,7 @@ class _ReelsPageState extends State<ReelsPage> {
             isSaved: isSaved,
             saveLabel: saveSemanticLabel(isSaved: isSaved),
             onSave: () => unawaited(_save(reel)),
-            onOpenSource: isOpenableWebUrl(reel.news.sourceUrl)
-                ? () => unawaited(_openSource(reel))
-                : null,
+            onShare: () => unawaited(_share(reel)),
           ),
         );
       },
@@ -349,8 +361,7 @@ class _Dark extends StatelessWidget {
   }
 }
 
-/// Primeira carga: um Reel em esqueleto, escuro como a tela, com o aviso de
-/// servidor acordando no topo (FR-011, FR-014).
+/// Primeira carga: um Reel em esqueleto, escuro como a tela (FR-011).
 class _ReelSkeleton extends StatelessWidget {
   const _ReelSkeleton({this.preview});
 
@@ -361,55 +372,36 @@ class _ReelSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final Color light = context.colors.textPrimaryForeground;
-    // Sobre o preto: barras claras e discretas, contêineres pretos (o
-    // esqueleto pinta os contêineres com o `card`) e o aviso em texto claro.
+    // Sobre o preto: barras claras e discretas e contêineres pretos (o
+    // esqueleto pinta os contêineres com o `card`).
     final ThemeData dark = theme.copyWith(
       extensions: [
         context.colors.copyWith(
           input: light.withValues(alpha: 0.14),
           card: Colors.black,
-          textMutedForeground: light.withValues(alpha: 0.8),
         ),
       ],
     );
     return Theme(
       data: dark,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          SafeSkeleton(
-            enabled: true,
-            highlightColor: light.withValues(alpha: 0.28),
-            child: ReelView(
-              reel: NewsPlaceholders.reel(news: preview),
-              now: DateTime.now(),
-              onReadFull: () {},
-              actions: ReelActions(
-                onPrevious: null,
-                onNext: null,
-                isLiked: false,
-                likesText: SafeSkeleton.text(1),
-                likeLabel: '',
-                onLike: () {},
-                isSaved: false,
-                saveLabel: '',
-                onSave: () {},
-                onOpenSource: null,
-              ),
-            ),
+      child: SafeSkeleton(
+        enabled: true,
+        highlightColor: light.withValues(alpha: 0.28),
+        child: ReelView(
+          reel: NewsPlaceholders.reel(news: preview),
+          now: DateTime.now(),
+          onReadFull: () {},
+          actions: ReelActions(
+            isLiked: false,
+            likesText: SafeSkeleton.text(1),
+            likeLabel: '',
+            onLike: () {},
+            isSaved: false,
+            saveLabel: '',
+            onSave: () {},
+            onShare: () {},
           ),
-          Positioned(
-            top: 0,
-            left: AppSpacing.s5,
-            right: AppSpacing.s5,
-            child: _Dark(
-              child: SlowRequestNotice(
-                active: true,
-                message: AppStrings.newsSlowServer.tr(),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

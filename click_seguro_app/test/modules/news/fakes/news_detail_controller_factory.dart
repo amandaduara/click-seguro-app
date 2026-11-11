@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,7 @@ NewsDetailController buildNewsDetailController(
   getNewsDetail: GetNewsDetailUseCase(repository),
   markAsRead: MarkNewsAsReadUseCase(repository),
   toggleSave: ToggleSaveUseCase(repository),
+  toggleLike: ToggleLikeUseCase(repository),
   sessionStatus: sessionStatus,
   newsId: newsId,
 );

@@ -6,19 +6,22 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity
 import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_status.dart';
 import 'package:flutter/foundation.dart';
 
-enum NewsDetailMessageType { saved, removed, saveFailed, notFound }
+enum NewsDetailMessageType { saved, removed, saveFailed, likeFailed, notFound }
 
-/// Aviso curto para a tela mostrar (salvo, removido, falha ao salvar).
+/// Aviso curto para a tela mostrar (salvo, removido, falha ao salvar ou ao
+/// curtir).
 class NewsDetailMessage {
   const NewsDetailMessage(this.type, [this.failureKey]);
 
   final NewsDetailMessageType type;
 
-  /// Chave de tradução da falha, só em [NewsDetailMessageType.saveFailed].
+  /// Chave de tradução da falha, em [NewsDetailMessageType.saveFailed] e
+  /// [NewsDetailMessageType.likeFailed].
   final String? failureKey;
 }
 
@@ -29,11 +32,13 @@ class NewsDetailController extends ChangeNotifier {
     required GetNewsDetailUseCase getNewsDetail,
     required MarkNewsAsReadUseCase markAsRead,
     required ToggleSaveUseCase toggleSave,
+    required ToggleLikeUseCase toggleLike,
     required ValueListenable<UserSessionStatus> sessionStatus,
     required this.newsId,
   }) : _getNewsDetail = getNewsDetail,
        _markAsRead = markAsRead,
        _toggleSave = toggleSave,
+       _toggleLike = toggleLike,
        _sessionStatus = sessionStatus,
        _lastSession = sessionStatus.value {
     _sessionStatus.addListener(_onSessionChanged);
@@ -42,6 +47,7 @@ class NewsDetailController extends ChangeNotifier {
   final GetNewsDetailUseCase _getNewsDetail;
   final MarkNewsAsReadUseCase _markAsRead;
   final ToggleSaveUseCase _toggleSave;
+  final ToggleLikeUseCase _toggleLike;
   final ValueListenable<UserSessionStatus> _sessionStatus;
 
   final String newsId;
@@ -70,6 +76,11 @@ class NewsDetailController extends ChangeNotifier {
 
   /// Há um pedido de salvar em andamento: novos toques são ignorados.
   bool get isSaving => _isSaving;
+
+  bool _isLiking = false;
+
+  /// Há um pedido de curtir em andamento: novos toques são ignorados.
+  bool get isLiking => _isLiking;
 
   bool _autoReadDone = false;
 
@@ -159,6 +170,55 @@ class NewsDetailController extends ChangeNotifier {
           ),
         );
       },
+    );
+    _notify();
+  }
+
+  /// Curte ou descurte na hora (±1) e depois mostra o que o servidor
+  /// devolveu; em falha, volta e avisa; 404 vira "não encontrada", como no
+  /// salvar. Só a página com conta chama (`requireAccount`).
+  Future<void> toggleLike() async {
+    final NewsDetailEntity? before = _detail;
+    if (before == null ||
+        _status != NewsDetailStatus.loaded ||
+        _isLiking ||
+        _disposed) {
+      return;
+    }
+    _isLiking = true;
+    _detail = before.copyWith(
+      isLiked: !before.isLiked,
+      likesCount: before.isLiked
+          ? (before.likesCount - 1).clamp(0, before.likesCount)
+          : before.likesCount + 1,
+    );
+    _notify();
+
+    final result = await _toggleLike(newsId);
+    _isLiking = false;
+    if (_disposed) return;
+    result.fold(
+      (failure) {
+        _detail = _detail?.copyWith(
+          isLiked: before.isLiked,
+          likesCount: before.likesCount,
+        );
+        if (failure is NewsNotFoundFailure) {
+          _status = NewsDetailStatus.notFound;
+          _emit(const NewsDetailMessage(NewsDetailMessageType.notFound));
+        } else {
+          _emit(
+            NewsDetailMessage(
+              NewsDetailMessageType.likeFailed,
+              failure.message,
+            ),
+          );
+        }
+      },
+      (like) => _detail = _detail?.copyWith(
+        isLiked: like.liked,
+        likesCount: like.likesCount,
+      ),
     );
     _notify();
   }

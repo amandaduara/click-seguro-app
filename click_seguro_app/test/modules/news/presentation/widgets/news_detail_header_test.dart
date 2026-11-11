@@ -1,116 +1,86 @@
-import 'dart:ui' as ui;
-
-import 'package:click_seguro_app/core/theme/app_motion.dart';
-import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_badge.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_header.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../../fakes/hanging_http_client.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_news_repository.dart';
 
-const String _url = 'https://img.test/n.jpg';
-const String _tag = 'news-image-recent-n1';
-
 void main() {
-  setUp(() => imageCache.clear());
-
-  Future<void> pumpHeader(
-    WidgetTester tester, {
-    String? heroTag = _tag,
-    bool reduceMotion = false,
-  }) async {
-    tester.view
-      ..physicalSize = const Size(1080, 2340)
-      ..devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-    await pumpLocalized(
-      tester,
-      settle: false,
-      child: AppMotionScope(
-        appReduceMotion: reduceMotion,
+  Future<void> pumpHeader(WidgetTester tester, {int? readingMinutes}) =>
+      pumpLocalized(
+        tester,
         child: Scaffold(
           body: ListView(
             children: [
               NewsDetailHeader(
-                news: newsItem('n1', imageUrl: _url),
+                news: newsItem(
+                  'n1',
+                  categories: const [
+                    NewsCategoryEntity(id: 'c1', name: 'Golpe', slug: 'golpe'),
+                    NewsCategoryEntity(
+                      id: 'c2',
+                      name: 'WhatsApp',
+                      slug: 'whatsapp',
+                    ),
+                  ],
+                ),
                 now: DateTime(2026, 9, 21),
-                heroTag: heroTag,
+                readingMinutes: readingMinutes,
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
+      );
 
-  /// A capa do cartão já no cache, como depois do feed: decodificada pela
-  /// largura da tela (360 dp × 3), a mesma chave que o detalhe pede.
-  Future<void> cacheCardCover(WidgetTester tester) async {
-    final ui.Image image =
-        await tester.runAsync(() => createTestImage()) as ui.Image;
-    final Object key = await const ResizeImage(
-      NetworkImage(_url),
-      width: 1080,
-    ).obtainKey(ImageConfiguration.empty);
-    imageCache.putIfAbsent(
-      key,
-      () => OneFrameImageStreamCompleter(
-        SynchronousFuture(ImageInfo(image: image)),
-      ),
-    );
-  }
-
-  Finder paintedImage() =>
-      find.byWidgetPredicate((w) => w is RawImage && w.image != null);
-
-  // specs/022 FR-017: o detalhe mostra na hora a imagem que o cartão já
-  // tinha. A capa do redesign pede a mesma chave de cache do cartão.
-  testWidgets('aberto por um cartão: a capa já aparece pronta', (tester) async {
-    debugNetworkImageHttpClientProvider = HangingHttpClient.new;
-    await cacheCardCover(tester);
-
-    await pumpHeader(tester);
-    await tester.pump();
-
-    expect(paintedImage(), findsOneWidget);
-    debugNetworkImageHttpClientProvider = null;
-  });
-
-  testWidgets('sem a imagem no cache, a ilustração cobre a espera', (
+  testWidgets('selos das categorias, a primeira em coral, e o título', (
     tester,
   ) async {
-    debugNetworkImageHttpClientProvider = HangingHttpClient.new;
-
-    await pumpHeader(tester, heroTag: null);
-    await tester.pump();
-
-    expect(paintedImage(), findsNothing);
-    expect(find.byType(SafeIllustration), findsOneWidget);
-    debugNetworkImageHttpClientProvider = null;
-  });
-
-  testWidgets('a imagem voa com o Hero do cartão', (tester) async {
-    debugNetworkImageHttpClientProvider = HangingHttpClient.new;
-
     await pumpHeader(tester);
 
+    final List<SafeBadge> badges = tester
+        .widgetList<SafeBadge>(find.byType(SafeBadge))
+        .toList();
+    expect(badges.map((b) => b.tone), [
+      SafeBadgeTone.primary,
+      SafeBadgeTone.secondary,
+    ]);
+    expect(find.text('Golpe'), findsOneWidget);
+    expect(find.text('WhatsApp'), findsOneWidget);
+    expect(find.text('Notícia n1'), findsOneWidget);
+    // Os selos vêm antes do título.
     expect(
-      find.byWidgetPredicate((w) => w is Hero && w.tag == _tag),
-      findsOneWidget,
+      tester.getTopLeft(find.text('Golpe')).dy,
+      lessThan(tester.getTopLeft(find.text('Notícia n1')).dy),
     );
-    debugNetworkImageHttpClientProvider = null;
   });
 
-  // specs/022 FR-010: com "Reduzir animações", a imagem não voa.
-  testWidgets('movimento reduzido: sem Hero', (tester) async {
-    debugNetworkImageHttpClientProvider = HangingHttpClient.new;
+  testWidgets('prévia, sem tempo de leitura: fonte e data', (tester) async {
+    await pumpHeader(tester);
 
-    await pumpHeader(tester, reduceMotion: true);
+    expect(find.text('Folha de Teste · Ontem'), findsOneWidget);
+    expect(find.textContaining('min de leitura'), findsNothing);
+  });
 
-    expect(find.byType(Hero), findsNothing);
-    debugNetworkImageHttpClientProvider = null;
+  testWidgets('com o detalhe: fonte, data e tempo de leitura, também lidos', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await pumpHeader(tester, readingMinutes: 3);
+
+    expect(
+      find.text('Folha de Teste · Ontem · 3 min de leitura'),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(
+        'Notícia n1, Folha de Teste, Ontem, 3 min de leitura',
+      ),
+      findsOneWidget,
+    );
+    // As categorias num nó só, separado do título.
+    expect(find.bySemanticsLabel('Golpe\nWhatsApp'), findsOneWidget);
+    handle.dispose();
   });
 }

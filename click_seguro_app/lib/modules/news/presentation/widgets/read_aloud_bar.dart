@@ -1,15 +1,17 @@
+import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_detail_presentation_extension.dart';
-import 'package:click_seguro_app/core/theme/app_typography.dart';
-import 'package:click_seguro_app/core/widgets/safe_chip.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
-/// Botão "Ouvir"/"Parar" e seletor de velocidade (lenta, normal, rápida) do
-/// detalhe (RF-015, FR-005 a FR-007, FR-010). Some sem voz no idioma do app,
-/// sem deixar espaço.
+/// Cartão "Ouvir notícia" do detalhe (RF-015, FR-005 a FR-007, FR-010;
+/// redesign 2.0, Figma quadro 05): botão de tocar coral, a velocidade atual
+/// e, à direita, a pílula "1x" que passa para a próxima velocidade
+/// ([nextReadingSpeed]). Some sem voz no idioma do app, sem deixar espaço.
 class ReadAloudBar extends StatelessWidget {
   const ReadAloudBar({
     super.key,
@@ -21,9 +23,7 @@ class ReadAloudBar extends StatelessWidget {
   });
 
   static const Key listenKey = ValueKey('detail-listen');
-
-  static Key speedKey(ReadingSpeed speed) =>
-      ValueKey('detail-speed-${speed.name}');
+  static const Key speedKey = ValueKey('detail-speed');
 
   final bool isAvailable;
   final bool isSpeaking;
@@ -37,78 +37,114 @@ class ReadAloudBar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!isAvailable) return const SizedBox.shrink();
     final AppPalette colors = context.colors;
-    // Redesign 2.0: um bloco com o "Ouvir" e as velocidades.
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s5),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        // Branco com borda: os chips creme das velocidades aparecem nele.
-        decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: AppSpacing.radiusLg,
-          border: Border.all(color: colors.border, width: 1.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListenButton(
-              key: listenKey,
-              isSpeaking: isSpeaking,
-              onPressed: onToggle,
-            ),
-            const SizedBox(height: AppSpacing.s3),
-            Semantics(
-              container: true,
-              label: speedSemanticLabel(speed),
-              child: ExcludeSemantics(
-                child: Text(
-                  speedSemanticLabel(speed),
-                  style: AppTypography.caption.copyWith(
-                    fontSize: 16,
-                    color: colors.textMutedForeground,
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.s3),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: AppSpacing.radiusLg,
+        // Alto contraste: sem fundo suave visível, a borda marca o bloco.
+        border: colors.shadow.isEmpty ? Border.all(color: colors.border) : null,
+      ),
+      child: Row(
+        children: [
+          ListenButton(
+            key: listenKey,
+            round: true,
+            isSpeaking: isSpeaking,
+            onPressed: onToggle,
+          ),
+          const SizedBox(width: AppSpacing.s4),
+          // O botão já diz "Ouvir"/"Parar" e a pílula diz a velocidade ao
+          // leitor de tela.
+          Expanded(
+            child: ExcludeSemantics(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.newsDetailListenTitle.tr(),
+                    style: AppTypography.label.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.textForeground,
+                    ),
                   ),
-                ),
+                  Text(
+                    speedSemanticLabel(speed),
+                    style: AppTypography.caption.copyWith(
+                      color: colors.textMutedForeground,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: AppSpacing.s2),
-            Wrap(
-              spacing: AppSpacing.s2,
-              runSpacing: AppSpacing.s2,
-              children: [
-                for (final option in ReadingSpeed.values)
-                  _SpeedOption(
-                    key: speedKey(option),
-                    speed: option,
-                    selected: option == speed,
-                    onTap: () => onSpeedChanged(option),
-                  ),
-              ],
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpacing.s2),
+          _SpeedPill(
+            key: speedKey,
+            speed: speed,
+            onTap: () => onSpeedChanged(nextReadingSpeed(speed)),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Opção de velocidade: botão de pelo menos 48×48 dp, preenchido quando
-/// escolhido.
-class _SpeedOption extends StatelessWidget {
-  const _SpeedOption({
-    super.key,
-    required this.speed,
-    required this.selected,
-    required this.onTap,
-  });
+/// Pílula branca com "0,5x", "1x" ou "2x"; tocar passa para a próxima
+/// velocidade. Lida como "Velocidade: normal, 1x" com a dica "Toque para
+/// mudar".
+class _SpeedPill extends StatelessWidget {
+  const _SpeedPill({super.key, required this.speed, required this.onTap});
 
   final ReadingSpeed speed;
-  final bool selected;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => SafeChip(
-    label: readingSpeedName(speed),
-    selected: selected,
-    onTap: onTap,
-  );
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    final String short = readingSpeedShort(speed);
+    return Semantics(
+      button: true,
+      label: AppStrings.newsDetailSpeedChip.tr(
+        args: [readingSpeedName(speed), short],
+      ),
+      hint: AppStrings.newsDetailSpeedChange.tr(),
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Material(
+        type: MaterialType.transparency,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: AppSpacing.radiusFull,
+            border: colors.shadow.isEmpty
+                ? Border.all(color: colors.border)
+                : null,
+          ),
+          child: InkWell(
+            borderRadius: AppSpacing.radiusFull,
+            onTap: onTap,
+            child: ConstrainedBox(
+              // 48: alvo de toque mínimo (RNF-003).
+              constraints: const BoxConstraints(minWidth: 64, minHeight: 48),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s3),
+                child: Center(
+                  widthFactor: 1,
+                  heightFactor: 1,
+                  child: Text(
+                    short,
+                    style: AppTypography.label.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: colors.textForeground,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

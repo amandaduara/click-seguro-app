@@ -42,4 +42,15 @@ void main() {
     expect(saveSemanticLabel(isSaved: false), 'Salvar');
     expect(saveSemanticLabel(isSaved: true), 'Salvo');
   });
+
+  test('shareText: título, fonte e endereço; sem endereço válido, sem ele', () {
+    expect(
+      reel('r1').shareText,
+      'Notícia r1\nFolha de Teste\nhttps://fonte.test/r1',
+    );
+    expect(
+      reel('r1', sourceUrl: 'ftp://x').shareText,
+      'Notícia r1\nFolha de Teste',
+    );
+  });
 }

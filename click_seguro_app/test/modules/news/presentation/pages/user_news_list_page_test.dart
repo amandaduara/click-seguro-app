@@ -4,7 +4,6 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
@@ -228,7 +227,10 @@ void main() {
       expect(find.text('Tentar novamente'), findsNothing);
     });
 
-    testWidgets('carregando mostra o aviso de servidor lento', (tester) async {
+    // Sem aviso de servidor lento (validação da usuária, specs/023).
+    testWidgets('carregando: só os blocos, sem aviso de servidor', (
+      tester,
+    ) async {
       repository.savedGate = Completer<void>();
       repository.savedResults.add(pageOf(1));
       const slow = 'Conectando ao servidor. Isso pode levar até um minuto.';
@@ -236,9 +238,8 @@ void main() {
       await pumpPage(tester, settle: false);
 
       expect(find.byType(SafeLoadingState), findsOneWidget);
+      await tester.pump(const Duration(seconds: 6));
       expect(find.text(slow), findsNothing);
-      await tester.pump(SlowRequestNotice.delay);
-      expect(find.text(slow), findsOneWidget);
 
       repository.savedGate!.complete();
       await tester.pumpAndSettle();

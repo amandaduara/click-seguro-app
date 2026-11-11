@@ -7,12 +7,13 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/press_scale.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Cartão de notícia do redesign 2.0 (FR-015): capa com o selo da categoria
-/// e, abaixo, título e fonte. Compacto (grade) ou completo (destaques).
+/// Cartão de notícia do redesign 2.0 (FR-015): caixa com borda, capa com o
+/// selo da categoria e, abaixo, título e fonte. Compacto (grade) ou completo (destaques).
 class NewsCard extends StatefulWidget {
   const NewsCard({
     super.key,
@@ -59,8 +60,9 @@ class _NewsCardState extends State<NewsCard> {
     final item = widget.item;
     final AppPalette colors = context.colors;
     final List<String> labels = item.categoryLabels();
-    // Redesign 2.0 (estilo Pinterest): a capa é o cartão; título e fonte
-    // ficam logo abaixo, sem caixa em volta.
+    final double inset = widget.compact ? AppSpacing.s3 : AppSpacing.s4;
+    // Cartão padrão do redesign (SafeCard): caixa branca com borda; a capa
+    // ocupa o topo e o título e a fonte ficam dentro, abaixo dela.
     return Semantics(
       button: true,
       label: item.semanticLabel(widget.now),
@@ -69,45 +71,60 @@ class _NewsCardState extends State<NewsCard> {
         enabled: true,
         pressedScale: 0.98,
         onTap: _open,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _hero(
-              NewsCover(
-                imageUrl: item.imageUrl,
-                themeText: item.categories.isEmpty
-                    ? item.title
-                    : '${item.categories.first.name} ${item.title}',
-                height: widget.coverHeight ?? (widget.compact ? 150 : 190),
-                radius: widget.compact ? 20 : 24,
-                labels: labels,
-                trailing: _signals(item, colors),
+        child: Container(
+          decoration: SafeCard.decoration(colors),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _hero(
+                NewsCover(
+                  imageUrl: item.imageUrl,
+                  themeText: item.categories.isEmpty
+                      ? item.title
+                      : '${item.categories.first.name} ${item.title}',
+                  height: widget.coverHeight ?? (widget.compact ? 150 : 190),
+                  // O canto vem do cartão.
+                  radius: 0,
+                  labels: labels,
+                  trailing: _signals(item, colors),
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.s3),
-            Text(
-              item.title,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style:
-                  (widget.compact
-                          ? AppTypography.label.copyWith(fontSize: 17)
-                          : AppTypography.title3.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ))
-                      .copyWith(color: colors.textForeground, height: 1.3),
-            ),
-            const SizedBox(height: AppSpacing.s1),
-            Text(
-              '${item.source} · ${item.relativeDate(widget.now)}',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(
-                color: colors.textMutedForeground,
+              Padding(
+                padding: EdgeInsets.all(inset),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          (widget.compact
+                                  ? AppTypography.label
+                                  : AppTypography.title3.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ))
+                              .copyWith(
+                                color: colors.textForeground,
+                                height: 1.3,
+                              ),
+                    ),
+                    const SizedBox(height: AppSpacing.s1),
+                    Text(
+                      '${item.source} · ${item.relativeDate(widget.now)}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.caption.copyWith(
+                        color: colors.textMutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

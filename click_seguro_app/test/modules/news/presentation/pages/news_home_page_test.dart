@@ -9,6 +9,7 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.d
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/news_home_page.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/category_filter_bar.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/feed_search_field.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -83,7 +84,8 @@ void main() {
   );
 
   group('feed', () {
-    testWidgets('carregando mostra o indicador e o aviso de servidor lento', (
+    // Sem aviso de servidor lento (validação da usuária, specs/023).
+    testWidgets('carregando mostra o esqueleto, sem aviso de servidor', (
       tester,
     ) async {
       repository.feedGate = Completer<void>();
@@ -104,10 +106,10 @@ void main() {
         findsOneWidget,
       );
       expect(find.byType(CircularProgressIndicator), findsNothing);
-      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(seconds: 6));
       expect(
         find.text('Conectando ao servidor. Isso pode levar até um minuto.'),
-        findsOneWidget,
+        findsNothing,
       );
 
       repository.feedGate!.complete();
@@ -134,6 +136,31 @@ void main() {
       expect(novidades, lessThan(destaques));
       expect(destaques, lessThan(recentes));
       expect(textInScroll('Recomendadas para você'), findsNothing);
+    });
+
+    // Validação da usuária (specs/023): a saudação e a busca sobem com as
+    // notícias; os filtros ficam presos no topo.
+    testWidgets('rolando, o cabeçalho sobe e os filtros ficam no topo', (
+      tester,
+    ) async {
+      repository.feedResults[0] = Right(newsFeed(recent: newsItems(20)));
+      await pumpPage(tester);
+      tester.view.physicalSize = const Size(400, 800);
+      await tester.pumpAndSettle();
+      final double filtersTop = tester
+          .getTopLeft(find.byType(CategoryFilterBar))
+          .dy;
+
+      await tester.drag(find.byType(NewsCard).first, const Offset(0, -1500));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícias seguras').hitTestable(), findsNothing);
+      expect(find.byType(FeedSearchField).hitTestable(), findsNothing);
+      final double pinnedTop = tester
+          .getTopLeft(find.byType(CategoryFilterBar))
+          .dy;
+      expect(pinnedTop, lessThan(filtersTop));
+      expect(find.byType(CategoryFilterBar).hitTestable(), findsOneWidget);
     });
 
     testWidgets('recomendadas aparecem quando vêm preenchidas', (tester) async {

@@ -3,7 +3,9 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_filter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Campo de busca do feed (design system §7.4): ícone de lupa, dica e um
@@ -37,6 +39,44 @@ class _FeedSearchFieldState extends State<FeedSearchField> {
     super.dispose();
   }
 
+  /// Espaço em branco não é busca (validação da usuária, specs/023): o
+  /// começo do texto perde os espaços e um toast curto explica.
+  late final TextInputFormatter _noLeadingSpace =
+      TextInputFormatter.withFunction((oldValue, newValue) {
+        final String trimmed = newValue.text.trimLeft();
+        if (trimmed == newValue.text) return newValue;
+        _warnInvalid();
+        final int removed = newValue.text.length - trimmed.length;
+        return TextEditingValue(
+          text: trimmed,
+          selection: TextSelection.collapsed(
+            offset: (newValue.selection.baseOffset - removed).clamp(
+              0,
+              trimmed.length,
+            ),
+          ),
+        );
+      });
+
+  /// Busca curta demais (ou vazia) ao tocar em "buscar" no teclado.
+  void _onSubmitted(String text) {
+    if (text.trim().length < minSearchLength) _warnInvalid();
+  }
+
+  void _warnInvalid() {
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 3),
+          content: Text(
+            AppStrings.newsSearchInvalid.tr(args: ['$minSearchLength']),
+          ),
+        ),
+      );
+  }
+
   void _clear() {
     _text.clear();
     setState(() {});
@@ -49,10 +89,12 @@ class _FeedSearchFieldState extends State<FeedSearchField> {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
       child: TextField(
         controller: _text,
+        inputFormatters: [_noLeadingSpace],
         onChanged: (value) {
           setState(() {});
           widget.onChanged(value);
         },
+        onSubmitted: _onSubmitted,
         textInputAction: TextInputAction.search,
         style: AppTypography.body.copyWith(
           color: context.colors.textForeground,

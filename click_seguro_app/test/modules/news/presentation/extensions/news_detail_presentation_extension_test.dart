@@ -31,6 +31,37 @@ void main() {
     expect(label, 'Notícia n1, Folha de Teste, 20 de set.');
   });
 
+  group('readingMinutes', () {
+    test('200 palavras por minuto, arredondando para cima', () {
+      expect(newsDetail('n1', content: 'Texto').readingMinutes, 1);
+      expect(
+        newsDetail(
+          'n1',
+          content: List.filled(200, 'a').join(' '),
+        ).readingMinutes,
+        1,
+      );
+      expect(
+        newsDetail(
+          'n1',
+          content: List.filled(201, 'a').join(' '),
+        ).readingMinutes,
+        2,
+      );
+      expect(
+        newsDetail(
+          'n1',
+          content: List.filled(600, 'a').join(' \n '),
+        ).readingMinutes,
+        3,
+      );
+    });
+
+    test('sem texto → null', () {
+      expect(newsDetail('n1', content: '  ').readingMinutes, isNull);
+    });
+  });
+
   group('spokenText', () {
     test('título, ponto e texto', () {
       expect(
@@ -71,5 +102,19 @@ void main() {
     expect(readingSpeedName(ReadingSpeed.normal), 'normal');
     expect(readingSpeedName(ReadingSpeed.fast), 'rápida');
     expect(speedSemanticLabel(ReadingSpeed.normal), 'Velocidade: normal');
+  });
+
+  testWidgets('pílula de velocidade: 0,5x, 1x e 2x', (tester) async {
+    await localized(tester);
+
+    expect(readingSpeedShort(ReadingSpeed.slow), '0,5x');
+    expect(readingSpeedShort(ReadingSpeed.normal), '1x');
+    expect(readingSpeedShort(ReadingSpeed.fast), '2x');
+  });
+
+  test('a pílula passa de 1x para 2x, depois 0,5x e volta a 1x', () {
+    expect(nextReadingSpeed(ReadingSpeed.normal), ReadingSpeed.fast);
+    expect(nextReadingSpeed(ReadingSpeed.fast), ReadingSpeed.slow);
+    expect(nextReadingSpeed(ReadingSpeed.slow), ReadingSpeed.normal);
   });
 }

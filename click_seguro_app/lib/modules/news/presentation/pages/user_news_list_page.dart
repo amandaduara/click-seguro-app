@@ -7,7 +7,6 @@ import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
@@ -148,19 +147,8 @@ class _UserNewsListState extends State<_UserNewsList> {
         .watch<UserNewsListController>();
     switch (controller.status) {
       case FeedStatus.loading:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SlowRequestNotice(
-              active: true,
-              message: AppStrings.newsSlowServer.tr(),
-            ),
-            // Blocos com brilho no formato do conteúdo (FR-018).
-            const Expanded(
-              child: SafeLoadingState(layout: SafeLoadingLayout.list),
-            ),
-          ],
-        );
+        // Blocos com brilho no formato do conteúdo (FR-018).
+        return const SafeLoadingState(layout: SafeLoadingLayout.list);
       case FeedStatus.error:
         return SafeErrorState(
           message: (controller.failure?.message ?? AppStrings.errorGeneric)
