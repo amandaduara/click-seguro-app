@@ -5,13 +5,12 @@ import 'package:provider/single_child_widget.dart';
 
 import '../modules/splash/fakes/fake_splash_usecases.dart';
 
-/// Splash sem espera, com onboarding já visto: abre o app real (rota `/`)
+/// Splash com onboarding já visto: abre o app real (rota `/`)
 /// e segue o destino de [status], como no aparelho.
 SingleChildWidget fakeSplashProvider(UserSessionStatus status) =>
     ChangeNotifierProvider(
       create: (_) => SplashController(
         FakeCheckOnboardingSeenUseCase(),
         FakeValidateStoredSessionUseCase(status: status),
-        minimumDisplayDuration: Duration.zero,
       ),
     );

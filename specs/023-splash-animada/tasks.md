@@ -12,7 +12,7 @@ limpo e `flutter test` verde.
 
 ## Phase 1: Setup
 
-- [ ] T001 Confirmar a base: `flutter analyze` e `flutter test` verdes na branch recém-criada,
+- [X] T001 Confirmar a base: `flutter analyze` e `flutter test` verdes na branch recém-criada,
   antes de qualquer mudança.
 
 ---
@@ -21,14 +21,14 @@ limpo e `flutter test` verde.
 
 **Purpose**: a marca desenhada em código, usada pela splash e pelo `AppLogo`.
 
-- [ ] T002 [P] Testes em `test/core/widgets/brand_mark_test.dart`:
+- [X] T002 [P] Testes em `test/core/widgets/brand_mark_test.dart`:
   - `BrandMarkPainter` com `strokeProgress: 1` e `elderProgress: 1` pinta sem exceção num
     `CustomPaint` 120×133 (proporção do `viewBox` `88 440 444 492`);
   - `shouldRepaint` é `true` só quando cor ou progressos mudam;
   - os paths de `BrandMarkPaths` têm os mesmos limites (bounds) do SVG oficial: escudo de
     (111,464) a (509,906) antes do traço;
   - `strokeProgress: 0` não desenha o escudo (só a silhueta, se `elderProgress > 0`).
-- [ ] T003 Criar `lib/core/widgets/brand_mark.dart` (research R3):
+- [X] T003 Criar `lib/core/widgets/brand_mark.dart` (research R3):
   - `BrandMarkPaths`: escudo, as duas metades do escudo a partir do topo (310,464) até a ponta
     (310,906), silhueta e os 5 traços de detalhe, transcritos exatamente de
     `assets/branding/click_seguro_logo.svg`;
@@ -51,11 +51,11 @@ limpo e `flutter test` verde.
 
 ### Tests (US1)
 
-- [ ] T004 [P] [US1] Ajustar `test/modules/splash/presentation/controller/splash_controller_test.dart`
+- [X] T004 [P] [US1] Ajustar `test/modules/splash/presentation/controller/splash_controller_test.dart`
   e `test/helpers/splash_provider.dart`: remover o parâmetro `minimumDisplayDuration` e o teste de
   duração mínima; acrescentar teste "decide assim que onboarding e sessão respondem" (sem espera
   fixa, com `fakeAsync` sem avançar o relógio).
-- [ ] T005 [P] [US1] Reescrever `test/modules/splash/presentation/pages/splash_page_test.dart`
+- [X] T005 [P] [US1] Reescrever `test/modules/splash/presentation/pages/splash_page_test.dart`
   (manter os testes de destino, nome/frase e tela 320×480 com fonte 200%):
   - destino pronto na hora → em 1 799 ms ainda na splash; depois de 1 800 ms + saída, na tela
     do destino;
@@ -65,17 +65,17 @@ limpo e `flutter test` verde.
   - leitor de tela: um único nó com "Click Seguro" e "Sua segurança em primeiro lugar"; a cena
     não expõe semântica;
   - nenhum widget da cena usa cor fora de `AppPalette` (pintor recebe as cores do tema).
-- [ ] T006 [P] [US1] Testes do pintor em
+- [X] T006 [P] [US1] Testes do pintor em
   `test/modules/splash/presentation/widgets/splash_scene_painter_test.dart`: para `t` em
   {0; 0,3; 0,5; 0,75; 1} pinta sem exceção; em `t = 1` a onda fica no rodapé e a mancha não é
   desenhada (FR-006); `shouldRepaint` só quando `t`, `breath` ou cores mudam.
 
 ### Implementation (US1)
 
-- [ ] T007 [US1] Remover `minimumDisplayDuration`/`defaultMinimumDisplayDuration` de
+- [X] T007 [US1] Remover `minimumDisplayDuration`/`defaultMinimumDisplayDuration` de
   `lib/modules/splash/presentation/controller/splash_controller.dart` (research R5): espera só
   onboarding e sessão; ajustar `lib/modules/splash/splash_module.dart` se passar o parâmetro.
-- [ ] T008 [US1] Criar `lib/modules/splash/presentation/widgets/splash_scene_painter.dart`
+- [X] T008 [US1] Criar `lib/modules/splash/presentation/widgets/splash_scene_painter.dart`
   (research R1, R2, R4): `SplashScenePainter({required double t, required double breath,
   required AppPalette colors})` com as fases da tabela R1 (Intervals sobre `t`):
   - toque `primary` (escala 0,4 → 1 → 0,78 → 1, some ao fim) no centro do escudo;
@@ -85,13 +85,13 @@ limpo e `flutter test` verde.
   - marca via `BrandMarkPainter`: em `background` recortada pela área vermelha e em `primary`
     recortada pela área revelada; `strokeProgress` e `elderProgress` pelos Intervals; escala
     `1 + 0,035 * breath`.
-- [ ] T009 [US1] Criar `lib/modules/splash/presentation/widgets/splash_animation.dart`:
+- [X] T009 [US1] Criar `lib/modules/splash/presentation/widgets/splash_animation.dart`:
   `AnimationController` de 1 800 ms (`AppMotion.of(context).reduced` → `value = 1` sem tocar),
   chama `onCompleted` ao terminar; segundo controlador de respiração (2 600 ms, `reverse: true`,
   `Curves.easeInOut`) ligado só com `breathing: true` e movimento normal; título e frase entram
   (sobem 14 px e aparecem) nos Intervals 1 400–1 650 e 1 550–1 800 ms; título 34/700 `secondary`,
   frase `bodyLarge` `textMutedForeground`; layout rola em tela curta.
-- [ ] T010 [US1] Reescrever `lib/modules/splash/presentation/pages/splash_page.dart`: fundo
+- [X] T010 [US1] Reescrever `lib/modules/splash/presentation/pages/splash_page.dart`: fundo
   `context.colors.background`; `SplashAnimation`; `Future.wait([controller.resolveDestination(),
   animaçãoTerminou.future])` e `context.go` uma vez; `breathing` = animação terminou e destino
   ainda nulo; `Semantics` único com nome e frase, cena em `ExcludeSemantics`; chaves
