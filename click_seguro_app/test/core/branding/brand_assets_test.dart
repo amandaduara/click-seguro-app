@@ -15,8 +15,13 @@ void main() {
       ).readAsStringSync(),
     );
 
-    test('não tem mais o terracota antigo', () {
-      expect(svg.toUpperCase(), isNot(contains('C0503E')));
+    test('não tem mais o terracota antigo: só cores primary', () {
+      final Iterable<String> colors = RegExp(
+        r'#[0-9A-Fa-f]{6}',
+      ).allMatches(svg).map((match) => match.group(0)!.toUpperCase());
+
+      expect(colors, isNotEmpty);
+      expect(colors, everyElement('#FE3152'));
     });
 
     test('usa primary no preenchimento e no traço', () {

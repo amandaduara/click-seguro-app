@@ -105,3 +105,27 @@ mantém a reprodutibilidade da feature 021.
 `#FE3152` sobre `#FFFDFB` ≈ 3,6:1 — atende 3:1 para elemento gráfico (logo, SC-004).
 Título `#182A4E` ≈ 14:1 e frase `#596475` ≈ 5,9:1 sobre `#FFFDFB` (≥ 4,5:1). No alto contraste,
 `#9E0019` sobre branco ≈ 8,5:1.
+
+## Ajustes feitos na implementação
+
+- **Curva (R1)**: toque, traço do escudo e onda usam `Curves.fastOutSlowIn` (o
+  `cubic-bezier(0,4 0 0,2 1)` do protótipo), não `AppMotion.standard`. A `standard` (0,2 0 0 1) é
+  seca no começo: nos 450 ms da onda ela chegava a 84% em 200 ms e a troca de cor da marca
+  passava em poucos quadros. As demais fases seguem a tabela R1 (`enter`, `emphasis`).
+- **Troca de cor da marca (R2)**: o recorte usa a borda da onda principal (`primary`); a faixa de
+  `primary-glow` que fica atrás dela já conta como "revelada", como no protótipo, onde a troca
+  acontece quando a borda principal cruza o logo.
+- **Ponto do topo**: `BrandMarkPainter` ganhou o parâmetro opcional `tipProgress` (padrão 0, não
+  desenha nada) para o ponto que pousa no topo do escudo (500–700 ms) antes do traço.
+- **Posição da marca**: o `SplashScenePainter` recebe `logoRect`, calculado por
+  `SplashScenePainter.logoRectFor` (largura 164 px, 96–164 conforme a altura; topo a 28% da
+  altura, como no protótipo). O layout (`SplashAnimation`) reserva o mesmo espaço com um
+  `SizedBox` (`SplashPage.logoKey`) e põe título e frase logo abaixo, dentro de uma rolagem.
+- **Conclusão da animação**: `onCompleted` é chamado depois do quadro em que a cena chega ao fim
+  (também com movimento reduzido), para a página poder chamar `setState` sem estar no build.
+- **R7 (venv)**: o Ubuntu do WSL não tem `python3-venv` (nem `pip`); o Pillow 13 (wheel
+  `cp314`) foi baixado do PyPI para uma pasta temporária e usado via `PYTHONPATH`, rodando o
+  `tools/generate_brand_assets.py` sem alterações além das previstas na T015.
+- **`click_seguro_logo.png`** deixou de ser carregado pelo app (o `AppLogo` desenha em código):
+  saiu do `assets:` do `pubspec.yaml` e fica só como arte exportada (T017).
+

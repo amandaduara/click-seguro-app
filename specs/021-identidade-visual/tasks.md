@@ -8,6 +8,9 @@ do Assistente de IA. A mudança não altera a integração da API.
 
 - [x] Preservar o SVG oficial fornecido na raiz do PI, sem alterar seus paths,
   máscaras ou cor, e versionar uma cópia em `assets/branding/`.
+  *(A parte "ou cor" foi substituída pela [feature 023](../023-splash-animada/spec.md): o
+  logo passa de terracota `#C0503E` para `primary` `#FE3152`; paths e máscaras seguem os
+  mesmos.)*
 - [x] Aplicar a logo oficial no login, splash Flutter e Sobre.
 - [x] Gerar ícones Android tradicionais/adaptativos, iOS e web, além das imagens
   nativas de abertura; incluir script para reprodução sem acesso à rede.

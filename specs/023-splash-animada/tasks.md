@@ -179,13 +179,13 @@ limpo e `flutter test` verde.
 
 ## Phase 7: Polish
 
-- [ ] T023 [P] Design system (`.specify/memory/design-system.md`): §2.1 registrar que a marca usa
+- [X] T023 [P] Design system (`.specify/memory/design-system.md`): §2.1 registrar que a marca usa
   `primary`; §5 trocar "Marca (splash, login, 1º slide) = `Shield`" pelo logo oficial onde valer;
   §6 acrescentar a splash (1,8 s, fases, regra animação E validação, respiração).
-- [ ] T024 [P] Marcar o FR-018 da `specs/022-fluidez-movimento/spec.md` como mantido pela 023 (nota
+- [X] T024 [P] Marcar o FR-018 da `specs/022-fluidez-movimento/spec.md` como mantido pela 023 (nota
   de rastreabilidade) e o item da `specs/021-identidade-visual/tasks.md` que preservava a cor do
   logo como substituído pela 023.
-- [ ] T025 `flutter analyze` sem novos avisos; `flutter test` verde; `git grep -i c0503e -- . ':!specs'`
+- [X] T025 `flutter analyze` sem novos avisos; `flutter test` verde; `git grep -i c0503e -- . ':!specs'`
   vazio.
 - [ ] T026 Rodar no emulador `fuja_api36` o roteiro "No aparelho" do quickstart (1–5) e comparar
   com o protótipo V4-2 lado a lado (SC-006).

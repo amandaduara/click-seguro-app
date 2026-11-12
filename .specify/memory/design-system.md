@@ -51,7 +51,7 @@ contraste chega à tela.
 
 | Token | Hex | Flutter | Uso |
 |---|---|---|---|
-| `primary` | `#FE3152` | `primary` | Botões principais, aba ativa, foco, links de ação ("Esqueci minha senha"), selo "Novo", ícone da marca |
+| `primary` | `#FE3152` | `primary` | Botões principais, aba ativa, foco, links de ação ("Esqueci minha senha"), selo "Novo", logo da marca (splash, login, Sobre e ícone do app: `#FE3152`, não mais o terracota antigo; no alto contraste segue o `primary` dele) |
 | `primary-foreground` | `#FFFFFF` | `textPrimaryForeground` | Texto e ícone sobre `primary`, `secondary` e fundos escuros |
 | `primary-glow` | `#FF6A7A` | `primaryGlow` | Fim do gradiente do botão "gradient" (`primary → primary-glow`) |
 | `secondary` | `#182A4E` | `secondary` | Títulos, chip/filtro selecionado, botão secundário, texto do botão "ghost" |
@@ -207,7 +207,8 @@ O wireframe deriva os raios de `--radius = 14px` (Tailwind v4: `xl` = 18, `2xl` 
 
 | Onde | Ícone |
 |---|---|
-| Marca (splash, login, 1º slide) | `Shield` |
+| Marca (splash, login, Sobre) | logo oficial desenhado em código (`BrandMark`/`AppLogo`), na cor `primary` do tema |
+| Marca no 1º slide do onboarding | `Shield` |
 | Abas | `Home` (Início), `GraduationCap` (Atividades), `Newspaper` (Notícias/Reels), `LifeBuoy` (Ajuda), `User` (Perfil) |
 | Barra superior | `Bell` (Notificações), `Settings` (Configurações) |
 | Onboarding | `Shield`, `Newspaper`, `GraduationCap` |
@@ -268,6 +269,7 @@ do "digitando") ficam paradas.
 | Assistente | balão "digitando" (três pontos) e mensagens novas subindo e esmaecendo |
 | Seletor "Entrar / Criar conta" | uma pílula branca desliza até a opção tocada |
 | Foco em campo | borda de `input` para `primary` |
+| Abertura do app (splash) | "Mancha e onda" em 1,8 s (feature 023): toque `primary` → mancha ondulada cobre a tela → escudo se desenha em `background` e o idoso entra → o vermelho escorre em onda (com onda `primary-glow` 60 ms atrás) → logo `primary`, nome e frase; só toca na abertura a frio. Navega quando a animação **e** a validação terminam; se a validação demorar, a marca respira (1 → 1,035, 2,6 s). Com "Reduzir animações": estado final direto, sem respirar. Exceção ao teto de 400 ms: é animação de assinatura, com tempos próprios em `SplashTimeline`, e a saída continua um esmaecimento |
 
 Vibrações passam por `AppHaptics` (`core/utils`): no máximo uma por ação, e o aparelho as
 ignora quando estão desligadas nele. No web, respeitar `prefers-reduced-motion` do mesmo jeito.
@@ -416,8 +418,12 @@ cima e 12 embaixo. Cinco abas de mesma largura, nesta ordem:
 
 ### 7.13 Splash
 
-Fundo `primary`; centralizados: escudo (`Shield`) branco de 64–80 px, nome "SafeNews" 30/700
-branco e a frase "Sua segurança em primeiro lugar" 14 branco 80%. Mínimo de 2 s na tela.
+Fundo `background`, sem círculo atrás do logo. A animação "Mancha e onda" (§6.3) termina com: logo
+oficial em `primary` (164 px, 96–164 conforme a altura da tela), nome "Click Seguro" 34/700
+`secondary`, frase "Sua segurança em primeiro lugar" 16/500 `muted-foreground` e uma onda
+`primary-glow`/`primary` no rodapé. Dura 1,8 s e só sai quando a validação da sessão também
+terminou (sem mínimo fixo). A abertura nativa (Android e iOS) mostra só o fundo `#FFFDFB`, para
+emendar sem piscar.
 
 ### 7.14 Onboarding
 
