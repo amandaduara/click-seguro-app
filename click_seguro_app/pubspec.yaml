@@ -40,7 +40,6 @@ flutter:
   assets:
     - assets/translations/
     - assets/data/official_contacts.json
-    - assets/branding/click_seguro_logo.png
 
   # Fonte da marca (design system §3), embutida para funcionar sem internet.
   # Licença: assets/fonts/montserrat/OFL.txt.

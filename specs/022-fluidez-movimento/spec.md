@@ -280,6 +280,8 @@ ausência de tela preta ao deslizar para o próximo Reel e o uso de memória est
 - **FR-017**: O detalhe da notícia aberto a partir de um cartão MUST mostrar imediatamente o
   título, a fonte, a data e a imagem que o cartão já tinha.
 - **FR-018**: A saída da splash MUST ser um esmaecimento para a primeira tela.
+  *(Mantido pela [feature 023](../023-splash-animada/spec.md), FR-005: a saída segue um
+  esmaecimento; a entrada do logo e do título passa a ser a animação da splash da 023.)*
 - **FR-019**: Abrir um Reel pelo carrossel do Início MUST mostrar a imagem do Reel tocado já
   carregada ao chegar à aba (a imagem do cartão é a mesma e é aproveitada).
 

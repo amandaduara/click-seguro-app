@@ -19,7 +19,7 @@
     </mask>
   </defs>
 
-  <g fill="#C0503E">
+  <g fill="#FE3152">
     <!-- Silhueta do idoso, limitada ao interior do escudo -->
     <path clip-path="url(#inside)" mask="url(#details)"
       d="M160,815 L238,710 C248,701 254,694 258,686
@@ -30,6 +30,6 @@
          C396,708 386,713 366,713 L355,716
          C358,736 366,758 375,792 L392,862 L392,960 L140,960 Z"/>
     <!-- Escudo -->
-    <use href="#shield" fill="none" stroke="#C0503E" stroke-width="32" stroke-linejoin="round"/>
+    <use href="#shield" fill="none" stroke="#FE3152" stroke-width="32" stroke-linejoin="round"/>
   </g>
 </svg>

@@ -4,7 +4,7 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFDFB",
-    "theme_color": "#C0503E",
+    "theme_color": "#FE3152",
     "description": "Notícias e atividades para reconhecer golpes digitais.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
