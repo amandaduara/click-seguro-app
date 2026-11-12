@@ -160,18 +160,18 @@ limpo e `flutter test` verde.
 **Goal**: abertura nativa só com o fundo `#FFFDFB`.
 **Independent Test**: teste abaixo + quickstart "No aparelho" 4.
 
-- [ ] T020 [P] [US4] Ampliar `test/core/branding/brand_assets_test.dart`: os dois
+- [X] T020 [P] [US4] Ampliar `test/core/branding/brand_assets_test.dart`: os dois
   `launch_background.xml` não têm `<bitmap`; `values-v31/styles.xml` e
   `values-night-v31/styles.xml` apontam `windowSplashScreenAnimatedIcon` para
   `@drawable/splash_icon_transparent`; `LaunchScreen.storyboard` não referencia `LaunchImage` e
   tem fundo `red="1" green="0.992" blue="0.984"`.
-- [ ] T021 [US4] Android: tirar o `<item><bitmap …launch_logo/></item>` de
+- [X] T021 [US4] Android: tirar o `<item><bitmap …launch_logo/></item>` de
   `android/app/src/main/res/drawable/launch_background.xml` e
   `android/app/src/main/res/drawable-v21/launch_background.xml`; criar
   `android/app/src/main/res/drawable/splash_icon_transparent.xml` (shape transparente); apontar
   `windowSplashScreenAnimatedIcon` para ele em `values-v31/styles.xml` e
   `values-night-v31/styles.xml`; apagar `drawable-*/launch_logo.png`.
-- [ ] T022 [US4] iOS: em `ios/Runner/Base.lproj/LaunchScreen.storyboard`, remover o `imageView`,
+- [X] T022 [US4] iOS: em `ios/Runner/Base.lproj/LaunchScreen.storyboard`, remover o `imageView`,
   suas constraints e o recurso `LaunchImage`, e mudar o fundo para `#FFFDFB`
   (`red="1" green="0.992" blue="0.984"`); apagar `ios/Runner/Assets.xcassets/LaunchImage.imageset`.
 
