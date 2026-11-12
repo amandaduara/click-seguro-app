@@ -108,29 +108,29 @@ limpo e `flutter test` verde.
 
 ### Tests (US2)
 
-- [ ] T011 [P] [US2] Reescrever `test/core/widgets/app_logo_test.dart`: `AppLogo(size: 96)` tem
+- [X] T011 [P] [US2] Reescrever `test/core/widgets/app_logo_test.dart`: `AppLogo(size: 96)` tem
   96×96 e usa `BrandMarkPainter` com `AppPalette.light.primary`; com o tema de alto contraste usa
   `AppPalette.highContrast.primary`; continua sem semântica própria (teste do nome único mantido).
-- [ ] T012 [P] [US2] Criar `test/core/branding/brand_assets_test.dart` (lê arquivos do projeto):
+- [X] T012 [P] [US2] Criar `test/core/branding/brand_assets_test.dart` (lê arquivos do projeto):
   `assets/branding/click_seguro_logo.svg` não contém `C0503E` e contém `FE3152` no `fill` e no
   `stroke`; `web/manifest.json` tem `theme_color` `#FE3152`.
 
 ### Implementation (US2)
 
-- [ ] T013 [US2] Trocar `#C0503E` por `#FE3152` (fill e stroke) em
+- [X] T013 [US2] Trocar `#C0503E` por `#FE3152` (fill e stroke) em
   `assets/branding/click_seguro_logo.svg`, sem mexer em paths, máscara ou `viewBox`.
-- [ ] T014 [US2] `lib/core/widgets/app_logo.dart`: `AppLogo` passa a ser `BrandMark(size: size)`
+- [X] T014 [US2] `lib/core/widgets/app_logo.dart`: `AppLogo` passa a ser `BrandMark(size: size)`
   (cor `context.colors.primary`); remover `AppLogo.asset` e conferir usos em
   `lib/modules/authentication/presentation/widgets/auth_header.dart`,
   `lib/modules/settings/presentation/pages/about_page.dart` e
   `test/modules/authentication/presentation/widgets/auth_header_test.dart`.
-- [ ] T015 [US2] `tools/generate_brand_assets.py`: parar de gerar `launch_logo.png` (Android) e
+- [X] T015 [US2] `tools/generate_brand_assets.py`: parar de gerar `launch_logo.png` (Android) e
   `LaunchImage*.png` (iOS) (research R6); atualizar a docstring (cor agora é `primary`). Rodar no
   WSL conforme o [quickstart](quickstart.md#regenerar-as-imagens-da-marca) para regenerar
   `assets/branding/click_seguro_logo.png`, `mipmap-*/ic_launcher*.png`,
   `AppIcon.appiconset/*.png`, `web/icons/*.png` e `web/favicon.png`.
-- [ ] T016 [P] [US2] `web/manifest.json`: `theme_color` → `#FE3152`; conferir `web/index.html`.
-- [ ] T017 [US2] Se `assets/branding/click_seguro_logo.png` não for mais usado pelo app, mantê-lo
+- [X] T016 [P] [US2] `web/manifest.json`: `theme_color` → `#FE3152`; conferir `web/index.html`.
+- [X] T017 [US2] Se `assets/branding/click_seguro_logo.png` não for mais usado pelo app, mantê-lo
   só como arte exportada (fora do `pubspec` `assets` se não for referenciado) e registrar no
   `README.md` da raiz que o logo é `#FE3152`.
 
