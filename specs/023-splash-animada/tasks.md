@@ -143,14 +143,14 @@ limpo e `flutter test` verde.
 **Goal**: com "Reduzir animações", estado final direto, sem respirar, navega com a validação.
 **Independent Test**: testes abaixo + quickstart "No aparelho" 2.
 
-- [ ] T018 [P] [US3] Testes em `test/modules/splash/presentation/pages/splash_page_test.dart`
+- [X] T018 [P] [US3] Testes em `test/modules/splash/presentation/pages/splash_page_test.dart`
   (substituem o teste de `Opacity` da 022):
   - movimento reduzido + destino pronto → navega no primeiro `pumpAndSettle`, sem esperar
     1 800 ms;
   - movimento reduzido + validação demorando → a escala da marca não muda entre `pump`s de
     3 s e o pintor está em `t = 1`;
   - movimento reduzido ligado durante a animação → pula para `t = 1`.
-- [ ] T019 [US3] Garantir em `lib/modules/splash/presentation/widgets/splash_animation.dart` que
+- [X] T019 [US3] Garantir em `lib/modules/splash/presentation/widgets/splash_animation.dart` que
   `didChangeDependencies` reaja à troca de `AppMotion` (pular para o fim e parar a respiração).
 
 ---

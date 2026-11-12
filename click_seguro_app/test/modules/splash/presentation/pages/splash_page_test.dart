@@ -51,22 +51,33 @@ void main() {
     visits = [];
   });
 
-  GoRouter buildRouter({bool reduceMotion = false}) => GoRouter(
-    routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => AppMotionScope(
-          appReduceMotion: reduceMotion,
-          child: ChangeNotifierProvider(
-            create: (_) => SplashController(checkOnboarding, validateSession),
-            child: const SplashPage(),
+  GoRouter buildRouter({
+    bool reduceMotion = false,
+    ValueNotifier<bool>? motion,
+  }) {
+    final ValueNotifier<bool> reduced = motion ?? ValueNotifier(reduceMotion);
+    return GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => ValueListenableBuilder<bool>(
+            valueListenable: reduced,
+            builder: (context, value, child) =>
+                AppMotionScope(appReduceMotion: value, child: child!),
+            child: ChangeNotifierProvider(
+              create: (_) => SplashController(checkOnboarding, validateSession),
+              child: const SplashPage(),
+            ),
           ),
         ),
-      ),
-      for (final String name in ['onboarding', 'home', 'login'])
-        GoRoute(path: '/$name', builder: (_, _) => _Destination(name, visits)),
-    ],
-  );
+        for (final String name in ['onboarding', 'home', 'login'])
+          GoRoute(
+            path: '/$name',
+            builder: (_, _) => _Destination(name, visits),
+          ),
+      ],
+    );
+  }
 
   SplashScenePainter scene(WidgetTester tester) =>
       tester
@@ -86,10 +97,11 @@ void main() {
   Future<void> pumpSplash(
     WidgetTester tester, {
     bool reduceMotion = false,
+    ValueNotifier<bool>? motion,
     ThemeData? theme,
   }) => pumpLocalized(
     tester,
-    router: buildRouter(reduceMotion: reduceMotion),
+    router: buildRouter(reduceMotion: reduceMotion, motion: motion),
     theme: theme,
     settle: false,
   );
@@ -288,6 +300,113 @@ void main() {
             ?.color,
         AppPalette.highContrast.textMutedForeground,
       );
+
+      validateSession.completer!.complete(UserSessionStatus.authenticated);
+      await tester.pumpAndSettle();
+    });
+  });
+
+  group('movimento reduzido', () {
+    testWidgets('destino pronto: navega no primeiro quadro, sem esperar os '
+        '1 800 ms', (tester) async {
+      await pumpSplash(tester, reduceMotion: true);
+
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.pumpAndSettle(const Duration(milliseconds: 16));
+
+      expect(find.text('tela home'), findsOneWidget);
+      expect(visits, ['home']);
+    });
+
+    testWidgets('validação demorando: mostra o estado final e nada se move', (
+      tester,
+    ) async {
+      validateSession.completer = Completer<UserSessionStatus>();
+      await pumpSplash(tester, reduceMotion: true);
+      await tester.pump(const Duration(milliseconds: 16));
+
+      final Size logo = tester.getSize(find.byKey(SplashPage.logoKey));
+      expect(scene(tester).t, 1);
+      expect(scene(tester).breath, 0);
+
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pump(const Duration(seconds: 3));
+
+      expect(scene(tester).t, 1);
+      expect(scene(tester).breath, 0, reason: 'a marca não respira');
+      expect(tester.getSize(find.byKey(SplashPage.logoKey)), logo);
+      expect(find.text('Click Seguro'), findsOneWidget);
+      expect(tester.hasRunningAnimations, isFalse);
+
+      validateSession.completer!.complete(UserSessionStatus.authenticated);
+      await tester.pumpAndSettle();
+      expect(find.text('tela home'), findsOneWidget);
+    });
+
+    testWidgets('o nome e a frase já aparecem inteiros, sem entrada', (
+      tester,
+    ) async {
+      validateSession.completer = Completer<UserSessionStatus>();
+      await pumpSplash(tester, reduceMotion: true);
+      await tester.pump(const Duration(milliseconds: 16));
+
+      for (final String text in [
+        'Click Seguro',
+        'Sua segurança em primeiro lugar',
+      ]) {
+        final Opacity rise = tester.widget(
+          find.ancestor(of: find.text(text), matching: find.byType(Opacity)),
+        );
+        expect(rise.opacity, 1);
+      }
+
+      validateSession.completer!.complete(UserSessionStatus.authenticated);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('ligado durante a animação, pula para o estado final', (
+      tester,
+    ) async {
+      validateSession.completer = Completer<UserSessionStatus>();
+      final ValueNotifier<bool> motion = ValueNotifier(false);
+      await pumpSplash(tester, motion: motion);
+
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(scene(tester).t, lessThan(1));
+
+      motion.value = true;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      expect(scene(tester).t, 1);
+      expect(scene(tester).breath, 0);
+
+      await tester.pump(const Duration(seconds: 3));
+      expect(scene(tester).breath, 0, reason: 'sem respirar');
+
+      validateSession.completer!.complete(UserSessionStatus.authenticated);
+      await tester.pumpAndSettle();
+      expect(find.text('tela home'), findsOneWidget);
+    });
+
+    testWidgets('ligado depois da animação, a marca para de respirar', (
+      tester,
+    ) async {
+      validateSession.completer = Completer<UserSessionStatus>();
+      final ValueNotifier<bool> motion = ValueNotifier(false);
+      await pumpSplash(tester, motion: motion);
+      await tester.pump(const Duration(milliseconds: 1800));
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 16));
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(scene(tester).breath, greaterThan(0));
+
+      motion.value = true;
+      await tester.pump();
+      final double frozen = scene(tester).breath;
+      await tester.pump(const Duration(seconds: 2));
+
+      expect(scene(tester).breath, frozen);
 
       validateSession.completer!.complete(UserSessionStatus.authenticated);
       await tester.pumpAndSettle();
