@@ -189,6 +189,11 @@ limpo e `flutter test` verde.
   vazio.
 - [ ] T026 Rodar no emulador `fuja_api36` o roteiro "No aparelho" do quickstart (1–5) e comparar
   com o protótipo V4-2 lado a lado (SC-006).
+  - 2026-11-12, build profile no `fuja_api36` (Android 16), gravação da abertura a frio: itens 1 e
+    4 conferidos — abertura nativa só com o fundo claro; toque → mancha → escudo em claro sobre o
+    vermelho → idoso → onda escorre → logo `primary`, nome e frase → Início com esmaecimento.
+  - Pendentes de conferência manual: 2 (reduzir animações), 3 (alto contraste), 5 (ícone, login e
+    Sobre) — cobertos por testes automatizados; e a comparação final da equipe (SC-006).
 
 ---
 
