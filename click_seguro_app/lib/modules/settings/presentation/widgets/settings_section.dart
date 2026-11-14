@@ -4,8 +4,7 @@ import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
 
-/// Título de seção e as linhas dela num cartão branco (quadro
-/// "Configurações").
+/// Título discreto de seção e as linhas dela num cartão padrão (SafeCard).
 class SettingsSection extends StatelessWidget {
   const SettingsSection({
     super.key,
@@ -28,8 +27,9 @@ class SettingsSection extends StatelessWidget {
   }
 }
 
-/// Título de uma seção das Configurações. Separado do [SettingsCard] para a
-/// tela de Acessibilidade pôr a prévia entre os dois (specs/014).
+/// Título de uma seção das Configurações: discreto (cinza), acima do cartão.
+/// Separado do [SettingsCard] para a tela de Acessibilidade pôr a prévia
+/// entre os dois (specs/014).
 class SettingsSectionTitle extends StatelessWidget {
   const SettingsSectionTitle(this.title, {super.key});
 
@@ -40,9 +40,9 @@ class SettingsSectionTitle extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s1,
-        AppSpacing.s5,
+        AppSpacing.s7,
         AppSpacing.s1,
-        AppSpacing.s2,
+        AppSpacing.s3,
       ),
       child: Semantics(
         header: true,
@@ -51,7 +51,8 @@ class SettingsSectionTitle extends StatelessWidget {
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontSize: AppTypography.body.fontSize,
             fontWeight: FontWeight.w700,
-            color: context.colors.secondary,
+            letterSpacing: 0.2,
+            color: context.colors.textMutedForeground,
           ),
         ),
       ),
@@ -59,7 +60,8 @@ class SettingsSectionTitle extends StatelessWidget {
   }
 }
 
-/// Cartão branco com borda e as linhas separadas por divisórias.
+/// Cartão padrão (SafeCard) com as linhas separadas por divisórias finas,
+/// recuadas das bordas.
 class SettingsCard extends StatelessWidget {
   const SettingsCard({super.key, required this.children});
 
@@ -68,8 +70,8 @@ class SettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
-    // A caixa padrão dos cartões (SafeCard); o Material por dentro dá o
-    // efeito de toque das linhas, recortado no canto.
+    // A caixa padrão dos cartões; o Material por dentro dá o efeito de toque
+    // das linhas, recortado no canto.
     return DecoratedBox(
       decoration: SafeCard.decoration(colors),
       child: Material(
@@ -80,7 +82,13 @@ class SettingsCard extends StatelessWidget {
           children: [
             for (final (index, child) in children.indexed) ...[
               if (index > 0)
-                Divider(height: 1, thickness: 1, color: colors.border),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  indent: AppSpacing.s4,
+                  endIndent: AppSpacing.s4,
+                  color: colors.border,
+                ),
               child,
             ],
           ],

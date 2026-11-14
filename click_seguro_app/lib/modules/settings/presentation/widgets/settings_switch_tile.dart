@@ -30,10 +30,19 @@ class SettingsSwitchTile extends StatelessWidget {
       title: title,
       subtitle: subtitle,
       onTap: change == null ? null : () => change(!value),
+      // A mesma chave em todas as linhas: verde ligada, creme com contorno
+      // desligada.
       trailing: Switch(
         value: value,
         activeThumbColor: colors.card,
         activeTrackColor: colors.success,
+        inactiveThumbColor: colors.textMutedForeground,
+        inactiveTrackColor: colors.surfaceStrong,
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? colors.success
+              : colors.inputBorder,
+        ),
         onChanged: change,
       ),
     );

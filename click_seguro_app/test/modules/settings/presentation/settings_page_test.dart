@@ -3,6 +3,7 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/settings/domain/entities/account_summary_entity.dart';
 import 'package:click_seguro_app/modules/settings/domain/entities/language_choice.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_page.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -92,15 +93,109 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('cartão da conta abre o Perfil', (tester) async {
+  /// O título grande rola com a lista: volta ao topo para vê-lo.
+  Future<void> scrollToTop(WidgetTester tester) async {
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 2000));
+    await tester.pumpAndSettle();
+  }
+
+  // O cartão "Editar perfil" saiu (abria a mesma tela de "Dados
+  // pessoais"), a pedido da usuária (specs/023).
+  testWidgets('sem o cartão "Editar perfil"; "Dados pessoais" abre a edição '
+      'e volta às Configurações', (tester) async {
     await open(tester);
 
-    expect(find.text('MS'), findsOneWidget);
-    expect(find.text('Maria da Silva'), findsOneWidget);
-    expect(find.text('Ver e editar seu perfil'), findsOneWidget);
+    expect(find.text('Editar perfil'), findsNothing);
+    expect(find.text('Maria da Silva'), findsNothing);
 
-    await tapAndSettle(tester, find.text('Ver e editar seu perfil'));
-    expectPage('/profile');
+    await tapAndSettle(tester, find.text('Dados pessoais'));
+    expectPage('/profile/edit');
+    expect(find.text('page:/profile'), findsNothing);
+
+    await back(tester);
+    await scrollToTop(tester);
+    expect(find.text('Configurações'), findsOneWidget);
+  });
+
+  testWidgets('"Dados pessoais" com as rotas do app (aba Perfil): abre a '
+      'edição, não o Perfil, e volta às Configurações', (tester) async {
+    final GlobalKey<NavigatorState> rootKey = GlobalKey<NavigatorState>();
+    // Mesma forma do app: o Perfil é aba do shell, a edição é filha dele
+    // sobre as abas e as Configurações ficam no navegador raiz.
+    final GoRouter appShaped = GoRouter(
+      navigatorKey: rootKey,
+      initialLocation: '/profile',
+      routes: [
+        StatefulShellRoute.indexedStack(
+          builder: (_, _, shell) => Scaffold(body: shell),
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/profile',
+                  builder: (context, _) => TextButton(
+                    onPressed: () => context.push('/settings'),
+                    child: const Text('page:/profile'),
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: 'edit',
+                      parentNavigatorKey: rootKey,
+                      builder: (_, _) =>
+                          const Scaffold(body: Text('page:/profile/edit')),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/settings',
+          parentNavigatorKey: rootKey,
+          builder: (_, _) => const SettingsPage(),
+        ),
+      ],
+    );
+    await pumpLocalized(tester, router: appShaped);
+    await tester.tap(find.text('page:/profile'));
+    await tester.pumpAndSettle();
+
+    await tapAndSettle(tester, find.text('Dados pessoais'));
+    expectPage('/profile/edit');
+
+    appShaped.pop();
+    await tester.pumpAndSettle();
+    await scrollToTop(tester);
+    expect(find.text('Configurações'), findsOneWidget);
+    expect(find.text('Dados pessoais'), findsOneWidget);
+  });
+
+  testWidgets('voltar redondo sai das Configurações', (tester) async {
+    final GoRouter withHome = GoRouter(
+      initialLocation: '/home',
+      routes: [
+        GoRoute(
+          path: '/home',
+          builder: (context, _) => TextButton(
+            onPressed: () => context.push('/settings'),
+            child: const Text('page:/home'),
+          ),
+        ),
+        GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
+      ],
+    );
+    await pumpLocalized(tester, router: withHome);
+    await tester.tap(find.text('page:/home'));
+    await tester.pumpAndSettle();
+
+    final semantics = tester.ensureSemantics();
+    expect(find.bySemanticsLabel('Voltar'), findsOneWidget);
+    semantics.dispose();
+    await tester.tap(find.byKey(SettingsBackButton.buttonKey));
+    await tester.pumpAndSettle();
+
+    expect(find.text('page:/home'), findsOneWidget);
   });
 
   testWidgets('seções na ordem do quadro', (tester) async {
@@ -166,6 +261,8 @@ void main() {
     expect(logout, findsOneWidget);
     expect(phrase, findsOneWidget);
 
+    await tester.ensureVisible(logout);
+    await tester.pumpAndSettle();
     await tester.tap(logout);
     await tester.tap(logout, warnIfMissed: false);
     await tester.pumpAndSettle();
@@ -175,20 +272,17 @@ void main() {
     expect(session.endReason, SessionEndReason.userLogout);
   });
 
-  testWidgets('conta com erro: nome da sessão e linhas funcionando', (
+  testWidgets('conta com erro: as linhas continuam funcionando', (
     tester,
   ) async {
     repository.accountResults[0] = const Left(ConnectionFailure());
     await open(tester);
 
-    expect(find.text('Maria da Silva'), findsOneWidget);
-    expect(find.text('MS'), findsOneWidget);
-
     await tapAndSettle(tester, find.text('Dados pessoais'));
     expectPage('/profile/edit');
   });
 
-  testWidgets('voltar da edição de dados recarrega o cartão', (tester) async {
+  testWidgets('voltar da edição de dados recarrega a conta', (tester) async {
     await open(tester);
     final int before = repository.accountCalls;
     repository.accountResults[0] = const Right(
@@ -199,9 +293,6 @@ void main() {
     await back(tester);
 
     expect(repository.accountCalls, before + 1);
-    await tester.drag(find.byType(Scrollable).first, const Offset(0, 1000));
-    await tester.pumpAndSettle();
-    expect(find.text('Maria Souza'), findsOneWidget);
   });
 
   group('sem conta', () {
@@ -375,8 +466,7 @@ void main() {
       expect(tester.widget<Switch>(alertsSwitch()).onChanged, isNull);
       expect(find.text('Não foi possível carregar'), findsOneWidget);
 
-      await tester.tap(find.text('Tentar novamente'));
-      await tester.pumpAndSettle();
+      await tapAndSettle(tester, find.text('Tentar novamente'));
 
       expect(tester.widget<Switch>(alertsSwitch()).onChanged, isNotNull);
     });
@@ -462,6 +552,7 @@ void main() {
       await openSheet(tester, 'Idioma');
       await choose(tester, 'English');
 
+      await scrollToTop(tester);
       expect(find.text('Settings'), findsOneWidget);
       expect(find.text('English'), findsOneWidget);
       expect(languages.saved, [LanguageChoice.english]);

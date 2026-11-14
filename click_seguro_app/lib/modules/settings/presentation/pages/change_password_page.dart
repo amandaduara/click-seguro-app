@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
@@ -11,6 +12,7 @@ import 'package:click_seguro_app/modules/common/validators/password_policy.dart'
 import 'package:click_seguro_app/modules/settings/domain/failures/settings_failures.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/change_password_controller.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_guest_invite.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -27,9 +29,9 @@ class ChangePasswordPage extends StatelessWidget {
     final bool hasAccount =
         GetIt.instance<UserSessionService>().isAuthenticated;
     if (!hasAccount) {
-      return Scaffold(
-        appBar: AppBar(title: Text(AppStrings.settingsChangePassword.tr())),
-        body: const SafeArea(child: SettingsGuestInvite()),
+      return SettingsScaffold(
+        title: AppStrings.settingsChangePassword.tr(),
+        children: const [SettingsGuestInvite()],
       );
     }
     return ChangeNotifierProvider<ChangePasswordController>(
@@ -72,9 +74,9 @@ class _ChangePasswordView extends StatelessWidget {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _confirmDiscard(context);
       },
-      child: Scaffold(
-        appBar: AppBar(title: Text(AppStrings.settingsChangePassword.tr())),
-        body: SafeArea(child: _Form(controller: controller)),
+      child: SettingsScaffold(
+        title: AppStrings.settingsChangePassword.tr(),
+        children: [_Form(controller: controller)],
       ),
     );
   }
@@ -156,9 +158,18 @@ class _Form extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Set<PasswordRule> met = controller.rulesMet;
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.s5),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const SizedBox(height: AppSpacing.s3),
+        Text(
+          AppStrings.settingsChangePasswordSub.tr(),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            fontSize: AppTypography.body.fontSize,
+            color: context.colors.textMutedForeground,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s6),
         _field(
           context,
           PasswordField.current,

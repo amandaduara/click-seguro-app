@@ -42,7 +42,7 @@ class SettingsOptionTile<T> extends StatelessWidget {
                   child: Text(
                     title,
                     style: textTheme.bodyLarge?.copyWith(
-                      fontSize: AppTypography.label.fontSize,
+                      fontSize: AppTypography.body.fontSize,
                       fontWeight: FontWeight.w700,
                       color: colors.textForeground,
                     ),
