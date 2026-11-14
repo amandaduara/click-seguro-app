@@ -38,6 +38,23 @@ void main() {
     );
   });
 
+  // O leitor de tela fala o rótulo uma vez, como nome do campo (revisão
+  // da tela de login, specs/023).
+  testWidgets('o rótulo é o nome do campo, lido uma vez só', (tester) async {
+    final SemanticsHandle handle = tester.ensureSemantics();
+    await pumpComponent(
+      tester,
+      const SafeTextField(label: 'E-mail', placeholder: 'seu@email.com'),
+    );
+
+    expect(find.bySemanticsLabel('E-mail'), findsOneWidget);
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('E-mail')),
+      isSemantics(isTextField: true),
+    );
+    handle.dispose();
+  });
+
   testWidgets('sem foco: borda do campo; com foco: tinta 2,5', (tester) async {
     await pumpComponent(tester, const SafeTextField(label: 'E-mail'));
 

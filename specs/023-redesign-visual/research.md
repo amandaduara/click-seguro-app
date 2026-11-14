@@ -378,3 +378,28 @@ Pedidos depois de ver a primeira versão no aparelho:
 3. **Ajuda**: carregando, erro e vazio ficam com a altura natural (`SliverToBoxAdapter`). Antes o
    vazio de "Meus contatos" ocupava a tela inteira abaixo do topo e rolava sozinho, diferente da
    lista de "Oficiais".
+
+## R18. Quarta rodada (2026-11-11)
+
+1. **Detalhe da notícia**: o fim do conteúdo respeita a barra de navegação do Android
+   (`paddingOf(context).bottom + s6`). Enquanto carrega, só o esqueleto (sem a imagem da prévia);
+   o `Hero` da capa só existe com o detalhe carregado.
+2. **Curtir e salvar**: os botões vindos do Reel ficavam ativos antes da carga com ação vazia, e a
+   trava de toque duplo ignorava toques sem mostrar nada (o servidor gratuito pode levar até
+   ~40 s). Agora: desativados antes da carga; durante o pedido, um carregamento no lugar do ícone,
+   botão desativado e anúncio para o leitor de tela; erro inesperado vira falha e a trava sempre
+   libera.
+3. **Saudação**: só o Início passa a saudação para a `AppTopBar`; sem subtítulo, o título divide
+   a linha com os botões. Saem as chaves `shell_greeting` e `shell_welcome`.
+4. **Configurações**: o cartão "Editar perfil" usava `go('/profile')` (trocava a pilha e abria a
+   aba Perfil); agora faz `push('/profile/edit')`. Depois, a pedido da usuária, o cartão saiu:
+   abria a mesma tela da linha "Dados pessoais", que ficou. As telas de configurações seguem o estilo do
+   Perfil (`SettingsScaffold`: voltar redondo, título grande que rola, linhas com ícone em círculo).
+5. **Login e recuperar senha**: no estilo do quadro "03 Entrar" (selo com a logo, campos com
+   rótulo acima, abas em pílula). O `SafeTextField` usa o rótulo visível como nome do campo no
+   leitor de tela, lido uma vez só.
+6. **Contatos**: o vazio de "Meus contatos" é um aviso curto num cartão creme; "Adicionar
+   contato" é um botão flutuante no canto de baixo à esquerda (posição do polegar), só nessa aba.
+   O formulário tem máscara de telefone (`PhoneInputFormatter(shortCodes: true)`, movido do Perfil
+   para `core/utils/phone_format.dart`: aceita 190 e 0800) e validação em tempo real depois que a
+   pessoa sai do campo ou tenta salvar.

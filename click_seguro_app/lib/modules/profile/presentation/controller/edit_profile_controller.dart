@@ -8,7 +8,7 @@ import 'package:click_seguro_app/modules/profile/domain/usecases/remove_avatar_u
 import 'package:click_seguro_app/modules/profile/domain/usecases/update_avatar_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/update_profile_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/validators/profile_form_validator.dart';
-import 'package:click_seguro_app/modules/profile/presentation/extensions/phone_format.dart';
+import 'package:click_seguro_app/core/utils/phone_format.dart';
 import 'package:flutter/widgets.dart';
 
 enum EditProfileStatus { loading, ready, error }

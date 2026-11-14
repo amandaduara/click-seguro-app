@@ -49,7 +49,7 @@ class SafeTextField extends StatefulWidget {
   final FocusNode? focusNode;
   final Iterable<String>? autofillHints;
 
-  /// Rótulo para leitor de tela quando o campo não tem [label] visível.
+  /// Nome do campo no leitor de tela; sem ele, vale o [label] visível.
   final String? semanticsLabel;
 
   /// Ex.: máscara do telefone.
@@ -100,12 +100,16 @@ class _SafeTextFieldState extends State<SafeTextField> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (widget.label != null) ...[
-              Text(
-                widget.label!,
-                style: AppTypography.label.copyWith(
-                  color: hasError
-                      ? context.colors.destructive
-                      : context.colors.textForeground,
+              // O rótulo visível é o nome do campo no leitor de tela (abaixo):
+              // fora daqui, para não ser lido duas vezes.
+              ExcludeSemantics(
+                child: Text(
+                  widget.label!,
+                  style: AppTypography.label.copyWith(
+                    color: hasError
+                        ? context.colors.destructive
+                        : context.colors.textForeground,
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.s2),
@@ -137,7 +141,7 @@ class _SafeTextFieldState extends State<SafeTextField> {
                     // leitor de tela (sem anunciar o campo duas vezes).
                     child: MergeSemantics(
                       child: Semantics(
-                        label: widget.semanticsLabel,
+                        label: widget.semanticsLabel ?? widget.label,
                         textField: true,
                         child: TextField(
                           controller: widget.controller,

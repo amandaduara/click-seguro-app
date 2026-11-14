@@ -28,6 +28,10 @@ abstract class AppStrings {
   static const String authNamePlaceholder = 'auth_name_placeholder';
   static const String authEmailPlaceholder = 'auth_email_placeholder';
   static const String authPasswordPlaceholder = 'auth_password_placeholder';
+  static const String authNameLabel = 'auth_name_label';
+  static const String authEmailLabel = 'auth_email_label';
+  static const String authPasswordLabel = 'auth_password_label';
+  static const String authGuestNote = 'auth_guest_note';
   static const String authPasswordShow = 'auth_password_show';
   static const String authPasswordHide = 'auth_password_hide';
   static const String authForgotPassword = 'auth_forgot_password';
@@ -67,6 +71,11 @@ abstract class AppStrings {
       'auth_reset_new_password_placeholder';
   static const String authResetConfirmPasswordPlaceholder =
       'auth_reset_confirm_password_placeholder';
+  static const String authResetCodeLabel = 'auth_reset_code_label';
+  static const String authResetNewPasswordLabel =
+      'auth_reset_new_password_label';
+  static const String authResetConfirmPasswordLabel =
+      'auth_reset_confirm_password_label';
   static const String authResetSave = 'auth_reset_save';
   static const String authResetSuccess = 'auth_reset_success';
 
@@ -106,8 +115,6 @@ abstract class AppStrings {
   static const String shellTabHelp = 'shell_tab_help';
   static const String shellTabProfile = 'shell_tab_profile';
   static const String shellNavLabel = 'shell_nav_label';
-  static const String shellGreeting = 'shell_greeting';
-  static const String shellWelcome = 'shell_welcome';
   static const String shellNotifications = 'shell_notifications';
 
   // --- news ---
@@ -183,6 +190,8 @@ abstract class AppStrings {
   static const String newsDetailBack = 'news_detail_back';
   static const String newsDetailListenTitle = 'news_detail_listen_title';
   static const String newsDetailReadingTime = 'news_detail_reading_time';
+  static const String newsDetailSaveLoading = 'news_detail_save_loading';
+  static const String newsDetailLikeLoading = 'news_detail_like_loading';
   static const String newsSavedTitle = 'news_saved_title';
   static const String newsSavedEmpty = 'news_saved_empty';
   static const String newsSavedEmptyHint = 'news_saved_empty_hint';
@@ -394,8 +403,6 @@ abstract class AppStrings {
   static const String settingsTitle = 'settings_title';
   static const String settingsAccessibilityTitle =
       'settings_accessibility_title';
-  static const String settingsAccountCardAction =
-      'settings_account_card_action';
   static const String settingsSectionAccount = 'settings_section_account';
   static const String settingsSectionAlerts = 'settings_section_alerts';
   static const String settingsSectionReading = 'settings_section_reading';

@@ -14,7 +14,7 @@ import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.
 import 'package:click_seguro_app/modules/profile/domain/failures/profile_failures.dart';
 import 'package:click_seguro_app/modules/profile/domain/validators/profile_form_validator.dart';
 import 'package:click_seguro_app/modules/profile/presentation/controller/edit_profile_controller.dart';
-import 'package:click_seguro_app/modules/profile/presentation/extensions/phone_format.dart';
+import 'package:click_seguro_app/core/utils/phone_format.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/guest_invite.dart';
 import 'package:click_seguro_app/core/widgets/photo_sheet.dart';
 import 'package:easy_localization/easy_localization.dart';
