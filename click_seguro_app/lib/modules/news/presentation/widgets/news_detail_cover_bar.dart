@@ -3,6 +3,8 @@ import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -18,10 +20,17 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// branca, para o texto nunca ficar por baixo deles.
 ///
 /// A capa pede a imagem com a mesma chave de cache do cartão (decodifica pela
-/// largura da tela), então ela já aparece pronta; sem [news] (carregando sem
-/// prévia), fica só o fundo.
+/// largura da tela), então ela já aparece pronta. Sem [news]: com [loading],
+/// o esqueleto no lugar da imagem (a capa só aparece com o detalhe
+/// carregado); sem ele (erro), só o fundo.
 class NewsDetailCoverBar extends StatelessWidget {
-  const NewsDetailCoverBar({super.key, this.news, this.heroTag, this.actions});
+  const NewsDetailCoverBar({
+    super.key,
+    this.news,
+    this.heroTag,
+    this.actions,
+    this.loading = false,
+  });
 
   static const double coverHeight = 270;
   static const double sheetRadius = 28;
@@ -34,6 +43,9 @@ class NewsDetailCoverBar extends StatelessWidget {
 
   /// Botões da direita; `null` até o detalhe chegar.
   final Widget? actions;
+
+  /// Carregando: esqueleto no lugar da capa.
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +81,13 @@ class NewsDetailCoverBar extends StatelessWidget {
         const SizedBox(width: AppSpacing.s5),
       ],
       flexibleSpace: FlexibleSpaceBar(
-        background: _cover(context, colors, coverHeight + top),
+        background: SafeStateSwitcher(
+          stateKey: news != null,
+          // A troca empilha sem esticar: o tamanho da capa vem daqui.
+          child: SizedBox.expand(
+            child: _cover(context, colors, coverHeight + top),
+          ),
+        ),
       ),
       // O começo da folha branca, por cima da base da capa.
       bottom: PreferredSize(
@@ -89,7 +107,18 @@ class NewsDetailCoverBar extends StatelessWidget {
 
   Widget _cover(BuildContext context, AppPalette colors, double height) {
     final NewsItemEntity? item = news;
-    if (item == null) return ColoredBox(color: colors.surface);
+    if (item == null) {
+      if (!loading) return ColoredBox(color: colors.surface);
+      // O esqueleto do corpo já diz "Carregando": este não repete.
+      return ExcludeSemantics(
+        child: SafeSkeleton(
+          enabled: true,
+          child: SafeSkeleton.leaf(
+            Container(height: height, color: colors.surface),
+          ),
+        ),
+      );
+    }
     final Widget cover = NewsCover(
       imageUrl: item.imageUrl,
       themeText: [...item.categories.map((c) => c.name), item.title].join(' '),

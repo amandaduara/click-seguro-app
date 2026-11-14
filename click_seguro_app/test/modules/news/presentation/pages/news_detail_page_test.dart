@@ -20,6 +20,7 @@ import 'package:click_seguro_app/modules/news/presentation/pages/news_detail_pag
 import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_actions.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_cover_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/related_activity_card.dart';
@@ -164,7 +165,9 @@ void main() {
 
       expect(find.text('Notícia'), findsNothing);
       expect(backButton(), findsOneWidget);
-      expect(find.byType(SafeSkeleton), findsOneWidget);
+      // Esqueleto da capa e do conteúdo, sem imagem.
+      expect(find.byType(SafeSkeleton), findsNWidgets(2));
+      expect(find.byType(NewsCover), findsNothing);
       // Sem detalhe ainda: sem curtir, compartilhar e salvar.
       expect(find.byKey(NewsDetailActions.likeKey), findsNothing);
       expect(find.byKey(NewsDetailActions.shareKey), findsNothing);
@@ -178,29 +181,37 @@ void main() {
         heroTag: 'news-image-recent-n1',
       );
 
-      testWidgets('com a prévia: título, fonte e imagem antes da carga; '
-          'esqueleto só do corpo', (tester) async {
-        repository.detailGate = Completer<void>();
+      Finder coverHero() => find.byWidgetPredicate(
+        (w) => w is Hero && w.tag == 'news-image-recent-n1',
+      );
+
+      testWidgets('com a prévia: enquanto carrega, só o esqueleto no lugar '
+          'da capa e do conteúdo, sem imagem; a capa (com o Hero de volta ao '
+          'cartão) só com o detalhe', (tester) async {
+        repository
+          ..detailGate = Completer<void>()
+          ..detailResults.add(
+            Right(
+              NewsDetailResult(
+                detail: newsDetail('n1', imageUrl: 'https://img.test/n.jpg'),
+                isFromCache: false,
+              ),
+            ),
+          );
 
         await pumpPage(tester, settle: false, preview: preview);
 
-        expect(find.text('Notícia n1'), findsOneWidget);
-        expect(find.text('Folha de Teste · 20 de set.'), findsOneWidget);
-        expect(find.text('Phishing'), findsOneWidget);
-        expect(
-          find.byWidgetPredicate(
-            (w) => w is Hero && w.tag == 'news-image-recent-n1',
-          ),
-          findsOneWidget,
-        );
-        final Finder skeleton = find.byType(SafeSkeleton);
-        expect(skeleton, findsOneWidget);
-        expect(
-          find.descendant(of: skeleton, matching: find.text('Notícia n1')),
-          findsNothing,
-        );
+        expect(find.byType(NewsCover), findsNothing);
+        expect(coverHero(), findsNothing);
+        expect(find.text('Notícia n1'), findsNothing);
+        expect(find.text('Phishing'), findsNothing);
+        expect(find.byType(SafeSkeleton), findsNWidgets(2));
+        expect(backButton(), findsOneWidget);
+
         repository.detailGate!.complete();
         await tester.pumpAndSettle();
+        expect(find.byType(NewsCover), findsOneWidget);
+        expect(coverHero(), findsOneWidget);
         expect(find.text('Notícia n1'), findsOneWidget);
         expect(find.byType(SafeSkeleton), findsNothing);
         expect(find.text('Texto'), findsOneWidget);
@@ -213,7 +224,7 @@ void main() {
 
         await pumpPage(tester, settle: false);
 
-        expect(find.byType(SafeSkeleton), findsOneWidget);
+        expect(find.byType(SafeSkeleton), findsNWidgets(2));
         expect(find.text('Notícia n1'), findsNothing);
         expect(find.byType(Hero), findsNothing);
         repository.detailGate!.complete();
@@ -267,7 +278,13 @@ void main() {
         for (final String tag in [tags.like, tags.share, tags.save]) {
           expect(heroWith(tag), findsOneWidget, reason: tag);
         }
-        // Sem detalhe, tocar não faz nada.
+        // Sem detalhe, desativados: tocar não faz nada.
+        expect(
+          tester
+              .widget<SafeIconButton>(find.byKey(NewsDetailActions.shareKey))
+              .onPressed,
+          isNull,
+        );
         await tester.tap(find.byKey(NewsDetailActions.likeKey));
         await tester.tap(find.byKey(NewsDetailActions.shareKey));
         await tester.pump();
@@ -739,7 +756,6 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(saveLabel(tester), 'Salvo');
       expect(find.byType(SnackBar), findsNothing);
 
       repository.saveGate!.complete();
@@ -754,6 +770,49 @@ void main() {
       expect(find.text('Removida dos salvos'), findsOneWidget);
       expect(saveLabel(tester), 'Salvar');
       expect(repository.saveCalls, ['n1', 'n1']);
+    });
+
+    testWidgets('em andamento: carregando no lugar do marcador, botão '
+        'desativado e "carregando" para o leitor de tela', (tester) async {
+      final handle = tester.ensureSemantics();
+      await signIn();
+      await pumpPage(tester);
+      repository.saveGate = Completer<void>();
+
+      await tester.tap(find.byKey(NewsDetailActions.saveKey));
+      await tester.pump();
+
+      final Finder save = find.byKey(NewsDetailActions.saveKey);
+      expect(
+        find.descendant(
+          of: save,
+          matching: find.byKey(NewsDetailActions.loadingKey),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(SafeIconButton), findsNWidgets(2)); // voltar e
+      // compartilhar: o salvar não é mais o botão comum.
+      expect(
+        tester.getSemantics(save),
+        matchesSemantics(
+          label: 'Salvar: carregando, aguarde',
+          isButton: true,
+          hasEnabledState: true,
+          isLiveRegion: true,
+        ),
+      );
+      expect(tester.getSize(save).width, greaterThanOrEqualTo(48));
+
+      // Novo toque durante o pedido: nenhum pedido a mais.
+      await tester.tap(save);
+      await tester.pump();
+      expect(repository.saveCalls, ['n1']);
+
+      repository.saveGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.byKey(NewsDetailActions.loadingKey), findsNothing);
+      expect(saveLabel(tester), 'Salvo');
+      handle.dispose();
     });
 
     testWidgets('falha: o marcador volta e o aviso mostra o erro', (
@@ -863,13 +922,55 @@ void main() {
       await tester.pump();
 
       expect(likeText('3'), findsOneWidget);
-      expect(find.byIcon(Icons.favorite), findsOneWidget);
 
       repository.likeGate!.complete();
       await tester.pumpAndSettle();
 
       expect(likeText('4'), findsOneWidget);
+      expect(find.byIcon(Icons.favorite), findsOneWidget);
       expect(repository.likeCalls, ['n1']);
+    });
+
+    testWidgets('em andamento: carregando no lugar do coração, botão '
+        'desativado e "carregando" para o leitor de tela', (tester) async {
+      final handle = tester.ensureSemantics();
+      await signIn();
+      await pumpPage(tester);
+      repository.likeGate = Completer<void>();
+
+      await tester.tap(likeButton());
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: likeButton(),
+          matching: find.byKey(NewsDetailActions.loadingKey),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: likeButton(), matching: find.byType(Icon)),
+        findsNothing,
+      );
+      expect(
+        tester.getSemantics(likeButton()),
+        matchesSemantics(
+          label: 'Curtir: carregando, aguarde',
+          isButton: true,
+          hasEnabledState: true,
+          isLiveRegion: true,
+        ),
+      );
+
+      await tester.tap(likeButton());
+      await tester.pump();
+      expect(repository.likeCalls, ['n1']);
+
+      repository.likeGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.byKey(NewsDetailActions.loadingKey), findsNothing);
+      expect(find.bySemanticsLabel('Curtido, 4 curtidas'), findsOneWidget);
+      handle.dispose();
     });
 
     testWidgets('falha: volta a contagem e avisa', (tester) async {
@@ -1123,6 +1224,38 @@ void main() {
 
       expect(find.text('Notícia n1'), findsOneWidget);
       expect(find.text('módulo m1'), findsNothing);
+    });
+
+    testWidgets('no fim, o bloco fica acima da barra de navegação do '
+        'aparelho, com respiro', (tester) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail(
+              'n1',
+              content: List<String>.filled(600, 'palavra').join(' '),
+              suggestedModule: const SuggestedModuleEntity(
+                id: 'm1',
+                title: 'Golpes no WhatsApp',
+                description: 'Aprenda a reconhecer',
+                lessonsCount: 3,
+              ),
+            ),
+            isFromCache: false,
+          ),
+        ),
+      );
+      // Barra de navegação do Android de 48 dp sobre a tela.
+      tester.view.padding = const FakeViewPadding(bottom: 48);
+      await pumpPage(tester, size: const Size(400, 800));
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -20000));
+      await tester.pumpAndSettle();
+
+      final double cardBottom = tester
+          .getBottomLeft(find.byType(RelatedActivityCard))
+          .dy;
+      expect(800 - cardBottom, moreOrLessEquals(48 + 24));
     });
 
     testWidgets('sem módulo sugerido: sem bloco', (tester) async {

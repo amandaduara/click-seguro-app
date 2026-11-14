@@ -47,10 +47,12 @@ import 'package:provider/provider.dart';
 /// compartilhar e salvar sobre ela e a folha branca com o texto; a atividade
 /// relacionada fica no fim do texto.
 ///
-/// Com [preview] (aberto por um cartão), o cabeçalho aparece na hora e só o
-/// corpo espera a carga (specs/022 R9); sem ela, a tela toda é esqueleto.
-/// Aberto por um Reel, a prévia também traz curtir e salvar, e os botões
-/// voam da coluna do Reel para o topo ([NewsActionsPreview]).
+/// Enquanto carrega, a capa e o conteúdo são esqueleto, com ou sem
+/// [preview]: a imagem só aparece com o detalhe carregado (e voa de volta ao
+/// cartão pelo `Hero` ao voltar). Aberto por um Reel, a prévia traz curtir e
+/// salvar, e os botões voam da coluna do Reel para o topo
+/// ([NewsActionsPreview]), desativados até a carga. Com erro, a prévia dá o
+/// título acima do erro.
 class NewsDetailPage extends StatefulWidget {
   const NewsDetailPage({super.key, required this.newsId, this.preview});
 
@@ -215,45 +217,17 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     if (controller.status == NewsDetailStatus.notFound) {
       return const _WithBackButton(child: _NotFound());
     }
-    final NewsItemEntity? news = detail?.news ?? widget.preview?.item;
-    // Sem prévia, a troca é da tela inteira; com ela, o cabeçalho fica parado
-    // (e o `Hero`, que não pode aparecer duas vezes, não entra na troca).
+    final NewsItemEntity? previewItem = widget.preview?.item;
+    final bool failed = controller.status == NewsDetailStatus.error;
+    // Erro sem prévia: sem cabeçalho para mostrar, só o "Voltar" e o erro.
+    // No resto, a capa fica parada (os `Hero` dos botões e da capa nunca
+    // aparecem duas vezes) e só o que está abaixo dela troca.
+    final bool bareError = failed && previewItem == null;
     return SafeStateSwitcher(
-      stateKey: news != null,
-      child: news == null
-          ? _withoutHeader(controller)
-          : _withHeader(controller, news, detail),
-    );
-  }
-
-  /// Sem cabeçalho para mostrar: esqueleto da tela toda ou o erro.
-  Widget _withoutHeader(NewsDetailController controller) {
-    if (controller.status == NewsDetailStatus.error) {
-      return _WithBackButton(child: _error(controller));
-    }
-    return CustomScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      slivers: [
-        const NewsDetailCoverBar(),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          sliver: SliverToBoxAdapter(
-            child: SafeSkeleton(
-              enabled: true,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  NewsDetailHeader(
-                    news: NewsPlaceholders.item(0),
-                    now: DateTime.now(),
-                  ),
-                  const _BodyPlaceholder(),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+      stateKey: bareError,
+      child: bareError
+          ? _WithBackButton(child: _error(controller))
+          : _page(controller, detail, previewItem),
     );
   }
 
@@ -265,50 +239,66 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     );
   }
 
-  /// Capa e cabeçalho (da prévia ou do detalhe) e, abaixo, o corpo, o
-  /// esqueleto do corpo ou o erro.
-  Widget _withHeader(
+  /// Capa e, abaixo, o cabeçalho e o corpo; o esqueleto de tudo enquanto
+  /// carrega (a imagem só aparece com o detalhe, mesmo com a prévia); ou,
+  /// com a prévia, o título dela e o erro.
+  Widget _page(
     NewsDetailController controller,
-    NewsItemEntity news,
     NewsDetailEntity? detail,
+    NewsItemEntity? previewItem,
   ) {
+    final bool loading = detail == null && !_failed(controller);
+    // Respiro no fim acima da barra de navegação do aparelho (área segura).
+    final double bottom = MediaQuery.paddingOf(context).bottom + AppSpacing.s6;
     return CustomScrollView(
+      physics: loading ? const NeverScrollableScrollPhysics() : null,
       slivers: [
         NewsDetailCoverBar(
-          news: news,
+          news: detail?.news,
           heroTag: widget.preview?.heroTag,
-          actions: _actions(detail),
+          actions: _actions(controller, detail),
+          loading: loading,
         ),
         if (detail != null && controller.isFromCache)
           const SliverToBoxAdapter(child: SafeOfflineBanner()),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s5,
-            0,
-            AppSpacing.s5,
-            AppSpacing.s7,
-          ),
+          padding: EdgeInsets.fromLTRB(AppSpacing.s5, 0, AppSpacing.s5, bottom),
           sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                NewsDetailHeader(
-                  news: news,
-                  now: DateTime.now(),
-                  readingMinutes: detail?.readingMinutes,
-                ),
-                SafeStateSwitcher(
-                  stateKey: controller.status,
-                  child: switch (controller.status) {
-                    NewsDetailStatus.error => _error(controller),
-                    _ when detail != null => _body(detail),
-                    _ => const SafeSkeleton(
-                      enabled: true,
-                      child: _BodyPlaceholder(),
+            child: SafeStateSwitcher(
+              stateKey: controller.status,
+              child: switch (detail) {
+                final NewsDetailEntity detail => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    NewsDetailHeader(
+                      news: detail.news,
+                      now: DateTime.now(),
+                      readingMinutes: detail.readingMinutes,
                     ),
-                  },
+                    _body(detail),
+                  ],
                 ),
-              ],
+                null when !loading && previewItem != null => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    NewsDetailHeader(news: previewItem, now: DateTime.now()),
+                    _error(controller),
+                  ],
+                ),
+                null => SafeSkeleton(
+                  enabled: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      NewsDetailHeader(
+                        news: NewsPlaceholders.item(0),
+                        now: DateTime.now(),
+                      ),
+                      const _BodyPlaceholder(),
+                    ],
+                  ),
+                ),
+              },
             ),
           ),
         ),
@@ -316,10 +306,14 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     );
   }
 
+  bool _failed(NewsDetailController controller) =>
+      controller.status == NewsDetailStatus.error;
+
   /// Curtir, compartilhar e salvar, sobre a capa. Antes da carga, só com a
-  /// prévia de um Reel: o estado que ele mostrava, sem ação, para os botões
-  /// já estarem no lugar quando voam ([NewsActionsPreview]).
-  Widget? _actions(NewsDetailEntity? detail) {
+  /// prévia de um Reel: o estado que ele mostrava, desativados, para os
+  /// botões já estarem no lugar quando voam ([NewsActionsPreview]). Com um
+  /// pedido em andamento, o botão mostra o carregando.
+  Widget? _actions(NewsDetailController controller, NewsDetailEntity? detail) {
     final NewsActionsPreview? preview = widget.preview?.actions;
     if (detail == null && preview == null) return null;
     return ValueListenableBuilder<UserSessionStatus>(
@@ -332,9 +326,11 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
           isLiked: signedIn && (detail?.isLiked ?? preview!.isLiked),
           likesCount: detail?.likesCount ?? preview!.likesCount,
           isSaved: signedIn && (detail?.isSaved ?? preview!.isSaved),
-          onLike: detail == null ? () {} : () => unawaited(_like()),
-          onSave: detail == null ? () {} : () => unawaited(_save()),
-          onShare: detail == null ? () {} : () => unawaited(_share(detail)),
+          isLiking: controller.isLiking,
+          isSaving: controller.isSaving,
+          onLike: detail == null ? null : () => unawaited(_like()),
+          onSave: detail == null ? null : () => unawaited(_save()),
+          onShare: detail == null ? null : () => unawaited(_share(detail)),
         );
       },
     );

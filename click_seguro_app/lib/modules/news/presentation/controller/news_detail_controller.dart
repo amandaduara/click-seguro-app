@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
@@ -10,6 +11,7 @@ import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecas
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_status.dart';
 import 'package:flutter/foundation.dart';
+import 'package:fpdart/fpdart.dart' show Either, Left;
 
 enum NewsDetailMessageType { saved, removed, saveFailed, likeFailed, notFound }
 
@@ -74,12 +76,14 @@ class NewsDetailController extends ChangeNotifier {
 
   bool _isSaving = false;
 
-  /// Há um pedido de salvar em andamento: novos toques são ignorados.
+  /// Há um pedido de salvar em andamento: o botão mostra o carregando e
+  /// novos toques são ignorados.
   bool get isSaving => _isSaving;
 
   bool _isLiking = false;
 
-  /// Há um pedido de curtir em andamento: novos toques são ignorados.
+  /// Há um pedido de curtir em andamento: o botão mostra o carregando e
+  /// novos toques são ignorados.
   bool get isLiking => _isLiking;
 
   bool _autoReadDone = false;
@@ -144,7 +148,9 @@ class NewsDetailController extends ChangeNotifier {
     _detail = before.copyWith(isSaved: !before.isSaved);
     _notify();
 
-    final result = await _toggleSave(newsId);
+    final Either<Failure, bool> result = await _guarded(
+      () => _toggleSave(newsId),
+    );
     _isSaving = false;
     if (_disposed) return;
     result.fold(
@@ -194,7 +200,9 @@ class NewsDetailController extends ChangeNotifier {
     );
     _notify();
 
-    final result = await _toggleLike(newsId);
+    final Either<Failure, LikeResultEntity> result = await _guarded(
+      () => _toggleLike(newsId),
+    );
     _isLiking = false;
     if (_disposed) return;
     result.fold(
@@ -255,6 +263,18 @@ class NewsDetailController extends ChangeNotifier {
         _lastSession != UserSessionStatus.authenticated;
     _lastSession = now;
     if (becameAuthenticated) unawaited(load());
+  }
+
+  /// Um erro inesperado (fora do `Either`) vira falha genérica: a trava de
+  /// toque duplo ([isSaving]/[isLiking]) sempre libera e o estado volta.
+  Future<Either<Failure, T>> _guarded<T>(
+    Future<Either<Failure, T>> Function() call,
+  ) async {
+    try {
+      return await call();
+    } on Object {
+      return const Left(ServerFailure());
+    }
   }
 
   void _emit(NewsDetailMessage message) {
