@@ -105,8 +105,8 @@ void main() {
 
     await tester.enterText(field('Código recebido'), '123456');
     await tapButton(tester, 'Continuar');
-    await tester.enterText(field('Nova senha'), 'Nova@1234');
-    await tester.enterText(field('Confirme a nova senha'), 'Nova@1234');
+    await tester.enterText(field('Digite a nova senha'), 'Nova@1234');
+    await tester.enterText(field('Digite a nova senha de novo'), 'Nova@1234');
     await tapButton(tester, 'Salvar nova senha');
 
     expect(find.text('Recuperar senha'), findsNothing);

@@ -58,7 +58,7 @@ void main() {
     String email = 'maria@exemplo.com',
   }) async {
     await tester.enterText(field('seu@email.com'), email);
-    await tester.enterText(field('Senha'), 'Senha@123');
+    await tester.enterText(field('Digite sua senha'), 'Senha@123');
     await tester.pump(); // habilita o botão com o formulário válido
   }
 
@@ -75,8 +75,25 @@ void main() {
 
       expect(find.byType(AuthHeader), findsOneWidget);
       expect(field('seu@email.com'), findsOneWidget);
-      expect(field('Senha'), findsOneWidget);
+      expect(field('Digite sua senha'), findsOneWidget);
       expect(find.text('Entrar'), findsWidgets);
+    });
+
+    testWidgets('campos com rótulo acima e o aviso do visitante', (
+      tester,
+    ) async {
+      await pumpLogin(tester);
+
+      expect(find.text('E-mail'), findsOneWidget);
+      expect(find.text('Senha'), findsOneWidget);
+      expect(
+        find.text('Sem conta, seu progresso vale só até fechar o app.'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('auth-mode-register')));
+      await tester.pumpAndSettle();
+      expect(find.text('Nome'), findsOneWidget);
     });
 
     testWidgets('credenciais válidas levam ao Início', (tester) async {
@@ -125,7 +142,7 @@ void main() {
       await tester.pump();
       expect(find.text('Digite um e-mail válido.'), findsNothing);
 
-      await tester.tap(field('Senha')); // sai do campo de e-mail
+      await tester.tap(field('Digite sua senha')); // sai do campo de e-mail
       await tester.pumpAndSettle();
 
       expect(find.text('Digite um e-mail válido.'), findsOneWidget);
@@ -134,13 +151,19 @@ void main() {
 
     testWidgets('o olho mostra e oculta a senha', (tester) async {
       await pumpLogin(tester);
-      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
 
-      expect(tester.widget<TextField>(field('Senha')).obscureText, isTrue);
+      expect(
+        tester.widget<TextField>(field('Digite sua senha')).obscureText,
+        isTrue,
+      );
       await tester.tap(find.byTooltip('Mostrar senha'));
       await tester.pump();
 
-      expect(tester.widget<TextField>(field('Senha')).obscureText, isFalse);
+      expect(
+        tester.widget<TextField>(field('Digite sua senha')).obscureText,
+        isFalse,
+      );
       expect(find.byTooltip('Ocultar senha'), findsOneWidget);
     });
   });
@@ -154,7 +177,7 @@ void main() {
     Future<void> fillRegister(WidgetTester tester) async {
       await tester.enterText(field('Seu nome'), 'Maria Silva');
       await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
-      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
       await tester.pump();
     }
 
@@ -212,11 +235,11 @@ void main() {
       await tester.enterText(field('Seu nome'), 'Maria Silva');
       await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
 
-      await tester.enterText(field('Senha'), 'Senha1234');
+      await tester.enterText(field('Digite sua senha'), 'Senha1234');
       await tester.pump();
       expect(disabled(), isTrue);
 
-      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
       await tester.pump();
       expect(disabled(), isFalse);
     });
@@ -225,7 +248,7 @@ void main() {
       await pumpLogin(tester);
       await openRegister(tester);
 
-      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
       await tester.pump();
 
       expect(find.byIcon(LucideIcons.circleCheck), findsNWidgets(5));
@@ -344,7 +367,7 @@ void main() {
       await pumpLogin(tester, page: fromAlert);
       await tester.enterText(field('Seu nome'), 'Maria Silva');
       await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
-      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
       await tester.pump();
 
       await tapPrimary(tester, 'Criar conta');

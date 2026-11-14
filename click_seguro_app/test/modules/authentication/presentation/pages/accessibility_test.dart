@@ -73,9 +73,12 @@ void main() {
     expectMinTarget(tester, find.byType(IconButton));
     expectMinTarget(tester, find.byType(TextButton));
     // Um só nó por campo, com o rótulo (não anunciado em dobro).
-    for (final label in ['seu@email.com', 'Senha']) {
+    for (final (hint, label) in [
+      ('seu@email.com', 'E-mail'),
+      ('Digite sua senha', 'Senha'),
+    ]) {
       final field = find.byWidgetPredicate(
-        (w) => w is TextField && w.decoration?.hintText == label,
+        (w) => w is TextField && w.decoration?.hintText == hint,
       );
       expect(tester.getSemantics(field).label, label);
     }
