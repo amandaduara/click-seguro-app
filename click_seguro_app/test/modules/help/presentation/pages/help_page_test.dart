@@ -114,26 +114,75 @@ void main() {
 
   // As duas abas rolam do mesmo jeito: "Meus contatos" vazio não ganha uma
   // rolagem própria nem espaço da tela inteira (validação da usuária).
-  testWidgets('"Meus contatos" vazio rola como "Oficiais"', (tester) async {
+  testWidgets('"Meus contatos" vazio: aviso curto, sem rolar demais', (
+    tester,
+  ) async {
     await open(tester);
     await tester.tap(find.text('Meus contatos'));
     await tester.pumpAndSettle();
 
+    // Texto do tamanho do corpo da tela, sem a ilustração grande.
+    expect(find.byType(SafeEmptyState), findsNothing);
+    final Text note = tester.widget<Text>(
+      find.text(
+        'Cadastre contatos de confiança para encontrá-los rapidamente.',
+      ),
+    );
+    expect(note.style?.fontSize, 16);
+    // O fim da rolagem é o fim do conteúdo, sem uma tela extra embaixo.
     final ScrollPosition outer = tester
         .state<ScrollableState>(find.byType(Scrollable).first)
         .position;
-    final double contentBottom =
-        tester.getBottomLeft(find.text('Adicionar contato').last).dy +
-        outer.pixels;
-    // O fim da rolagem é o fim do conteúdo, sem uma tela extra embaixo.
-    expect(
-      outer.maxScrollExtent,
-      lessThanOrEqualTo(
-        (contentBottom - outer.viewportDimension).clamp(0, double.infinity) +
-            80,
-      ),
-    );
-    expect(find.byType(SafeEmptyState), findsOneWidget);
+    expect(outer.maxScrollExtent, lessThan(200));
+  });
+
+  testWidgets('"Adicionar contato" no canto de baixo à esquerda, só nos '
+      'pessoais', (tester) async {
+    await open(tester);
+    expect(find.byKey(const ValueKey('help_add_contact')), findsNothing);
+
+    await tester.tap(find.text('Meus contatos'));
+    await tester.pumpAndSettle();
+
+    final Finder button = find.byKey(const ValueKey('help_add_contact'));
+    expect(button, findsOneWidget);
+    final Size screen = tester.getSize(find.byType(Scaffold).first);
+    final Rect rect = tester.getRect(button);
+    expect(rect.center.dx, lessThan(screen.width / 2));
+    expect(rect.bottom, greaterThan(screen.height * 0.8));
+    expect(rect.height, greaterThanOrEqualTo(48));
+  });
+
+  // Máscara e validação em tempo real (validação da usuária, specs/023).
+  testWidgets('formulário: máscara no telefone e erro que acompanha', (
+    tester,
+  ) async {
+    await open(tester);
+    await tester.tap(find.text('Meus contatos'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('help_add_contact')));
+    await tester.pumpAndSettle();
+    final Finder phone = find.byType(TextField).at(1);
+
+    await tester.enterText(phone, '11912345678');
+    await tester.pump();
+    expect(find.text('(11) 91234-5678'), findsOneWidget);
+
+    await tester.enterText(phone, '11');
+    await tester.pump();
+    expect(find.textContaining('Informe um telefone válido'), findsNothing);
+    // Sai do campo: o erro aparece e acompanha a digitação.
+    await tester.tap(find.byType(TextField).at(2));
+    await tester.pump();
+    expect(find.textContaining('Informe um telefone válido'), findsOneWidget);
+    await tester.enterText(phone, '190');
+    await tester.pump();
+    expect(find.textContaining('Informe um telefone válido'), findsNothing);
+
+    // O nome não aceita espaço no começo.
+    await tester.enterText(find.byType(TextField).at(0), '  Ana');
+    await tester.pump();
+    expect(find.text('Ana'), findsOneWidget);
   });
 
   group('cartão "Caiu em um golpe?" (FR-016 de specs/023)', () {
@@ -364,7 +413,7 @@ void main() {
     await tester.tap(find.text('Salvar contato'));
     await tester.pumpAndSettle();
     expect(
-      find.text('Informe um telefone válido com 3 a 15 dígitos.'),
+      find.text('Informe um telefone válido, como (11) 91234-5678 ou 190.'),
       findsOneWidget,
     );
 

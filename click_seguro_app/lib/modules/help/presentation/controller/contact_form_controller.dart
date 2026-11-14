@@ -65,6 +65,34 @@ class ContactFormController extends ChangeNotifier {
   String get relationship => _relationship;
   String? get photoPath => _photoPath;
   ContactValidationError? get validationError => _validationError;
+
+  /// A pessoa já saiu do campo (ou tentou salvar): daí em diante o erro
+  /// acompanha a digitação (validação da usuária, specs/023).
+  bool _nameTouched = false;
+  bool _phoneTouched = false;
+
+  /// Erro do nome para mostrar agora; `null` antes de tocar no campo.
+  ContactValidationError? get nameError =>
+      _nameTouched ? ContactValidation.validateName(_name) : null;
+
+  /// Erro do telefone para mostrar agora; `null` antes de tocar no campo.
+  ContactValidationError? get phoneError =>
+      _phoneTouched && ContactValidation.normalizePhone(_phone) == null
+      ? ContactValidationError.phone
+      : null;
+
+  void touchName() {
+    if (_nameTouched) return;
+    _nameTouched = true;
+    _notify();
+  }
+
+  void touchPhone() {
+    if (_phoneTouched) return;
+    _phoneTouched = true;
+    _notify();
+  }
+
   Failure? get loadFailure => _loadFailure;
   Failure? get saveFailure => _saveFailure;
   Failure? get deleteFailure => _deleteFailure;
@@ -179,12 +207,16 @@ class ContactFormController extends ChangeNotifier {
       _temporaryPhotoPath = null;
     } else {
       // Nome ou telefone inválido: o usecase valida, o campo mostra o erro.
-      result.match(
-        (failure) => failure is ContactValidationFailure
-            ? _validationError = failure.error
-            : _saveFailure = failure,
-        (_) {},
-      );
+      result.match((failure) {
+        if (failure is ContactValidationFailure) {
+          _validationError = failure.error;
+          // Mostra todos os campos inválidos, não só o primeiro.
+          _nameTouched = true;
+          _phoneTouched = true;
+        } else {
+          _saveFailure = failure;
+        }
+      }, (_) {});
       if (_disposed && temporaryPhoto != null) {
         _temporaryPhotoPath = null;
         await _deleteImage(temporaryPhoto);

@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/utils/phone_format.dart';
 import 'package:click_seguro_app/core/widgets/photo_sheet.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
@@ -13,6 +14,7 @@ import 'package:click_seguro_app/modules/help/presentation/controller/contact_fo
 import 'package:click_seguro_app/core/widgets/person_avatar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -22,6 +24,9 @@ class ContactFormPage extends StatelessWidget {
   const ContactFormPage({super.key, this.contactId});
 
   final String? contactId;
+
+  /// Tamanho máximo do nome do contato.
+  static const int nameMaxLength = 60;
 
   @override
   Widget build(BuildContext context) => ChangeNotifierProvider(
@@ -48,10 +53,20 @@ class _ContactFormContentState extends State<_ContactFormContent> {
   TextEditingController? _phoneField;
   TextEditingController? _relationshipField;
 
+  /// Ao sair de um campo, o erro dele passa a aparecer enquanto digita.
+  final FocusNode _nameFocus = FocusNode();
+  final FocusNode _phoneFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
     _controller = context.read<ContactFormController>();
+    _nameFocus.addListener(() {
+      if (!_nameFocus.hasFocus) _controller.touchName();
+    });
+    _phoneFocus.addListener(() {
+      if (!_phoneFocus.hasFocus) _controller.touchPhone();
+    });
     if (widget.contactId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _loadContact();
@@ -63,6 +78,8 @@ class _ContactFormContentState extends State<_ContactFormContent> {
 
   @override
   void dispose() {
+    _nameFocus.dispose();
+    _phoneFocus.dispose();
     _nameField?.dispose();
     _phoneField?.dispose();
     _relationshipField?.dispose();
@@ -136,20 +153,29 @@ class _ContactFormContentState extends State<_ContactFormContent> {
             controller: _nameField ??= TextEditingController(
               text: controller.name,
             ),
-            error: controller.validationError == ContactValidationError.name
+            focusNode: _nameFocus,
+            error: controller.nameError == ContactValidationError.name
                 ? AppStrings.helpNameRequired.tr()
                 : null,
             textInputAction: TextInputAction.next,
+            // Sem espaço no começo e com um limite de tamanho.
+            inputFormatters: [
+              FilteringTextInputFormatter.deny(RegExp(r'^\s+')),
+              LengthLimitingTextInputFormatter(ContactFormPage.nameMaxLength),
+            ],
             onChanged: _controller.setName,
           ),
           const SizedBox(height: AppSpacing.s4),
           SafeTextField(
             label: AppStrings.helpPhone.tr(),
             controller: _phoneField ??= TextEditingController(
-              text: controller.phone,
+              text: formatPhone(controller.phone, shortCodes: true),
             ),
+            focusNode: _phoneFocus,
             keyboardType: TextInputType.phone,
-            error: controller.validationError == ContactValidationError.phone
+            // Máscara enquanto digita: (11) 91234-5678, 190, 0800 728 4567.
+            inputFormatters: const [PhoneInputFormatter(shortCodes: true)],
+            error: controller.phoneError == ContactValidationError.phone
                 ? AppStrings.helpPhoneInvalid.tr()
                 : null,
             textInputAction: TextInputAction.next,

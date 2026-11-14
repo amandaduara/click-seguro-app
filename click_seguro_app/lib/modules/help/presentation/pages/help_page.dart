@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
@@ -63,6 +64,13 @@ class _HelpPageContentState extends State<_HelpPageContent> {
     final HelpController controller = context.watch<HelpController>();
     final bool official = _tab == 0;
     return Scaffold(
+      // "Adicionar contato" no canto de baixo à esquerda, ao alcance do
+      // polegar, na aba dos contatos pessoais (validação da usuária,
+      // specs/023).
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButton: official
+          ? null
+          : _AddContactButton(onPressed: () => _openForm(context, controller)),
       body: SafeArea(
         child: GestureDetector(
           onHorizontalDragEnd: _onSwipe,
@@ -152,34 +160,24 @@ class _HelpPageContentState extends State<_HelpPageContent> {
         fill(
           official
               ? SafeEmptyState(message: AppStrings.helpOfficialUnavailable.tr())
-              : SafeEmptyState(
-                  message: AppStrings.helpPersonalEmpty.tr(),
-                  actionLabel: AppStrings.helpAddContact.tr(),
-                  onAction: () => _openForm(context, controller),
-                ),
+              // Aviso curto, no tamanho do texto da tela: o botão de
+              // adicionar fica no canto (validação da usuária).
+              : const _PersonalEmptyNote(),
         ),
       ];
     }
     return [
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(
+        // Nos pessoais, espaço embaixo para o botão de adicionar não cobrir
+        // o último contato.
+        padding: EdgeInsets.fromLTRB(
           AppSpacing.s5,
           AppSpacing.s2,
           AppSpacing.s5,
-          AppSpacing.s5,
+          official ? AppSpacing.s5 : _AddContactButton.clearance,
         ),
         sliver: SliverList.list(
           children: [
-            if (!official)
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton.icon(
-                  key: const ValueKey('help_add_contact'),
-                  onPressed: () => _openForm(context, controller),
-                  icon: const Icon(LucideIcons.plus),
-                  label: Text(AppStrings.helpAddContact.tr()),
-                ),
-              ),
             for (final contact in contacts)
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.s3),
@@ -314,4 +312,73 @@ class _ContactCard extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Botão "Adicionar contato" da aba dos pessoais: pílula coral no canto de
+/// baixo à esquerda, ao alcance do polegar.
+class _AddContactButton extends StatelessWidget {
+  const _AddContactButton({required this.onPressed});
+
+  /// Espaço que a lista deixa embaixo para o botão não cobrir nada.
+  static const double clearance = 104;
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    return FloatingActionButton.extended(
+      key: const ValueKey('help_add_contact'),
+      heroTag: null,
+      onPressed: onPressed,
+      backgroundColor: colors.primary,
+      foregroundColor: colors.textPrimaryForeground,
+      shape: const StadiumBorder(),
+      extendedTextStyle: AppTypography.button,
+      icon: const Icon(LucideIcons.userPlus),
+      label: Text(AppStrings.helpAddContact.tr()),
+    );
+  }
+}
+
+/// Sem contatos pessoais: um aviso curto no tamanho do texto da tela, num
+/// cartão creme, em vez da ilustração grande (validação da usuária).
+class _PersonalEmptyNote extends StatelessWidget {
+  const _PersonalEmptyNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s5,
+        AppSpacing.s3,
+        AppSpacing.s5,
+        _AddContactButton.clearance,
+      ),
+      child: SafeCard(
+        elevation: SafeCardElevation.flat,
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: colors.primarySoft,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(LucideIcons.users, size: 22, color: colors.primary),
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            Expanded(
+              child: Text(
+                AppStrings.helpPersonalEmpty.tr(),
+                style: AppTypography.body.copyWith(color: colors.textBody),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

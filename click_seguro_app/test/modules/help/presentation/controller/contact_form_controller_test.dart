@@ -8,6 +8,7 @@ import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dar
 import 'package:click_seguro_app/modules/help/domain/usecases/delete_personal_contact_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/get_personal_contacts_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/save_personal_contact_usecase.dart';
+import 'package:click_seguro_app/modules/help/domain/validation/contact_validation.dart';
 import 'package:click_seguro_app/modules/help/presentation/controller/contact_form_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,6 +16,60 @@ import '../../fakes/fake_help_repository.dart';
 import '../../../../fakes/fake_image_storage_service.dart';
 
 void main() {
+  // Validação em tempo real (validação da usuária, specs/023): o erro só
+  // aparece depois que a pessoa sai do campo ou tenta salvar, e some na
+  // hora em que o valor fica válido.
+  group('validação em tempo real', () {
+    test('sem tocar no campo, nenhum erro', () {
+      final controller = _controller(FakeHelpRepository());
+
+      controller.setPhone('11');
+
+      expect(controller.nameError, isNull);
+      expect(controller.phoneError, isNull);
+      controller.dispose();
+    });
+
+    test('depois de sair do campo, o erro acompanha a digitação', () {
+      final controller = _controller(FakeHelpRepository());
+
+      controller
+        ..touchName()
+        ..touchPhone();
+      expect(controller.nameError, ContactValidationError.name);
+      expect(controller.phoneError, ContactValidationError.phone);
+
+      controller
+        ..setName('Ana')
+        ..setPhone('(11) 91234-5678');
+      expect(controller.nameError, isNull);
+      expect(controller.phoneError, isNull);
+
+      controller.setPhone('(11');
+      expect(controller.phoneError, ContactValidationError.phone);
+      controller.dispose();
+    });
+
+    test('número curto de emergência vale', () {
+      final controller = _controller(FakeHelpRepository())..touchPhone();
+
+      controller.setPhone('190');
+
+      expect(controller.phoneError, isNull);
+      controller.dispose();
+    });
+
+    test('salvar inválido mostra os dois erros de uma vez', () async {
+      final controller = _controller(FakeHelpRepository());
+
+      expect(await controller.save(), isFalse);
+
+      expect(controller.nameError, ContactValidationError.name);
+      expect(controller.phoneError, ContactValidationError.phone);
+      controller.dispose();
+    });
+  });
+
   test('salva campos normalizados e mantém id estável na edição', () async {
     final repository = FakeHelpRepository()..personal = [person];
     final controller = _controller(repository, contactId: 'p1');
