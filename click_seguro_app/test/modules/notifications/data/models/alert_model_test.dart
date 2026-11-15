@@ -19,7 +19,7 @@ void main() {
     });
 
     // A imagem vai na lateral do alerta, como nos cartões do Início
-    // (validação da usuária, specs/023).
+    // (validação da usuária, specs/024).
     test('sem imagem ou com imagem vazia: imageUrl nulo', () {
       expect(AlertModel.fromNewsJson(newsItemJson(id: 'n1')).imageUrl, isNull);
       expect(

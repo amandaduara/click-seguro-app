@@ -399,8 +399,7 @@ class _LessonBody extends StatelessWidget {
           header: true,
           child: Text(
             lesson.question,
-            style: AppTypography.title1.copyWith(
-              fontSize: 22,
+            style: AppTypography.title2.copyWith(
               height: 1.3,
               color: colors.textForeground,
             ),

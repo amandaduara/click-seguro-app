@@ -10,7 +10,7 @@ import '../../../../helpers/localized_app.dart';
 import '../../fakes/alerts_fixtures.dart';
 
 /// Alerta no estilo dos cartões do Início: caixa com borda, capa na lateral
-/// e o texto ao lado (validação da usuária, specs/023).
+/// e o texto ao lado (validação da usuária, specs/024).
 void main() {
   Future<void> pumpTile(
     WidgetTester tester, {

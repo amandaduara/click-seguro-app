@@ -69,7 +69,6 @@ class _SplashPageState extends State<SplashPage> {
                     AppStrings.appTitle.tr(),
                     textAlign: TextAlign.center,
                     style: AppTypography.display.copyWith(
-                      fontSize: 32,
                       color: colors.textForeground,
                     ),
                   ),

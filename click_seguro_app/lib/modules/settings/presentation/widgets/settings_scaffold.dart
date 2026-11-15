@@ -19,8 +19,6 @@ class SettingsScaffold extends StatelessWidget {
     this.bottom,
   });
 
-  static const Key bottomKey = ValueKey('settings-bottom');
-
   final String title;
   final List<Widget> children;
 
@@ -58,12 +56,11 @@ class SettingsScaffold extends StatelessWidget {
                   AppSpacing.s5,
                   AppSpacing.s8,
                 ),
-                children: [SettingsPageTitle(title), ...children],
+                children: [_PageTitle(title), ...children],
               ),
             ),
             if (bottom case final Widget bottom)
               Padding(
-                key: bottomKey,
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.s5,
                   AppSpacing.s3,
@@ -80,8 +77,8 @@ class SettingsScaffold extends StatelessWidget {
 }
 
 /// Título grande da tela, no estilo do "Perfil".
-class SettingsPageTitle extends StatelessWidget {
-  const SettingsPageTitle(this.title, {super.key});
+class _PageTitle extends StatelessWidget {
+  const _PageTitle(this.title);
 
   final String title;
 

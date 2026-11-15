@@ -7,13 +7,23 @@ void main() {
     expect(ContactValidation.validateName('  '), ContactValidationError.name);
   });
 
+  test('nome aceita até 60 caracteres e recusa mais', () {
+    expect(ContactValidation.nameMaxLength, 60);
+    expect(ContactValidation.validateName('a' * 60), isNull);
+    expect(ContactValidation.validateName(' ${'a' * 60} '), isNull);
+    expect(
+      ContactValidation.validateName('a' * 61),
+      ContactValidationError.name,
+    );
+  });
+
   test('telefone aceita formatação e + inicial', () {
     expect(ContactValidation.normalizePhone('+55 (11) 99999-1234'), isNotNull);
     expect(ContactValidation.normalizePhone('11abc222'), isNull);
     expect(ContactValidation.normalizePhone('11+222'), isNull);
   });
 
-  // Número incompleto não passa (validação da usuária, specs/023): só
+  // Número incompleto não passa (validação da usuária, specs/024): só
   // números curtos de 3 dígitos, 0800 completo, fixo/celular com DDD (10 ou
   // 11 dígitos) ou internacional com + (8 a 15 dígitos).
   test('telefone completo: curto, 0800, fixo, celular e internacional', () {

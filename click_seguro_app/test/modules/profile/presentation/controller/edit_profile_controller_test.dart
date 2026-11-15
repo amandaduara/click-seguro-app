@@ -454,32 +454,27 @@ void main() {
       expect(repository.profileCalls, 1);
     });
 
-    test('removePhoto busca o perfil antes de terminar', () async {
-      await loaded();
-      repository
-        ..profileResults[0] = const Right(testProfile)
-        ..profileGate = Completer<void>();
+    test(
+      'removePhoto não busca o perfil; o guardado já fica sem foto',
+      () async {
+        await loaded();
 
-      final removing = controller.removePhoto();
-      await pumpEventQueue();
+        expect(await controller.removePhoto(), isNull);
 
-      expect(repository.removeCalls, 1);
-      expect(repository.profileCalls, 2);
-      expect(controller.photoState, PhotoState.removing);
+        expect(repository.removeCalls, 1);
+        expect(repository.profileCalls, 1);
+        expect(repository.lastProfile!.avatarUrl, isNull);
+      },
+    );
 
-      repository.profileGate!.complete();
-      expect(await removing, isNull);
-      expect(controller.photoState, PhotoState.idle);
-      expect(repository.lastProfile!.avatarUrl, isNull);
-    });
-
-    test('falha ao remover não busca o perfil', () async {
+    test('falha ao remover mantém a foto no perfil guardado', () async {
       repository.removeResults[0] = const Left(ConnectionFailure());
       await loaded();
 
       await controller.removePhoto();
 
       expect(repository.profileCalls, 1);
+      expect(repository.lastProfile!.avatarUrl, oldUrl);
     });
 
     test('trocar a foto não conta como alteração dos campos', () async {

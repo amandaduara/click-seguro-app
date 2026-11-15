@@ -109,7 +109,7 @@ void main() {
   Future<void> open(WidgetTester tester) =>
       pumpLocalized(tester, router: router, theme: AppTheme.lightTheme);
 
-  // Leitura automática (validação da usuária, specs/023): como nas outras
+  // Leitura automática (validação da usuária, specs/024): como nas outras
   // telas, com a opção ligada a resposta e o resultado são lidos.
   group('leitura automática', () {
     Future<void> signIn() => session.saveSession(

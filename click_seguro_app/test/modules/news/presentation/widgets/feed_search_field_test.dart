@@ -50,7 +50,7 @@ void main() {
     expect(find.text('pix'), findsNothing);
   });
 
-  // Validação da usuária (specs/023): espaço em branco não é busca; o
+  // Validação da usuária (specs/024): espaço em branco não é busca; o
   // campo avisa num toast curto.
   group('busca inválida', () {
     testWidgets('só espaços: o campo fica vazio e avisa', (tester) async {

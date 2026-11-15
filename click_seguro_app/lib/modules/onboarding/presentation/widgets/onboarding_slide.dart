@@ -19,7 +19,7 @@ class OnboardingSlide extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6 + 4),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6),
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: constraints.maxHeight),
           child: Column(

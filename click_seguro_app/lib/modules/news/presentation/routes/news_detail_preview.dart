@@ -19,19 +19,23 @@ class NewsDetailPreview {
   /// Aberto por um Reel: curtir, salvar e compartilhar voam da coluna do
   /// Reel para o topo do detalhe e aparecem antes da carga.
   final NewsActionsPreview? actions;
+
+  /// Tags dos `Hero` de curtir, salvar e compartilhar quando aberto por um
+  /// Reel; senão, `null`.
+  NewsActionTags? get actionTags =>
+      actions == null ? null : NewsActionsPreview.tagsFor(item.id);
 }
 
 /// Estado de curtir e salvar que o Reel já mostra e as tags dos `Hero` dos
-/// três botões, as mesmas em `ReelActions` e `NewsDetailActions`.
+/// três botões, as mesmas em `ReelActions` e `NewsDetailActions` (a
+/// notícia é a de [NewsDetailPreview.item]).
 class NewsActionsPreview {
   const NewsActionsPreview({
-    required this.newsId,
     required this.isLiked,
     required this.likesCount,
     required this.isSaved,
   });
 
-  final String newsId;
   final bool isLiked;
   final int likesCount;
 
@@ -44,8 +48,6 @@ class NewsActionsPreview {
     save: 'reel-save-$newsId',
     share: 'reel-share-$newsId',
   );
-
-  NewsActionTags get tags => tagsFor(newsId);
 }
 
 /// Tags dos `Hero` de curtir, salvar e compartilhar.

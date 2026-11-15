@@ -56,7 +56,7 @@ void main() {
     });
   });
 
-  // Leitura automática do resultado (validação da usuária, specs/023).
+  // Leitura automática do resultado (validação da usuária, specs/024).
   group('spokenText', () {
     testWidgets('sucesso: selo, explicação e cuidados, nessa ordem', (
       tester,

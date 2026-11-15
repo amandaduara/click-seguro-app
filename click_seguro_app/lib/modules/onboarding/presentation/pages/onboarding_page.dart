@@ -8,7 +8,6 @@ import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboard
 import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_slide.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/utils/motion_scroll.dart';
-import 'package:click_seguro_app/core/widgets/safe_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -55,7 +54,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final OnboardingPageContent currentContent =
         OnboardingPageContent.pages[controller.currentPage];
 
-    // Redesign 2.0 (Figma, quadro 02): "Pular" em pílula no topo, o slide,
+    // Redesign 2.0 (Figma, quadro 02): "Pular" no topo, o slide,
     // o indicador alinhado ao texto e o botão principal embaixo.
     return Scaffold(
       body: SafeArea(
@@ -71,10 +70,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
               child: Align(
                 alignment: Alignment.centerRight,
-                child: SafeChip(
+                // Botão de texto: o leitor de tela anuncia "botão", não um
+                // filtro (alvo de 48 dp do tamanho compacto).
+                child: SafeButton(
                   label: AppStrings.onboardingSkip.tr(),
-                  selected: false,
-                  onTap: () => _handleSkip(controller),
+                  size: SafeButtonSize.compact,
+                  tone: SafeButtonTone.link,
+                  onPressed: () => _handleSkip(controller),
                 ),
               ),
             ),
@@ -89,7 +91,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s6 + 4,
+                AppSpacing.s6,
                 AppSpacing.s4,
                 AppSpacing.s6,
                 0,

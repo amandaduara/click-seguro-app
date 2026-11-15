@@ -15,6 +15,9 @@ class FakeHelpRepository implements HelpRepository {
   Completer<Either<Failure, ContactEntity>>? saveCompleter;
   String? deletedId;
 
+  /// Segura a remoção até o teste completar.
+  Completer<void>? deleteGate;
+
   @override
   Future<Either<Failure, List<ContactEntity>>> getOfficialContacts() async =>
       readFailure == null ? Right(official) : Left(readFailure!);
@@ -41,6 +44,7 @@ class FakeHelpRepository implements HelpRepository {
 
   @override
   Future<Either<Failure, Unit>> deletePersonalContact(String id) async {
+    await deleteGate?.future;
     if (writeFailure != null) return Left(writeFailure!);
     deletedId = id;
     personal = personal.where((contact) => contact.id != id).toList();

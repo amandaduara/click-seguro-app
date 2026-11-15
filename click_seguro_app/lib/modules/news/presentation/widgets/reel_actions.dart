@@ -213,6 +213,9 @@ class _RoundButton extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
+      // Sem isto o excludeSemantics tira a ação do GestureDetector e o
+      // leitor de tela não consegue tocar no botão.
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

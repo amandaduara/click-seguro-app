@@ -10,6 +10,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 class SafeOfflineBanner extends StatelessWidget {
   const SafeOfflineBanner({super.key});
 
+  /// Canto da faixa: entre o `radiusSm` (12) e o `radiusMd` (16).
+  static const BorderRadius _radius = BorderRadius.all(Radius.circular(14));
+
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
@@ -27,7 +30,7 @@ class SafeOfflineBanner extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: colors.secondary,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: _radius,
         ),
         child: Row(
           children: [

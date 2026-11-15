@@ -4,7 +4,7 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/press_scale.dart';
 import 'package:flutter/material.dart';
 
-enum SafeCardElevation { flat, sm, md }
+enum SafeCardElevation { flat, sm }
 
 /// SafeCard — cartão do redesign 2.0 (FR-004): branco, borda de 1 px, canto
 /// 20 e a sombra única; `flat` é creme e sem sombra. É o padrão de todo

@@ -72,8 +72,7 @@ class _DisabledNotice extends StatelessWidget {
                 Expanded(
                   child: Text(
                     AppStrings.notificationsDisabledNotice.tr(),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: AppTypography.label.fontSize,
+                    style: AppTypography.body.copyWith(
                       color: context.colors.textForeground,
                     ),
                   ),

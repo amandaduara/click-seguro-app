@@ -115,15 +115,17 @@ abstract class AppTheme {
         backgroundColor: palette.card,
         surfaceTintColor: Colors.transparent,
         showDragHandle: false,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: AppSpacing.radius2xl.topLeft,
+          ),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: palette.secondary,
-        contentTextStyle: AppTypography.label.copyWith(
-          fontSize: 16,
+        contentTextStyle: AppTypography.body.copyWith(
+          fontWeight: FontWeight.w600,
           color: palette.textPrimaryForeground,
         ),
         shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusMd),

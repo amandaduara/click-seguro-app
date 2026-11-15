@@ -15,7 +15,7 @@ import '../../fakes/fake_help_repository.dart';
 import '../../../../fakes/fake_image_storage_service.dart';
 
 void main() {
-  // Validação em tempo real (validação da usuária, specs/023): o erro
+  // Validação em tempo real (validação da usuária, specs/024): o erro
   // aparece enquanto a pessoa digita (ou ao sair do campo vazio, ou ao
   // tentar salvar) e some na hora em que o valor fica válido.
   group('validação em tempo real', () {
@@ -126,11 +126,12 @@ void main() {
       final controller = _controller(repository);
       controller.setName(' ');
       expect(await controller.save(), isFalse);
-      expect(controller.validationError, isNotNull);
+      expect(controller.nameError, ContactValidationError.name);
       controller.setName('Ana');
       controller.setPhone('11ABC');
       expect(await controller.save(), isFalse);
-      expect(controller.validationError, isNotNull);
+      expect(controller.nameError, isNull);
+      expect(controller.phoneError, ContactValidationError.phone);
       controller.setPhone('11999999999');
       expect(await controller.save(), isFalse);
       expect(controller.saveFailure, isA<CacheFailure>());

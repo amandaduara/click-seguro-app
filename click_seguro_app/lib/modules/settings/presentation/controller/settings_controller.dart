@@ -52,11 +52,9 @@ class SettingsController extends ChangeNotifier {
   /// A chave de alertas fica parada até a resposta.
   bool get isSavingAlerts => _isSavingAlerts;
 
-  bool? _pendingAlertsValue;
-
   /// Valor que a pessoa escolheu para os alertas e não foi salvo (falha);
   /// `null` = nada pendente. [retryAlerts] reenvia este valor.
-  bool? get pendingAlertsValue => _pendingAlertsValue;
+  bool? _pendingAlertsValue;
 
   /// Salvar a escolha dos alertas falhou.
   bool get alertsSaveFailed => _pendingAlertsValue != null;
@@ -67,9 +65,11 @@ class SettingsController extends ChangeNotifier {
   /// botão de tentar de novo.
   bool get isRetryingAlerts => _isRetryingAlerts;
 
-  /// A conta não carregou ou salvar os alertas falhou: a chave dá lugar ao
-  /// botão de tentar de novo.
-  bool get alertsNeedRetry => alertsSaveFailed || _account is AccountFailed;
+  /// A conta não carregou: a chave de alertas dá lugar ao tentar de novo.
+  bool get alertsLoadFailed => _account is AccountFailed;
+
+  /// A conta não carregou ou salvar os alertas falhou.
+  bool get _alertsNeedRetry => alertsSaveFailed || alertsLoadFailed;
 
   bool _loggingOut = false;
   bool _disposed = false;
@@ -87,7 +87,7 @@ class SettingsController extends ChangeNotifier {
   Future<void> retryAccount() => _loadAccount();
 
   /// Muda a chave na hora e salva; em falha, volta ao valor anterior, guarda
-  /// o valor pedido em [pendingAlertsValue] e devolve a falha (FR-016).
+  /// o valor pedido em [_pendingAlertsValue] e devolve a falha (FR-016).
   /// Durante o envio, novos toques são ignorados.
   Future<Failure?> setReceiveAlerts(bool value) async {
     final AccountState current = _account;
@@ -106,13 +106,13 @@ class SettingsController extends ChangeNotifier {
   }
 
   /// Refaz o que falhou nos alertas: recarrega a conta, se ela não veio, e
-  /// reenvia o valor de [pendingAlertsValue], se salvar falhou. Durante o
+  /// reenvia o valor de [_pendingAlertsValue], se salvar falhou. Durante o
   /// pedido, [isRetryingAlerts] fica ligado.
   Future<void> retryAlerts() async {
-    if (_isRetryingAlerts || _isSavingAlerts || !alertsNeedRetry) return;
+    if (_isRetryingAlerts || _isSavingAlerts || !_alertsNeedRetry) return;
     _isRetryingAlerts = true;
     _notify();
-    if (_account is AccountFailed) await _loadAccount();
+    if (alertsLoadFailed) await _loadAccount();
     final bool? pending = _pendingAlertsValue;
     if (!_disposed && pending != null) await setReceiveAlerts(pending);
     if (_disposed) return;

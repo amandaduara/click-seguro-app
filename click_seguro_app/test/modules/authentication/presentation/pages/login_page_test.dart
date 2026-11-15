@@ -7,6 +7,7 @@ import 'package:click_seguro_app/modules/authentication/presentation/controller/
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
 import 'package:click_seguro_app/core/widgets/animated_reveal.dart';
+import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -91,7 +92,7 @@ void main() {
         findsOneWidget,
       );
 
-      await tester.tap(find.byKey(const ValueKey('auth-mode-register')));
+      await tester.tap(registerTab);
       await tester.pumpAndSettle();
       expect(find.text('Nome'), findsOneWidget);
     });
@@ -170,7 +171,7 @@ void main() {
 
   group('US2', () {
     Future<void> openRegister(WidgetTester tester) async {
-      await tester.tap(find.byKey(const ValueKey('auth-mode-register')));
+      await tester.tap(registerTab);
       await tester.pumpAndSettle();
     }
 
@@ -306,7 +307,7 @@ void main() {
       expect(find.text('ou'), findsOneWidget);
       expect(find.text('Continuar sem login'), findsOneWidget);
 
-      await tester.tap(find.byKey(const ValueKey('auth-mode-register')));
+      await tester.tap(registerTab);
       await tester.pumpAndSettle();
       expect(find.text('Continuar sem login'), findsOneWidget);
 
@@ -327,7 +328,7 @@ void main() {
     });
   });
 
-  // Sem aviso de servidor lento (validação da usuária, specs/023).
+  // Sem aviso de servidor lento (validação da usuária, specs/024).
   group('servidor lento', () {
     testWidgets('esperando, sem aviso de servidor; o botão carrega', (
       tester,
@@ -388,3 +389,9 @@ void main() {
     });
   });
 }
+
+/// A aba "Criar conta" do seletor no topo do login.
+final Finder registerTab = find.descendant(
+  of: find.byType(SafePillTabs),
+  matching: find.text('Criar conta'),
+);

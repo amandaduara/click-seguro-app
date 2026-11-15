@@ -10,6 +10,7 @@ import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.
 import 'package:click_seguro_app/modules/profile/domain/failures/profile_failures.dart';
 import 'package:click_seguro_app/modules/profile/presentation/pages/profile_edit_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
@@ -475,6 +476,42 @@ void main() {
 
         repository.uploadGate!.complete();
         await tester.pumpAndSettle();
+      });
+
+      testWidgets('leitor de tela: voltar desativado, aviso e uma ação', (
+        tester,
+      ) async {
+        final semantics = tester.ensureSemantics();
+        await startUpload(tester);
+        final String back = MaterialLocalizations.of(
+          tester.element(find.byType(AppBar)),
+        ).backButtonTooltip;
+
+        final Finder node = find.bySemanticsLabel(back);
+        expect(node, findsOneWidget);
+        expect(
+          tester.getSemantics(node),
+          matchesSemantics(
+            label: back,
+            hint: warning,
+            isButton: true,
+            hasEnabledState: true,
+            isEnabled: false,
+            hasTapAction: true,
+          ),
+        );
+
+        final SemanticsNode backNode = tester.getSemantics(node);
+        backNode.owner!.performAction(backNode.id, SemanticsAction.tap);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(find.byType(ProfileEditPage), findsOneWidget);
+        expect(find.text(warning), findsOneWidget);
+
+        repository.uploadGate!.complete();
+        await tester.pumpAndSettle();
+        semantics.dispose();
       });
 
       testWidgets('terminado o envio, voltar sai normalmente', (tester) async {

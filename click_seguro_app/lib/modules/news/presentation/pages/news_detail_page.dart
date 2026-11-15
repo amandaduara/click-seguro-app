@@ -2,14 +2,13 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
-import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
@@ -244,7 +243,13 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
       stateKey: bareError,
       child: bareError
           ? _WithBackButton(child: _error(controller))
-          : _page(controller, detail, previewItem, busy: busy),
+          : _page(
+              controller,
+              detail,
+              previewItem,
+              loading: detail == null && !failed,
+              busy: busy,
+            ),
     );
   }
 
@@ -263,9 +268,9 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     NewsDetailController controller,
     NewsDetailEntity? detail,
     NewsItemEntity? previewItem, {
+    required bool loading,
     required bool busy,
   }) {
-    final bool loading = detail == null && !_failed(controller);
     // Respiro no fim acima da barra de navegação do aparelho (área segura).
     final double bottom = MediaQuery.paddingOf(context).bottom + AppSpacing.s6;
     return CustomScrollView(
@@ -325,9 +330,6 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     );
   }
 
-  bool _failed(NewsDetailController controller) =>
-      controller.status == NewsDetailStatus.error;
-
   /// Curtir, compartilhar e salvar, sobre a capa. Antes da carga, só com a
   /// prévia de um Reel: o estado que ele mostrava, desativados, para os
   /// botões já estarem no lugar quando voam ([NewsActionsPreview]). Com um
@@ -341,7 +343,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
       builder: (context, status, _) {
         final bool signedIn = status == UserSessionStatus.authenticated;
         return NewsDetailActions(
-          heroTags: preview?.tags,
+          heroTags: widget.preview?.actionTags,
           isLiked: signedIn && (detail?.isLiked ?? preview!.isLiked),
           likesCount: detail?.likesCount ?? preview!.likesCount,
           isSaved: signedIn && (detail?.isSaved ?? preview!.isSaved),
@@ -358,7 +360,6 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
   /// O que vem abaixo do cabeçalho: abrir a fonte, ouvir, texto e atividade.
   Widget _body(NewsDetailEntity detail) {
     final AppPalette colors = context.colors;
-    final String sourceLabel = AppStrings.newsReelsOpenSource.tr();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -366,18 +367,14 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
           const SizedBox(height: AppSpacing.s2),
           Align(
             alignment: AlignmentDirectional.centerStart,
-            child: Semantics(
-              button: true,
-              label: sourceLabel,
-              excludeSemantics: true,
-              child: SafeButton(
-                key: NewsDetailPage.sourceKey,
-                label: sourceLabel,
-                tone: SafeButtonTone.link,
-                size: SafeButtonSize.compact,
-                icon: const Icon(LucideIcons.externalLink),
-                onPressed: () => unawaited(_openSource(detail)),
-              ),
+            // O SafeButton já é lido como botão, com o rótulo e o toque.
+            child: SafeButton(
+              key: NewsDetailPage.sourceKey,
+              label: AppStrings.newsReelsOpenSource.tr(),
+              tone: SafeButtonTone.link,
+              size: SafeButtonSize.compact,
+              icon: const Icon(LucideIcons.externalLink),
+              onPressed: () => unawaited(_openSource(detail)),
             ),
           ),
         ],
@@ -484,23 +481,6 @@ class _NotFound extends StatelessWidget {
   const _NotFound();
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.s6),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SafeIllustration(AppIllustration.stateEmpty, height: 180),
-          const SizedBox(height: AppSpacing.s5),
-          Text(
-            AppStrings.newsErrorNotFound.tr(),
-            textAlign: TextAlign.center,
-            style: AppTypography.bodyLarge.copyWith(
-              color: context.colors.textForeground,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      SafeEmptyState(message: AppStrings.newsErrorNotFound.tr());
 }

@@ -8,7 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// fazer). Com [busy], mostra o carregamento por cima e não aceita toque.
 ///
 /// Visual da edição de perfil, também no contato de confiança (validação da
-/// usuária, specs/023).
+/// usuária, specs/024).
 class EditableAvatar extends StatelessWidget {
   const EditableAvatar({
     super.key,

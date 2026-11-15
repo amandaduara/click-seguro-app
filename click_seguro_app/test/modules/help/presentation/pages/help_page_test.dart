@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/routing/navigator_keys.dart';
 import 'package:click_seguro_app/core/errors/cache_failure.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
@@ -74,7 +76,7 @@ void main() {
     );
   }
 
-  // Validação da usuária (specs/023): a rolagem termina no fim da lista,
+  // Validação da usuária (specs/024): a rolagem termina no fim da lista,
   // sem uma área vazia enorme embaixo quando há poucos contatos.
   testWidgets('a rolagem para no fim da lista, sem tela vazia', (tester) async {
     repository.official = [
@@ -118,7 +120,7 @@ void main() {
   // As duas abas rolam do mesmo jeito: "Meus contatos" vazio não ganha uma
   // rolagem própria nem espaço da tela inteira (validação da usuária).
   // Igual ao vazio dos "Oficiais" e das listas do perfil: ilustração e
-  // texto de 16 (validação da usuária, specs/023).
+  // texto de 16 (validação da usuária, specs/024).
   testWidgets('"Meus contatos" vazio: o mesmo estado vazio, sem rolar demais', (
     tester,
   ) async {
@@ -157,7 +159,7 @@ void main() {
     expect(rect.height, greaterThanOrEqualTo(48));
   });
 
-  // Máscara e validação em tempo real (validação da usuária, specs/023).
+  // Máscara e validação em tempo real (validação da usuária, specs/024).
   testWidgets('formulário: máscara no telefone e erro que acompanha', (
     tester,
   ) async {
@@ -188,7 +190,7 @@ void main() {
     expect(find.text('Ana'), findsOneWidget);
   });
 
-  group('cartão "Caiu em um golpe?" (FR-016 de specs/023)', () {
+  group('cartão "Caiu em um golpe?" (FR-016 de specs/024)', () {
     testWidgets('fica no topo, com título, texto e botão', (tester) async {
       final SemanticsHandle semantics = tester.ensureSemantics();
       await open(tester);
@@ -300,8 +302,59 @@ void main() {
     expect(find.text('Ana'), findsNothing);
   });
 
+  group('leitor de tela no cartão pessoal', () {
+    const ContactEntity ana = ContactEntity(
+      id: 'p1',
+      name: 'Ana',
+      phone: '11912345678',
+      type: ContactType.personal,
+    );
+
+    testWidgets('o cartão diz que tocar edita o contato', (tester) async {
+      repository.personal = [ana];
+      final SemanticsHandle semantics = tester.ensureSemantics();
+      await open(tester);
+      await tester.tap(find.text('Meus contatos'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSemantics(find.text('Ana')),
+        isSemantics(isButton: true, hint: 'Editar contato', hasTapAction: true),
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('a lixeira removendo é anunciada como carregando', (
+      tester,
+    ) async {
+      repository
+        ..personal = [ana]
+        ..deleteGate = Completer<void>();
+      final SemanticsHandle semantics = tester.ensureSemantics();
+      await open(tester);
+      await tester.tap(find.text('Meus contatos'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Remover contato'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remover').last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final Finder spinner = find.byType(CircularProgressIndicator);
+      expect(spinner, findsOneWidget);
+      // O aviso entra no cartão, junto do nome e do telefone.
+      expect(tester.getSemantics(spinner).label, contains('Carregando'));
+
+      repository.deleteGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('Ana'), findsNothing);
+      semantics.dispose();
+    });
+  });
+
   // A foto trocada ou removida no cadastro aparece no cartão ao voltar
-  // (validação da usuária, specs/023).
+  // (validação da usuária, specs/024).
   testWidgets('trocar e remover a foto atualiza o cartão', (tester) async {
     repository.personal = [
       const ContactEntity(
@@ -443,7 +496,7 @@ void main() {
     await tester.tap(find.text('Adicionar contato').last);
     await tester.pumpAndSettle();
     // Vazio: "Salvar contato" indisponível, como na edição de perfil, e
-    // fixo no fim da tela (validação da usuária, specs/023).
+    // fixo no fim da tela (validação da usuária, specs/024).
     SafeButton save() => tester.widget<SafeButton>(
       find.ancestor(
         of: find.text('Salvar contato'),

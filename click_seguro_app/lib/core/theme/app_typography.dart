@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_palette.dart';
 
-/// Escala de texto do redesign 2.0 em Inter (R3 de specs/023-redesign-visual).
+/// Escala de texto do redesign 2.0 em Inter (R3 de specs/024-redesign-visual).
 /// Corpo de 16 e nada abaixo de 14 (FR-003, revisto na validação da usuária:
 /// a escala de 18 ficou grande demais; a pessoa aumenta na Acessibilidade). Sem cor: ela vem do
 /// [textTheme] ou de `context.colors`.

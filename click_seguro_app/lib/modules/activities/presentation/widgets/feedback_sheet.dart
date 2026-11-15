@@ -6,6 +6,7 @@ import 'package:click_seguro_app/modules/activities/domain/entities/answer_resul
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/answer_presentation.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/spring_in.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
@@ -122,7 +123,7 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
             children: [
               Row(
                 children: [
-                  _SpringIn(
+                  SpringIn(
                     child: SafeIllustration(
                       result.isCorrect
                           ? AppIllustration.answerCorrect
@@ -227,26 +228,6 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Entra com uma mola leve (FR-020); direto com reduzir animações.
-class _SpringIn extends StatelessWidget {
-  const _SpringIn({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    if (AppMotion.of(context).reduced) return child;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.6, end: 1),
-      duration: AppMotion.of(context).long,
-      curve: AppMotion.emphasis,
-      builder: (context, scale, child) =>
-          Transform.scale(scale: scale, child: child),
-      child: child,
     );
   }
 }

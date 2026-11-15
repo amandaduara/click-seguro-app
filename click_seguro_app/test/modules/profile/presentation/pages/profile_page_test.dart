@@ -8,6 +8,8 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/profile/domain/entities/news_counts_entity.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.dart';
 import 'package:click_seguro_app/modules/profile/presentation/pages/profile_page.dart';
+import 'package:click_seguro_app/modules/profile/presentation/widgets/achievements_section.dart';
+import 'package:click_seguro_app/modules/profile/presentation/widgets/profile_header_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -260,6 +262,82 @@ void main() {
         findsNothing,
       );
       expect(find.text('Lidas'), findsOneWidget);
+    });
+
+    // Redesign 2.0 (T067): sem círculo girando, o lugar da área carrega em
+    // esqueleto e é lido como "Carregando".
+    testWidgets('tentando os números de novo: esqueleto "Carregando"', (
+      tester,
+    ) async {
+      repository.countsResults
+        ..[0] = const Left(ServerFailure())
+        ..add(const Right(testCounts));
+      await open(tester);
+      repository.countsGate = Completer<void>();
+
+      await tester.tap(find.text('Tentar novamente').first);
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(ProfileHeaderCard),
+          matching: find.byWidgetPredicate(
+            (w) => w is SafeSkeleton && w.enabled,
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel('Carregando'), findsWidgets);
+
+      repository.countsGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('Lidas'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+        findsNothing,
+      );
+    });
+
+    testWidgets('tentando as conquistas de novo: esqueleto "Carregando"', (
+      tester,
+    ) async {
+      repository.progressResults
+        ..[0] = const Left(ServerFailure())
+        ..add(const Right(testProgress));
+      await open(tester);
+      expect(
+        find.text('Não foi possível carregar suas conquistas.'),
+        findsOneWidget,
+      );
+      repository.progressGate = Completer<void>();
+
+      final Finder retry = find.descendant(
+        of: find.byType(AchievementsSection),
+        matching: find.text('Tentar novamente'),
+      );
+      await tester.ensureVisible(retry);
+      await tester.tap(retry);
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      final Finder skeleton = find.descendant(
+        of: find.byType(AchievementsSection),
+        matching: find.byWidgetPredicate((w) => w is SafeSkeleton && w.enabled),
+      );
+      expect(skeleton, findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AchievementsSection),
+          matching: find.bySemanticsLabel('Carregando'),
+        ),
+        findsOneWidget,
+      );
+
+      repository.progressGate!.complete();
+      await tester.pumpAndSettle();
+      expect(skeleton, findsNothing);
+      expect(find.text('Conquistas (2)'), findsOneWidget);
     });
 
     testWidgets('voltar de uma lista atualiza os números', (tester) async {

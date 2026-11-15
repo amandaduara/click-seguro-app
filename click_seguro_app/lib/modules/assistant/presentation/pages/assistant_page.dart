@@ -98,7 +98,7 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
   int? _shownMessages;
 
   /// Leitura em voz alta das respostas, como nas outras telas (validação da
-  /// usuária, specs/023): com a leitura automática ligada na
+  /// usuária, specs/024): com a leitura automática ligada na
   /// Acessibilidade, a resposta nova e o resultado da verificação são lidos.
   final ReadAloudController _readAloud = GetIt.instance<ReadAloudController>();
   Locale? _locale;
@@ -533,7 +533,7 @@ class _ChatComposer extends StatelessWidget {
                     : onCamera,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.s3),
             Expanded(
               child: TextField(
                 key: const ValueKey('assistant-chat-input'),
@@ -566,7 +566,7 @@ class _ChatComposer extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.s3),
             _SendButton(
               sending: controller.isSendingChat,
               onPressed: canSend ? onSubmit : null,

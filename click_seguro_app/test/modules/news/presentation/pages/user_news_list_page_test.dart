@@ -275,7 +275,7 @@ void main() {
       expect(find.text('Tentar novamente'), findsNothing);
     });
 
-    // Sem aviso de servidor lento (validação da usuária, specs/023).
+    // Sem aviso de servidor lento (validação da usuária, specs/024).
     testWidgets('carregando: só os blocos, sem aviso de servidor', (
       tester,
     ) async {

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
@@ -37,7 +38,7 @@ void main() {
     ),
   );
 
-  // Sem imagem, a capa é a ilustração do tema (FR-015 de specs/023).
+  // Sem imagem, a capa é a ilustração do tema (FR-015 de specs/024).
   Finder placeholder() => find.byType(SafeIllustration);
 
   Finder cover() => find.byType(NewsCover);
@@ -78,6 +79,17 @@ void main() {
     await pumpCard(tester, newsItem('n1'));
 
     expect(placeholder(), findsOneWidget);
+  });
+
+  // O mesmo texto do detalhe: a capa não muda de desenho ao abrir.
+  testWidgets('tema da capa: todas as categorias e o título', (tester) async {
+    final item = newsItem(
+      'n1',
+      categories: [category('Phishing'), category('Pix')],
+    );
+    await pumpCard(tester, item);
+
+    expect(tester.widget<NewsCover>(cover()).themeText, item.illustrationText);
   });
 
   testWidgets('lida e salva aparecem só quando verdadeiras', (tester) async {

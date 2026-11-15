@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_bottom_nav.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../helpers/localized_app.dart';
@@ -27,6 +28,20 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Perfil'));
 
     expect(selected, [AppTab.profile.index]);
+  });
+
+  testWidgets('o leitor de tela também toca na aba', (tester) async {
+    final SemanticsHandle handle = tester.ensureSemantics();
+    final selected = await pumpNav(tester);
+
+    final SemanticsNode node = tester.getSemantics(
+      find.bySemanticsLabel('Notícias'),
+    );
+    expect(node, isSemantics(isButton: true, hasTapAction: true));
+    node.owner!.performAction(node.id, SemanticsAction.tap);
+
+    expect(selected, [AppTab.news.index]);
+    handle.dispose();
   });
 
   testWidgets('só ícones; o nome da aba fica no leitor de tela', (

@@ -136,97 +136,87 @@ class NewsDetailController extends ChangeNotifier {
   /// Salva ou remove dos salvos na hora e depois mostra o que o servidor
   /// devolveu, com o aviso; em falha, volta e avisa; 404 vira "não
   /// encontrada" (R6). Só a página com conta chama (`requireAccount`).
-  Future<void> toggleSave() async {
-    final NewsDetailEntity? before = _detail;
-    if (before == null ||
-        _status != NewsDetailStatus.loaded ||
-        _isSaving ||
-        _disposed) {
-      return;
-    }
-    _isSaving = true;
-    _detail = before.copyWith(isSaved: !before.isSaved);
-    _notify();
-
-    final Either<Failure, bool> result = await _guarded(
-      () => _toggleSave(newsId),
-    );
-    _isSaving = false;
-    if (_disposed) return;
-    result.fold(
-      (failure) {
-        _detail = _detail?.copyWith(isSaved: before.isSaved);
-        if (failure is NewsNotFoundFailure) {
-          _status = NewsDetailStatus.notFound;
-          _emit(const NewsDetailMessage(NewsDetailMessageType.notFound));
-        } else {
-          _emit(
-            NewsDetailMessage(
-              NewsDetailMessageType.saveFailed,
-              failure.message,
-            ),
-          );
-        }
-      },
-      (saved) {
-        _detail = _detail?.copyWith(isSaved: saved);
-        _emit(
-          NewsDetailMessage(
-            saved ? NewsDetailMessageType.saved : NewsDetailMessageType.removed,
-          ),
-        );
-      },
-    );
-    _notify();
-  }
+  Future<void> toggleSave() => _toggleOptimistic<bool>(
+    busy: _isSaving,
+    setBusy: (busy) => _isSaving = busy,
+    optimistic: (detail) => detail.copyWith(isSaved: !detail.isSaved),
+    request: () => _toggleSave(newsId),
+    revert: (detail, before) => detail.copyWith(isSaved: before.isSaved),
+    apply: (detail, saved) => detail.copyWith(isSaved: saved),
+    onApplied: (saved) => _emit(
+      NewsDetailMessage(
+        saved ? NewsDetailMessageType.saved : NewsDetailMessageType.removed,
+      ),
+    ),
+    failedType: NewsDetailMessageType.saveFailed,
+  );
 
   /// Curte ou descurte na hora (±1) e depois mostra o que o servidor
   /// devolveu; em falha, volta e avisa; 404 vira "não encontrada", como no
   /// salvar. Só a página com conta chama (`requireAccount`).
-  Future<void> toggleLike() async {
+  Future<void> toggleLike() => _toggleOptimistic<LikeResultEntity>(
+    busy: _isLiking,
+    setBusy: (busy) => _isLiking = busy,
+    optimistic: (detail) => detail.copyWith(
+      isLiked: !detail.isLiked,
+      likesCount: detail.isLiked
+          ? (detail.likesCount - 1).clamp(0, detail.likesCount)
+          : detail.likesCount + 1,
+    ),
+    request: () => _toggleLike(newsId),
+    revert: (detail, before) =>
+        detail.copyWith(isLiked: before.isLiked, likesCount: before.likesCount),
+    apply: (detail, like) =>
+        detail.copyWith(isLiked: like.liked, likesCount: like.likesCount),
+    failedType: NewsDetailMessageType.likeFailed,
+  );
+
+  /// Esqueleto comum de salvar e curtir: muda na hora ([optimistic]), trava
+  /// novos toques com [setBusy], pede e então aplica a resposta ([apply])
+  /// ou volta ([revert]) e avisa com [failedType]; 404 vira "não
+  /// encontrada".
+  Future<void> _toggleOptimistic<T>({
+    required bool busy,
+    required void Function(bool busy) setBusy,
+    required NewsDetailEntity Function(NewsDetailEntity detail) optimistic,
+    required Future<Either<Failure, T>> Function() request,
+    required NewsDetailEntity Function(
+      NewsDetailEntity detail,
+      NewsDetailEntity before,
+    )
+    revert,
+    required NewsDetailEntity Function(NewsDetailEntity detail, T value) apply,
+    required NewsDetailMessageType failedType,
+    void Function(T value)? onApplied,
+  }) async {
     final NewsDetailEntity? before = _detail;
     if (before == null ||
         _status != NewsDetailStatus.loaded ||
-        _isLiking ||
+        busy ||
         _disposed) {
       return;
     }
-    _isLiking = true;
-    _detail = before.copyWith(
-      isLiked: !before.isLiked,
-      likesCount: before.isLiked
-          ? (before.likesCount - 1).clamp(0, before.likesCount)
-          : before.likesCount + 1,
-    );
+    setBusy(true);
+    _detail = optimistic(before);
     _notify();
 
-    final Either<Failure, LikeResultEntity> result = await _guarded(
-      () => _toggleLike(newsId),
-    );
-    _isLiking = false;
+    final Either<Failure, T> result = await _guarded(request);
+    setBusy(false);
     if (_disposed) return;
     result.fold(
       (failure) {
-        _detail = _detail?.copyWith(
-          isLiked: before.isLiked,
-          likesCount: before.likesCount,
-        );
+        if (_detail case final detail?) _detail = revert(detail, before);
         if (failure is NewsNotFoundFailure) {
           _status = NewsDetailStatus.notFound;
           _emit(const NewsDetailMessage(NewsDetailMessageType.notFound));
         } else {
-          _emit(
-            NewsDetailMessage(
-              NewsDetailMessageType.likeFailed,
-              failure.message,
-            ),
-          );
+          _emit(NewsDetailMessage(failedType, failure.message));
         }
       },
-      (like) => _detail = _detail?.copyWith(
-        isLiked: like.liked,
-        likesCount: like.likesCount,
-      ),
+      (value) {
+        if (_detail case final detail?) _detail = apply(detail, value);
+        onApplied?.call(value);
+      },
     );
     _notify();
   }

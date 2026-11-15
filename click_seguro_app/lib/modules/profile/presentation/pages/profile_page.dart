@@ -289,61 +289,72 @@ class _Stats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppPalette colors = context.colors;
     return switch (state) {
-      AreaLoading() => Padding(
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: Center(child: CircularProgressIndicator(color: colors.primary)),
+      // Tentando de novo: os números em esqueleto, lidos como "Carregando".
+      AreaLoading() => SafeSkeleton(
+        enabled: true,
+        child: _tiles(context, _placeholder),
       ),
       AreaFailed() => AreaNotice(
         message: AppStrings.profileStatsFailed.tr(),
         onRetry: onRetry,
       ),
-      AreaLoaded(:final value) => IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final (index, stat) in [
-              (
-                LucideIcons.bookOpenCheck,
-                colors.secondary,
-                value.read,
-                AppStrings.profileStatRead,
-                AppStrings.profileStatReadSemantic,
-                '/news/read',
-              ),
-              (
-                LucideIcons.bookmark,
-                colors.warning,
-                value.saved,
-                AppStrings.profileStatSaved,
-                AppStrings.profileStatSavedSemantic,
-                '/news/saved',
-              ),
-              (
-                LucideIcons.heart,
-                colors.primary,
-                value.liked,
-                AppStrings.profileStatLiked,
-                AppStrings.profileStatLikedSemantic,
-                '/news/liked',
-              ),
-            ].indexed) ...[
-              if (index > 0) const SizedBox(width: AppSpacing.s3),
-              Expanded(
-                child: StatTile(
-                  icon: stat.$1,
-                  color: stat.$2,
-                  count: stat.$3,
-                  label: stat.$4.tr(),
-                  semanticLabel: stat.$5.tr(args: ['${stat.$3}']),
-                  onTap: () => open(stat.$6),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+      AreaLoaded(:final value) => _tiles(context, value),
     };
+  }
+
+  static const NewsCountsEntity _placeholder = NewsCountsEntity(
+    read: 0,
+    saved: 0,
+    liked: 0,
+  );
+
+  Widget _tiles(BuildContext context, NewsCountsEntity value) {
+    final AppPalette colors = context.colors;
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (index, stat) in [
+            (
+              LucideIcons.bookOpenCheck,
+              colors.secondary,
+              value.read,
+              AppStrings.profileStatRead,
+              AppStrings.profileStatReadSemantic,
+              '/news/read',
+            ),
+            (
+              LucideIcons.bookmark,
+              colors.warning,
+              value.saved,
+              AppStrings.profileStatSaved,
+              AppStrings.profileStatSavedSemantic,
+              '/news/saved',
+            ),
+            (
+              LucideIcons.heart,
+              colors.primary,
+              value.liked,
+              AppStrings.profileStatLiked,
+              AppStrings.profileStatLikedSemantic,
+              '/news/liked',
+            ),
+          ].indexed) ...[
+            if (index > 0) const SizedBox(width: AppSpacing.s3),
+            Expanded(
+              child: StatTile(
+                icon: stat.$1,
+                color: stat.$2,
+                count: stat.$3,
+                label: stat.$4.tr(),
+                semanticLabel: stat.$5.tr(args: ['${stat.$3}']),
+                onTap: () => open(stat.$6),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

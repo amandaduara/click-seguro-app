@@ -69,7 +69,7 @@ class HelpController extends ChangeNotifier {
   Future<void> refresh() => load();
 
   /// Remove um contato pessoal pela lixeira do cartão (validação da
-  /// usuária, specs/023). Devolve a falha, ou `null` quando removeu.
+  /// usuária, specs/024). Devolve a falha, ou `null` quando removeu.
   Future<Failure?> deleteContact(String id) async {
     if (_deleting.contains(id)) return null;
     _deleting.add(id);
@@ -90,7 +90,7 @@ class HelpController extends ChangeNotifier {
 
   Future<bool> call(ContactEntity contact) => callNumber(contact.phone);
 
-  /// Liga para um número, como os contatos (FR-016 de specs/023: o cartão
+  /// Liga para um número, como os contatos (FR-016 de specs/024: o cartão
   /// "Caiu em um golpe?"). `false` quando não há discador ou ele não abre.
   Future<bool> callNumber(String phone) async {
     return await _launcher.canCall() && await _launcher.call(phone);

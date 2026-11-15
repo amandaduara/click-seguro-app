@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Monta um componente do `core` com o tema do app e as opções de mídia que
-/// os testes do redesign variam (specs/023-redesign-visual).
+/// os testes do redesign variam (specs/024-redesign-visual).
 Future<void> pumpComponent(
   WidgetTester tester,
   Widget child, {

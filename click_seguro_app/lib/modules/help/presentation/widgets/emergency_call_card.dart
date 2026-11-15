@@ -13,7 +13,7 @@ abstract final class EmergencyNumbers {
 }
 
 /// "Caiu em um golpe?" no topo da Central de ajuda (FR-016 de
-/// specs/023-redesign-visual): cartão coral com o botão branco
+/// specs/024-redesign-visual): cartão coral com o botão branco
 /// "Ligar para 190".
 class EmergencyCallCard extends StatelessWidget {
   const EmergencyCallCard({super.key, required this.onCall});
@@ -57,16 +57,16 @@ class EmergencyCallCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s2),
           Text(
             AppStrings.helpEmergencyBody.tr(),
-            style: AppTypography.body.copyWith(
-              fontSize: 16,
-              height: 1.45,
-              color: onCoral,
-            ),
+            style: AppTypography.body.copyWith(height: 1.45, color: onCoral),
           ),
           const SizedBox(height: AppSpacing.s4),
+          // Nó próprio, com o toque: o `excludeSemantics` tira a ação do
+          // InkWell, e sem `container` o botão se juntaria ao cabeçalho.
           Semantics(
+            container: true,
             button: true,
             label: AppStrings.helpEmergencyCall.tr(),
+            onTap: onCall,
             excludeSemantics: true,
             child: Material(
               color: colors.card,
@@ -89,7 +89,7 @@ class EmergencyCallCard extends StatelessWidget {
                           size: 22,
                           color: colors.primary,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: AppSpacing.s2),
                         Flexible(
                           child: Text(
                             AppStrings.helpEmergencyCall.tr(),

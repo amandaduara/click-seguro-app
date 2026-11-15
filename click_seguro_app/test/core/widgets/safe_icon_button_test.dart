@@ -45,21 +45,18 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('sobre imagem: branco com a sombra única, tamanho 56', (
-    tester,
-  ) async {
+  testWidgets('sobre imagem: branco com a sombra única', (tester) async {
     await pumpComponent(
       tester,
       SafeIconButton(
         icon: LucideIcons.share2,
         semanticLabel: 'Compartilhar',
         onImage: true,
-        size: 56,
         onPressed: () {},
       ),
     );
 
-    expect(tester.getSize(find.byType(SafeIconButton)), const Size(56, 56));
+    expect(tester.getSize(find.byType(SafeIconButton)), const Size(48, 48));
     expect(box(tester).color, AppPalette.light.card);
     expect(box(tester).boxShadow, AppPalette.light.shadow);
   });

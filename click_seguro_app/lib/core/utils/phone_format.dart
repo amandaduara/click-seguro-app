@@ -3,13 +3,24 @@ import 'package:flutter/services.dart';
 const String _countryCode = '55';
 const int _maxNationalDigits = 11;
 
+/// Máximo de dígitos de um número internacional (E.164).
+const int _maxInternationalDigits = 15;
+
 /// "+5511912345678" (ou só dígitos) → "(11) 91234-5678"; incompleto fica
 /// parcial: "(11) 9123".
 ///
 /// Com [shortCodes] (contatos de confiança): até 3 dígitos fica como está
-/// (190, 192) e 0800 vai em blocos ("0800 728 4567").
+/// (190, 192), 0800 vai em blocos ("0800 728 4567") e número com + de outro
+/// país fica com o + e sem a máscara do Brasil ("+14155550123", até 15
+/// dígitos), como a validação de contato aceita; "+55" segue a máscara.
 String formatPhone(String phone, {bool shortCodes = false}) {
   String digits = phone.replaceAll(RegExp(r'\D'), '');
+  if (shortCodes &&
+      phone.trimLeft().startsWith('+') &&
+      !digits.startsWith(_countryCode)) {
+    final int length = digits.length.clamp(0, _maxInternationalDigits);
+    return '+${digits.substring(0, length)}';
+  }
   if (digits.length > _maxNationalDigits && digits.startsWith(_countryCode)) {
     digits = digits.substring(_countryCode.length);
   }

@@ -1,13 +1,15 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_progress.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
-/// "Pergunta X de Y" e uma marca por pergunta: respondida com check, atual
-/// destacada (FR-006). Lido como um item só pelo leitor de tela.
+/// "Pergunta X de Y" e um segmento por pergunta ([SafeSegmentedProgress]):
+/// respondidas em coral, a atual destacada (FR-006). Lido como um item só
+/// pelo leitor de tela.
 class LessonProgressIndicator extends StatelessWidget {
   const LessonProgressIndicator({
     super.key,
@@ -32,27 +34,9 @@ class LessonProgressIndicator extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Um segmento por pergunta: respondidas em coral, a atual em coral
-          // claro, as outras em creme (redesign 2.0).
-          Row(
-            children: [
-              for (final (index, lesson) in lessons.indexed) ...[
-                if (index > 0) const SizedBox(width: 6),
-                Expanded(
-                  child: Container(
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: lesson.isCompleted
-                          ? colors.primary
-                          : index == currentIndex
-                          ? colors.primary.withValues(alpha: 0.35)
-                          : colors.surfaceStrong,
-                      borderRadius: AppSpacing.radiusFull,
-                    ),
-                  ),
-                ),
-              ],
-            ],
+          SafeSegmentedProgress(
+            completed: [for (final lesson in lessons) lesson.isCompleted],
+            current: currentIndex,
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(

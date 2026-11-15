@@ -41,12 +41,6 @@ void main() {
       expect(find.bySemanticsLabel('Carregando'), findsOneWidget);
       semantics.dispose();
     });
-
-    testWidgets('texto opcional com 16 px', (tester) async {
-      await pump(tester, const SafeLoadingState(message: 'Buscando notícias'));
-
-      expect(fontSizeOf(tester, 'Buscando notícias'), greaterThanOrEqualTo(16));
-    });
   });
 
   group('SafeErrorState', () {
@@ -109,7 +103,7 @@ void main() {
     });
 
     // O mesmo tamanho das listas do perfil (validação da usuária,
-    // specs/023): 16 em seminegrito e a dica mais clara embaixo.
+    // specs/024): 16 em seminegrito e a dica mais clara embaixo.
     testWidgets('mensagem em 16 seminegrito e dica opcional', (tester) async {
       await pump(
         tester,
@@ -170,10 +164,7 @@ void main() {
       ListView(
         children: [
           const SafeOfflineBanner(),
-          const SizedBox(
-            height: 200,
-            child: SafeLoadingState(message: 'Buscando'),
-          ),
+          const SizedBox(height: 200, child: SafeLoadingState()),
           SizedBox(
             height: 300,
             child: SafeErrorState(message: 'Falhou', onRetry: () {}),

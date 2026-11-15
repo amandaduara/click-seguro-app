@@ -6,6 +6,7 @@ import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -135,7 +136,7 @@ class NewsDetailCoverBar extends StatelessWidget {
     }
     final Widget cover = NewsCover(
       imageUrl: item.imageUrl,
-      themeText: [...item.categories.map((c) => c.name), item.title].join(' '),
+      themeText: item.illustrationText,
       height: height,
       radius: 0,
     );

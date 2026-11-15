@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/profile/data/models/profile_model.dart';
 import 'package:click_seguro_app/modules/profile/data/repositories/profile_repository_impl.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/profile_update.dart';
@@ -7,15 +8,29 @@ import 'package:click_seguro_app/modules/profile/domain/failures/profile_failure
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 
+import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../fakes/fake_profile_remote_data_source.dart';
 
 void main() {
   late FakeProfileRemoteDataSource remote;
+  late UserSessionService session;
   late ProfileRepositoryImpl repository;
 
-  setUp(() {
+  Future<void> logIn() => session.saveSession(
+    accessToken: 'token',
+    refreshToken: 'refresh',
+    email: 'maria@exemplo.com',
+  );
+
+  setUp(() async {
     remote = FakeProfileRemoteDataSource();
-    repository = ProfileRepositoryImpl(remote, clock: () => 42);
+    session = UserSessionService(FakeSecureStorageService());
+    await logIn();
+    repository = ProfileRepositoryImpl(
+      remote,
+      sessionStatus: session.sessionStatus,
+      clock: () => 42,
+    );
   });
 
   ApiException apiError(
@@ -163,6 +178,27 @@ void main() {
 
       await repository.removeAvatar();
       expect(repository.lastProfile!.avatarUrl, isNull);
+    });
+
+    test('sair da conta apaga o perfil guardado e a versão da foto', () async {
+      await repository.uploadAvatar('/tmp/foto.png');
+      await repository.getProfile();
+      expect(repository.lastProfile, isNotNull);
+
+      await session.logout();
+
+      expect(repository.lastProfile, isNull);
+      await logIn();
+      await repository.getProfile();
+      expect(repository.lastProfile!.avatarUrl, url);
+    });
+
+    test('sessão expirada também apaga o perfil guardado', () async {
+      await repository.getProfile();
+
+      await session.expire();
+
+      expect(repository.lastProfile, isNull);
     });
 
     test('busca que falha mantém o último perfil', () async {

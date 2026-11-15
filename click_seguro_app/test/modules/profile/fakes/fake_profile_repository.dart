@@ -112,15 +112,21 @@ class FakeProfileRepository implements ProfileRepository {
     return _answer(updateResults, updateGate);
   }
 
+  /// Como no repository real: a foto nova entra no perfil guardado.
   @override
-  Future<Either<Failure, String>> uploadAvatar(String filePath) {
+  Future<Either<Failure, String>> uploadAvatar(String filePath) async {
     uploadCalls.add(filePath);
-    return _answer(uploadResults, uploadGate);
+    final result = await _answer(uploadResults, uploadGate);
+    result.map((url) => lastProfile = lastProfile?.withAvatarUrl(url));
+    return result;
   }
 
+  /// Como no repository real: a foto sai do perfil guardado.
   @override
-  Future<Either<Failure, Unit>> removeAvatar() {
+  Future<Either<Failure, Unit>> removeAvatar() async {
     removeCalls++;
-    return _answer(removeResults, removeGate);
+    final result = await _answer(removeResults, removeGate);
+    if (result.isRight()) lastProfile = lastProfile?.withAvatarUrl(null);
+    return result;
   }
 }

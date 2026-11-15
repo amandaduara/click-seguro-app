@@ -12,7 +12,7 @@ import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Um alerta na lista, no estilo dos cartões do Início (validação da
-/// usuária, specs/023): capa da notícia à esquerda e, ao lado, "Novo" escrito
+/// usuária, specs/024): capa da notícia à esquerda e, ao lado, "Novo" escrito
 /// (além da cor) quando não lido, título e "fonte · hora/data". Cartão
 /// inteiro tocável, bem acima de 48 dp.
 class AlertTile extends StatelessWidget {
@@ -25,6 +25,9 @@ class AlertTile extends StatelessWidget {
 
   /// Lado da capa.
   static const double _thumb = 88;
+
+  /// Espessura do contorno coral de um alerta não lido.
+  static const double _unreadOutline = 2;
 
   final AlertEntity alert;
   final DateTime now;
@@ -43,8 +46,13 @@ class AlertTile extends StatelessWidget {
         // Não lido: contorno coral em volta do cartão.
         decoration: unread
             ? BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: colors.primary, width: 2),
+                // O canto do cartão mais a espessura do contorno.
+                borderRadius:
+                    AppSpacing.radiusLg + BorderRadius.circular(_unreadOutline),
+                border: Border.all(
+                  color: colors.primary,
+                  width: _unreadOutline,
+                ),
               )
             : null,
         child: SafeCard(

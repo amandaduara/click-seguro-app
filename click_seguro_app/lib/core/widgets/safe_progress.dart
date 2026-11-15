@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
 enum SafeProgressTone { primary, success }
@@ -105,8 +106,7 @@ class SafeProgressRing extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: Text(
                 label,
-                style: TextStyle(
-                  fontSize: 22,
+                style: AppTypography.title2.copyWith(
                   fontWeight: FontWeight.w800,
                   color: colors.textForeground,
                 ),
@@ -156,17 +156,16 @@ class _RingPainter extends CustomPainter {
 }
 
 /// Um segmento por pergunta: respondidas em coral, a atual em coral claro e
-/// as próximas em creme (pergunta da lição).
+/// as próximas em creme (pergunta da lição). [completed] diz, na ordem, quais
+/// já foram respondidas.
 class SafeSegmentedProgress extends StatelessWidget {
   const SafeSegmentedProgress({
     super.key,
-    required this.total,
-    required this.done,
+    required this.completed,
     this.current,
   });
 
-  final int total;
-  final int done;
+  final List<bool> completed;
   final int? current;
 
   @override
@@ -175,13 +174,13 @@ class SafeSegmentedProgress extends StatelessWidget {
     return ExcludeSemantics(
       child: Row(
         children: [
-          for (int i = 0; i < total; i++) ...[
+          for (final (i, done) in completed.indexed) ...[
             if (i > 0) const SizedBox(width: 6),
             Expanded(
               child: Container(
                 height: 10,
                 decoration: BoxDecoration(
-                  color: i < done
+                  color: done
                       ? colors.primary
                       : i == current
                       ? colors.primary.withValues(alpha: 0.35)

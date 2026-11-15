@@ -85,7 +85,10 @@ void main() {
         tester,
         const SizedBox(
           width: 300,
-          child: SafeSegmentedProgress(total: 5, done: 2, current: 2),
+          child: SafeSegmentedProgress(
+            completed: [true, true, false, false, false],
+            current: 2,
+          ),
         ),
       );
 

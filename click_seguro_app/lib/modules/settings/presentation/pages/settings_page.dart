@@ -23,7 +23,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Configurações (B8, specs/013-configuracoes) no estilo do redesign 2.0
-/// (specs/023): voltar redondo, título grande e seções em cartões padrão. Com
+/// (specs/024): voltar redondo, título grande e seções em cartões padrão. Com
 /// conta, a lista inteira; sem conta, só o que não precisa de conta (R6 de
 /// specs/014-acessibilidade).
 class SettingsPage extends StatelessWidget {
@@ -126,7 +126,7 @@ class _AccountSettings extends StatelessWidget {
               saving: controller.isSavingAlerts,
               // A falha fica na própria linha (aviso e ícone de tentar de
               // novo), sem SnackBar.
-              loadFailed: controller.account is AccountFailed,
+              loadFailed: controller.alertsLoadFailed,
               saveFailed: controller.alertsSaveFailed,
               retrying: controller.isRetryingAlerts,
               onChanged: controller.setReceiveAlerts,

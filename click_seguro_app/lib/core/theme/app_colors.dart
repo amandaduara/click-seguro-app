@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Cores do tema normal do redesign 2.0 (specs/023-redesign-visual,
+/// Cores do tema normal do redesign 2.0 (specs/024-redesign-visual,
 /// data-model). Os widgets leem por `context.colors` ([AppPalette]), para a
 /// troca pelo alto contraste chegar a todas as telas.
 abstract class AppColors {

@@ -85,6 +85,9 @@ class _ListenButtonState extends State<ListenButton>
       child: Semantics(
         button: true,
         label: label,
+        // Sem isto o excludeSemantics tira a ação do InkWell e o leitor de
+        // tela não consegue tocar no botão.
+        onTap: widget.onPressed,
         excludeSemantics: true,
         child: AnimatedBuilder(
           animation: _pulse,

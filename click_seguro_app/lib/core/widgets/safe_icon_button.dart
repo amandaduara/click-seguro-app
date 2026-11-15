@@ -10,17 +10,16 @@ class SafeIconButton extends StatelessWidget {
     required this.icon,
     required this.semanticLabel,
     this.onPressed,
-    this.size = 48,
     this.onImage = false,
   });
 
   final IconData icon;
   final String semanticLabel;
   final VoidCallback? onPressed;
-
-  /// 48 (padrão) ou 56; nunca menos que 48 (RNF-003).
-  final double size;
   final bool onImage;
+
+  /// Alvo de toque mínimo (RNF-003).
+  static const double _size = 48;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +34,7 @@ class SafeIconButton extends StatelessWidget {
       onTap: onPressed,
       excludeSemantics: true,
       child: SizedBox.square(
-        dimension: size,
+        dimension: _size,
         child: Material(
           type: MaterialType.transparency,
           child: Ink(
@@ -48,11 +47,7 @@ class SafeIconButton extends StatelessWidget {
             child: InkWell(
               customBorder: const CircleBorder(),
               onTap: onPressed,
-              child: Icon(
-                icon,
-                size: size >= 56 ? 26 : 24,
-                color: colors.textForeground,
-              ),
+              child: Icon(icon, size: 24, color: colors.textForeground),
             ),
           ),
         ),

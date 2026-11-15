@@ -44,7 +44,7 @@ class SafeStateLayout extends StatelessWidget {
                 SafeIllustration(illustration, height: art),
                 const SizedBox(height: AppSpacing.s5),
                 // Mesmo tamanho em todo estado vazio ou de erro do app
-                // (validação da usuária, specs/023): o texto da tela, em
+                // (validação da usuária, specs/024): o texto da tela, em
                 // seminegrito, e a dica mais clara embaixo.
                 Text(
                   message,

@@ -9,6 +9,7 @@ import 'package:click_seguro_app/modules/settings/presentation/pages/settings_pa
 import 'package:click_seguro_app/modules/settings/presentation/widgets/alerts_switch_tile.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
@@ -104,7 +105,7 @@ void main() {
   }
 
   // O cartão "Editar perfil" saiu (abria a mesma tela de "Dados
-  // pessoais"), a pedido da usuária (specs/023).
+  // pessoais"), a pedido da usuária (specs/024).
   testWidgets('sem o cartão "Editar perfil"; "Dados pessoais" abre a edição '
       'e volta às Configurações', (tester) async {
     await open(tester);
@@ -446,7 +447,7 @@ void main() {
     });
 
     // Carregamento no lugar da chave enquanto salva (validação da usuária,
-    // specs/023): a pessoa vê que a escolha está indo.
+    // specs/024): a pessoa vê que a escolha está indo.
     testWidgets('salvando: carregamento no lugar da chave', (tester) async {
       await open(tester);
       repository.alertsGate = Completer<void>();
@@ -491,6 +492,47 @@ void main() {
         findsOneWidget,
       );
       expect(find.bySemanticsLabel(RegExp('Tentar de novo')), findsOneWidget);
+      semantics.dispose();
+    });
+
+    testWidgets('leitor de tela: a linha é um só botão "Tentar de novo"', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      repository.alertsResults
+        ..[0] = const Left(ConnectionFailure())
+        ..add(const Right(unit));
+      await open(tester);
+      await tester.tap(alertsSwitch());
+      await tester.pumpAndSettle();
+
+      final Finder row = find.bySemanticsLabel(RegExp('Tentar de novo'));
+      expect(row, findsOneWidget);
+      final SemanticsNode node = tester.getSemantics(row);
+      expect(
+        node,
+        isSemantics(
+          label:
+              'Alertas de notícias novas\n'
+              'Não foi possível mudar os alertas. Tente de novo.\n'
+              'Tentar de novo',
+          isButton: true,
+          hasTapAction: true,
+        ),
+      );
+      var childActions = 0;
+      node.visitChildren((child) {
+        if (child.getSemanticsData().hasAction(SemanticsAction.tap)) {
+          childActions++;
+        }
+        return true;
+      });
+      expect(childActions, 0);
+
+      node.owner!.performAction(node.id, SemanticsAction.tap);
+      await tester.pumpAndSettle();
+
+      expect(repository.alertsCalls, [false, false]);
       semantics.dispose();
     });
 

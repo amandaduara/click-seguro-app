@@ -10,7 +10,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// ([loadFailed]) ou salvar a escolha falhou ([saveFailed]), a chave dá lugar
 /// ao ícone vermelho de tentar de novo. Enquanto salva ([saving]), tenta de
 /// novo ([retrying]) ou a conta carrega, um carregamento ocupa o lugar da
-/// chave (validação da usuária, specs/023).
+/// chave (validação da usuária, specs/024).
 class AlertsSwitchTile extends StatelessWidget {
   const AlertsSwitchTile({
     super.key,
@@ -74,7 +74,9 @@ class AlertsSwitchTile extends StatelessWidget {
   }
 }
 
-/// Ícone vermelho de reiniciar, com alvo de 48 dp.
+/// Ícone vermelho de reiniciar, com alvo de 48 dp. A ação para o leitor de
+/// tela é a da linha (botão "…, Tentar de novo"): aqui só o rótulo entra na
+/// leitura, sem uma segunda ação.
 class _RetryButton extends StatelessWidget {
   const _RetryButton({required this.onPressed});
 
@@ -83,22 +85,21 @@ class _RetryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      button: true,
       label: AppStrings.settingsAlertsRetry.tr(),
-      onTap: onPressed,
-      excludeSemantics: true,
-      child: SizedBox.square(
-        key: AlertsSwitchTile.retryKey,
-        dimension: 48,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onPressed,
-            child: Icon(
-              LucideIcons.rotateCcw,
-              size: 26,
-              color: context.colors.destructive,
+      child: ExcludeSemantics(
+        child: SizedBox.square(
+          key: AlertsSwitchTile.retryKey,
+          dimension: 48,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onPressed,
+              child: Icon(
+                LucideIcons.rotateCcw,
+                size: 26,
+                color: context.colors.destructive,
+              ),
             ),
           ),
         ),

@@ -19,7 +19,7 @@ void main() {
     });
   });
 
-  // Contatos de confiança (validação da usuária, specs/023): números curtos
+  // Contatos de confiança (validação da usuária, specs/024): números curtos
   // de emergência e 0800 também valem.
   group('formatPhone com números curtos (contatos)', () {
     test('até 3 dígitos fica como está: 190, 192', () {
@@ -45,6 +45,38 @@ void main() {
     });
   });
 
+  // A validação de contato aceita internacional (+ e 8 a 15 dígitos): o +
+  // fica e o número não recebe a máscara do Brasil.
+  group('formatPhone internacional (contatos)', () {
+    test('contato salvo +14155550123 aparece inteiro, com o +', () {
+      expect(formatPhone('+14155550123', shortCodes: true), '+14155550123');
+    });
+
+    test('limite de 15 dígitos', () {
+      expect(
+        formatPhone('+1234567890123456789', shortCodes: true),
+        '+123456789012345',
+      );
+    });
+
+    test('+55 continua com a máscara do Brasil', () {
+      expect(
+        formatPhone('+5511912345678', shortCodes: true),
+        '(11) 91234-5678',
+      );
+    });
+
+    test('só o +, ou + com poucos dígitos, fica como está', () {
+      expect(formatPhone('+', shortCodes: true), '+');
+      expect(formatPhone('+1', shortCodes: true), '+1');
+      expect(formatPhone('+5', shortCodes: true), '+5');
+    });
+
+    test('sem números curtos (perfil), o + continua sumindo', () {
+      expect(formatPhone('+14155550123'), '(14) 15555-0123');
+    });
+  });
+
   group('PhoneInputFormatter', () {
     test('formata enquanto digita e põe o cursor no fim', () {
       const formatter = PhoneInputFormatter(shortCodes: true);
@@ -56,6 +88,12 @@ void main() {
       expect(value.text, '(11) 91234-5678');
       expect(value.selection.baseOffset, value.text.length);
       expect(_type(formatter, '190'), '190');
+    });
+
+    test('digitar +14155550123 mantém o + e todos os dígitos', () {
+      const formatter = PhoneInputFormatter(shortCodes: true);
+      expect(_type(formatter, '+14155550123'), '+14155550123');
+      expect(_type(formatter, '+1 415-555'), '+1415555');
     });
   });
 }

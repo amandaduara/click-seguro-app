@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -52,6 +53,21 @@ void main() {
       tester.getSize(find.byType(ListenButton)).height,
       greaterThanOrEqualTo(48),
     );
+  });
+
+  // Com excludeSemantics, a ação do InkWell some: o próprio Semantics tem
+  // que levar o toque, senão o leitor de tela não consegue ativar.
+  testWidgets('o leitor de tela também toca no botão', (tester) async {
+    final SemanticsHandle handle = tester.ensureSemantics();
+    await pump(tester, isSpeaking: false);
+
+    final SemanticsNode node = tester.getSemantics(
+      find.bySemanticsLabel('Ouvir'),
+    );
+    expect(node, isSemantics(isButton: true, hasTapAction: true));
+    node.owner!.performAction(node.id, SemanticsAction.tap);
+    expect(taps, 1);
+    handle.dispose();
   });
 
   testWidgets('pílula do tamanho do texto, mesmo numa coluna esticada', (

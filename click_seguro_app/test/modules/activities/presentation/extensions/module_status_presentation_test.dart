@@ -1,4 +1,3 @@
-import 'package:click_seguro_app/core/widgets/safe_badge.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_status.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/module_status_presentation.dart';
 import 'package:flutter/material.dart';
@@ -30,16 +29,7 @@ void main() {
     );
   });
 
-  test('tom do selo e ícone', () {
-    expect(
-      [for (final status in ModuleStatus.values) status.badgeTone],
-      [
-        SafeBadgeTone.neutral,
-        SafeBadgeTone.primary,
-        SafeBadgeTone.success,
-        SafeBadgeTone.neutral,
-      ],
-    );
+  test('ícone do selo', () {
     expect(
       [for (final status in ModuleStatus.values) status.icon],
       [

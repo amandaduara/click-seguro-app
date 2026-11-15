@@ -125,7 +125,6 @@ class _ReelsPageState extends State<ReelsPage> {
         extra: NewsDetailPreview(
           item: reel.news,
           actions: NewsActionsPreview(
-            newsId: reel.id,
             isLiked: reel.isLiked,
             likesCount: reel.likesCount,
             isSaved: _isAuthenticated && reel.isSaved,

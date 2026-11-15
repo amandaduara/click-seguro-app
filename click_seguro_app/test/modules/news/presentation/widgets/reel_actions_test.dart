@@ -60,6 +60,28 @@ void main() {
     handle.dispose();
   });
 
+  // O excludeSemantics não pode tirar a ação: o leitor de tela toca.
+  testWidgets('o leitor de tela toca em cada botão', (tester) async {
+    final handle = tester.ensureSemantics();
+    var shares = 0;
+    await pump(tester, onShare: () => shares++);
+
+    for (final key in [
+      ReelActions.likeKey,
+      ReelActions.saveKey,
+      ReelActions.shareKey,
+    ]) {
+      expect(
+        tester.getSemantics(find.byKey(key)),
+        isSemantics(isButton: true, hasTapAction: true),
+        reason: '$key',
+      );
+    }
+    tester.semantics.tap(find.semantics.byLabel('Compartilhar'));
+    expect(shares, 1);
+    handle.dispose();
+  });
+
   testWidgets('com as tags, cada botão é origem de um Hero', (tester) async {
     await pump(tester, heroTags: tags);
 

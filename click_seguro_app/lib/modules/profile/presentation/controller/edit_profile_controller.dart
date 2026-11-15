@@ -224,15 +224,13 @@ class EditProfileController extends ChangeNotifier {
     return outcome;
   }
 
-  /// Remove a foto; as iniciais aparecem na hora. `null` = removida. Antes
-  /// de terminar, busca o perfil de novo para o Perfil já voltar sem foto.
+  /// Remove a foto; as iniciais aparecem na hora. `null` = removida. O
+  /// repositório já tira a foto do perfil guardado: o Perfil volta sem ela.
   Future<Failure?> removePhoto() async {
     if (_photoState != PhotoState.idle) return null;
     _photoState = PhotoState.removing;
     _notify();
     final result = await _removeAvatar();
-    if (_disposed) return null;
-    if (result.isRight()) await _getProfile();
     if (_disposed) return null;
     _photoState = PhotoState.idle;
     final Failure? failure = result.fold((failure) => failure, (_) {
@@ -246,6 +244,10 @@ class EditProfileController extends ChangeNotifier {
   /// Busca o perfil (o Perfil passa a ter a foto nova) e, junto, pré-carrega
   /// [uploadedUrl]; se a busca trouxer outro endereço, pré-carrega também.
   /// Falhas não desfazem a troca: o Perfil busca de novo ao voltar.
+  ///
+  /// O repositório já guarda [uploadedUrl] no perfil, mas a busca continua:
+  /// o servidor pode devolver a foto em outro endereço (ex.: outra versão),
+  /// e é esse que o Perfil mostra; sem pré-carregá-lo, a foto piscaria.
   Future<void> _refreshForProfile(
     String uploadedUrl,
     PrepareAvatarImage? prepareImage,

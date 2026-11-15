@@ -27,6 +27,10 @@ class SafeChip extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
+      enabled: onTap != null,
+      // Sem isto o excludeSemantics tira a ação do InkWell e o leitor de
+      // tela não consegue tocar no chip.
+      onTap: onTap,
       excludeSemantics: true,
       child: Material(
         type: MaterialType.transparency,

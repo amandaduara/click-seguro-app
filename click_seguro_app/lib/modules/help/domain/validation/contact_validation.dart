@@ -6,12 +6,20 @@ enum ContactValidationError { name, phone }
 class ContactValidation {
   const ContactValidation._();
 
-  static ContactValidationError? validateName(String name) =>
-      name.trim().isEmpty ? ContactValidationError.name : null;
+  /// Tamanho máximo do nome do contato.
+  static const int nameMaxLength = 60;
+
+  /// Nome obrigatório e com até [nameMaxLength] caracteres.
+  static ContactValidationError? validateName(String name) {
+    final trimmed = name.trim();
+    return trimmed.isEmpty || trimmed.length > nameMaxLength
+        ? ContactValidationError.name
+        : null;
+  }
 
   /// Retorna telefone sem máscara ou null se a entrada não for aceita.
   ///
-  /// Número completo (validação da usuária, specs/023): curto de 3 dígitos
+  /// Número completo (validação da usuária, specs/024): curto de 3 dígitos
   /// (190), 0800 com 11 dígitos, fixo ou celular com DDD (10 ou 11 dígitos)
   /// ou internacional com `+` (8 a 15 dígitos).
   static String? normalizePhone(String phone) {

@@ -49,8 +49,7 @@ Future<LanguageChoice?> showLanguageSheet(
                     ),
                     title: Text(
                       choice.label,
-                      style: TextStyle(
-                        fontSize: AppTypography.body.fontSize,
+                      style: AppTypography.body.copyWith(
                         fontWeight: choice == current
                             ? FontWeight.w700
                             : FontWeight.w500,

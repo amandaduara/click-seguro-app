@@ -36,7 +36,8 @@ class CategoryFilterBar extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s2),
         itemBuilder: (_, index) {
           final (label, slug) = chips[index];
-          return _FilterChip(
+          // Chip do redesign 2.0 (FR-007).
+          return SafeChip(
             label: label,
             selected: slug == selectedSlug,
             onTap: () => onSelected(slug),
@@ -45,21 +46,4 @@ class CategoryFilterBar extends StatelessWidget {
       ),
     );
   }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  // Chip do redesign 2.0 (FR-007).
-  @override
-  Widget build(BuildContext context) =>
-      SafeChip(label: label, selected: selected, onTap: onTap);
 }

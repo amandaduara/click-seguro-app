@@ -5,6 +5,7 @@ import 'package:click_seguro_app/modules/profile/domain/entities/activity_progre
 import 'package:click_seguro_app/modules/profile/domain/entities/news_counts_entity.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/get_activity_progress_usecase.dart';
+import 'package:click_seguro_app/modules/profile/domain/usecases/get_cached_profile_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/get_news_counts_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/get_profile_usecase.dart';
 import 'package:click_seguro_app/modules/profile/presentation/controller/area_state.dart';
@@ -17,13 +18,16 @@ import 'package:fpdart/fpdart.dart';
 class ProfileController extends ChangeNotifier {
   ProfileController({
     required GetProfileUseCase getProfile,
+    required GetCachedProfileUseCase getCachedProfile,
     required GetNewsCountsUseCase getNewsCounts,
     required GetActivityProgressUseCase getActivityProgress,
   }) : _getProfile = getProfile,
+       _getCachedProfile = getCachedProfile,
        _getNewsCounts = getNewsCounts,
        _getActivityProgress = getActivityProgress;
 
   final GetProfileUseCase _getProfile;
+  final GetCachedProfileUseCase _getCachedProfile;
   final GetNewsCountsUseCase _getNewsCounts;
   final GetActivityProgressUseCase _getActivityProgress;
 
@@ -74,7 +78,7 @@ class ProfileController extends ChangeNotifier {
   /// carregando; os números mudam no lugar. O perfil que outra tela acabou
   /// de buscar (a foto nova da edição) aparece já, antes da resposta.
   Future<void> refresh() {
-    final ProfileEntity? latest = _getProfile.latest;
+    final ProfileEntity? latest = _getCachedProfile();
     if (_profile != null && latest != null && !identical(latest, _profile)) {
       _profile = latest;
       _notify();

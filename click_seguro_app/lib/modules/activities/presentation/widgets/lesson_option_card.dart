@@ -175,10 +175,8 @@ class _LessonOptionCardState extends State<LessonOptionCard>
                             color: colors.textForeground,
                           ),
                         ),
-                        AnimatedSize(
-                          duration: motion.medium,
-                          curve: AppMotion.standard,
-                          alignment: Alignment.topLeft,
+                        _GrowIn(
+                          motion: motion,
                           child: look.status == null
                               ? const SizedBox(width: double.infinity)
                               : Padding(
@@ -257,4 +255,25 @@ class _LessonOptionCardState extends State<LessonOptionCard>
       ),
     );
   }
+}
+
+/// O texto de status entra crescendo. Com o movimento reduzido, aparece
+/// direto: o `AnimatedSize` com duração zero termina dentro do próprio
+/// layout e quebra a tela ("RenderAnimatedSize was mutated in its own
+/// performLayout").
+class _GrowIn extends StatelessWidget {
+  const _GrowIn({required this.motion, required this.child});
+
+  final AppMotion motion;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => motion.reduced
+      ? child
+      : AnimatedSize(
+          duration: motion.medium,
+          curve: AppMotion.standard,
+          alignment: Alignment.topLeft,
+          child: child,
+        );
 }

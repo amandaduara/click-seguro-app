@@ -38,7 +38,7 @@ class NewsCover extends StatelessWidget {
     final AppPalette colors = context.colors;
     final IllustrationTheme theme = IllustrationTheme.fromText(themeText);
     // No esqueleto (carregando), só o bloco cinza, sem a ilustração
-    // (validação da usuária, specs/023).
+    // (validação da usuária, specs/024).
     final Widget illustration = SafeSkeleton.leaf(
       ColoredBox(
         color: theme.pastel(colors),

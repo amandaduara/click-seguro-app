@@ -100,7 +100,7 @@ class AssistantChatBubble extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         const AssistantAvatar(),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppSpacing.s3),
         Flexible(
           child: DecoratedBox(
             key: const ValueKey('assistant-bubble-assistant'),

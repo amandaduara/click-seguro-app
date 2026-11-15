@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/localized_app.dart';
 
 /// Selos do redesign 2.0: fundo "suave" e texto forte da mesma família, com
-/// contraste AA (FR-001, FR-007; contrato de specs/023-redesign-visual).
+/// contraste AA (FR-001, FR-007; contrato de specs/024-redesign-visual).
 void main() {
   Future<void> pumpBadge(WidgetTester tester, SafeBadgeTone tone) =>
       pumpLocalized(

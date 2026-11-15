@@ -34,7 +34,7 @@ extension AiAnalysisPresentation on AiAnalysisEntity {
 
   /// O que a leitura automática fala: o selo, a explicação e os cuidados,
   /// na ordem do cartão; numa falha, só a mensagem (validação da usuária,
-  /// specs/023).
+  /// specs/024).
   String get spokenText {
     if (status != AiAnalysisStatus.success) return statusMessageKey.tr();
     final String? text = explanation?.trim();

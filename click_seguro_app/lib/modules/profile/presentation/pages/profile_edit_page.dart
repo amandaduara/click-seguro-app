@@ -128,8 +128,9 @@ class _EditView extends StatelessWidget {
   }
 }
 
-/// Voltar da barra desativado (lido como "desativado"); o toque mostra o
-/// aviso do envio.
+/// Voltar da barra desativado durante o envio; o toque mostra o aviso. O
+/// leitor de tela ouve "Voltar, desativado" e o aviso como dica, e o toque
+/// dele também mostra o aviso (uma só ação).
 class _BlockedBackButton extends StatelessWidget {
   const _BlockedBackButton({required this.onTap});
 
@@ -137,13 +138,17 @@ class _BlockedBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
+    return Semantics(
+      button: true,
+      enabled: false,
+      label: MaterialLocalizations.of(context).backButtonTooltip,
+      hint: AppStrings.profilePhotoWaitUpload.tr(),
       onTap: onTap,
-      child: IconButton(
-        onPressed: null,
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        icon: const BackButtonIcon(),
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: const IconButton(onPressed: null, icon: BackButtonIcon()),
       ),
     );
   }

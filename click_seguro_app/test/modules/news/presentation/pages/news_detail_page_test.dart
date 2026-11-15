@@ -252,7 +252,6 @@ void main() {
       final reelPreview = NewsDetailPreview(
         item: newsItem('n1'),
         actions: const NewsActionsPreview(
-          newsId: 'n1',
           isLiked: true,
           likesCount: 7,
           isSaved: true,
@@ -1122,6 +1121,24 @@ void main() {
       expect(launcher.openedUrls, hasLength(1));
       launcher.gate!.complete();
       await tester.pumpAndSettle();
+    });
+
+    // Sem perder a ação no leitor de tela (excludeSemantics sem onTap).
+    testWidgets('"Abrir fonte" pelo leitor de tela: botão com toque', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpPage(tester);
+
+      expect(
+        tester.getSemantics(sourceButton()),
+        isSemantics(label: 'Abrir fonte', isButton: true, hasTapAction: true),
+      );
+      tester.semantics.tap(find.semantics.byLabel('Abrir fonte'));
+      await tester.pumpAndSettle();
+
+      expect(launcher.openedUrls, ['https://fonte.test/n']);
+      handle.dispose();
     });
 
     testWidgets('rótulos e botões de 48 dp', (tester) async {

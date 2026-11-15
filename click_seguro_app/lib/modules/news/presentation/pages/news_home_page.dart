@@ -83,7 +83,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
     return Scaffold(
       body: SafeArea(
         // A saudação e a busca sobem junto com as notícias; os filtros ficam
-        // presos no topo (validação da usuária, specs/023).
+        // presos no topo (validação da usuária, specs/024).
         child: NestedScrollView(
           headerSliverBuilder: (context, _) => [
             SliverToBoxAdapter(
@@ -250,12 +250,10 @@ class _NewsHomePageState extends State<NewsHomePage> {
     Widget cards(_FeedSection section, List<NewsItemEntity> items) =>
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-          sliver: SliverToBoxAdapter(
-            child: NewsGrid(
-              items: items,
-              itemBuilder: (item, coverHeight) =>
-                  card(section, item, coverHeight: coverHeight),
-            ),
+          sliver: NewsGrid(
+            items: items,
+            itemBuilder: (item, coverHeight) =>
+                card(section, item, coverHeight: coverHeight),
           ),
         );
 
@@ -338,17 +336,24 @@ class _FeedSkeleton extends StatelessWidget {
                 onTap: () async {},
               ),
               const SizedBox(height: AppSpacing.s6),
-              NewsGrid(
-                items: [
-                  for (int index = 1; index < 5; index++)
-                    NewsPlaceholders.item(index),
+              // A mesma grade do feed, em sliver: 4 cartões só.
+              CustomScrollView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                slivers: [
+                  NewsGrid(
+                    items: [
+                      for (int index = 1; index < 5; index++)
+                        NewsPlaceholders.item(index),
+                    ],
+                    itemBuilder: (item, coverHeight) => NewsCard(
+                      item: item,
+                      now: now,
+                      coverHeight: coverHeight,
+                      onTap: () async {},
+                    ),
+                  ),
                 ],
-                itemBuilder: (item, coverHeight) => NewsCard(
-                  item: item,
-                  now: now,
-                  coverHeight: coverHeight,
-                  onTap: () async {},
-                ),
               ),
             ],
           ),

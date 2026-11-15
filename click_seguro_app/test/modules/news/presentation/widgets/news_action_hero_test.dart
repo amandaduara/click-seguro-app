@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// O botão redondo do Reel voa até o curtir do detalhe, que é uma pílula
 /// mais larga com o número: no voo nada pode estourar (erro visto no
-/// aparelho, specs/023).
+/// aparelho, specs/024).
 void main() {
   const String tag = 'reel-like-n1';
 

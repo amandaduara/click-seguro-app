@@ -86,9 +86,7 @@ class _NewsCardState extends State<NewsCard> {
               _hero(
                 NewsCover(
                   imageUrl: item.imageUrl,
-                  themeText: item.categories.isEmpty
-                      ? item.title
-                      : '${item.categories.first.name} ${item.title}',
+                  themeText: item.illustrationText,
                   height: widget.coverHeight ?? (widget.compact ? 150 : 190),
                   // O canto vem do cartão.
                   radius: 0,

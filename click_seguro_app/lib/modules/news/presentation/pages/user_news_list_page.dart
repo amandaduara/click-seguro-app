@@ -88,8 +88,8 @@ class _GuestInvite extends StatelessWidget {
             Text(
               kind.guestBody.tr(),
               textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(
-                fontSize: AppTypography.label.fontSize,
+              style: AppTypography.body.copyWith(
+                color: context.colors.textBody,
               ),
             ),
             const SizedBox(height: AppSpacing.s6),
@@ -207,7 +207,7 @@ class _EmptyList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SafeEmptyState(
-    // O mesmo estado vazio do resto do app (validação da usuária, specs/023).
+    // O mesmo estado vazio do resto do app (validação da usuária, specs/024).
     message: kind.empty.tr(),
     hint: kind.emptyHint.tr(),
     actionLabel: AppStrings.commonBackHome.tr(),

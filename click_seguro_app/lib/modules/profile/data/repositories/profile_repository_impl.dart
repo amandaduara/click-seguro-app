@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_failure_mapper.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/activity_progress_entity.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/news_counts_entity.dart';
@@ -8,17 +9,28 @@ import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.
 import 'package:click_seguro_app/modules/profile/domain/entities/profile_update.dart';
 import 'package:click_seguro_app/modules/profile/domain/failures/profile_failures.dart';
 import 'package:click_seguro_app/modules/profile/domain/repositories/profile_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 
+/// Singleton com estado: o perfil guardado e a versão da foto ligam a edição
+/// ao Perfil (R20.5 de specs/024-redesign-visual). Toda mudança de
+/// [sessionStatus] (saída, expiração, entrada em outra conta) apaga esse
+/// estado, para nada da conta anterior aparecer na seguinte.
 class ProfileRepositoryImpl implements ProfileRepository {
-  ProfileRepositoryImpl(this._remote, {int Function()? clock})
-    : _clock = clock ?? _now;
+  ProfileRepositoryImpl(
+    this._remote, {
+    required ValueListenable<UserSessionStatus> sessionStatus,
+    int Function()? clock,
+  }) : _clock = clock ?? _now {
+    // Vive o app inteiro (lazy singleton): o ouvinte não precisa sair.
+    sessionStatus.addListener(_clearSessionState);
+  }
 
   static const String emailInUseCode = 'USER_EMAIL_ALREADY_EXISTS';
   static const String invalidImageCode = 'INVALID_IMAGE_TYPE';
 
   /// Parâmetro da versão da foto no endereço mostrado.
-  static const String photoVersionParam = 'v';
+  static const String _photoVersionParam = 'v';
 
   final ProfileRemoteDataSource _remote;
   final int Function() _clock;
@@ -38,6 +50,11 @@ class ProfileRepositoryImpl implements ProfileRepository {
   ProfileEntity? get lastProfile => _lastProfile;
 
   static int _now() => DateTime.now().millisecondsSinceEpoch;
+
+  void _clearSessionState() {
+    _lastProfile = null;
+    _photoVersion = null;
+  }
 
   @override
   Future<Either<Failure, ProfileEntity>> getProfile() => _guard(() async {
@@ -90,7 +107,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         .replace(
           queryParameters: {
             ...uri.queryParameters,
-            photoVersionParam: '$version',
+            _photoVersionParam: '$version',
           },
         )
         .toString();

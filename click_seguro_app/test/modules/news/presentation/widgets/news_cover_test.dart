@@ -8,7 +8,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../helpers/localized_app.dart';
 
 /// Capa da notícia: sem imagem, a ilustração do tema; carregando, só o
-/// cinza do esqueleto (validação da usuária, specs/023).
+/// cinza do esqueleto (validação da usuária, specs/024).
 void main() {
   Widget cover() =>
       const NewsCover(imageUrl: null, themeText: 'Golpe do Pix', height: 150);

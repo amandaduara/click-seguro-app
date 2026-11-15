@@ -7,13 +7,13 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/animated_reveal.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/extensions/auth_presentation_extension.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
-import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_mode_switch.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/or_divider.dart';
 import 'package:click_seguro_app/modules/common/presentation/extensions/password_rule_presentation.dart';
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
@@ -164,11 +164,16 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         const AuthHeader(),
                         const SizedBox(height: AppSpacing.s6),
-                        AuthModeSwitch(
-                          loginLabel: AppStrings.authModeLogin.tr(),
-                          registerLabel: AppStrings.authModeRegister.tr(),
-                          isRegister: isRegister,
-                          onChanged: (register) {
+                        SafePillTabs(
+                          tabs: [
+                            AppStrings.authModeLogin.tr(),
+                            AppStrings.authModeRegister.tr(),
+                          ],
+                          selectedIndex: isRegister ? 1 : 0,
+                          onChanged: (index) {
+                            final bool register = index == 1;
+                            // Tocar na aba atual não muda nada.
+                            if (register == isRegister) return;
                             setState(() => _passwordWasReset = false);
                             controller.setMode(
                               register ? AuthMode.register : AuthMode.login,

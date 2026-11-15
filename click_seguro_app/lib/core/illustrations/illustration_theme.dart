@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 /// Tema da ilustração de capa, reconhecido num texto livre: o título do
 /// módulo ou a categoria e o título da notícia (FR-014, R7 de
-/// specs/023-redesign-visual). Fica no `core` porque atividades e notícias
+/// specs/024-redesign-visual). Fica no `core` porque atividades e notícias
 /// usam a mesma regra.
 enum IllustrationTheme {
   whatsapp(AppIllustration.themeWhatsapp, [

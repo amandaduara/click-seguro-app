@@ -187,8 +187,8 @@ class _GuestInvite extends StatelessWidget {
             Text(
               AppStrings.notificationsGuestBody.tr(),
               textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(
-                fontSize: AppTypography.label.fontSize,
+              style: AppTypography.body.copyWith(
+                color: context.colors.textBody,
               ),
             ),
             const SizedBox(height: AppSpacing.s6),
@@ -300,8 +300,7 @@ class _EmptyAlertsContent extends StatelessWidget {
           child: Text(
             AppStrings.notificationsEmptyHint.tr(),
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontSize: AppTypography.label.fontSize,
+            style: AppTypography.body.copyWith(
               color: context.colors.textMutedForeground,
             ),
           ),

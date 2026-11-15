@@ -7,6 +7,7 @@ import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/completion_presentation.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/spring_in.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/share_service.dart';
@@ -139,7 +140,7 @@ class _CompletionPageState extends State<CompletionPage> {
                 AppSpacing.s6,
               ),
               children: [
-                const _SpringIn(
+                const SpringIn(
                   child: SafeIllustration(
                     AppIllustration.stateTrophy,
                     height: 190,
@@ -173,7 +174,6 @@ class _CompletionPageState extends State<CompletionPage> {
                   completion.messageKey.tr(),
                   textAlign: TextAlign.center,
                   style: AppTypography.bodyLarge.copyWith(
-                    fontSize: 17,
                     color: colors.textForeground,
                   ),
                 ),
@@ -221,30 +221,10 @@ class _CompletionPageState extends State<CompletionPage> {
 }
 
 /// Duração do confete e da contagem do placar (FR-020 de
-/// specs/023-redesign-visual). Fica fora do teto de 400 ms das animações de
+/// specs/024-redesign-visual). Fica fora do teto de 400 ms das animações de
 /// interface (specs/022 FR-008) porque é uma comemoração que toca uma vez; com
 /// o movimento reduzido, nenhuma das duas acontece.
 const Duration _celebration = Duration(milliseconds: 1200);
-
-/// Entra com uma mola leve (FR-020); direto com reduzir animações.
-class _SpringIn extends StatelessWidget {
-  const _SpringIn({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    if (AppMotion.of(context).reduced) return child;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.6, end: 1),
-      duration: AppMotion.of(context).long,
-      curve: AppMotion.emphasis,
-      builder: (context, scale, child) =>
-          Transform.scale(scale: scale, child: child),
-      child: child,
-    );
-  }
-}
 
 /// Placar em destaque contando de 0 até [value] em 1,2 s (FR-020). O leitor
 /// de tela lê o texto completo logo abaixo, então o número é decorativo.

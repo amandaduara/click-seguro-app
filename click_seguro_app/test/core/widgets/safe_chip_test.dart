@@ -53,6 +53,29 @@ void main() {
 
     await tester.tap(find.byType(SafeChip));
     expect(taps, 1);
+
+    // O leitor de tela também toca no chip.
+    final SemanticsNode node = tester.getSemantics(find.byType(SafeChip));
+    expect(
+      node,
+      isSemantics(isButton: true, isEnabled: true, hasTapAction: true),
+    );
+    node.owner!.performAction(node.id, SemanticsAction.tap);
+    expect(taps, 2);
+    handle.dispose();
+  });
+
+  testWidgets('sem onTap: desativado e sem ação para o leitor', (tester) async {
+    final SemanticsHandle handle = tester.ensureSemantics();
+    await pumpComponent(
+      tester,
+      const SafeChip(label: 'Todas', selected: false),
+    );
+
+    expect(
+      tester.getSemantics(find.byType(SafeChip)),
+      isSemantics(isButton: true, isEnabled: false, hasTapAction: false),
+    );
     handle.dispose();
   });
 }

@@ -24,9 +24,6 @@ class ContactFormPage extends StatelessWidget {
 
   final String? contactId;
 
-  /// Tamanho máximo do nome do contato.
-  static const int nameMaxLength = 60;
-
   @override
   Widget build(BuildContext context) => ChangeNotifierProvider(
     create: (_) => GetIt.instance<ContactFormController>(param1: contactId),
@@ -113,7 +110,7 @@ class _ContactFormContentState extends State<_ContactFormContent> {
             }
             if (controller.isLoading) return const SafeLoadingState();
             // O botão principal fica no fim da tela; o formulário rola acima
-            // dele (validação da usuária, specs/023).
+            // dele (validação da usuária, specs/024).
             return Column(
               children: [
                 Expanded(child: _form(context, controller)),
@@ -170,7 +167,7 @@ class _ContactFormContentState extends State<_ContactFormContent> {
             // Sem espaço no começo e com um limite de tamanho.
             inputFormatters: [
               FilteringTextInputFormatter.deny(RegExp(r'^\s+')),
-              LengthLimitingTextInputFormatter(ContactFormPage.nameMaxLength),
+              LengthLimitingTextInputFormatter(ContactValidation.nameMaxLength),
             ],
             onChanged: _controller.setName,
           ),

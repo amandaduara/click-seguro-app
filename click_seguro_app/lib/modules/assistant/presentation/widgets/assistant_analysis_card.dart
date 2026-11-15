@@ -45,21 +45,18 @@ class AssistantAnalysisCard extends StatelessWidget {
     }
 
     final AssistantRiskLevel risk = analysis.riskLevel;
-    final (SafeBadgeTone tone, IconData icon, String label) = switch (risk) {
+    final (SafeBadgeTone tone, IconData icon) = switch (risk) {
       AssistantRiskLevel.high => (
         SafeBadgeTone.destructive,
         LucideIcons.triangleAlert,
-        risk.labelKey,
       ),
       AssistantRiskLevel.medium => (
         SafeBadgeTone.warning,
         LucideIcons.circleAlert,
-        risk.labelKey,
       ),
       AssistantRiskLevel.low => (
         SafeBadgeTone.success,
         LucideIcons.shieldCheck,
-        risk.labelKey,
       ),
     };
     return Container(
@@ -83,7 +80,7 @@ class AssistantAnalysisCard extends StatelessWidget {
                 key: const ValueKey('assistant-risk-badge'),
                 tone: tone,
                 icon: Icon(icon),
-                child: Text(label.tr()),
+                child: Text(risk.labelKey.tr()),
               ),
             ),
           ),
@@ -116,7 +113,7 @@ class AssistantAnalysisCard extends StatelessWidget {
                             : colors.primary,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: AppSpacing.s2),
                     Expanded(
                       child: Text(
                         tip,

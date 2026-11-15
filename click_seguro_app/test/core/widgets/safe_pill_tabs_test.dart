@@ -40,7 +40,34 @@ void main() {
     handle.dispose();
   });
 
-  // Validação da usuária (specs/023): ao trocar, as duas opções piscavam
+  testWidgets('cada aba tem alvo de toque de pelo menos 48 (RNF-003)', (
+    tester,
+  ) async {
+    await pumpComponent(
+      tester,
+      SizedBox(
+        width: 300,
+        child: SafePillTabs(
+          tabs: const ['Oficiais', 'Meus contatos'],
+          selectedIndex: 0,
+          onChanged: (_) {},
+        ),
+      ),
+    );
+
+    final Finder tabs = find.descendant(
+      of: find.byType(SafePillTabs),
+      matching: find.byType(GestureDetector),
+    );
+    expect(tabs, findsNWidgets(2));
+    for (int i = 0; i < 2; i++) {
+      final Size size = tester.getSize(tabs.at(i));
+      expect(size.height, greaterThanOrEqualTo(48));
+      expect(size.width, greaterThanOrEqualTo(48));
+    }
+  });
+
+  // Validação da usuária (specs/024): ao trocar, as duas opções piscavam
   // porque cada uma animava o próprio fundo. Agora um único indicador
   // desliza da aba antiga para a nova.
   testWidgets('a troca move um só indicador, sem fundo nas abas', (
@@ -62,7 +89,11 @@ void main() {
         ),
       ),
     );
-    final Finder indicator = find.byKey(SafePillTabs.indicatorKey);
+    // O indicador é a única caixa que ocupa a fração de uma aba.
+    final Finder indicator = find.descendant(
+      of: find.byType(SafePillTabs),
+      matching: find.byType(FractionallySizedBox),
+    );
     expect(indicator, findsOneWidget);
     final double start = tester.getCenter(indicator).dx;
     expect(start, closeTo(tester.getCenter(find.text('Conversar')).dx, 1));

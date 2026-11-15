@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
 import 'package:click_seguro_app/modules/notifications/notifications.dart';
 import 'package:click_seguro_app/modules/shell/presentation/require_account.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -14,7 +15,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// Cada página a coloca no próprio topo (R6 de specs/005-shell-navegacao-base).
 /// Com [subtitle] (a saudação do Início), ele fica na linha dos botões e o
 /// título embaixo; sem ele, o título divide a linha com os botões. Só o
-/// Início cumprimenta (validação da usuária, specs/023).
+/// Início cumprimenta (validação da usuária, specs/024).
 class AppTopBar extends StatefulWidget {
   const AppTopBar({super.key, required this.title, this.subtitle});
 
@@ -56,10 +57,13 @@ class _AppTopBarState extends State<AppTopBar> {
         NotificationBellButton(onPressed: _openNotifications),
         Padding(
           padding: const EdgeInsets.only(left: AppSpacing.s2),
-          child: _CircleActionButton(
-            label: AppStrings.assistantTitle.tr(),
-            icon: LucideIcons.messageCircle,
-            onPressed: _openAssistant,
+          child: Tooltip(
+            message: AppStrings.assistantTitle.tr(),
+            child: SafeIconButton(
+              icon: LucideIcons.messageCircle,
+              semanticLabel: AppStrings.assistantTitle.tr(),
+              onPressed: _openAssistant,
+            ),
           ),
         ),
       ],
@@ -99,8 +103,7 @@ class _AppTopBarState extends State<AppTopBar> {
                     Expanded(
                       child: Text(
                         subtitle,
-                        style: AppTypography.caption.copyWith(
-                          fontSize: 16,
+                        style: AppTypography.body.copyWith(
                           color: context.colors.textMutedForeground,
                         ),
                       ),
@@ -113,42 +116,6 @@ class _AppTopBarState extends State<AppTopBar> {
                 title,
               ],
             ),
-    );
-  }
-}
-
-class _CircleActionButton extends StatelessWidget {
-  const _CircleActionButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: label,
-      child: Semantics(
-        button: true,
-        label: label,
-        excludeSemantics: true,
-        child: Material(
-          color: context.colors.input,
-          shape: const CircleBorder(),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onPressed,
-            child: SizedBox.square(
-              dimension: 48,
-              child: Icon(icon, size: 20, color: context.colors.secondary),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

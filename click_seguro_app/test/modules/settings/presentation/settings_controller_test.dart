@@ -131,9 +131,8 @@ void main() {
 
         expect(failure, isA<ConnectionFailure>());
         expect(alertsOn(), isTrue);
-        expect(controller.pendingAlertsValue, isFalse);
         expect(controller.alertsSaveFailed, isTrue);
-        expect(controller.alertsNeedRetry, isTrue);
+        expect(controller.alertsLoadFailed, isFalse);
       },
     );
 
@@ -153,8 +152,7 @@ void main() {
       expect(controller.isRetryingAlerts, isFalse);
       expect(repository.alertsCalls, [false, false]);
       expect(alertsOn(), isFalse);
-      expect(controller.pendingAlertsValue, isNull);
-      expect(controller.alertsNeedRetry, isFalse);
+      expect(controller.alertsSaveFailed, isFalse);
     });
 
     test('retryAlerts que falha de novo mantém o pedido pendente', () async {
@@ -165,7 +163,7 @@ void main() {
       await controller.retryAlerts();
 
       expect(repository.alertsCalls, [true, true]);
-      expect(controller.pendingAlertsValue, isTrue);
+      expect(controller.alertsSaveFailed, isTrue);
       expect(controller.isRetryingAlerts, isFalse);
     });
 
@@ -174,7 +172,7 @@ void main() {
         ..[0] = const Left(ConnectionFailure())
         ..add(const Right(testAccount));
       await controller.load();
-      expect(controller.alertsNeedRetry, isTrue);
+      expect(controller.alertsLoadFailed, isTrue);
       repository.accountGate = Completer<void>();
 
       final retrying = controller.retryAlerts();
@@ -183,9 +181,47 @@ void main() {
       repository.accountGate!.complete();
       await retrying;
       expect(controller.account, isA<AccountLoaded>());
-      expect(controller.alertsNeedRetry, isFalse);
+      expect(controller.alertsLoadFailed, isFalse);
       expect(controller.isRetryingAlerts, isFalse);
       expect(repository.alertsCalls, isEmpty);
+    });
+
+    // Alcançável: salvar falha e, depois, recarregar a conta (volta da
+    // edição de dados) também falha.
+    group('retryAlerts com a conta em erro e um valor pendente', () {
+      setUp(() async {
+        await controller.load();
+        repository.alertsResults[0] = const Left(ConnectionFailure());
+        await controller.setReceiveAlerts(false);
+        repository.accountResults[0] = const Left(ConnectionFailure());
+        await controller.retryAccount();
+        expect(controller.alertsLoadFailed, isTrue);
+        expect(controller.alertsSaveFailed, isTrue);
+        repository.alertsResults[0] = const Right(unit);
+      });
+
+      test('recarrega a conta e depois reenvia o valor', () async {
+        repository.accountResults[0] = const Right(testAccount);
+
+        await controller.retryAlerts();
+
+        expect(repository.accountCalls, 3);
+        expect(repository.alertsCalls, [false, false]);
+        expect(alertsOn(), isFalse);
+        expect(controller.alertsLoadFailed, isFalse);
+        expect(controller.alertsSaveFailed, isFalse);
+        expect(controller.isRetryingAlerts, isFalse);
+      });
+
+      test('a conta falha de novo: não reenvia e mantém o pendente', () async {
+        await controller.retryAlerts();
+
+        expect(repository.accountCalls, 3);
+        expect(repository.alertsCalls, [false]);
+        expect(controller.alertsLoadFailed, isTrue);
+        expect(controller.alertsSaveFailed, isTrue);
+        expect(controller.isRetryingAlerts, isFalse);
+      });
     });
 
     test('retryAlerts sem nada para refazer não faz pedido', () async {

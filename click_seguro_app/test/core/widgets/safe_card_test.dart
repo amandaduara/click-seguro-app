@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Cartões do redesign 2.0 (FR-004; contrato de specs/023-redesign-visual).
+/// Cartões do redesign 2.0 (FR-004; contrato de specs/024-redesign-visual).
 void main() {
   Future<void> pump(
     WidgetTester tester,

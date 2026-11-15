@@ -33,7 +33,7 @@ class ActivitiesDashboardPage extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         // O topo sobe junto com os cartões; só o Início prende os filtros
-        // (validação da usuária, specs/023).
+        // (validação da usuária, specs/024).
         child: NestedScrollView(
           headerSliverBuilder: (context, _) => [
             SliverToBoxAdapter(
@@ -91,7 +91,7 @@ class _DashboardBodyState extends State<_DashboardBody>
   String get tabPath => ActivitiesDashboardPage.path;
 
   /// Muda a cada volta à aba: recria o progresso, que enche de novo até
-  /// o valor atual (validação da usuária, specs/023).
+  /// o valor atual (validação da usuária, specs/024).
   int _entrance = 0;
 
   @override

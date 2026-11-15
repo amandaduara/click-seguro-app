@@ -12,7 +12,7 @@ import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_assistant_repository.dart';
 
 /// Balões da conversa e cartão do resultado no visual do quadro
-/// "10 Assistente" (redesign 2.0, specs/023-redesign-visual T063).
+/// "10 Assistente" (redesign 2.0, specs/024-redesign-visual T063).
 void main() {
   Future<void> pump(WidgetTester tester, Widget child, {ThemeData? theme}) =>
       pumpLocalized(

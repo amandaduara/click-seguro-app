@@ -39,7 +39,7 @@ class _FeedSearchFieldState extends State<FeedSearchField> {
     super.dispose();
   }
 
-  /// Espaço em branco não é busca (validação da usuária, specs/023): o
+  /// Espaço em branco não é busca (validação da usuária, specs/024): o
   /// começo do texto perde os espaços e um toast curto explica.
   late final TextInputFormatter _noLeadingSpace =
       TextInputFormatter.withFunction((oldValue, newValue) {
@@ -60,7 +60,7 @@ class _FeedSearchFieldState extends State<FeedSearchField> {
 
   /// Busca curta demais (ou vazia) ao tocar em "buscar" no teclado.
   void _onSubmitted(String text) {
-    if (text.trim().length < minSearchLength) _warnInvalid();
+    if (!NewsFilter(search: text).hasSearch) _warnInvalid();
   }
 
   void _warnInvalid() {

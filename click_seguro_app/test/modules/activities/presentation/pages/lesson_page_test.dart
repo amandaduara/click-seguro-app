@@ -37,7 +37,7 @@ import '../../fakes/fake_activities_remote_data_source.dart';
 import '../../fakes/fake_activities_repository.dart';
 
 /// Respondidas: os segmentos coral do progresso da pergunta (redesign 2.0,
-/// specs/023).
+/// specs/024).
 int answeredSegments(WidgetTester tester) => tester
     .widgetList<Container>(
       find.descendant(
@@ -1299,7 +1299,7 @@ void main() {
       expect(find.text('Pergunta 1 de 3'), findsOneWidget);
     });
 
-    // Sem aviso de serviço acordando (validação da usuária, specs/023).
+    // Sem aviso de serviço acordando (validação da usuária, specs/024).
     testWidgets('envio demorado: sem aviso de serviço', (tester) async {
       await open(tester);
       await chooseSecond(tester);

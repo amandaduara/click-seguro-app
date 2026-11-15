@@ -43,7 +43,6 @@ class ContactFormController extends ChangeNotifier {
   String _relationship = '';
   String? _photoPath;
   String? _temporaryPhotoPath;
-  ContactValidationError? _validationError;
   Failure? _loadFailure;
   Failure? _saveFailure;
 
@@ -57,11 +56,10 @@ class ContactFormController extends ChangeNotifier {
   String get phone => _phone;
   String get relationship => _relationship;
   String? get photoPath => _photoPath;
-  ContactValidationError? get validationError => _validationError;
 
   /// A pessoa já mexeu no campo (digitou, saiu dele ou tentou salvar): daí
   /// em diante o erro acompanha a digitação (validação da usuária,
-  /// specs/023).
+  /// specs/024).
   bool _nameTouched = false;
   bool _phoneTouched = false;
 
@@ -76,7 +74,7 @@ class ContactFormController extends ChangeNotifier {
       : null;
 
   /// "Salvar contato" disponível só com nome e telefone válidos e nada em
-  /// andamento, como na edição de perfil (validação da usuária, specs/023).
+  /// andamento, como na edição de perfil (validação da usuária, specs/024).
   bool get canSave =>
       !_saving &&
       !_photoLoading &&
@@ -132,9 +130,8 @@ class ContactFormController extends ChangeNotifier {
 
   void setName(String value) {
     _name = value;
-    // O erro acompanha a digitação (validação da usuária, specs/023).
+    // O erro acompanha a digitação (validação da usuária, specs/024).
     _nameTouched = true;
-    _validationError = null;
     _saveFailure = null;
     _notify();
   }
@@ -142,7 +139,6 @@ class ContactFormController extends ChangeNotifier {
   void setPhone(String value) {
     _phone = value;
     _phoneTouched = true;
-    _validationError = null;
     _saveFailure = null;
     _notify();
   }
@@ -195,7 +191,6 @@ class ContactFormController extends ChangeNotifier {
       return false;
     }
     _saving = true;
-    _validationError = null;
     _saveFailure = null;
     _notify();
     final result = await _savePersonalContact(
@@ -215,7 +210,6 @@ class ContactFormController extends ChangeNotifier {
       // Nome ou telefone inválido: o usecase valida, o campo mostra o erro.
       result.match((failure) {
         if (failure is ContactValidationFailure) {
-          _validationError = failure.error;
           // Mostra todos os campos inválidos, não só o primeiro.
           _nameTouched = true;
           _phoneTouched = true;

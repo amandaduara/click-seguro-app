@@ -56,7 +56,7 @@ class AppBottomNav extends StatelessWidget {
               children: [
                 // Cinco abas iguais, sem o botão central de antes: ele
                 // confundia em qual aba a pessoa estava (FR-009 de
-                // specs/023-redesign-visual).
+                // specs/024-redesign-visual).
                 for (final tab in AppTab.values)
                   Expanded(
                     child: _TabItem(
@@ -101,6 +101,9 @@ class _TabItem extends StatelessWidget {
         button: true,
         selected: selected,
         label: label,
+        // Sem isto o excludeSemantics tira a ação do InkResponse e o leitor
+        // de tela não consegue trocar de aba.
+        onTap: onTap,
         excludeSemantics: true,
         child: InkResponse(
           onTap: onTap,

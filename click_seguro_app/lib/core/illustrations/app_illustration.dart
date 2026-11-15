@@ -1,5 +1,5 @@
 /// Ilustrações do redesign 2.0, em `assets/illustrations/` (FR-017; tabela
-/// "Ilustração" do data-model de specs/023-redesign-visual).
+/// "Ilustração" do data-model de specs/024-redesign-visual).
 enum AppIllustration {
   onboardingProtect('onboarding_protect'),
   onboardingNews('onboarding_news'),

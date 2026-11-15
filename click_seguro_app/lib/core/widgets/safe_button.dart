@@ -42,6 +42,11 @@ class SafeButton extends StatefulWidget {
 }
 
 class _SafeButtonState extends State<SafeButton> {
+  /// Canto do botão compacto: entre o `radiusSm` (12) e o `radiusMd` (16).
+  static const BorderRadius _compactRadius = BorderRadius.all(
+    Radius.circular(14),
+  );
+
   bool _pressed = false;
 
   bool get _isDisabled =>
@@ -169,9 +174,7 @@ class _SafeButtonState extends State<SafeButton> {
               width: _large ? double.infinity : null,
               decoration: BoxDecoration(
                 color: style.bg,
-                borderRadius: _large
-                    ? AppSpacing.radiusMd
-                    : BorderRadius.circular(14),
+                borderRadius: _large ? AppSpacing.radiusMd : _compactRadius,
                 border: style.border == null
                     ? null
                     : Border.fromBorderSide(style.border!),

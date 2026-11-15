@@ -70,7 +70,7 @@ class ModuleCard extends StatelessWidget {
               Opacity(
                 opacity: module.isAvailable ? 1 : 0.5,
                 // No esqueleto (carregando), a capa é só um bloco cinza, sem a
-                // ilustração (validação da usuária, specs/023).
+                // ilustração (validação da usuária, specs/024).
                 child: SafeSkeleton.leaf(
                   ClipRRect(
                     borderRadius: AppSpacing.radiusMd,
@@ -124,7 +124,6 @@ class ModuleCard extends StatelessWidget {
                                   : null,
                               overflow: compact ? TextOverflow.ellipsis : null,
                               style: AppTypography.body.copyWith(
-                                fontSize: 16,
                                 height: 1.4,
                                 color: colors.textBody,
                               ),

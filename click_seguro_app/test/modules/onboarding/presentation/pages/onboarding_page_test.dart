@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/onboarding/domain/usecases/complete_onboarding_usecase.dart';
 import 'package:click_seguro_app/modules/onboarding/onboarding.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/controller/onboarding_controller.dart';
@@ -104,6 +105,28 @@ void main() {
 
     expect(find.text('login'), findsOneWidget);
     expect(repository.seen, isTrue);
+  });
+
+  testWidgets('"Pular" é lido como botão, não como filtro', (tester) async {
+    await pumpLocalized(tester, router: buildRouter());
+    final SemanticsHandle semantics = tester.ensureSemantics();
+
+    expect(
+      tester.getSemantics(find.text('Pular')),
+      isSemantics(
+        label: 'Pular',
+        isButton: true,
+        hasEnabledState: true,
+        isEnabled: true,
+        hasTapAction: true,
+        hasSelectedState: false,
+      ),
+    );
+    expect(
+      tester.getSize(find.widgetWithText(SafeButton, 'Pular')).height,
+      greaterThanOrEqualTo(48),
+    );
+    semantics.dispose();
   });
 
   testWidgets('"Pular" no 1º slide abre o login', (tester) async {

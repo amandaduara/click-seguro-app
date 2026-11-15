@@ -39,7 +39,7 @@ void main() {
   });
 
   // O leitor de tela fala o rótulo uma vez, como nome do campo (revisão
-  // da tela de login, specs/023).
+  // da tela de login, specs/024).
   testWidgets('o rótulo é o nome do campo, lido uma vez só', (tester) async {
     final SemanticsHandle handle = tester.ensureSemantics();
     await pumpComponent(

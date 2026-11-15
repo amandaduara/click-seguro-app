@@ -4,6 +4,7 @@ import 'package:click_seguro_app/modules/authentication/presentation/controller/
 import 'package:click_seguro_app/modules/authentication/presentation/controller/forgot_password_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/forgot_password_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
+import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -78,7 +79,7 @@ void main() {
     await pumpApp(tester);
     expect(find.text('Esqueci minha senha'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('auth-mode-register')));
+    await tester.tap(registerTab);
     await tester.pumpAndSettle();
 
     expect(find.text('Esqueci minha senha'), findsNothing);
@@ -220,3 +221,9 @@ void main() {
     });
   });
 }
+
+/// A aba "Criar conta" do seletor no topo do login.
+final Finder registerTab = find.descendant(
+  of: find.byType(SafePillTabs),
+  matching: find.text('Criar conta'),
+);

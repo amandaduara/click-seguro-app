@@ -1,5 +1,4 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/widgets/safe_badge.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_status.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
@@ -14,13 +13,6 @@ extension ModuleStatusPresentation on ModuleStatus {
     ModuleStatus.completed => AppStrings.activitiesStatusCompleted,
     ModuleStatus.unavailable => AppStrings.activitiesStatusUnavailable,
   }.tr();
-
-  SafeBadgeTone get badgeTone => switch (this) {
-    ModuleStatus.notStarted => SafeBadgeTone.neutral,
-    ModuleStatus.inProgress => SafeBadgeTone.primary,
-    ModuleStatus.completed => SafeBadgeTone.success,
-    ModuleStatus.unavailable => SafeBadgeTone.neutral,
-  };
 
   /// Cor do ícone no selo sobre a capa do cartão (redesign 2.0).
   Color iconColor(AppPalette colors) => switch (this) {

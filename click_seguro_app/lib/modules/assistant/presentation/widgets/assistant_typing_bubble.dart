@@ -54,7 +54,7 @@ class _AssistantTypingBubbleState extends State<AssistantTypingBubble>
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           const AssistantAvatar(),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.s3),
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.s5,

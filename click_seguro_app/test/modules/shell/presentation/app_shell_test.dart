@@ -68,7 +68,7 @@ void main() {
     await openHome(tester);
 
     // Sem botão central e só com ícones: o nome de cada aba fica no leitor
-    // de tela (FR-009 de specs/023-redesign-visual).
+    // de tela (FR-009 de specs/024-redesign-visual).
     for (final label in [
       'Início',
       'Atividades',

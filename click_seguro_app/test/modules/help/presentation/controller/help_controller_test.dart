@@ -11,7 +11,7 @@ import '../../../../fakes/fake_external_launcher_service.dart';
 
 void main() {
   // Remover pelo cartão da lista, com a lixeira ao lado de ligar
-  // (validação da usuária, specs/023).
+  // (validação da usuária, specs/024).
   group('remover contato pessoal', () {
     const ContactEntity ana = ContactEntity(
       id: 'p1',
@@ -101,7 +101,7 @@ void main() {
   callNumberTests();
 }
 
-// FR-016 de specs/023-redesign-visual: o cartão "Caiu em um golpe?" liga
+// FR-016 de specs/024-redesign-visual: o cartão "Caiu em um golpe?" liga
 // para um número, com a mesma regra dos contatos.
 void callNumberTests() {
   test('callNumber liga para o número pedido', () async {

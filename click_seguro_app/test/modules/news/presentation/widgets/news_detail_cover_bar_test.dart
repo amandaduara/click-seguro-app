@@ -4,7 +4,9 @@ import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_actions.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_cover_bar.dart';
 import 'package:flutter/foundation.dart';
@@ -126,6 +128,16 @@ void main() {
       expect(cover.width, 360);
       expect(cover.height, NewsDetailCoverBar.coverHeight);
       expect(find.text('Notícia n1'), findsNothing);
+    });
+
+    // O mesmo texto do cartão: a capa não muda de desenho ao abrir.
+    coverTest('tema da capa: o mesmo texto do cartão', (tester) async {
+      await pumpCover(tester);
+
+      expect(
+        tester.widget<NewsCover>(find.byType(NewsCover)).themeText,
+        newsItem('n1', imageUrl: _url).illustrationText,
+      );
     });
 
     coverTest('a imagem voa com o Hero do cartão', (tester) async {

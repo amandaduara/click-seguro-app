@@ -269,7 +269,7 @@ void main() {
       final preview = detailExtra! as NewsDetailPreview;
       expect(preview.item.id, 'r1');
       expect(preview.heroTag, isNull);
-      expect(preview.actions!.tags, NewsActionsPreview.tagsFor('r1'));
+      expect(preview.actionTags, NewsActionsPreview.tagsFor('r1'));
       expect(preview.actions!.likesCount, controller.reels.first.likesCount);
       final navigator = tester.state<NavigatorState>(
         find.byType(Navigator).first,

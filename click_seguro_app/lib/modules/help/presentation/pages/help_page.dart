@@ -37,7 +37,7 @@ class HelpPage extends StatelessWidget {
 ///
 /// Uma rolagem só, que termina no fim da lista: o topo (barra, cartão de
 /// emergência e abas) rola junto, e não sobra tela vazia embaixo quando a
-/// lista é curta (validação da usuária, specs/023). As abas em pílula
+/// lista é curta (validação da usuária, specs/024). As abas em pílula
 /// (T030) trocam a lista; deslizar para o lado também troca.
 class _HelpPageContent extends StatefulWidget {
   const _HelpPageContent();
@@ -68,7 +68,7 @@ class _HelpPageContentState extends State<_HelpPageContent> {
     return Scaffold(
       // "Adicionar contato" no canto de baixo à direita, ao alcance do
       // polegar, na aba dos contatos pessoais (validação da usuária,
-      // specs/023).
+      // specs/024).
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: official
           ? null
@@ -137,7 +137,7 @@ class _HelpPageContentState extends State<_HelpPageContent> {
     // Carregando, erro e vazio com a altura natural, como os cartões: a
     // rolagem termina no fim deles, igual nas duas abas. Ocupando o resto
     // da tela, o estado vazio de "Meus contatos" rolava sozinho e deixava
-    // o topo sumir (validação da usuária, specs/023).
+    // o topo sumir (validação da usuária, specs/024).
     Widget fill(Widget child) => SliverToBoxAdapter(child: child);
 
     final failure = official
@@ -225,7 +225,7 @@ class _HelpPageContentState extends State<_HelpPageContent> {
   }
 
   /// Confirma e remove o contato pela lixeira do cartão; a falha vira um
-  /// aviso (validação da usuária, specs/023).
+  /// aviso (validação da usuária, specs/024).
   Future<void> _confirmDelete(
     BuildContext context,
     HelpController controller,
@@ -259,7 +259,7 @@ class _HelpPageContentState extends State<_HelpPageContent> {
   }
 
   /// Liga; sem discador, mostra o número para copiar (CB-009). Vale para
-  /// os contatos e para o "Ligar para 190" (FR-016 de specs/023).
+  /// os contatos e para o "Ligar para 190" (FR-016 de specs/024).
   Future<void> _callNumber(
     BuildContext context,
     HelpController controller,
@@ -329,65 +329,72 @@ class _ContactCard extends StatelessWidget {
     return SafeCard(
       interactive: edit != null,
       onTap: edit,
-      child: Row(
-        children: [
-          PersonAvatar(
-            name: contact.name,
-            size: 56,
-            photoPath: contact.photoPath,
-          ),
-          const SizedBox(width: AppSpacing.s3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  contact.name,
-                  style: AppTypography.title3.copyWith(
-                    color: colors.textForeground,
-                  ),
-                ),
-                Text(
-                  formatPhone(contact.phone, shortCodes: true),
-                  style: AppTypography.body.copyWith(color: colors.textBody),
-                ),
-                if (contact.relationship case final String relationship)
+      // O leitor de tela avisa que tocar no cartão abre a edição.
+      child: Semantics(
+        hint: edit != null ? AppStrings.helpEditContact.tr() : null,
+        child: Row(
+          children: [
+            PersonAvatar(
+              name: contact.name,
+              size: 56,
+              photoPath: contact.photoPath,
+            ),
+            const SizedBox(width: AppSpacing.s3),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    relationship,
-                    style: AppTypography.caption.copyWith(
-                      color: colors.textMutedForeground,
+                    contact.name,
+                    style: AppTypography.title3.copyWith(
+                      color: colors.textForeground,
                     ),
                   ),
-              ],
-            ),
-          ),
-          IconButton(
-            tooltip: AppStrings.helpCall.tr(args: [contact.name]),
-            onPressed: onCall,
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-            icon: Icon(LucideIcons.phone, color: colors.primary),
-          ),
-          if (delete != null)
-            deleting
-                ? const SizedBox.square(
-                    dimension: 48,
-                    child: Center(
-                      child: SizedBox.square(
-                        dimension: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                  Text(
+                    formatPhone(contact.phone, shortCodes: true),
+                    style: AppTypography.body.copyWith(color: colors.textBody),
+                  ),
+                  if (contact.relationship case final String relationship)
+                    Text(
+                      relationship,
+                      style: AppTypography.caption.copyWith(
+                        color: colors.textMutedForeground,
                       ),
                     ),
-                  )
-                : IconButton(
-                    tooltip: AppStrings.helpDeleteContact.tr(),
-                    onPressed: delete,
-                    constraints: const BoxConstraints(
-                      minWidth: 48,
-                      minHeight: 48,
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: AppStrings.helpCall.tr(args: [contact.name]),
+              onPressed: onCall,
+              constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+              icon: Icon(LucideIcons.phone, color: colors.primary),
+            ),
+            if (delete != null)
+              deleting
+                  ? SizedBox.square(
+                      dimension: 48,
+                      child: Center(
+                        child: SizedBox.square(
+                          dimension: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            semanticsLabel: AppStrings.commonLoading.tr(),
+                          ),
+                        ),
+                      ),
+                    )
+                  : IconButton(
+                      tooltip: AppStrings.helpDeleteContact.tr(),
+                      onPressed: delete,
+                      constraints: const BoxConstraints(
+                        minWidth: 48,
+                        minHeight: 48,
+                      ),
+                      icon: Icon(LucideIcons.trash2, color: colors.destructive),
                     ),
-                    icon: Icon(LucideIcons.trash2, color: colors.destructive),
-                  ),
-        ],
+          ],
+        ),
       ),
     );
   }

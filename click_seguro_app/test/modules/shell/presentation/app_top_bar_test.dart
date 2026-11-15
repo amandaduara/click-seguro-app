@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_top_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -47,7 +48,7 @@ void main() {
     ],
   );
 
-  // Só o Início cumprimenta (validação da usuária, specs/023): ele passa a
+  // Só o Início cumprimenta (validação da usuária, specs/024): ele passa a
   // saudação como subtítulo; as outras abas mostram só o título.
   group('título e subtítulo', () {
     testWidgets('sem subtítulo: só o título, sem saudação', (tester) async {
@@ -140,7 +141,7 @@ void main() {
       ('conectada', (UserSessionService s) async {}),
       ('visitante', (UserSessionService s) => s.startGuestSession()),
     ]) {
-      // A engrenagem fica só no Perfil (validação da usuária, specs/023).
+      // A engrenagem fica só no Perfil (validação da usuária, specs/024).
       testWidgets('$label: sem a engrenagem das configurações', (tester) async {
         if (label == 'conectada') await signIn();
         await enter(session);
@@ -166,6 +167,28 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('tela alertas'), findsOneWidget);
+    });
+
+    testWidgets('conectada, o leitor de tela toca em "Assistente"', (
+      tester,
+    ) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      final SemanticsNode node = tester.getSemantics(
+        find.bySemanticsLabel('Assistente'),
+      );
+      expect(node, isSemantics(isButton: true, hasTapAction: true));
+      node.owner!.performAction(node.id, SemanticsAction.tap);
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela assistente'), findsOneWidget);
+      handle.dispose();
     });
 
     testWidgets('visitante: "Alertas" mostra o convite e não abre', (

@@ -186,7 +186,7 @@ void main() {
     expect(find.text('Seu progresso'), findsNothing);
   });
 
-  testWidgets('capa com a ilustração do tema do título (FR-014 de specs/023)', (
+  testWidgets('capa com a ilustração do tema do título (FR-014 de specs/024)', (
     tester,
   ) async {
     await open(tester);
@@ -395,7 +395,7 @@ void main() {
       expect(find.text('1 de 9 lições concluídas'), findsOneWidget);
     });
 
-    // Validação da usuária (specs/023): a cada volta, o progresso enche de
+    // Validação da usuária (specs/024): a cada volta, o progresso enche de
     // novo, de 0 até o valor atual.
     testWidgets('voltar à aba enche o progresso de novo', (tester) async {
       await open(tester);
@@ -565,7 +565,7 @@ void main() {
   });
 
   group('estados (US4)', () {
-    // Sem o aviso de servidor acordando (validação da usuária, specs/023).
+    // Sem o aviso de servidor acordando (validação da usuária, specs/024).
     testWidgets('carregando: só o esqueleto, sem aviso de servidor', (
       tester,
     ) async {
@@ -578,7 +578,7 @@ void main() {
       );
       expect(find.bySemanticsLabel('Carregando'), findsOneWidget);
       // Só o cinza do esqueleto: as capas não mostram a ilustração
-      // (validação da usuária, specs/023).
+      // (validação da usuária, specs/024).
       for (final Element cover in find.byType(SafeIllustration).evaluate()) {
         expect(
           find.ancestor(
