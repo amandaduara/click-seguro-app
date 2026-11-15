@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
@@ -17,8 +18,6 @@ import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_pr
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
-import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
-import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -187,6 +186,8 @@ class _UserNewsListState extends State<_UserNewsList> {
                 item: items[index],
                 now: now,
                 heroTag: _heroTag(items[index]),
+                // Sem "lida"/"salva" na capa: a lista já diz o que é.
+                showSignals: false,
                 onTap: () => _openNews(items[index]),
               );
             },
@@ -205,49 +206,13 @@ class _EmptyList extends StatelessWidget {
   final NewsListKind kind;
 
   @override
-  Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    // Rolável: com a fonte grande e o botão, pode não caber na tela.
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.s6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SafeIllustration(AppIllustration.stateEmpty, height: 180),
-            const SizedBox(height: AppSpacing.s5),
-            Text(
-              kind.empty.tr(),
-              textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(
-                fontSize: AppTypography.label.fontSize,
-                fontWeight: FontWeight.w600,
-                color: context.colors.textForeground,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s2),
-            Text(
-              kind.emptyHint.tr(),
-              textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(
-                fontSize: AppTypography.label.fontSize,
-                color: context.colors.textMutedForeground,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s5),
-            ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 48),
-              child: SafeButton(
-                label: AppStrings.commonBackHome.tr(),
-                size: SafeButtonSize.compact,
-                onPressed: () => context.go('/home'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SafeEmptyState(
+    // O mesmo estado vazio do resto do app (validação da usuária, specs/023).
+    message: kind.empty.tr(),
+    hint: kind.emptyHint.tr(),
+    actionLabel: AppStrings.commonBackHome.tr(),
+    onAction: () => context.go('/home'),
+  );
 }
 
 IconData _iconOf(NewsListKind kind) => switch (kind) {

@@ -12,6 +12,7 @@ import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:click_seguro_app/core/widgets/safe_progress.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_status.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:flutter/material.dart';
 
 /// Cartão de um módulo no painel (FR-003, FR-004). [compact] (duas colunas,
@@ -68,28 +69,32 @@ class ModuleCard extends StatelessWidget {
               // Módulo indisponível (CB-012): capa apagada.
               Opacity(
                 opacity: module.isAvailable ? 1 : 0.5,
-                child: ClipRRect(
-                  borderRadius: AppSpacing.radiusMd,
-                  child: Container(
-                    height: 150,
-                    color: theme.pastel(colors),
-                    padding: const EdgeInsets.all(AppSpacing.s3),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        SafeIllustration(theme.illustration),
-                        Align(
-                          alignment: Alignment.topLeft,
-                          child: SafeBadge(
-                            tone: SafeBadgeTone.onImage,
-                            icon: Icon(
-                              module.status.icon,
-                              color: module.status.iconColor(colors),
+                // No esqueleto (carregando), a capa é só um bloco cinza, sem a
+                // ilustração (validação da usuária, specs/023).
+                child: SafeSkeleton.leaf(
+                  ClipRRect(
+                    borderRadius: AppSpacing.radiusMd,
+                    child: Container(
+                      height: 150,
+                      color: theme.pastel(colors),
+                      padding: const EdgeInsets.all(AppSpacing.s3),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          SafeIllustration(theme.illustration),
+                          Align(
+                            alignment: Alignment.topLeft,
+                            child: SafeBadge(
+                              tone: SafeBadgeTone.onImage,
+                              icon: Icon(
+                                module.status.icon,
+                                color: module.status.iconColor(colors),
+                              ),
+                              child: Text(status),
                             ),
-                            child: Text(status),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

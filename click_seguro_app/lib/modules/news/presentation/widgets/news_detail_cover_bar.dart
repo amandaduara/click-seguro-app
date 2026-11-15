@@ -30,6 +30,7 @@ class NewsDetailCoverBar extends StatelessWidget {
     this.heroTag,
     this.actions,
     this.loading = false,
+    this.onBlockedBack,
   });
 
   static const double coverHeight = 270;
@@ -46,6 +47,11 @@ class NewsDetailCoverBar extends StatelessWidget {
 
   /// Carregando: esqueleto no lugar da capa.
   final bool loading;
+
+  /// Com um pedido em andamento, a saída fica bloqueada: o "Voltar" fica
+  /// desativado (o leitor de tela diz "desativado") e um toque nele chama
+  /// isto, para a tela explicar por que não saiu. `null`: "Voltar" normal.
+  final VoidCallback? onBlockedBack;
 
   @override
   Widget build(BuildContext context) {
@@ -67,12 +73,20 @@ class NewsDetailCoverBar extends StatelessWidget {
       leading: Padding(
         padding: const EdgeInsetsDirectional.only(start: AppSpacing.s5),
         child: Center(
-          child: SafeIconButton(
-            key: backKey,
-            onImage: true,
-            icon: LucideIcons.chevronLeft,
-            semanticLabel: AppStrings.newsDetailBack.tr(),
-            onPressed: () => Navigator.maybePop(context),
+          // Desativado, o botão não pega o toque: ele chega aqui e vira o
+          // aviso (o leitor de tela já ouve "desativado" do botão).
+          child: GestureDetector(
+            excludeFromSemantics: true,
+            onTap: onBlockedBack,
+            child: SafeIconButton(
+              key: backKey,
+              onImage: true,
+              icon: LucideIcons.chevronLeft,
+              semanticLabel: AppStrings.newsDetailBack.tr(),
+              onPressed: onBlockedBack == null
+                  ? () => Navigator.maybePop(context)
+                  : null,
+            ),
           ),
         ),
       ),

@@ -1513,4 +1513,75 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  group('saída durante curtir ou salvar', () {
+    const String wait = 'Aguarde: salvando sua escolha.';
+
+    testWidgets('salvando: o voltar do aparelho não sai e avisa; depois sai', (
+      tester,
+    ) async {
+      await signIn();
+      await pumpPage(tester);
+      repository.saveGate = Completer<void>();
+      await tester.tap(find.byKey(NewsDetailActions.saveKey));
+      await tester.pump();
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+
+      expect(find.text(wait), findsOneWidget);
+      expect(find.byType(NewsDetailPage), findsOneWidget);
+      expect(find.text('tela anterior'), findsNothing);
+
+      repository.saveGate!.complete();
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela anterior'), findsOneWidget);
+      expect(find.byType(NewsDetailPage), findsNothing);
+    });
+
+    testWidgets('curtindo: o botão voltar fica desativado e avisa; depois '
+        'volta a funcionar', (tester) async {
+      final handle = tester.ensureSemantics();
+      await signIn();
+      await pumpPage(tester);
+      repository.likeGate = Completer<void>();
+      await tester.tap(find.byKey(NewsDetailActions.likeKey));
+      await tester.pump();
+
+      expect(
+        tester.getSemantics(backButton()),
+        isSemantics(
+          label: 'Voltar',
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: false,
+        ),
+      );
+      expect(tester.getSize(backButton()).width, greaterThanOrEqualTo(48));
+
+      await tester.tap(backButton());
+      await tester.pump();
+
+      expect(find.text(wait), findsOneWidget);
+      expect(find.byType(NewsDetailPage), findsOneWidget);
+
+      repository.likeGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSemantics(backButton()),
+        isSemantics(label: 'Voltar', isEnabled: true),
+      );
+
+      await tester.tap(backButton());
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela anterior'), findsOneWidget);
+      handle.dispose();
+    });
+  });
 }

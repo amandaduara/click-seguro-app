@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/widgets/safe_badge.dart';
 import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:flutter/material.dart';
 
 /// Capa de notícia do redesign 2.0 (FR-015): a imagem da notícia, ou, sem
@@ -36,11 +37,15 @@ class NewsCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
     final IllustrationTheme theme = IllustrationTheme.fromText(themeText);
-    final Widget illustration = ColoredBox(
-      color: theme.pastel(colors),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: SafeIllustration(theme.illustration),
+    // No esqueleto (carregando), só o bloco cinza, sem a ilustração
+    // (validação da usuária, specs/023).
+    final Widget illustration = SafeSkeleton.leaf(
+      ColoredBox(
+        color: theme.pastel(colors),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: SafeIllustration(theme.illustration),
+        ),
       ),
     );
     return ClipRRect(

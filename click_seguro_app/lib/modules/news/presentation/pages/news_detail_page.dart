@@ -207,13 +207,30 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
         .watch<NewsDetailController>();
     final NewsDetailEntity? detail =
         controller.status == NewsDetailStatus.loaded ? controller.detail : null;
-    return Scaffold(
-      backgroundColor: context.colors.card,
-      body: _content(controller, detail),
+    // Com curtir ou salvar em andamento, não sai (nem pelo voltar do
+    // aparelho): as listas de lidas, salvas e curtidas só ficam certas com o
+    // pedido terminado. Tentar sair mostra o aviso.
+    final bool busy = controller.isSaving || controller.isLiking;
+    return PopScope(
+      canPop: !busy,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _warnPending();
+      },
+      child: Scaffold(
+        backgroundColor: context.colors.card,
+        body: _content(controller, detail, busy: busy),
+      ),
     );
   }
 
-  Widget _content(NewsDetailController controller, NewsDetailEntity? detail) {
+  /// "Aguarde: salvando sua escolha." ao tentar sair durante um pedido.
+  void _warnPending() => _snack(AppStrings.newsDetailWaitPending.tr());
+
+  Widget _content(
+    NewsDetailController controller,
+    NewsDetailEntity? detail, {
+    required bool busy,
+  }) {
     if (controller.status == NewsDetailStatus.notFound) {
       return const _WithBackButton(child: _NotFound());
     }
@@ -227,7 +244,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
       stateKey: bareError,
       child: bareError
           ? _WithBackButton(child: _error(controller))
-          : _page(controller, detail, previewItem),
+          : _page(controller, detail, previewItem, busy: busy),
     );
   }
 
@@ -245,8 +262,9 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
   Widget _page(
     NewsDetailController controller,
     NewsDetailEntity? detail,
-    NewsItemEntity? previewItem,
-  ) {
+    NewsItemEntity? previewItem, {
+    required bool busy,
+  }) {
     final bool loading = detail == null && !_failed(controller);
     // Respiro no fim acima da barra de navegação do aparelho (área segura).
     final double bottom = MediaQuery.paddingOf(context).bottom + AppSpacing.s6;
@@ -258,6 +276,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
           heroTag: widget.preview?.heroTag,
           actions: _actions(controller, detail),
           loading: loading,
+          onBlockedBack: busy ? _warnPending : null,
         ),
         if (detail != null && controller.isFromCache)
           const SliverToBoxAdapter(child: SafeOfflineBanner()),

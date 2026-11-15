@@ -15,6 +15,7 @@ import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -576,6 +577,17 @@ void main() {
         findsOneWidget,
       );
       expect(find.bySemanticsLabel('Carregando'), findsOneWidget);
+      // Só o cinza do esqueleto: as capas não mostram a ilustração
+      // (validação da usuária, specs/023).
+      for (final Element cover in find.byType(SafeIllustration).evaluate()) {
+        expect(
+          find.ancestor(
+            of: find.byElementPredicate((e) => e == cover),
+            matching: find.byWidgetPredicate((w) => w is Skeleton),
+          ),
+          findsWidgets,
+        );
+      }
       await tester.pump(const Duration(seconds: 6));
       expect(find.textContaining('O serviço está acordando'), findsNothing);
 

@@ -23,6 +23,7 @@ class NewsCard extends StatefulWidget {
     this.compact = true,
     this.coverHeight,
     this.heroTag,
+    this.showSignals = true,
   });
 
   final NewsItemEntity item;
@@ -37,6 +38,10 @@ class NewsCard extends StatefulWidget {
 
   /// Tag do `Hero` da capa, a mesma passada na prévia do detalhe.
   final String? heroTag;
+
+  /// Sinais de "lida" e "salva" na capa. Falso nas listas do perfil (lidas,
+  /// salvas e curtidas), onde o próprio título da lista já diz isso.
+  final bool showSignals;
 
   @override
   State<NewsCard> createState() => _NewsCardState();
@@ -88,7 +93,7 @@ class _NewsCardState extends State<NewsCard> {
                   // O canto vem do cartão.
                   radius: 0,
                   labels: labels,
-                  trailing: _signals(item, colors),
+                  trailing: widget.showSignals ? _signals(item, colors) : null,
                 ),
               ),
               Padding(

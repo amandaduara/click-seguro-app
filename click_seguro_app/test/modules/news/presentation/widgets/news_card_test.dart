@@ -18,6 +18,7 @@ void main() {
     WidgetTester tester,
     NewsItemEntity item, {
     bool compact = true,
+    bool showSignals = true,
     Future<void> Function()? onTap,
   }) => pumpLocalized(
     tester,
@@ -27,6 +28,7 @@ void main() {
           NewsCard(
             item: item,
             compact: compact,
+            showSignals: showSignals,
             now: feedNow,
             onTap: onTap ?? () async {},
           ),
@@ -90,6 +92,22 @@ void main() {
     expect(find.byTooltip('Salva'), findsOneWidget);
 
     await pumpCard(tester, newsItem('n2'));
+    expect(find.byTooltip('Lida'), findsNothing);
+    expect(find.byTooltip('Salva'), findsNothing);
+  });
+
+  testWidgets('sem os sinais (listas do perfil): nem lida nem salva', (
+    tester,
+  ) async {
+    await pumpCard(
+      tester,
+      newsItem(
+        'n1',
+        interaction: const NewsInteraction(isRead: true, isSaved: true),
+      ),
+      showSignals: false,
+    );
+
     expect(find.byTooltip('Lida'), findsNothing);
     expect(find.byTooltip('Salva'), findsNothing);
   });

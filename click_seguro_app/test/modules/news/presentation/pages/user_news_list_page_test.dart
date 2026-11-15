@@ -5,6 +5,8 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/user_news_list_result.dart';
@@ -179,6 +181,52 @@ void main() {
       expect(find.text('Notícia n2'), findsOneWidget);
     });
 
+    testWidgets('desmarcar salvar no detalhe e voltar: o item sai, mesmo '
+        'com o servidor ainda devolvendo a lista antiga, sem esqueleto', (
+      tester,
+    ) async {
+      repository.savedResults
+        ..add(pageOf(3))
+        ..add(pageOf(3));
+      await pumpPage(tester);
+
+      await tester.tap(find.text('Notícia n1'));
+      await tester.pumpAndSettle();
+      // O detalhe confirma a remoção (o repositório avisa) e a pessoa volta.
+      repository.interactions.add(
+        const NewsInteractionChange(newsId: 'n1', isSaved: false),
+      );
+      await tester.tap(find.byType(BackButton));
+      await tester.pump();
+
+      expect(find.byType(SafeLoadingState), findsNothing);
+      await tester.pumpAndSettle();
+      expect(repository.savedCalls, [1, 1]);
+      expect(find.text('Notícia n1'), findsNothing);
+      expect(find.text('Notícia n2'), findsOneWidget);
+      expect(find.text('Notícia n3'), findsOneWidget);
+    });
+
+    testWidgets('curtidas: descurtir no detalhe e voltar tira o item', (
+      tester,
+    ) async {
+      repository.savedResults
+        ..add(pageOf(2))
+        ..add(pageOf(2));
+      await pumpPage(tester, kind: NewsListKind.liked);
+
+      await tester.tap(find.text('Notícia n2'));
+      await tester.pumpAndSettle();
+      repository.interactions.add(
+        const NewsInteractionChange(newsId: 'n2', isLiked: false),
+      );
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícia n2'), findsNothing);
+      expect(find.text('Notícia n1'), findsOneWidget);
+    });
+
     testWidgets('lista vazia: mensagem e dica', (tester) async {
       repository.savedResults.add(pageOf(0));
 
@@ -245,6 +293,44 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Notícia n1'), findsOneWidget);
     });
+  });
+
+  group('sem sinais de lida e salva nos cartões', () {
+    setUp(signIn);
+
+    for (final kind in NewsListKind.values) {
+      testWidgets('${kind.name}: cartões sem "Lida" nem "Salva"', (
+        tester,
+      ) async {
+        repository.savedResults.add(
+          Right(
+            UserNewsListResult(
+              page: NewsPageEntity(
+                items: [
+                  newsItem(
+                    'n1',
+                    interaction: const NewsInteraction(
+                      isRead: true,
+                      isSaved: true,
+                      isLiked: true,
+                    ),
+                  ),
+                ],
+                hasMore: false,
+                page: 1,
+              ),
+              isFromCache: false,
+            ),
+          ),
+        );
+
+        await pumpPage(tester, kind: kind);
+
+        expect(find.text('Notícia n1'), findsOneWidget);
+        expect(find.byTooltip('Lida'), findsNothing);
+        expect(find.byTooltip('Salva'), findsNothing);
+      });
+    }
   });
 
   group('visitante', () {
