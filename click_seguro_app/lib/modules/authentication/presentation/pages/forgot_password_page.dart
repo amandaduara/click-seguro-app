@@ -115,49 +115,86 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           title: Text(AppStrings.authResetTitle.tr()),
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s6,
-              AppSpacing.s4,
-              AppSpacing.s6,
-              AppSpacing.s6,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _StepBadge(
-                  icon: switch (controller.step) {
-                    ResetStep.email => LucideIcons.mail,
-                    ResetStep.code => LucideIcons.keyRound,
-                    ResetStep.newPassword => LucideIcons.lockKeyhole,
-                  },
-                ),
-                const SizedBox(height: AppSpacing.s5),
-                ...switch (controller.step) {
-                  ResetStep.email => _emailStep(controller),
-                  ResetStep.code => _codeStep(controller),
-                  ResetStep.newPassword => _newPasswordStep(controller),
-                },
-                if (controller.failure != null) ...[
-                  const SizedBox(height: AppSpacing.s4),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      controller.failure!.message.tr(),
-                      style: AppTypography.body.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: context.colors.destructive,
-                      ),
-                    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s6,
+                    AppSpacing.s4,
+                    AppSpacing.s6,
+                    AppSpacing.s6,
                   ),
-                ],
-              ],
-            ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _StepBadge(
+                        icon: switch (controller.step) {
+                          ResetStep.email => LucideIcons.mail,
+                          ResetStep.code => LucideIcons.keyRound,
+                          ResetStep.newPassword => LucideIcons.lockKeyhole,
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.s5),
+                      ...switch (controller.step) {
+                        ResetStep.email => _emailStep(controller),
+                        ResetStep.code => _codeStep(controller),
+                        ResetStep.newPassword => _newPasswordStep(controller),
+                      },
+                      if (controller.failure != null) ...[
+                        const SizedBox(height: AppSpacing.s4),
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            controller.failure!.message.tr(),
+                            style: AppTypography.body.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: context.colors.destructive,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s6,
+                  AppSpacing.s3,
+                  AppSpacing.s6,
+                  AppSpacing.s4,
+                ),
+                child: _primaryButton(controller),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+
+  /// Botão principal do passo, fixo no fim da tela (fora da rolagem): fica
+  /// acima da área segura e sobe com o teclado.
+  Widget _primaryButton(ForgotPasswordController controller) =>
+      switch (controller.step) {
+        ResetStep.email => SafeButton(
+          label: AppStrings.authResetSendCode.tr(),
+          loading: controller.isSubmitting,
+          onPressed: () => controller.submitEmail(_emailController.text),
+        ),
+        ResetStep.code => SafeButton(
+          label: AppStrings.authResetContinue.tr(),
+          loading: controller.isSubmitting,
+          onPressed: () => controller.submitCode(_codeController.text),
+        ),
+        ResetStep.newPassword => SafeButton(
+          label: AppStrings.authResetSave.tr(),
+          loading: controller.isSubmitting,
+          onPressed: () => _saveNewPassword(controller),
+        ),
+      };
 
   /// Texto de apoio de cada passo, no corpo grande do app.
   Widget _description(String text) => Text(
@@ -182,12 +219,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       onSubmitted: (_) => controller.submitEmail(_emailController.text),
       error: _errorFor(controller, AuthField.email),
     ),
-    const SizedBox(height: AppSpacing.s6),
-    SafeButton(
-      label: AppStrings.authResetSendCode.tr(),
-      loading: controller.isSubmitting,
-      onPressed: () => controller.submitEmail(_emailController.text),
-    ),
   ];
 
   List<Widget> _codeStep(ForgotPasswordController controller) => [
@@ -203,12 +234,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       autofillHints: const [AutofillHints.oneTimeCode],
       onSubmitted: (_) => controller.submitCode(_codeController.text),
       error: _errorFor(controller, AuthField.code),
-    ),
-    const SizedBox(height: AppSpacing.s6),
-    SafeButton(
-      label: AppStrings.authResetContinue.tr(),
-      loading: controller.isSubmitting,
-      onPressed: () => controller.submitCode(_codeController.text),
     ),
     const SizedBox(height: AppSpacing.s3),
     Center(
@@ -264,12 +289,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       textInputAction: TextInputAction.done,
       onSubmitted: (_) => _saveNewPassword(controller),
       error: _errorFor(controller, AuthField.passwordConfirmation),
-    ),
-    const SizedBox(height: AppSpacing.s6),
-    SafeButton(
-      label: AppStrings.authResetSave.tr(),
-      loading: controller.isSubmitting,
-      onPressed: () => _saveNewPassword(controller),
     ),
   ];
 
