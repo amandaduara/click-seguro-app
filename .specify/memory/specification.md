@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.4.0
+**Versão**: 2.5.0
 
 **Criado em**: 2026-09-07
 
@@ -127,29 +127,36 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   (só para cadastrado, quando houver) e a lista de notícias recentes.
 - **RF-010**: O feed MUST ser paginado, ordenado da mais recente para a mais antiga.
 - **RF-011**: O sistema MUST permitir buscar notícias por texto, com estado vazio explicativo.
+  Espaços no começo do texto MUST ser descartados, e uma busca com menos de 2 letras MUST NOT ser
+  enviada; nos dois casos, um aviso curto explica (specs/024-redesign-visual).
 - **RF-012**: Todo card e todo detalhe de notícia MUST exibir as categorias da notícia (ex.:
   "Phishing", "Golpes Bancários"), vindas da API (RN-002). *(Até a v2.0.0 era o selo de
   veracidade, que não existe na API.)*
 - **RF-013**: A tela de Reels MUST exibir uma notícia por vez em tela cheia (imagem, título,
-  trecho do texto), com navegação vertical por gesto de arrastar e também por botões, e ações
-  de curtir, salvar e abrir a fonte.
+  trecho do texto), com navegação vertical por gesto de arrastar e ações de curtir, salvar e
+  compartilhar. Tocar no texto ou na imagem MUST abrir a notícia completa (RF-014 a RF-018).
+  *(Até a v2.4.0 havia também botões de navegação e de abrir a fonte; o redesign 2.0 os tirou da
+  tela, e a fonte continua no detalhe.)*
 - **RF-014**: O detalhe da notícia MUST exibir título, imagem (quando houver), texto completo,
   fonte, data da publicação original e número de curtidas.
 - **RF-015**: O detalhe MUST oferecer **leitura em voz alta** do conteúdo, com controle de
-  velocidade (lenta, normal, rápida).
+  velocidade (lenta, normal, rápida) no próprio cartão de ouvir (alterna 0,5x, 1x e 2x).
 - **RF-016**: O detalhe MUST permitir compartilhar a notícia pelo menu nativo do aparelho.
 - **RF-017**: O detalhe MUST permitir abrir a fonte original no navegador externo.
 - **RF-018**: Quando a API sugerir um módulo, o detalhe MUST exibir um bloco de **atividade
   relacionada** que leva a esse módulo na trilha de atividades. Sem sugestão, o bloco não
   aparece.
 - **RF-019**: O usuário cadastrado MUST poder **salvar** (favoritar) notícias e **curtir** Reels.
+  No detalhe, curtir e salvar MUST ficar desativados até a notícia carregar; durante o pedido, o
+  botão mostra o carregamento, fica desativado e o leitor de tela anuncia; e a pessoa MUST NOT
+  sair do detalhe com o pedido em andamento (aviso curto) (specs/024-redesign-visual).
 
 ### 3.4 Alertas de notícias novas (A6)
 
 - **RF-020**: O sistema MUST gerar, no próprio aparelho, um alerta para cada notícia publicada
   desde a última verificação, e MUST listá-los agrupados por data ("Hoje", "Ontem",
-  "Anteriores"). Tocar num alerta abre a notícia. Com "Receber alertas" desligado no perfil,
-  nenhum alerta novo é gerado.
+  "Anteriores"), cada um com a capa da notícia (ou a ilustração do tema, se não houver).
+  Tocar num alerta abre a notícia. Com "Receber alertas" desligado, nenhum alerta novo é gerado.
 - **RF-021**: O topo do app MUST exibir um contador de alertas não lidos.
 - **RF-022**: O usuário MUST poder marcar um alerta como lido (ao abri-lo) e marcar todos
   como lidos. Alertas e marcações ficam salvos no aparelho.
@@ -180,9 +187,20 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 
 - **RF-031**: A central MUST ter duas abas: "Oficiais" (polícia, bancos, Procon, canais
   anti-golpe) e "Meus contatos".
+- **RF-031a**: Acima das abas, a central MUST mostrar o cartão de emergência "Caiu em um
+  golpe?", com o texto "Ligue agora para a polícia e para o seu banco." e o botão "Ligar para
+  190", que abre o discador como os outros contatos (RF-032, CB-009) (specs/024-redesign-visual).
 - **RF-032**: Todo contato MUST ter ação de **ligar em um toque**.
 - **RF-033**: O usuário MUST poder cadastrar, editar e remover contatos pessoais (nome,
-  telefone, parentesco opcional e foto circular da galeria ou câmera).
+  telefone, parentesco opcional e foto circular da galeria ou câmera). Revisto no redesign 2.0
+  (specs/024-redesign-visual):
+  - "Adicionar contato" é um botão flutuante, só na aba "Meus contatos";
+  - tocar no cartão edita; a **lixeira** ao lado de ligar remove, com confirmação (o formulário
+    não tem mais "Remover contato");
+  - o telefone MUST estar completo: 3 dígitos (ex.: 190), 0800 com 11 dígitos, fixo ou celular
+    com DDD (10 ou 11 dígitos) ou internacional com `+` (8 a 15 dígitos), com máscara;
+  - a validação MUST acontecer enquanto a pessoa digita, e "Salvar" só fica disponível com nome
+    e telefone válidos.
 - **RF-034**: Os contatos pessoais e as fotos MUST ser salvos **somente no aparelho** (RN-007)
   e MUST continuar disponíveis após fechar o app.
 
@@ -193,15 +211,25 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   atalhos. As conquistas são calculadas no app (RN-008) a partir das notícias lidas e do progresso
   nas atividades. *(Até 2026-10-09 havia um selo de nível, removido porque não há limite de
   módulos; em 2026-10-12, o redesign trocou "módulos e lições concluídos" por lidas e curtidas e
-  tirou o e-mail do cartão.)*
+  tirou o e-mail do cartão.)* Ao desmarcar uma notícia (lida, salva ou curtida), ela MUST sair da
+  lista correspondente sem novo pedido ao servidor (specs/024-redesign-visual).
 - **RF-036**: O usuário MUST poder editar seus dados (nome, e-mail e telefone), trocar e
-  remover a foto de perfil e ligar/desligar "Receber alertas".
+  remover a foto de perfil e ligar/desligar "Receber alertas". Na edição, os erros MUST aparecer
+  enquanto a pessoa digita (só nos campos alterados), "Salvar" só fica disponível com alguma
+  mudança, nada salvando e nenhum erro, e a pessoa MUST NOT sair da tela durante o envio da foto
+  (aviso curto). Ao voltar, o Perfil já mostra a foto nova (specs/024-redesign-visual).
 
 ### 3.8 Configurações (B8)
 
 - **RF-037**: As configurações MUST listar as seções Conta ("Dados pessoais"), Alertas,
   Segurança ("Alterar senha") e Acessibilidade, e a ação de sair da conta. Toda linha MUST
-  levar a uma tela funcional (nenhuma linha "morta").
+  levar a uma tela funcional (nenhuma linha "morta"). As Configurações abrem só pela engrenagem
+  do Perfil (também para o visitante). "Receber alertas" controla os alertas do próprio app (sino
+  e tela de Alertas): enquanto salva, tenta de novo ou a conta carrega, a chave dá lugar a um
+  carregamento; se carregar a conta ou salvar falhar, ela dá lugar a um botão de **tentar de
+  novo**, que refaz a ação que falhou, com a mensagem na própria linha. Na troca de senha, a
+  validação MUST acontecer enquanto a pessoa digita e o botão fica desativado até o formulário
+  ficar válido (specs/024-redesign-visual).
 - **RF-042**: O app MUST usar o idioma do aparelho (português do Brasil ou inglês dos EUA; outro
   idioma cai em português) e as configurações MUST permitir escolher o idioma (Português/English).
   A escolha MUST ser salva no aparelho e valer para os textos do app e para a leitura em voz alta
@@ -215,12 +243,26 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   acima do padrão), aplicado em todas as telas.
 - **RF-039**: O usuário MUST poder ativar um tema de **alto contraste**.
 - **RF-040**: O usuário MUST poder ativar a **leitura automática em voz alta** do conteúdo
-  principal ao abrir o detalhe de uma notícia ou uma pergunta de atividade.
+  principal ao abrir o detalhe de uma notícia ou uma pergunta de atividade. Ligada, ela também lê
+  a resposta nova do Assistente e o resultado da verificação (selo, explicação e cuidados; numa
+  falha, a mensagem) (specs/024-redesign-visual).
 - **RF-041**: As preferências de acessibilidade MUST ser salvas no aparelho e aplicadas já no
   splash da próxima abertura.
 - **RF-041a**: O usuário MUST poder ativar **Reduzir animações** (desligado por padrão), que
   troca as animações de interface por mudança imediata de estado; o "remover animações" do
-  sistema tem o mesmo efeito (specs/022-fluidez-movimento).
+  sistema tem o mesmo efeito (specs/022-fluidez-movimento). Vale também para as animações do
+  redesign 2.0 (confete e placar da conclusão, progresso, pulso do "Ouvir", voos entre telas).
+
+### 3.9a Navegação principal (shell)
+
+- **RF-046**: A barra inferior MUST ter cinco abas de mesmo tamanho, nesta ordem: Início,
+  Atividades, Notícias (Reels), Ajuda e Perfil, **só com ícones**; a aba atual MUST ser marcada
+  por um círculo coral com o ícone branco (não só pela cor), e o nome de cada aba MUST ficar no
+  leitor de tela e na dica do toque longo. *(Até a v2.4.0 havia rótulos e um botão central
+  elevado para Notícias; specs/024-redesign-visual.)*
+- **RF-047**: O topo das abas Início, Atividades e Ajuda MUST ter os atalhos de Alertas (com o
+  contador do RF-021) e do Assistente; só o Início mostra a saudação (RF-009). A engrenagem de
+  Configurações fica só no Perfil (RF-037).
 
 ---
 
@@ -248,8 +290,10 @@ de IA de 2026-10-03; não representa homologação dos endpoints nem aprovação
   (contatos oficiais e pessoais) MUST funcionar sem internet. Ações que exigem rede MUST ficar
   desabilitadas com aviso claro.
 - **RNF-003 (Usabilidade para idosos)**: Alvos de toque MUST ter no mínimo 48×48 dp, o texto base
-  MUST ter no mínimo 16 sp, os textos MUST usar linguagem simples e toda ação destrutiva
-  (remover contato, sair) MUST pedir confirmação.
+  MUST ter 16 sp, nenhum texto MUST ficar abaixo de 14 sp (metadados), os títulos ficam entre 18
+  e 28 sp, os textos MUST usar linguagem simples e toda ação destrutiva (remover contato, sair)
+  MUST pedir confirmação. Quem precisa de letra maior usa o RF-038. (Escala revista na validação
+  do redesign 2.0, specs/024-redesign-visual.)
 - **RNF-004 (Acessibilidade)**: Todo elemento interativo MUST ter rótulo semântico para
   TalkBack/VoiceOver, o contraste MUST atender WCAG 2.1 AA (e AAA no tema de alto contraste) e o
   app MUST respeitar também a escala de fonte do sistema operacional.
@@ -333,6 +377,10 @@ está coberto.
   "Senha atual incorreta" e MUST NOT encerrar a sessão.
 - **CB-014 (Conta desativada)**: Se a API informar que o usuário não existe mais ao restaurar
   a sessão, o app MUST encerrar a sessão e ir ao login.
+- **CB-015 (Servidor demorando)**: Enquanto a resposta não chega (o servidor gratuito pode levar
+  até ~40 s para acordar), o app MUST mostrar só o carregamento (esqueleto no formato do conteúdo
+  ou o botão carregando), anunciado ao leitor de tela. **Não há aviso de servidor lento**: ele
+  foi removido na validação do redesign 2.0 (specs/024-redesign-visual).
 
 ---
 
@@ -349,7 +397,7 @@ está coberto.
 - A lista de contatos oficiais é embarcada no app (assets) para funcionar offline em uma
   emergência (RNF-002), mesmo existindo um endpoint de contatos na API.
 - O onboarding e o splash já existem no código (módulos `splash` e `onboarding`), assim como o
-  design system (`SafeButton`, `SafeCard`, `SafeTextField`, `SafeBadge`) e o style guide.
+  [design system](design-system.md) (v2.0.0 desde o redesign visual 2.0) e o style guide.
 
 ---
 
@@ -378,9 +426,23 @@ Este documento descreve requisitos de **negócio e produto**. Se um requisito ex
 [constitution.md](constitution.md), o requisito MUST ser redesenhado. Mudanças de escopo exigem
 nova versão e registro no changelog.
 
-**Versão**: 2.4.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-22
+**Versão**: 2.5.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-11-15
 
 ## Changelog
+
+- **2.5.0 (2026-11-15)**: redesign visual 2.0 e as validações da usuária no aparelho
+  (`specs/024-redesign-visual`). Novos RF-031a (cartão de emergência "Caiu em um golpe?" com
+  "Ligar para 190"), RF-046 (barra inferior com cinco abas iguais, só ícones e aba atual em
+  círculo coral, no lugar do botão central), RF-047 (topo com Alertas e Assistente, saudação só
+  no Início, engrenagem só no Perfil) e CB-015 (servidor demorando: só carregamento, sem aviso de
+  servidor lento). Revistos: RF-011 (busca sem espaço inicial e com mínimo de 2 letras), RF-013
+  (Reels com curtir, salvar e compartilhar; tocar abre a notícia), RF-015 (velocidade no cartão
+  de ouvir), RF-019 (curtir/salvar no detalhe desativados até carregar e sem sair com pedido em
+  andamento), RF-020 (alerta com a capa), RF-033 (lixeira no cartão, telefone completo, validação
+  em tempo real e "Salvar" só válido), RF-035 (item desmarcado sai da lista), RF-036 (edição de
+  perfil com validação em tempo real), RF-037 (alertas com carregamento e tentar de novo, troca de
+  senha validada ao digitar), RF-040 (leitura automática no Assistente), RF-041a (cobre as
+  animações novas) e RNF-003 (corpo 16, mínimo 14, títulos 18–28).
 
 - **2.4.0 (2026-10-22)**: Amanda Duara (dupla do TCC) aprova o Assistente de IA na v1;
   adicionados RF-043 a RF-045 e UC-17, RN-003 inclui o Assistente entre o que exige conta, e

@@ -2,12 +2,12 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.2.0
+**Versão**: 2.3.0
 
 **Criado em**: 2026-09-07
 
 **Insumos**: [constitution.md](constitution.md) v1.2.0 · [specification.md](specification.md)
-v2.4.0 · [plan.md](plan.md) v2.2.0 · [api-contract.md](api-contract.md) v1.1.1 ·
+v2.5.0 · [plan.md](plan.md) v2.2.0 · [api-contract.md](api-contract.md) v1.1.1 ·
 [openapi.json](openapi.json) · wireframe em `wireframe/` (React, referência visual) ·
 [guia de integração](../../click_seguro_app/ENDPOINT_INTEGRATION_CONTEXT.md) · divisão em trilhas
 do wireframe do Lovable
@@ -366,6 +366,29 @@ Módulos: `activities`, `help`, `profile`, `settings`.
 
 ---
 
+## Fase R — Revisões transversais
+
+- [x] **R1 Redesign visual 2.0** (FR-001 a FR-025 da feature; RF-011, RF-013, RF-015, RF-019,
+  RF-020, RF-031a, RF-033, RF-035 a RF-037, RF-040, RF-041a, RF-046, RF-047, RNF-003, CB-015)
+  (specs/024-redesign-visual)
+  - Fundamentos: paleta nova com alto contraste estendido, Inter empacotada (corpo 16, títulos
+    18–28, mínimo 14), cantos 12/16/20/24/32, sombra única e cartão padrão (`SafeCard`,
+    `SafeCard.decoration`). [design-system.md](design-system.md) 2.0.0.
+  - Componentes: `SafeButton` e `SafeTextField` revistos; novos `SafeIconButton`, `SafeChip`,
+    `SafePillTabs`, `SafeSheet`, progresso, `SafeStateLayout` e `EditableAvatar`; ilustrações
+    SVG com tema reconhecido no título (`IllustrationTheme`).
+  - Shell: barra inferior só com ícones e aba ativa em círculo coral; topo com saudação só no
+    Início e engrenagem só no Perfil.
+  - Telas: splash, onboarding, login e recuperar senha, Início (grade de 2 colunas), detalhe,
+    Reels, Alertas, Atividades (painel, pergunta, feedback, conclusão com confete), Assistente,
+    Central de ajuda (cartão de emergência, contatos com lixeira e telefone completo), Perfil e
+    Configurações (alertas com tentar de novo, validação ao digitar).
+  - Estados: carregamento só com esqueleto cinza, vazio/erro com `SafeStateLayout`, sem aviso de
+    servidor lento. Validado pela usuária no aparelho; [specification.md](specification.md)
+    2.5.0.
+
+---
+
 ## Fase C — Integração (as duas pessoas)
 
 - [ ] **C1 Persistência**: revisar, no aparelho, o que precisa sobreviver ao fechar o app: sessão,
@@ -421,4 +444,4 @@ Dependências entre trilhas (as únicas):
 - As tarefas da versão 1.x (checagem colaborativa) estão preservadas no histórico do Git e na §8
   da especificação, para a v2.
 
-**Versão**: 2.2.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-10-22
+**Versão**: 2.3.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-11-15

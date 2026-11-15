@@ -440,7 +440,10 @@ Pedidos depois de ver a primeira versão no aparelho:
 4. **Recuperar senha**: botão principal de cada passo fixo no fim da tela.
 5. **Foto do perfil**: com o avatar carregando, a edição envia, busca o perfil e pré-carrega a
    imagem nova no tamanho do Perfil; o repositório guarda o último perfil e o Perfil o mostra na
-   volta, já com a foto em cache.
+   volta, já com a foto em cache. Exceção à regra de repositório sem estado: o
+   `ProfileRepositoryImpl` (lazy singleton) guarda o último perfil e a versão da foto como canal
+   entre a edição e o Perfil (lidos pelo `GetCachedProfileUseCase`), e apaga os dois a cada
+   mudança de `UserSessionService.sessionStatus` (saída, expiração, troca de conta).
 6. **Detalhe**: não dá para sair com curtir ou salvar em andamento (aviso curto). As listas do
    perfil mostram os cartões sem os sinais de lida/salva (`NewsCard.showSignals`).
 7. **Telefone do contato**: válido só se completo (3 dígitos, 0800 com 11, fixo/celular com 10

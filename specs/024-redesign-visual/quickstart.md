@@ -5,7 +5,7 @@
 
 ## Pré-requisitos
 
-- Branch `023-redesign-visual`, com `flutter pub get` em `click_seguro_app/`.
+- Branch `024-redesign-visual`, com `flutter pub get` em `click_seguro_app/`.
 - Um aparelho Android (ou emulador) e a URL da API de desenvolvimento (`--dart-define=API_URL=...`;
   a primeira resposta pode demorar uns 40 s, porque o servidor acorda).
 - O Figma aberto ao lado, para comparar quadro a quadro.

@@ -5,7 +5,7 @@ description: "Task list for feature 022: redesign visual 2.0"
 
 # Tasks: Redesign visual 2.0
 
-**Input**: Design documents from `/specs/023-redesign-visual/`
+**Input**: Design documents from `/specs/024-redesign-visual/`
 
 **Prerequisites**: [plan.md](plan.md), [spec.md](spec.md), [research.md](research.md),
 [data-model.md](data-model.md), [contracts/ui-components.md](contracts/ui-components.md),
@@ -342,11 +342,10 @@ passo 1).
   - módulo sem lições sai com a ilustração apagada e sem abrir (CB-012).
 
   Rodar e ver falhar.
-- [ ] T040 [P] [US3] Em `tmod/activities/presentation/widgets/lesson_option_card_test.dart`: as
+- [X] T040 [P] [US3] Em `tmod/activities/presentation/widgets/lesson_option_card_test.dart`: as
   quatro aparências (padrão, selecionada com borda tinta, certa com check, errada com X), cada uma
   com semântica distinta além da cor. A errada balança, e não balança com `disableAnimations`.
   Rodar e ver falhar.
-  > Pendente: falta o teste do balanço da opção errada (com e sem movimento reduzido).
 - [X] T041 [P] [US3] Em `tmod/activities/presentation/widgets/feedback_sheet_test.dart`:
   - certa → `SafeIllustration(answerCorrect)`, título em `success`;
   - errada → `answerWrong` e a resposta correta;
@@ -416,22 +415,20 @@ passos 3 e 4).
 
 ### Testes da US4
 
-- [ ] T050 [P] [US4] Criar `tmod/news/presentation/widgets/news_cover_test.dart`:
+- [X] T050 [P] [US4] Criar `tmod/news/presentation/widgets/news_cover_test.dart`:
   - com `imageUrl`, usa a imagem;
   - sem imagem ou com erro de carga, usa a `SafeIllustration` do
     `IllustrationTheme.fromText(primeira categoria)` ou, se der `generic`, do título;
   - fundo pastel do tema.
-  > Pendente: `news_cover_test.dart` ainda não existe.
 
   Rodar e ver falhar.
-- [ ] T051 [P] [US4] Em `tmod/news/presentation/pages/news_home_page_test.dart`:
+- [X] T051 [P] [US4] Em `tmod/news/presentation/pages/news_home_page_test.dart`:
   - "Destaques" em largura total;
   - "Recomendadas" e "Tudo recente" em 2 colunas, mantendo a ordem da API (esquerda para direita,
     de cima para baixo);
   - com escala total de texto acima de 1,3, 1 coluna;
   - a mesma lista gera sempre as mesmas alturas de capa (regra determinística do T053);
   - paginação e rodapé como antes.
-  > Pendente: faltam os testes da grade (2 colunas, 1 coluna com letra grande, ordem e alturas).
 
   Rodar e ver falhar.
 
@@ -486,12 +483,11 @@ ligar com 190 (quickstart, passos 6 e 7).
   - `call(contact)` continua igual, delegando ao `callNumber`.
 
   Rodar e ver falhar.
-- [ ] T059 [P] [US5] Criar `tmod/help/presentation/widgets/emergency_call_card_test.dart`:
+- [X] T059 [P] [US5] Criar `tmod/help/presentation/widgets/emergency_call_card_test.dart`:
   - título, texto e botão nos dois idiomas;
   - o toque chama `callNumber('190')`;
   - se a chamada falhar, mostra o mesmo aviso dos contatos;
   - o leitor de tela lê título, texto e botão.
-  > Pendente: `emergency_call_card_test.dart` ainda não existe.
 
   Rodar e ver falhar.
 - [X] T060 [US5] Em `mod/help/presentation/controller/help_controller.dart`, criar
@@ -545,12 +541,11 @@ notícias salvas (quickstart, passo 8).
   200, título `title1`, texto `bodyLarge` centralizado, ações como hoje, rolagem em telas curtas),
   `safe_offline_banner.dart` e `slow_request_notice.dart`. Apagar
   `core/widgets/safe_state_illustration.dart` e o teste dele.
-- [ ] T067 [US6] Nas 14 telas que usam `SafeLoadingState`, escolher o `layout` que combina com o
+- [X] T067 [US6] Nas 14 telas que usam `SafeLoadingState`, escolher o `layout` que combina com o
   conteúdo:
   - `cards`: painel de atividades e Início;
   - `list`: listas de notícias, alertas e histórico do assistente;
   - `detail`: detalhe da notícia e pergunta.
-  > Parcial: só a lista de notícias pede o `layout` certo, e ainda há indicadores de carregamento soltos (Assistente, Reels, Perfil, Conquistas, edição do perfil).
 
   Trocar os 9 `CircularProgressIndicator` soltos de carregamento de tela por `SafeLoadingState`.
   Os de botão carregando ficam. Atualizar os 12 testes que procuram `CircularProgressIndicator` ou
@@ -564,18 +559,18 @@ notícias salvas (quickstart, passo 8).
 
 - [ ] T069 [P] Rodar o app no aparelho com fonte no maior nível, alto contraste e inglês. Corrigir
   textos cortados ou sobrepostos (SC-003, edge cases da spec).
-- [ ] T070 [P] Reescrever `.specify/memory/design-system.md` como 2.0.0 ([R13](research.md#r13-documentação)):
+- [X] T070 [P] Reescrever `.specify/memory/design-system.md` como 2.0.0 ([R13](research.md#r13-documentação)):
   - princípios, tokens claro e alto contraste, tipografia, cantos, sombra e movimento;
   - componentes (do [contrato](contracts/ui-components.md)), ilustrações e regra de tema;
   - barra inferior, divergências e changelog.
 
   Trocar "SafeNews" por "Click Seguro".
-- [ ] T071 [P] `.specify/memory/specification.md` 2.5.0:
+- [X] T071 [P] `.specify/memory/specification.md` 2.5.0:
   - barra inferior com 5 abas iguais (navegação);
   - cartão de emergência junto do RF-031;
   - "Reduzir animações" junto do RF-038 a RF-041;
   - changelog.
-- [ ] T072 Rodar o `/revisar-pr` na própria branch (diff `origin/develop...023-redesign-visual`,
+- [ ] T072 Rodar o `/revisar-pr` na própria branch (diff `origin/develop...024-redesign-visual`,
   por subagente independente). Corrigir os achados Alto e Médio, sobretudo código morto: tokens
   sem uso, `module_icon.dart`, campos removidos.
 - [ ] T073 Atualizar a branch com o `develop` (`git fetch` e merge) e resolver conflitos com o
@@ -583,8 +578,8 @@ notícias salvas (quickstart, passo 8).
   `flutter test` e `flutter build web`.
 - [ ] T074 Validação da usuária no aparelho, seguindo o [quickstart](quickstart.md) inteiro (passos
   1 a 11). Mudanças de comportamento achadas viram clarificação na spec.
-- [ ] T075 Adicionar a tarefa R1 "Redesign visual 2.0" em `.specify/memory/tasks.md`, já marcada e
-  com o link para `specs/023-redesign-visual`,
+- [X] T075 Adicionar a tarefa R1 "Redesign visual 2.0" em `.specify/memory/tasks.md`, já marcada e
+  com o link para `specs/024-redesign-visual`,
   marcar as tarefas deste arquivo e fazer o **commit** de docs:
   `docs(022): redesign validado no aparelho`. Push e PR para `develop` ("O que entra", "Como
   validar", "Fora do escopo").
