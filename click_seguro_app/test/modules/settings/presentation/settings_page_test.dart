@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/settings/domain/entities/account_summary_entity.dart';
 import 'package:click_seguro_app/modules/settings/domain/entities/language_choice.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_page.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/alerts_switch_tile.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -441,21 +445,81 @@ void main() {
       expect(repository.alertsCalls, [false]);
     });
 
-    testWidgets('falha → volta e avisa', (tester) async {
+    // Carregamento no lugar da chave enquanto salva (validação da usuária,
+    // specs/023): a pessoa vê que a escolha está indo.
+    testWidgets('salvando: carregamento no lugar da chave', (tester) async {
+      await open(tester);
+      repository.alertsGate = Completer<void>();
+
+      await tester.tap(alertsSwitch());
+      await tester.pump();
+
+      expect(alertsSwitch(), findsNothing);
+      expect(find.byKey(AlertsSwitchTile.busyKey), findsOneWidget);
+
+      repository.alertsGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.byKey(AlertsSwitchTile.busyKey), findsNothing);
+      expect(tester.widget<Switch>(alertsSwitch()).value, isFalse);
+    });
+
+    Finder retryIcon() => find.byKey(AlertsSwitchTile.retryKey);
+
+    testWidgets('falha ao salvar → ícone vermelho no lugar da chave e aviso', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
       repository.alertsResults[0] = const Left(ConnectionFailure());
       await open(tester);
 
       await tester.tap(alertsSwitch());
       await tester.pumpAndSettle();
 
-      expect(tester.widget<Switch>(alertsSwitch()).value, isTrue);
+      expect(alertsSwitch(), findsNothing);
+      expect(find.text('Tentar novamente'), findsNothing);
+      expect(retryIcon(), findsOneWidget);
+      final Icon icon = tester.widget<Icon>(
+        find.descendant(of: retryIcon(), matching: find.byType(Icon)),
+      );
+      expect(icon.icon, LucideIcons.rotateCcw);
+      expect(icon.color, AppPalette.light.destructive);
+      final Size size = tester.getSize(retryIcon());
+      expect(size.width, greaterThanOrEqualTo(48));
+      expect(size.height, greaterThanOrEqualTo(48));
       expect(
         find.text('Não foi possível mudar os alertas. Tente de novo.'),
         findsOneWidget,
       );
+      expect(find.bySemanticsLabel(RegExp('Tentar de novo')), findsOneWidget);
+      semantics.dispose();
     });
 
-    testWidgets('conta com erro → chave desabilitada e tentar de novo', (
+    testWidgets('ícone reenvia o valor pedido, com carregamento no lugar', (
+      tester,
+    ) async {
+      repository.alertsResults
+        ..[0] = const Left(ConnectionFailure())
+        ..add(const Right(unit));
+      await open(tester);
+      await tester.tap(alertsSwitch());
+      await tester.pumpAndSettle();
+      repository.alertsGate = Completer<void>();
+
+      await tester.tap(retryIcon());
+      await tester.pump();
+
+      expect(find.byKey(AlertsSwitchTile.busyKey), findsOneWidget);
+      expect(retryIcon(), findsNothing);
+
+      repository.alertsGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(repository.alertsCalls, [false, false]);
+      expect(retryIcon(), findsNothing);
+      expect(tester.widget<Switch>(alertsSwitch()).value, isFalse);
+    });
+
+    testWidgets('conta com erro → ícone no lugar da chave e recarrega', (
       tester,
     ) async {
       repository.accountResults
@@ -463,11 +527,14 @@ void main() {
         ..add(const Right(testAccount));
       await open(tester);
 
-      expect(tester.widget<Switch>(alertsSwitch()).onChanged, isNull);
+      expect(alertsSwitch(), findsNothing);
+      expect(find.text('Tentar novamente'), findsNothing);
       expect(find.text('Não foi possível carregar'), findsOneWidget);
 
-      await tapAndSettle(tester, find.text('Tentar novamente'));
+      await tapAndSettle(tester, retryIcon());
 
+      expect(repository.accountCalls, 2);
+      expect(retryIcon(), findsNothing);
       expect(tester.widget<Switch>(alertsSwitch()).onChanged, isNotNull);
     });
   });

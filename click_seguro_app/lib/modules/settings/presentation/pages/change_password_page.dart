@@ -76,9 +76,45 @@ class _ChangePasswordView extends StatelessWidget {
       },
       child: SettingsScaffold(
         title: AppStrings.settingsChangePassword.tr(),
+        // O botão fica no fim da tela, fora da rolagem; com o teclado aberto,
+        // sobe junto e continua à mão.
+        bottom: SafeButton(
+          label: AppStrings.settingsPasswordSave.tr(),
+          disabled: !controller.canSave,
+          loading: controller.isSaving,
+          onPressed: () => _save(context, controller),
+        ),
         children: [_Form(controller: controller)],
       ),
     );
+  }
+}
+
+/// Envia a troca e avisa o resultado; com sucesso, volta.
+Future<void> _save(
+  BuildContext context,
+  ChangePasswordController controller,
+) async {
+  FocusScope.of(context).unfocus();
+  // Guardado antes: no novo login que falha, a tela some (vai ao login).
+  final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+  final ChangePasswordResult result = await controller.save();
+  final Failure? failure = controller.saveFailure;
+  final String? message = switch (result) {
+    ChangePasswordResult.invalid => null,
+    ChangePasswordResult.saved => AppStrings.settingsPasswordSaved.tr(),
+    ChangePasswordResult.failed => switch (failure) {
+      PasswordChangedReloginFailure() ||
+      UnauthorizedFailure() => failure!.message.tr(),
+      _ => AppStrings.settingsPasswordFailed.tr(),
+    },
+  };
+  if (message == null) return;
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(message)));
+  if (result == ChangePasswordResult.saved && context.mounted) {
+    context.pop();
   }
 }
 
@@ -101,30 +137,6 @@ class _Form extends StatelessWidget {
       AppStrings.settingsPasswordErrorSame.tr(),
   };
 
-  Future<void> _save(BuildContext context) async {
-    FocusScope.of(context).unfocus();
-    // Guardado antes: no novo login que falha, a tela some (vai ao login).
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-    final ChangePasswordResult result = await controller.save();
-    final Failure? failure = controller.saveFailure;
-    final String? message = switch (result) {
-      ChangePasswordResult.invalid => null,
-      ChangePasswordResult.saved => AppStrings.settingsPasswordSaved.tr(),
-      ChangePasswordResult.failed => switch (failure) {
-        PasswordChangedReloginFailure() ||
-        UnauthorizedFailure() => failure!.message.tr(),
-        _ => AppStrings.settingsPasswordFailed.tr(),
-      },
-    };
-    if (message == null) return;
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-    if (result == ChangePasswordResult.saved && context.mounted) {
-      context.pop();
-    }
-  }
-
   Widget _field(
     BuildContext context,
     PasswordField field,
@@ -142,7 +154,9 @@ class _Form extends StatelessWidget {
       textInputAction: action,
       autofillHints: autofill,
       onSubmitted: action == TextInputAction.done
-          ? (_) => _save(context)
+          ? (_) {
+              if (controller.canSave) _save(context, controller);
+            }
           : null,
       rightIcon: IconButton(
         constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
@@ -206,13 +220,6 @@ class _Form extends StatelessWidget {
           controller.confirmation,
           autofill: const [AutofillHints.newPassword],
           action: TextInputAction.done,
-        ),
-        const SizedBox(height: AppSpacing.s6),
-        SafeButton(
-          label: AppStrings.settingsPasswordSave.tr(),
-          disabled: !controller.canSave,
-          loading: controller.isSaving,
-          onPressed: () => _save(context),
         ),
       ],
     );

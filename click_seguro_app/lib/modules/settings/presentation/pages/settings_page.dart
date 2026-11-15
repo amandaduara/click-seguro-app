@@ -91,20 +91,6 @@ class _AccountSettings extends StatelessWidget {
     unawaited(controller.retryAccount());
   }
 
-  Future<void> _setAlerts(
-    BuildContext context,
-    SettingsController controller,
-    bool value,
-  ) async {
-    final failure = await controller.setReceiveAlerts(value);
-    if (failure == null || !context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(AppStrings.settingsAlertsFailed.tr())),
-      );
-  }
-
   @override
   Widget build(BuildContext context) {
     final SettingsController controller = context.watch<SettingsController>();
@@ -138,8 +124,13 @@ class _AccountSettings extends StatelessWidget {
             AlertsSwitchTile(
               value: account?.receiveNotifications,
               saving: controller.isSavingAlerts,
-              onChanged: (value) => _setAlerts(context, controller, value),
-              onRetry: controller.retryAccount,
+              // A falha fica na própria linha (aviso e ícone de tentar de
+              // novo), sem SnackBar.
+              loadFailed: controller.account is AccountFailed,
+              saveFailed: controller.alertsSaveFailed,
+              retrying: controller.isRetryingAlerts,
+              onChanged: controller.setReceiveAlerts,
+              onRetry: controller.retryAlerts,
             ),
           ],
         ),

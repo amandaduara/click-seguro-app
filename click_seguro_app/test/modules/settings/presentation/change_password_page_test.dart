@@ -1,4 +1,5 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/settings/domain/failures/settings_failures.dart';
@@ -150,6 +151,131 @@ void main() {
     await tester.pump();
 
     expect(find.byIcon(LucideIcons.circleCheck), findsNWidgets(5));
+  });
+
+  SafeButton saveButton(WidgetTester tester) =>
+      tester.widget<SafeButton>(find.widgetWithText(SafeButton, 'Salvar'));
+
+  group('validação enquanto digita', () {
+    testWidgets('abre sem avisos e com o botão desativado', (tester) async {
+      await open(tester);
+
+      expect(find.text('As senhas não são iguais.'), findsNothing);
+      expect(saveButton(tester).disabled, isTrue);
+    });
+
+    testWidgets('aviso aparece ao digitar e some quando fica válido', (
+      tester,
+    ) async {
+      await open(tester);
+      await tester.enterText(field('Nova senha'), 'NovaSenha@456');
+      await tester.enterText(field('Confirmar nova senha'), 'NovaSenha@4');
+      await tester.pump();
+
+      expect(find.text('As senhas não são iguais.'), findsOneWidget);
+      expect(repository.changeCalls, isEmpty);
+
+      await tester.enterText(field('Confirmar nova senha'), 'NovaSenha@456');
+      await tester.pump();
+
+      expect(find.text('As senhas não são iguais.'), findsNothing);
+    });
+
+    testWidgets('nova senha fraca avisa na hora', (tester) async {
+      await open(tester);
+      await tester.enterText(field('Nova senha'), 'fraca');
+      await tester.pump();
+
+      expect(
+        tester
+            .widget<SafeTextField>(
+              find.widgetWithText(SafeTextField, 'Nova senha'),
+            )
+            .error,
+        isNotNull,
+      );
+      expect(
+        tester
+            .widget<SafeTextField>(
+              find.widgetWithText(SafeTextField, 'Senha atual'),
+            )
+            .error,
+        isNull,
+        reason: 'campo ainda não tocado',
+      );
+    });
+
+    testWidgets('botão só ativa com o formulário válido', (tester) async {
+      await open(tester);
+      await fill(tester, confirmation: 'OutraSenha@789');
+      expect(saveButton(tester).disabled, isTrue);
+
+      await tester.enterText(field('Confirmar nova senha'), 'NovaSenha@456');
+      await tester.pump();
+
+      expect(saveButton(tester).disabled, isFalse);
+    });
+  });
+
+  group('botão no fim da tela', () {
+    testWidgets('fixo embaixo, fora da rolagem, com margem', (tester) async {
+      await open(tester);
+      final Finder button = find.widgetWithText(SafeButton, 'Salvar');
+      final Size screen =
+          tester.view.physicalSize / tester.view.devicePixelRatio;
+
+      expect(
+        find.descendant(of: find.byType(ListView), matching: button),
+        findsNothing,
+      );
+      final Rect rect = tester.getRect(button);
+      expect(screen.height - rect.bottom, greaterThan(0));
+      expect(screen.height - rect.bottom, lessThanOrEqualTo(48));
+      expect(
+        rect.top,
+        greaterThanOrEqualTo(tester.getRect(find.byType(ListView)).bottom),
+      );
+    });
+
+    testWidgets('acima da área segura do Android', (tester) async {
+      tester.view.padding = const FakeViewPadding(bottom: 48 * 3);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await open(tester);
+      final Size screen =
+          tester.view.physicalSize / tester.view.devicePixelRatio;
+
+      final Rect rect = tester.getRect(
+        find.widgetWithText(SafeButton, 'Salvar'),
+      );
+
+      expect(rect.bottom, lessThanOrEqualTo(screen.height - 48));
+    });
+
+    testWidgets('com o teclado aberto continua visível e tocável', (
+      tester,
+    ) async {
+      await open(tester);
+      await fill(tester);
+      tester.view.viewInsets = FakeViewPadding(
+        bottom: 300 * tester.view.devicePixelRatio,
+      );
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpAndSettle();
+      final Size screen =
+          tester.view.physicalSize / tester.view.devicePixelRatio;
+
+      final Rect rect = tester.getRect(
+        find.widgetWithText(SafeButton, 'Salvar'),
+      );
+      expect(rect.bottom, lessThanOrEqualTo(screen.height - 300));
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('Salvar'));
+      await tester.pumpAndSettle();
+
+      expect(repository.changeCalls, hasLength(1));
+    });
   });
 
   testWidgets('confirmação diferente → aviso, sem pedido', (tester) async {

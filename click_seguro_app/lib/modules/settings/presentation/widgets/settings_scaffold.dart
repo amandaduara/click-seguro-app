@@ -8,14 +8,18 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Quadro das telas das Configurações no redesign 2.0: topo limpo só com o
 /// botão redondo de voltar, título grande na página (como no Perfil) e o
-/// conteúdo rolando abaixo dele.
+/// conteúdo rolando abaixo dele. [bottom] (ex.: o botão principal) fica
+/// fixo no fim da tela, acima da área segura e do teclado.
 class SettingsScaffold extends StatelessWidget {
   const SettingsScaffold({
     super.key,
     required this.title,
     required this.children,
     this.fallbackLocation = '/settings',
+    this.bottom,
   });
+
+  static const Key bottomKey = ValueKey('settings-bottom');
 
   final String title;
   final List<Widget> children;
@@ -23,6 +27,9 @@ class SettingsScaffold extends StatelessWidget {
   /// Para onde o voltar leva quando a tela foi aberta por link direto, sem
   /// nada atrás dela.
   final String fallbackLocation;
+
+  /// Fixo embaixo, fora da rolagem.
+  final Widget? bottom;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +61,17 @@ class SettingsScaffold extends StatelessWidget {
                 children: [SettingsPageTitle(title), ...children],
               ),
             ),
+            if (bottom case final Widget bottom)
+              Padding(
+                key: bottomKey,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s5,
+                  AppSpacing.s3,
+                  AppSpacing.s5,
+                  AppSpacing.s4,
+                ),
+                child: bottom,
+              ),
           ],
         ),
       ),
