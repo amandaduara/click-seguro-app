@@ -15,6 +15,17 @@ void main() {
       expect(model.publishedAt, DateTime.utc(2026, 10, 8, 2, 16, 3, 253));
       expect(model.publishedAt.isUtc, isTrue);
       expect(model.isRead, isFalse);
+      expect(model.imageUrl, realBankNewsJson['imageUrl']);
+    });
+
+    // A imagem vai na lateral do alerta, como nos cartões do Início
+    // (validação da usuária, specs/024).
+    test('sem imagem ou com imagem vazia: imageUrl nulo', () {
+      expect(AlertModel.fromNewsJson(newsItemJson(id: 'n1')).imageUrl, isNull);
+      expect(
+        AlertModel.fromNewsJson(newsItemJson(id: 'n1', imageUrl: '')).imageUrl,
+        isNull,
+      );
     });
 
     test('sem publishedAt usa originalPublishedAt', () {
@@ -105,6 +116,24 @@ void main() {
       expect(back.publishedAt, DateTime.utc(2026, 10, 9, 14, 10));
     });
 
+    test('a imagem vai e volta no registro', () {
+      final model = AlertModel.fromEntity(
+        alert(newsId: 'n7', imageUrl: 'https://img.test/n7.jpg'),
+      );
+
+      final json = model.toJson();
+
+      expect(json['imageUrl'], 'https://img.test/n7.jpg');
+      expect(AlertModel.fromJson(json).toEntity().imageUrl, model.imageUrl);
+    });
+
+    test('registro antigo, sem imagem: imageUrl nulo', () {
+      final json = AlertModel.fromEntity(alert()).toJson();
+
+      expect(json.containsKey('imageUrl'), isFalse);
+      expect(AlertModel.fromJson(json).imageUrl, isNull);
+    });
+
     test('isRead ausente: não lido', () {
       final json = AlertModel.fromEntity(alert()).toJson()..remove('isRead');
 
@@ -112,7 +141,11 @@ void main() {
     });
 
     test('toEntity mantém todos os campos', () {
-      final entity = alert(newsId: 'x', isRead: true);
+      final entity = alert(
+        newsId: 'x',
+        imageUrl: 'https://img.test/x.jpg',
+        isRead: true,
+      );
 
       final back = AlertModel.fromEntity(entity).toEntity();
 
@@ -120,6 +153,7 @@ void main() {
       expect(back.title, entity.title);
       expect(back.source, entity.source);
       expect(back.publishedAt, entity.publishedAt);
+      expect(back.imageUrl, entity.imageUrl);
       expect(back.isRead, isTrue);
     });
 

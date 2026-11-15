@@ -6,6 +6,9 @@ import 'package:click_seguro_app/modules/profile/presentation/controller/area_st
 import 'package:click_seguro_app/modules/profile/presentation/widgets/area_notice.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/medal_card.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -24,18 +27,24 @@ class AchievementsSection extends StatelessWidget {
   final ValueChanged<List<AchievementEntity>> onSeeAll;
   final VoidCallback onRetry;
 
+  /// Medalhas de exemplo para o esqueleto da faixa.
+  static const List<AchievementEntity> _placeholders = [
+    AchievementEntity(kind: AchievementKind.firstLesson, current: 0, target: 1),
+    AchievementEntity(kind: AchievementKind.firstModule, current: 0, target: 1),
+    AchievementEntity(
+      kind: AchievementKind.dedicatedStudent,
+      current: 0,
+      target: 1,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
     final AreaState<List<AchievementEntity>> current = state;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.s4),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: AppSpacing.radius3xl,
-        border: Border.all(color: colors.border),
-        boxShadow: colors.shadowSm,
-      ),
+      decoration: SafeCard.decoration(colors),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -53,7 +62,7 @@ class AchievementsSection extends StatelessWidget {
                         )
                       : AppStrings.profileAchievements.tr(),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 18,
+                    fontSize: AppTypography.body.fontSize,
                     fontWeight: FontWeight.w700,
                     color: colors.secondary,
                   ),
@@ -80,11 +89,10 @@ class AchievementsSection extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s3),
           switch (current) {
-            AreaLoading() => Padding(
-              padding: const EdgeInsets.all(AppSpacing.s4),
-              child: Center(
-                child: CircularProgressIndicator(color: colors.primary),
-              ),
+            // Tentando de novo: a faixa em esqueleto, lida como "Carregando".
+            AreaLoading() => const SafeSkeleton(
+              enabled: true,
+              child: _MedalStrip(achievements: _placeholders),
             ),
             AreaFailed() => AreaNotice(
               message: AppStrings.profileAchievementsFailed.tr(),

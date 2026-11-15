@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/reset_step.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/forgot_password_controller.dart';
@@ -16,6 +16,7 @@ import 'package:click_seguro_app/modules/common/presentation/extensions/password
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -98,7 +99,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ForgotPasswordController>();
-    final textTheme = Theme.of(context).textTheme;
 
     return PopScope(
       canPop: false,
@@ -110,103 +110,130 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           leading: IconButton(
             onPressed: _goBack,
             tooltip: AppStrings.authBack.tr(),
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(LucideIcons.arrowLeft),
           ),
           title: Text(AppStrings.authResetTitle.tr()),
         ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.s6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ...switch (controller.step) {
-                  ResetStep.email => _emailStep(controller, textTheme),
-                  ResetStep.code => _codeStep(controller, textTheme),
-                  ResetStep.newPassword => _newPasswordStep(controller),
-                },
-                SlowRequestNotice(
-                  active: controller.isSubmitting,
-                  message: AppStrings.authSlowServer.tr(),
-                ),
-                if (controller.failure != null) ...[
-                  const SizedBox(height: AppSpacing.s4),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      controller.failure!.message.tr(),
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: context.colors.destructive,
-                      ),
-                    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s6,
+                    AppSpacing.s4,
+                    AppSpacing.s6,
+                    AppSpacing.s6,
                   ),
-                ],
-              ],
-            ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _StepBadge(
+                        icon: switch (controller.step) {
+                          ResetStep.email => LucideIcons.mail,
+                          ResetStep.code => LucideIcons.keyRound,
+                          ResetStep.newPassword => LucideIcons.lockKeyhole,
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.s5),
+                      ...switch (controller.step) {
+                        ResetStep.email => _emailStep(controller),
+                        ResetStep.code => _codeStep(controller),
+                        ResetStep.newPassword => _newPasswordStep(controller),
+                      },
+                      if (controller.failure != null) ...[
+                        const SizedBox(height: AppSpacing.s4),
+                        Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            controller.failure!.message.tr(),
+                            style: AppTypography.body.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: context.colors.destructive,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s6,
+                  AppSpacing.s3,
+                  AppSpacing.s6,
+                  AppSpacing.s4,
+                ),
+                child: _primaryButton(controller),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  List<Widget> _emailStep(
-    ForgotPasswordController controller,
-    TextTheme textTheme,
-  ) => [
-    Text(
-      AppStrings.authResetEmailDescription.tr(),
-      style: textTheme.bodyLarge?.copyWith(
-        color: context.colors.textForeground,
-      ),
+  /// Botão principal do passo, fixo no fim da tela (fora da rolagem): fica
+  /// acima da área segura e sobe com o teclado.
+  Widget _primaryButton(ForgotPasswordController controller) =>
+      switch (controller.step) {
+        ResetStep.email => SafeButton(
+          label: AppStrings.authResetSendCode.tr(),
+          loading: controller.isSubmitting,
+          onPressed: () => controller.submitEmail(_emailController.text),
+        ),
+        ResetStep.code => SafeButton(
+          label: AppStrings.authResetContinue.tr(),
+          loading: controller.isSubmitting,
+          onPressed: () => controller.submitCode(_codeController.text),
+        ),
+        ResetStep.newPassword => SafeButton(
+          label: AppStrings.authResetSave.tr(),
+          loading: controller.isSubmitting,
+          onPressed: () => _saveNewPassword(controller),
+        ),
+      };
+
+  /// Texto de apoio de cada passo, no corpo grande do app.
+  Widget _description(String text) => Text(
+    text,
+    style: AppTypography.bodyLarge.copyWith(
+      color: context.colors.textForeground,
     ),
-    const SizedBox(height: AppSpacing.s5),
+  );
+
+  List<Widget> _emailStep(ForgotPasswordController controller) => [
+    _description(AppStrings.authResetEmailDescription.tr()),
+    const SizedBox(height: AppSpacing.s6),
     SafeTextField(
       controller: _emailController,
+      label: AppStrings.authEmailLabel.tr(),
+      semanticsLabel: AppStrings.authEmailLabel.tr(),
       placeholder: AppStrings.authEmailPlaceholder.tr(),
-      semanticsLabel: AppStrings.authEmailPlaceholder.tr(),
-      leftIcon: const Icon(Icons.mail_outline),
+      leftIcon: const Icon(LucideIcons.mail),
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.done,
       autofillHints: const [AutofillHints.email],
       onSubmitted: (_) => controller.submitEmail(_emailController.text),
       error: _errorFor(controller, AuthField.email),
     ),
-    const SizedBox(height: AppSpacing.s5),
-    SafeButton(
-      label: AppStrings.authResetSendCode.tr(),
-      loading: controller.isSubmitting,
-      shadow: true,
-      onPressed: () => controller.submitEmail(_emailController.text),
-    ),
   ];
 
-  List<Widget> _codeStep(
-    ForgotPasswordController controller,
-    TextTheme textTheme,
-  ) => [
-    Text(
-      AppStrings.authResetCodeSent.tr(),
-      style: textTheme.bodyLarge?.copyWith(
-        color: context.colors.textForeground,
-      ),
-    ),
-    const SizedBox(height: AppSpacing.s5),
+  List<Widget> _codeStep(ForgotPasswordController controller) => [
+    _description(AppStrings.authResetCodeSent.tr()),
+    const SizedBox(height: AppSpacing.s6),
     SafeTextField(
       controller: _codeController,
+      label: AppStrings.authResetCodeLabel.tr(),
+      semanticsLabel: AppStrings.authResetCodeLabel.tr(),
       placeholder: AppStrings.authResetCodePlaceholder.tr(),
-      semanticsLabel: AppStrings.authResetCodePlaceholder.tr(),
-      leftIcon: const Icon(Icons.pin_outlined),
+      leftIcon: const Icon(LucideIcons.hash),
       textInputAction: TextInputAction.done,
       autofillHints: const [AutofillHints.oneTimeCode],
       onSubmitted: (_) => controller.submitCode(_codeController.text),
       error: _errorFor(controller, AuthField.code),
-    ),
-    const SizedBox(height: AppSpacing.s5),
-    SafeButton(
-      label: AppStrings.authResetContinue.tr(),
-      loading: controller.isSubmitting,
-      shadow: true,
-      onPressed: () => controller.submitCode(_codeController.text),
     ),
     const SizedBox(height: AppSpacing.s3),
     Center(
@@ -220,9 +247,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   List<Widget> _newPasswordStep(ForgotPasswordController controller) => [
     SafeTextField(
       controller: _passwordController,
+      label: AppStrings.authResetNewPasswordLabel.tr(),
+      semanticsLabel: AppStrings.authResetNewPasswordLabel.tr(),
       placeholder: AppStrings.authResetNewPasswordPlaceholder.tr(),
-      semanticsLabel: AppStrings.authResetNewPasswordPlaceholder.tr(),
-      leftIcon: const Icon(Icons.lock_outline),
+      leftIcon: const Icon(LucideIcons.lock),
       obscureText: !controller.isPasswordVisible,
       textInputAction: TextInputAction.next,
       autofillHints: const [AutofillHints.newPassword],
@@ -235,13 +263,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             ? AppStrings.authPasswordHide.tr()
             : AppStrings.authPasswordShow.tr(),
         icon: Icon(
-          controller.isPasswordVisible
-              ? Icons.visibility_off_outlined
-              : Icons.visibility_outlined,
+          controller.isPasswordVisible ? LucideIcons.eyeOff : LucideIcons.eye,
         ),
       ),
     ),
-    const SizedBox(height: AppSpacing.s2),
+    const SizedBox(height: AppSpacing.s3),
     PasswordRulesList(
       rules: [
         for (final rule in PasswordRule.values)
@@ -251,24 +277,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
       ],
     ),
-    const SizedBox(height: AppSpacing.s3),
+    const SizedBox(height: AppSpacing.s5),
     SafeTextField(
       controller: _confirmationController,
       focusNode: _confirmationFocus,
+      label: AppStrings.authResetConfirmPasswordLabel.tr(),
+      semanticsLabel: AppStrings.authResetConfirmPasswordLabel.tr(),
       placeholder: AppStrings.authResetConfirmPasswordPlaceholder.tr(),
-      semanticsLabel: AppStrings.authResetConfirmPasswordPlaceholder.tr(),
-      leftIcon: const Icon(Icons.lock_outline),
+      leftIcon: const Icon(LucideIcons.lock),
       obscureText: !controller.isPasswordVisible,
       textInputAction: TextInputAction.done,
       onSubmitted: (_) => _saveNewPassword(controller),
       error: _errorFor(controller, AuthField.passwordConfirmation),
-    ),
-    const SizedBox(height: AppSpacing.s5),
-    SafeButton(
-      label: AppStrings.authResetSave.tr(),
-      loading: controller.isSubmitting,
-      shadow: true,
-      onPressed: () => _saveNewPassword(controller),
     ),
   ];
 
@@ -277,4 +297,29 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         password: _passwordController.text,
         confirmation: _confirmationController.text,
       );
+}
+
+/// Ícone do passo num círculo rosado, como os selos do redesign 2.0.
+/// Decorativo: o título e o texto do passo já dizem o que fazer.
+class _StepBadge extends StatelessWidget {
+  const _StepBadge({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          color: context.colors.primarySoft,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 32, color: context.colors.primary),
+      ),
+    ),
+  );
 }

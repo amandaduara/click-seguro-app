@@ -6,6 +6,7 @@ import 'package:click_seguro_app/core/widgets/app_logo.dart';
 import 'package:click_seguro_app/modules/splash/presentation/controller/splash_controller.dart';
 import 'package:click_seguro_app/modules/splash/presentation/controller/splash_destination.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -36,8 +37,11 @@ class _SplashPageState extends State<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    // Redesign 2.0 (Figma, quadro 01): fundo creme e a logo oficial num
+    // círculo branco.
     return Scaffold(
-      backgroundColor: context.colors.background,
+      backgroundColor: colors.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -46,21 +50,34 @@ class _SplashPageState extends State<SplashPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const AppLogo(size: 112),
-                  const SizedBox(height: 16),
+                  Container(
+                    width: 168,
+                    height: 168,
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      shape: BoxShape.circle,
+                      boxShadow: colors.shadow,
+                      border: colors.shadow.isEmpty
+                          ? Border.all(color: colors.border)
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: const AppLogo(size: 96),
+                  ),
+                  const SizedBox(height: AppSpacing.s7),
                   Text(
                     AppStrings.appTitle.tr(),
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: context.colors.secondary,
+                    style: AppTypography.display.copyWith(
+                      color: colors.textForeground,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.s2),
+                  const SizedBox(height: AppSpacing.s3),
                   Text(
                     AppStrings.splashTagline.tr(),
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.colors.textMutedForeground,
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: colors.textBody,
                     ),
                   ),
                 ],

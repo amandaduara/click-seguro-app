@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
@@ -5,24 +7,24 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/animated_reveal.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/extensions/auth_presentation_extension.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
-import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_mode_switch.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/or_divider.dart';
 import 'package:click_seguro_app/modules/common/presentation/extensions/password_rule_presentation.dart';
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
-/// Login, cadastro e visitante (wireframe: LoginScreen).
+/// Login, cadastro e visitante (redesign 2.0, quadro "03 Entrar").
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, this.initialMode = AuthMode.login, this.next});
 
@@ -45,6 +47,13 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordFocus = FocusNode();
 
   late final AuthenticationController _controller;
+
+  static const EdgeInsets _padding = EdgeInsets.fromLTRB(
+    AppSpacing.s6,
+    AppSpacing.s7,
+    AppSpacing.s6,
+    AppSpacing.s6,
+  );
 
   /// Aviso de "senha alterada" ao voltar da recuperação (FR-016).
   bool _passwordWasReset = false;
@@ -134,181 +143,216 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: SafeArea(
         child: AutofillGroup(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s6,
-              AppSpacing.s7,
-              AppSpacing.s6,
-              AppSpacing.s6,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const AuthHeader(),
-                const SizedBox(height: AppSpacing.s7),
-                AuthModeSwitch(
-                  loginLabel: AppStrings.authModeLogin.tr(),
-                  registerLabel: AppStrings.authModeRegister.tr(),
-                  isRegister: isRegister,
-                  onChanged: (register) {
-                    setState(() => _passwordWasReset = false);
-                    controller.setMode(
-                      register ? AuthMode.register : AuthMode.login,
-                    );
-                  },
-                ),
-                const SizedBox(height: AppSpacing.s6),
-                // Campos, regras e mensagens entram e saem crescendo e
-                // esmaecendo (specs/022 FR-023).
-                AnimatedReveal(
-                  child: isRegister
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            SafeTextField(
-                              controller: _nameController,
-                              focusNode: _nameFocus,
-                              onChanged: _onFormChanged,
-                              placeholder: AppStrings.authNamePlaceholder.tr(),
-                              semanticsLabel: AppStrings.authNamePlaceholder
-                                  .tr(),
-                              leftIcon: const Icon(LucideIcons.user),
-                              textInputAction: TextInputAction.next,
-                              autofillHints: const [AutofillHints.name],
-                              onSubmitted: (_) => _emailFocus.requestFocus(),
-                              error: _errorFor(controller, AuthField.name),
-                            ),
-                            const SizedBox(height: AppSpacing.s3),
-                          ],
-                        )
-                      : null,
-                ),
-                SafeTextField(
-                  controller: _emailController,
-                  focusNode: _emailFocus,
-                  onChanged: _onFormChanged,
-                  placeholder: AppStrings.authEmailPlaceholder.tr(),
-                  semanticsLabel: AppStrings.authEmailPlaceholder.tr(),
-                  leftIcon: const Icon(LucideIcons.mail),
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.email],
-                  onSubmitted: (_) => _passwordFocus.requestFocus(),
-                  error: _errorFor(controller, AuthField.email),
-                ),
-                const SizedBox(height: AppSpacing.s3),
-                SafeTextField(
-                  controller: _passwordController,
-                  focusNode: _passwordFocus,
-                  placeholder: AppStrings.authPasswordPlaceholder.tr(),
-                  semanticsLabel: AppStrings.authPasswordPlaceholder.tr(),
-                  leftIcon: const Icon(LucideIcons.lock),
-                  obscureText: !controller.isPasswordVisible,
-                  textInputAction: TextInputAction.done,
-                  autofillHints: [
-                    isRegister
-                        ? AutofillHints.newPassword
-                        : AutofillHints.password,
-                  ],
-                  onChanged: _onFormChanged,
-                  onSubmitted: (_) => _submit(),
-                  error: _errorFor(controller, AuthField.password),
-                  rightIcon: IconButton(
-                    onPressed: controller.togglePasswordVisibility,
-                    tooltip: controller.isPasswordVisible
-                        ? AppStrings.authPasswordHide.tr()
-                        : AppStrings.authPasswordShow.tr(),
-                    icon: Icon(
-                      controller.isPasswordVisible
-                          ? LucideIcons.eyeOff
-                          : LucideIcons.eye,
-                    ),
+          // Rola com fonte grande; com espaço sobrando, o aviso do visitante
+          // fica no pé da tela (quadro "03 Entrar").
+          child: LayoutBuilder(
+            builder: (context, viewport) => SingleChildScrollView(
+              padding: _padding,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: math.max(
+                    0,
+                    viewport.maxHeight - _padding.vertical,
                   ),
                 ),
-                AnimatedReveal(
-                  child: isRegister
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const SizedBox(height: AppSpacing.s2),
-                            PasswordRulesList(
-                              rules: [
-                                for (final rule in PasswordRule.values)
-                                  (
-                                    label: rule.labelKey.tr(),
-                                    met: controller.passwordRules.contains(
-                                      rule,
-                                    ),
-                                  ),
-                              ],
-                            ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const AuthHeader(),
+                        const SizedBox(height: AppSpacing.s6),
+                        SafePillTabs(
+                          tabs: [
+                            AppStrings.authModeLogin.tr(),
+                            AppStrings.authModeRegister.tr(),
                           ],
-                        )
-                      : null,
-                ),
-                AnimatedReveal(
-                  child: isRegister
-                      ? null
-                      : Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _openForgotPassword,
-                            style: TextButton.styleFrom(
-                              foregroundColor: context.colors.primary,
-                              minimumSize: const Size(48, 48),
-                            ),
-                            child: Text(AppStrings.authForgotPassword.tr()),
-                          ),
+                          selectedIndex: isRegister ? 1 : 0,
+                          onChanged: (index) {
+                            final bool register = index == 1;
+                            // Tocar na aba atual não muda nada.
+                            if (register == isRegister) return;
+                            setState(() => _passwordWasReset = false);
+                            controller.setMode(
+                              register ? AuthMode.register : AuthMode.login,
+                            );
+                          },
                         ),
+                        const SizedBox(height: AppSpacing.s6),
+                        ..._form(controller, isRegister),
+                        const SizedBox(height: AppSpacing.s5),
+                        SafeButton(
+                          label: primaryLabel,
+                          loading: controller.isSubmitting,
+                          // Só com todos os campos corretos (no cadastro, a
+                          // senha cumprindo as 5 regras).
+                          disabled:
+                              !controller.canSubmit && !controller.isSubmitting,
+                          onPressed: _submit,
+                        ),
+                        const SizedBox(height: AppSpacing.s5),
+                        const OrDivider(),
+                        const SizedBox(height: AppSpacing.s5),
+                        SafeButton(
+                          label: AppStrings.authContinueAsGuest.tr(),
+                          tone: SafeButtonTone.secondary,
+                          onPressed: controller.continueAsGuest,
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.s7),
+                      child: Text(
+                        AppStrings.authGuestNote.tr(),
+                        textAlign: TextAlign.center,
+                        style: AppTypography.body.copyWith(
+                          color: context.colors.textMutedForeground,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                AnimatedReveal(
-                  child: _passwordWasReset
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const SizedBox(height: AppSpacing.s2),
-                            Semantics(
-                              liveRegion: true,
-                              child: Text(
-                                AppStrings.authResetSuccess.tr(),
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(color: context.colors.success),
-                              ),
-                            ),
-                          ],
-                        )
-                      : null,
-                ),
-                AnimatedReveal(child: _failureMessage(controller)),
-                const SizedBox(height: AppSpacing.s5),
-                SafeButton(
-                  label: primaryLabel,
-                  loading: controller.isSubmitting,
-                  // Só com todos os campos corretos (no cadastro, a senha
-                  // cumprindo as 5 regras).
-                  disabled: !controller.canSubmit && !controller.isSubmitting,
-                  shadow: controller.canSubmit,
-                  onPressed: _submit,
-                ),
-                SlowRequestNotice(
-                  active: controller.isSubmitting,
-                  message: AppStrings.authSlowServer.tr(),
-                ),
-                const SizedBox(height: AppSpacing.s6),
-                const OrDivider(),
-                const SizedBox(height: AppSpacing.s6),
-                SafeButton(
-                  label: AppStrings.authContinueAsGuest.tr(),
-                  tone: SafeButtonTone.ghost,
-                  onPressed: controller.continueAsGuest,
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+
+  /// Campos com o rótulo acima (redesign 2.0), regras da senha, "Esqueci
+  /// minha senha" e as mensagens. Campos, regras e mensagens entram e saem
+  /// crescendo e esmaecendo (specs/022 FR-023).
+  List<Widget> _form(AuthenticationController controller, bool isRegister) => [
+    AnimatedReveal(
+      child: isRegister
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SafeTextField(
+                  controller: _nameController,
+                  focusNode: _nameFocus,
+                  onChanged: _onFormChanged,
+                  label: AppStrings.authNameLabel.tr(),
+                  semanticsLabel: AppStrings.authNameLabel.tr(),
+                  placeholder: AppStrings.authNamePlaceholder.tr(),
+                  leftIcon: const Icon(LucideIcons.user),
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.name],
+                  onSubmitted: (_) => _emailFocus.requestFocus(),
+                  error: _errorFor(controller, AuthField.name),
+                ),
+                const SizedBox(height: AppSpacing.s5),
+              ],
+            )
+          : null,
+    ),
+    SafeTextField(
+      controller: _emailController,
+      focusNode: _emailFocus,
+      onChanged: _onFormChanged,
+      label: AppStrings.authEmailLabel.tr(),
+      semanticsLabel: AppStrings.authEmailLabel.tr(),
+      placeholder: AppStrings.authEmailPlaceholder.tr(),
+      leftIcon: const Icon(LucideIcons.mail),
+      keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.next,
+      autofillHints: const [AutofillHints.email],
+      onSubmitted: (_) => _passwordFocus.requestFocus(),
+      error: _errorFor(controller, AuthField.email),
+    ),
+    const SizedBox(height: AppSpacing.s5),
+    SafeTextField(
+      controller: _passwordController,
+      focusNode: _passwordFocus,
+      label: AppStrings.authPasswordLabel.tr(),
+      semanticsLabel: AppStrings.authPasswordLabel.tr(),
+      placeholder: AppStrings.authPasswordPlaceholder.tr(),
+      leftIcon: const Icon(LucideIcons.lock),
+      obscureText: !controller.isPasswordVisible,
+      textInputAction: TextInputAction.done,
+      autofillHints: [
+        isRegister ? AutofillHints.newPassword : AutofillHints.password,
+      ],
+      onChanged: _onFormChanged,
+      onSubmitted: (_) => _submit(),
+      error: _errorFor(controller, AuthField.password),
+      rightIcon: IconButton(
+        onPressed: controller.togglePasswordVisibility,
+        tooltip: controller.isPasswordVisible
+            ? AppStrings.authPasswordHide.tr()
+            : AppStrings.authPasswordShow.tr(),
+        icon: Icon(
+          controller.isPasswordVisible ? LucideIcons.eyeOff : LucideIcons.eye,
+        ),
+      ),
+    ),
+    AnimatedReveal(
+      child: isRegister
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: AppSpacing.s3),
+                PasswordRulesList(
+                  rules: [
+                    for (final rule in PasswordRule.values)
+                      (
+                        label: rule.labelKey.tr(),
+                        met: controller.passwordRules.contains(rule),
+                      ),
+                  ],
+                ),
+              ],
+            )
+          : null,
+    ),
+    AnimatedReveal(
+      child: isRegister
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s1),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: _openForgotPassword,
+                  style: TextButton.styleFrom(
+                    foregroundColor: context.colors.textForeground,
+                    minimumSize: const Size(48, 48),
+                    padding: EdgeInsets.zero,
+                    textStyle: AppTypography.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                  child: Text(AppStrings.authForgotPassword.tr()),
+                ),
+              ),
+            ),
+    ),
+    AnimatedReveal(
+      child: _passwordWasReset
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: AppSpacing.s2),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    AppStrings.authResetSuccess.tr(),
+                    style: AppTypography.body.copyWith(
+                      color: context.colors.success,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : null,
+    ),
+    AnimatedReveal(child: _failureMessage(controller)),
+  ];
 
   /// `null` sem falha. Uma mensagem dá lugar a outra esmaecendo.
   Widget? _failureMessage(AuthenticationController controller) {
@@ -333,7 +377,8 @@ class _LoginPageState extends State<LoginPage> {
             liveRegion: true,
             child: Text(
               failure.message.tr(),
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              style: AppTypography.body.copyWith(
+                fontWeight: FontWeight.w600,
                 color: isInfo
                     ? context.colors.secondary
                     : context.colors.destructive,

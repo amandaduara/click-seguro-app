@@ -1,14 +1,15 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_palette.dart';
-import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
-import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_state_layout.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Estado de erro (FR-015): a mensagem (já traduzida, ex.:
-/// `failure.message.tr()`) e "Tentar novamente".
+/// Estado de erro (FR-015, FR-019): a mensagem (já traduzida, ex.:
+/// `failure.message.tr()`) e "Tentar novamente". Redesign 2.0: a ilustração
+/// da tomada desconectada, ou a da nuvem sem sinal quando a falha é de
+/// conexão.
 class SafeErrorState extends StatelessWidget {
   const SafeErrorState({
     super.key,
@@ -21,51 +22,21 @@ class SafeErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final double artSize = constraints.hasBoundedHeight
-              ? (constraints.maxHeight * .3).clamp(64, 112)
-              : 112;
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.s6),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SafeStateIllustration(
-                    isError: true,
-                    icon: LucideIcons.circleAlert,
-                    size: artSize,
-                  ),
-                  const SizedBox(height: AppSpacing.s3),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontSize: 16,
-                      color: context.colors.textForeground,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.s5),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minWidth: 48,
-                      minHeight: 48,
-                    ),
-                    child: SafeButton(
-                      label: AppStrings.commonTryAgain.tr(),
-                      size: SafeButtonSize.compact,
-                      icon: const Icon(LucideIcons.rotateCcw),
-                      onPressed: onRetry,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+    // A falha de conexão chega como a mensagem padrão já traduzida
+    // (`ConnectionFailure`): é ela que pede a ilustração de sem internet.
+    final bool offline = message == AppStrings.errorConnection.tr();
+    return SafeStateLayout(
+      illustration: offline
+          ? AppIllustration.stateOffline
+          : AppIllustration.stateError,
+      message: message,
+      actions: [
+        SafeButton(
+          label: AppStrings.commonTryAgain.tr(),
+          icon: const Icon(LucideIcons.rotateCcw),
+          onPressed: onRetry,
+        ),
+      ],
     );
   }
 }

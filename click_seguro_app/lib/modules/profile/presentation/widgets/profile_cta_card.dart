@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -30,7 +31,7 @@ class ProfileCtaCard extends StatelessWidget {
         button: true,
         child: Material(
           color: background,
-          borderRadius: AppSpacing.radius3xl,
+          borderRadius: AppSpacing.radiusXl,
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
@@ -55,7 +56,7 @@ class ProfileCtaCard extends StatelessWidget {
                         Text(
                           title,
                           style: textTheme.titleMedium?.copyWith(
-                            fontSize: 18,
+                            fontSize: AppTypography.body.fontSize,
                             fontWeight: FontWeight.w700,
                             color: foreground,
                           ),
@@ -63,7 +64,7 @@ class ProfileCtaCard extends StatelessWidget {
                         Text(
                           subtitle,
                           style: textTheme.bodyMedium?.copyWith(
-                            fontSize: 15,
+                            fontSize: AppTypography.caption.fontSize,
                             color: foreground,
                           ),
                         ),

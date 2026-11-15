@@ -60,8 +60,10 @@ Map<String, dynamic> newsItemJson({
   String source = 'Folha de Teste',
   String? publishedAt = '2026-10-09T14:00:00.000Z',
   String originalPublishedAt = '2026-09-29T03:00:00.000Z',
+  String? imageUrl,
 }) => {
   'id': id,
+  'imageUrl': ?imageUrl,
   'title': title,
   'source': source,
   'sourceUrl': 'https://fonte.test/$id',
@@ -102,12 +104,14 @@ AlertEntity alert({
   String title = 'Golpe do Pix',
   String source = 'Folha de Teste',
   DateTime? publishedAt,
+  String? imageUrl,
   bool isRead = false,
 }) => AlertEntity(
   newsId: newsId,
   title: title,
   source: source,
   publishedAt: publishedAt ?? testNow.subtract(const Duration(hours: 1)),
+  imageUrl: imageUrl,
   isRead: isRead,
 );
 

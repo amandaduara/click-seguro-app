@@ -1,4 +1,5 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -17,6 +18,14 @@ extension ReelPresentation on ReelEntity {
       (isLiked ? AppStrings.newsReelsLiked : AppStrings.newsReelsLike).tr(
         args: [formattedLikes],
       );
+
+  /// O que o menu de compartilhar leva: título, fonte e endereço da fonte,
+  /// em linhas; sem endereço válido, só título e fonte (como no detalhe).
+  String get shareText => [
+    news.title,
+    news.source,
+    if (isOpenableWebUrl(news.sourceUrl)) news.sourceUrl.trim(),
+  ].where((line) => line.trim().isNotEmpty).join('\n');
 }
 
 /// "Salvar" / "Salvo". Recebe o estado já resolvido: o visitante vê sempre

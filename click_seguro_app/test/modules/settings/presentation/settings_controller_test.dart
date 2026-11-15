@@ -121,14 +121,116 @@ void main() {
       expect(repository.alertsCalls, [false]);
     });
 
-    test('falha → volta ao valor anterior e devolve a falha', () async {
+    test(
+      'falha → volta ao valor anterior, guarda o pedido e devolve a falha',
+      () async {
+        await controller.load();
+        repository.alertsResults[0] = const Left(ConnectionFailure());
+
+        final failure = await controller.setReceiveAlerts(false);
+
+        expect(failure, isA<ConnectionFailure>());
+        expect(alertsOn(), isTrue);
+        expect(controller.alertsSaveFailed, isTrue);
+        expect(controller.alertsLoadFailed, isFalse);
+      },
+    );
+
+    test('retryAlerts reenvia o valor pendente, com carregamento', () async {
+      await controller.load();
+      repository.alertsResults
+        ..[0] = const Left(ConnectionFailure())
+        ..add(const Right(unit));
+      await controller.setReceiveAlerts(false);
+      repository.alertsGate = Completer<void>();
+
+      final retrying = controller.retryAlerts();
+
+      expect(controller.isRetryingAlerts, isTrue);
+      repository.alertsGate!.complete();
+      await retrying;
+      expect(controller.isRetryingAlerts, isFalse);
+      expect(repository.alertsCalls, [false, false]);
+      expect(alertsOn(), isFalse);
+      expect(controller.alertsSaveFailed, isFalse);
+    });
+
+    test('retryAlerts que falha de novo mantém o pedido pendente', () async {
       await controller.load();
       repository.alertsResults[0] = const Left(ConnectionFailure());
+      await controller.setReceiveAlerts(true);
 
-      final failure = await controller.setReceiveAlerts(false);
+      await controller.retryAlerts();
 
-      expect(failure, isA<ConnectionFailure>());
-      expect(alertsOn(), isTrue);
+      expect(repository.alertsCalls, [true, true]);
+      expect(controller.alertsSaveFailed, isTrue);
+      expect(controller.isRetryingAlerts, isFalse);
+    });
+
+    test('retryAlerts com a conta em erro recarrega a conta', () async {
+      repository.accountResults
+        ..[0] = const Left(ConnectionFailure())
+        ..add(const Right(testAccount));
+      await controller.load();
+      expect(controller.alertsLoadFailed, isTrue);
+      repository.accountGate = Completer<void>();
+
+      final retrying = controller.retryAlerts();
+
+      expect(controller.isRetryingAlerts, isTrue);
+      repository.accountGate!.complete();
+      await retrying;
+      expect(controller.account, isA<AccountLoaded>());
+      expect(controller.alertsLoadFailed, isFalse);
+      expect(controller.isRetryingAlerts, isFalse);
+      expect(repository.alertsCalls, isEmpty);
+    });
+
+    // Alcançável: salvar falha e, depois, recarregar a conta (volta da
+    // edição de dados) também falha.
+    group('retryAlerts com a conta em erro e um valor pendente', () {
+      setUp(() async {
+        await controller.load();
+        repository.alertsResults[0] = const Left(ConnectionFailure());
+        await controller.setReceiveAlerts(false);
+        repository.accountResults[0] = const Left(ConnectionFailure());
+        await controller.retryAccount();
+        expect(controller.alertsLoadFailed, isTrue);
+        expect(controller.alertsSaveFailed, isTrue);
+        repository.alertsResults[0] = const Right(unit);
+      });
+
+      test('recarrega a conta e depois reenvia o valor', () async {
+        repository.accountResults[0] = const Right(testAccount);
+
+        await controller.retryAlerts();
+
+        expect(repository.accountCalls, 3);
+        expect(repository.alertsCalls, [false, false]);
+        expect(alertsOn(), isFalse);
+        expect(controller.alertsLoadFailed, isFalse);
+        expect(controller.alertsSaveFailed, isFalse);
+        expect(controller.isRetryingAlerts, isFalse);
+      });
+
+      test('a conta falha de novo: não reenvia e mantém o pendente', () async {
+        await controller.retryAlerts();
+
+        expect(repository.accountCalls, 3);
+        expect(repository.alertsCalls, [false]);
+        expect(controller.alertsLoadFailed, isTrue);
+        expect(controller.alertsSaveFailed, isTrue);
+        expect(controller.isRetryingAlerts, isFalse);
+      });
+    });
+
+    test('retryAlerts sem nada para refazer não faz pedido', () async {
+      await controller.load();
+      final int calls = repository.totalCalls;
+
+      await controller.retryAlerts();
+
+      expect(repository.totalCalls, calls);
     });
 
     test('toque durante o envio é ignorado', () async {

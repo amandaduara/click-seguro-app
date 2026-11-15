@@ -9,19 +9,21 @@ import 'package:click_seguro_app/modules/settings/domain/entities/language_choic
 import 'package:click_seguro_app/modules/settings/presentation/controller/account_state.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/settings_controller.dart';
 import 'package:click_seguro_app/modules/settings/presentation/extensions/language_choice_presentation.dart';
-import 'package:click_seguro_app/modules/settings/presentation/widgets/account_card.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/alerts_switch_tile.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/language_sheet.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_section.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_tile.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
-/// Configurações (B8, specs/013-configuracoes), no quadro do Figma. Com
+/// Configurações (B8, specs/013-configuracoes) no estilo do redesign 2.0
+/// (specs/024): voltar redondo, título grande e seções em cartões padrão. Com
 /// conta, a lista inteira; sem conta, só o que não precisa de conta (R6 de
 /// specs/014-acessibilidade).
 class SettingsPage extends StatelessWidget {
@@ -30,52 +32,43 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final UserSessionService session = GetIt.instance<UserSessionService>();
-    return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.settingsTitle.tr())),
-      body: SafeArea(
-        // Um controller só: se a sessão expira com a tela aberta, a lista do
-        // visitante usa o idioma e a versão já carregados.
-        child: ChangeNotifierProvider<SettingsController>(
-          create: (_) {
-            final SettingsController controller =
-                GetIt.instance<SettingsController>();
-            unawaited(
-              session.isAuthenticated
-                  ? controller.load()
-                  : controller.loadDeviceSettings(),
-            );
-            return controller;
-          },
-          child: ValueListenableBuilder<UserSessionStatus>(
-            valueListenable: session.sessionStatus,
-            builder: (context, status, _) =>
-                status == UserSessionStatus.authenticated
-                ? _SettingsList(sessionName: session.userName ?? '')
-                : const _GuestSettingsList(),
-          ),
+    // Um controller só: se a sessão expira com a tela aberta, a lista do
+    // visitante usa o idioma e a versão já carregados.
+    return ChangeNotifierProvider<SettingsController>(
+      create: (_) {
+        final SettingsController controller =
+            GetIt.instance<SettingsController>();
+        unawaited(
+          session.isAuthenticated
+              ? controller.load()
+              : controller.loadDeviceSettings(),
+        );
+        return controller;
+      },
+      child: ValueListenableBuilder<UserSessionStatus>(
+        valueListenable: session.sessionStatus,
+        builder: (context, status, _) => SettingsScaffold(
+          title: AppStrings.settingsTitle.tr(),
+          fallbackLocation: '/profile',
+          children: status == UserSessionStatus.authenticated
+              ? const [_AccountSettings()]
+              : const [_GuestSettings()],
         ),
       ),
     );
   }
 }
 
-const EdgeInsets _listPadding = EdgeInsets.fromLTRB(
-  AppSpacing.s5,
-  AppSpacing.s4,
-  AppSpacing.s5,
-  AppSpacing.s6,
-);
-
 /// Sem conta: sem cartão, sem itens da conta, sem "Sair" e sem convite
 /// (clarificação de 2026-10-15).
-class _GuestSettingsList extends StatelessWidget {
-  const _GuestSettingsList();
+class _GuestSettings extends StatelessWidget {
+  const _GuestSettings();
 
   @override
   Widget build(BuildContext context) {
     final SettingsController controller = context.watch<SettingsController>();
-    return ListView(
-      padding: _listPadding,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _ReadingSection(controller: controller),
         _AboutSection(version: controller.appVersion),
@@ -84,33 +77,18 @@ class _GuestSettingsList extends StatelessWidget {
   }
 }
 
-class _SettingsList extends StatelessWidget {
-  const _SettingsList({required this.sessionName});
+class _AccountSettings extends StatelessWidget {
+  const _AccountSettings();
 
-  /// Nome guardado na sessão: o cartão o usa enquanto a conta não chega ou
-  /// se ela não carregar.
-  final String sessionName;
-
-  Future<void> _openPersonalData(
+  /// "Dados pessoais" abre a edição por cima das Configurações (o cartão
+  /// "Editar perfil" saiu, a pedido da usuária: abria a mesma tela); ao
+  /// voltar, a conta recarrega.
+  Future<void> _openProfileEdit(
     BuildContext context,
     SettingsController controller,
   ) async {
     await context.push<void>('/profile/edit');
     unawaited(controller.retryAccount());
-  }
-
-  Future<void> _setAlerts(
-    BuildContext context,
-    SettingsController controller,
-    bool value,
-  ) async {
-    final failure = await controller.setReceiveAlerts(value);
-    if (failure == null || !context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text(AppStrings.settingsAlertsFailed.tr())),
-      );
   }
 
   @override
@@ -120,16 +98,9 @@ class _SettingsList extends StatelessWidget {
       AccountLoaded(:final account) => account,
       _ => null,
     };
-    final String name = account?.name ?? sessionName;
-    return ListView(
-      padding: _listPadding,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AccountCard(
-          name: name,
-          initials: initialsOf(name),
-          avatarUrl: account?.avatarUrl,
-          onTap: () => context.go('/profile'),
-        ),
         SettingsSection(
           title: AppStrings.settingsSectionAccount.tr(),
           children: [
@@ -137,7 +108,7 @@ class _SettingsList extends StatelessWidget {
               icon: LucideIcons.userRound,
               title: AppStrings.settingsPersonalData.tr(),
               subtitle: AppStrings.settingsPersonalDataSub.tr(),
-              onTap: () => _openPersonalData(context, controller),
+              onTap: () => _openProfileEdit(context, controller),
             ),
             SettingsTile(
               icon: LucideIcons.lockKeyhole,
@@ -153,22 +124,40 @@ class _SettingsList extends StatelessWidget {
             AlertsSwitchTile(
               value: account?.receiveNotifications,
               saving: controller.isSavingAlerts,
-              onChanged: (value) => _setAlerts(context, controller, value),
-              onRetry: controller.retryAccount,
+              // A falha fica na própria linha (aviso e ícone de tentar de
+              // novo), sem SnackBar.
+              loadFailed: controller.alertsLoadFailed,
+              saveFailed: controller.alertsSaveFailed,
+              retrying: controller.isRetryingAlerts,
+              onChanged: controller.setReceiveAlerts,
+              onRetry: controller.retryAlerts,
             ),
           ],
         ),
         _ReadingSection(controller: controller),
         _AboutSection(version: controller.appVersion),
-        const SizedBox(height: AppSpacing.s6),
-        _LogoutButton(onPressed: controller.logout),
+        const SizedBox(height: AppSpacing.s7),
+        SettingsCard(
+          children: [
+            SettingsTile(
+              icon: LucideIcons.logOut,
+              title: AppStrings.settingsLogout.tr(),
+              destructive: true,
+              onTap: controller.logout,
+            ),
+          ],
+        ),
         const SizedBox(height: AppSpacing.s3),
-        Text(
-          AppStrings.settingsLogoutNote.tr(),
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontSize: 14,
-            color: context.colors.textMutedForeground,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+          child: Text(
+            AppStrings.settingsLogoutNote.tr(),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontSize: AppTypography.caption.fontSize,
+              height: 1.4,
+              color: context.colors.textMutedForeground,
+            ),
           ),
         ),
       ],
@@ -248,34 +237,6 @@ class _AboutSection extends StatelessWidget {
           onTap: () => context.push('/settings/about'),
         ),
       ],
-    );
-  }
-}
-
-/// "Sair da conta": contorno e texto vermelhos; sai na hora, sem aviso
-/// (clarificação de 2026-10-14).
-class _LogoutButton extends StatelessWidget {
-  const _LogoutButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppPalette colors = context.colors;
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(52),
-        foregroundColor: colors.destructive,
-        backgroundColor: colors.destructive.withValues(alpha: 0.06),
-        side: BorderSide(color: colors.destructive.withValues(alpha: 0.5)),
-        shape: const RoundedRectangleBorder(
-          borderRadius: AppSpacing.radiusFull,
-        ),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-      ),
-      icon: const Icon(LucideIcons.logOut, size: 20),
-      label: Text(AppStrings.settingsLogout.tr()),
     );
   }
 }

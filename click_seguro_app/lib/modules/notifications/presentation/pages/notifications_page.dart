@@ -18,6 +18,7 @@ import 'package:click_seguro_app/modules/notifications/presentation/widgets/aler
 import 'package:click_seguro_app/modules/notifications/presentation/widgets/alerts_notices.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/widgets/alerts_summary_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -186,7 +187,9 @@ class _GuestInvite extends StatelessWidget {
             Text(
               AppStrings.notificationsGuestBody.tr(),
               textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(fontSize: 16),
+              style: AppTypography.body.copyWith(
+                color: context.colors.textBody,
+              ),
             ),
             const SizedBox(height: AppSpacing.s6),
             SafeButton(
@@ -245,7 +248,7 @@ class _AlertsList extends StatelessWidget {
               child: Text(
                 _title(section.group),
                 style: textTheme.titleMedium?.copyWith(
-                  fontSize: 20,
+                  fontSize: AppTypography.title3.fontSize,
                   fontWeight: FontWeight.bold,
                   color: context.colors.secondary,
                 ),
@@ -291,17 +294,13 @@ class _EmptyAlertsContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SafeEmptyState(
-          icon: LucideIcons.bell,
-          message: AppStrings.notificationsEmpty.tr(),
-        ),
+        SafeEmptyState(message: AppStrings.notificationsEmpty.tr()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s6),
           child: Text(
             AppStrings.notificationsEmptyHint.tr(),
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontSize: 16,
+            style: AppTypography.body.copyWith(
               color: context.colors.textMutedForeground,
             ),
           ),

@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -106,5 +107,108 @@ void main() {
     await pump(tester, text: 'Uma alternativa bem comprida ' * 6);
 
     expect(tester.takeException(), isNull);
+  });
+
+  group('balanço da errada', () {
+    /// Começa escolhida e passa a errada, como depois da correção: o balanço
+    /// só acontece na troca para errada.
+    Future<ValueNotifier<LessonOptionState>> pumpSwitchable(
+      WidgetTester tester, {
+      bool reduceMotion = false,
+    }) async {
+      final state = ValueNotifier(LessonOptionState.selected);
+      addTearDown(state.dispose);
+      await pumpLocalized(
+        tester,
+        child: AppMotionScope(
+          appReduceMotion: reduceMotion,
+          child: Scaffold(
+            body: ListView(
+              children: [
+                ValueListenableBuilder<LessonOptionState>(
+                  valueListenable: state,
+                  builder: (_, value, _) => LessonOptionCard(
+                    number: 1,
+                    text: 'Ignorar e denunciar',
+                    state: value,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      return state;
+    }
+
+    double textLeft(WidgetTester tester) =>
+        tester.getTopLeft(find.text('Ignorar e denunciar')).dx;
+
+    testWidgets('errada balança para os lados e volta ao lugar', (
+      tester,
+    ) async {
+      final state = await pumpSwitchable(tester);
+      final double rest = textLeft(tester);
+
+      state.value = LessonOptionState.wrong;
+      await tester.pump();
+      // 1/4 da animação de 500 ms: no ponto mais à esquerda (−6 px).
+      await tester.pump(const Duration(milliseconds: 125));
+      // A borda engrossa 0,5 px junto; o balanço passa bem disso.
+      expect(textLeft(tester), lessThan(rest - 4));
+      // Na metade: no ponto mais à direita (+6 px); em 3/4, à esquerda de
+      // novo (duas idas e voltas).
+      await tester.pump(const Duration(milliseconds: 125));
+      expect(textLeft(tester), greaterThan(rest + 4));
+      await tester.pump(const Duration(milliseconds: 125));
+      expect(textLeft(tester), lessThan(rest - 4));
+
+      await tester.pumpAndSettle();
+      expect(textLeft(tester), closeTo(rest, 1));
+    });
+
+    testWidgets('certa não balança', (tester) async {
+      final state = await pumpSwitchable(tester);
+      final double rest = textLeft(tester);
+
+      state.value = LessonOptionState.correct;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 125));
+
+      expect(textLeft(tester), closeTo(rest, 1));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('com "Reduzir animações" do app, não balança', (tester) async {
+      final state = await pumpSwitchable(tester, reduceMotion: true);
+      final double rest = textLeft(tester);
+
+      state.value = LessonOptionState.wrong;
+      for (final ms in [0, 125, 250, 125]) {
+        await tester.pump(Duration(milliseconds: ms));
+        expect(textLeft(tester), closeTo(rest, 1));
+      }
+      expect(find.text('sua resposta, errada'), findsOneWidget);
+      // Sem animação, o status entra sem quebrar o layout.
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('com "remover animações" do aparelho, não balança', (
+      tester,
+    ) async {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      final state = await pumpSwitchable(tester);
+      final double rest = textLeft(tester);
+
+      state.value = LessonOptionState.wrong;
+      for (final ms in [0, 125, 250, 125]) {
+        await tester.pump(Duration(milliseconds: ms));
+        expect(textLeft(tester), closeTo(rest, 1));
+      }
+    });
   });
 }

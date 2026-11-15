@@ -19,25 +19,16 @@ enum AppTab {
 
   final String labelKey;
   final IconData icon;
-
-  /// A aba do meio é o botão central redondo (Reels).
-  bool get isCenter => this == AppTab.news;
 }
 
-/// Barra inferior do wireframe (design system §7.12).
-///
-/// O círculo central sobe [overhang] acima da barra. Essa faixa faz parte da
-/// área do widget (transparente), para o toque funcionar no círculo inteiro:
-/// o Flutter não entrega toques fora dos limites do pai (specs/022 FR-006).
+/// Barra inferior do redesign 2.0 (FR-009; design system §7.12): só os
+/// ícones, com a aba ativa num círculo coral.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
     required this.currentIndex,
     required this.onSelected,
   });
-
-  /// Quanto o círculo central sobe acima da borda da barra.
-  static const double overhang = AppSpacing.s4;
 
   final int currentIndex;
   final ValueChanged<int> onSelected;
@@ -47,69 +38,37 @@ class AppBottomNav extends StatelessWidget {
     return Semantics(
       container: true,
       label: AppStrings.shellNavLabel.tr(),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: overhang),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: context.colors.background,
-                border: Border(top: BorderSide(color: context.colors.border)),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s2,
-                    AppSpacing.s2,
-                    AppSpacing.s2,
-                    AppSpacing.s3,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      for (final tab in AppTab.values)
-                        Expanded(
-                          // O espaço do círculo fica vazio aqui: ele é
-                          // desenhado na camada de cima.
-                          child: tab.isCenter
-                              ? const SizedBox.shrink()
-                              : _TabItem(
-                                  tab: tab,
-                                  selected: tab.index == currentIndex,
-                                  onTap: () => onSelected(tab.index),
-                                ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: context.colors.card,
+          border: Border(top: BorderSide(color: context.colors.border)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s2,
+              AppSpacing.s2,
+              AppSpacing.s2,
+              AppSpacing.s2,
             ),
-          ),
-          // Camada do círculo: começa no topo da faixa. Os espaços vazios ao
-          // lado não recebem toque, que segue para as abas de baixo.
-          Positioned(
-            top: 0,
-            left: AppSpacing.s2,
-            right: AppSpacing.s2,
             child: Row(
               children: [
+                // Cinco abas iguais, sem o botão central de antes: ele
+                // confundia em qual aba a pessoa estava (FR-009 de
+                // specs/024-redesign-visual).
                 for (final tab in AppTab.values)
                   Expanded(
-                    child: tab.isCenter
-                        ? Center(
-                            child: _CenterItem(
-                              tab: tab,
-                              selected: tab.index == currentIndex,
-                              onTap: () => onSelected(tab.index),
-                            ),
-                          )
-                        : const SizedBox.shrink(),
+                    child: _TabItem(
+                      tab: tab,
+                      selected: tab.index == currentIndex,
+                      onTap: () => onSelected(tab.index),
+                    ),
                   ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -122,106 +81,62 @@ class _TabItem extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Diâmetro do círculo coral da aba ativa.
+  static const double _circle = 44;
+
   final AppTab tab;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final Color target = selected
-        ? context.colors.primary
-        : context.colors.textMutedForeground;
-    final String label = tab.labelKey.tr();
+    final AppPalette colors = context.colors;
     final AppMotion motion = AppMotion.of(context);
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      excludeSemantics: true,
-      child: InkWell(
+    // Só o ícone na barra; o nome da aba fica para o leitor de tela e para
+    // o toque longo (dica).
+    final String label = tab.labelKey.tr();
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: label,
+        // Sem isto o excludeSemantics tira a ação do InkResponse e o leitor
+        // de tela não consegue trocar de aba.
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s1),
-            // A aba ativa troca de cor e cresce um pouco (specs/022 FR-025).
-            child: TweenAnimationBuilder<Color?>(
-              tween: ColorTween(end: target),
-              duration: motion.short,
-              curve: AppMotion.standard,
-              builder: (context, color, _) => Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AnimatedScale(
-                    scale: selected ? 1.15 : 1,
-                    duration: motion.short,
-                    curve: AppMotion.emphasis,
-                    child: Icon(tab.icon, size: 20, color: color),
+        excludeSemantics: true,
+        child: InkResponse(
+          onTap: onTap,
+          radius: 32,
+          child: SizedBox(
+            height: 56,
+            child: Center(
+              // A aba ativa fica num círculo coral com o ícone branco, como o
+              // antigo botão central, só que menor.
+              child: AnimatedContainer(
+                duration: motion.short,
+                curve: AppMotion.standard,
+                width: _circle,
+                height: _circle,
+                decoration: BoxDecoration(
+                  color: selected ? colors.primary : Colors.transparent,
+                  shape: BoxShape.circle,
+                  boxShadow: selected ? colors.shadow : null,
+                ),
+                // A cor do ícone muda com animação curta (specs/022 FR-025).
+                child: TweenAnimationBuilder<Color?>(
+                  tween: ColorTween(
+                    end: selected
+                        ? colors.textPrimaryForeground
+                        : colors.textMutedForeground,
                   ),
-                  const SizedBox(height: AppSpacing.s1),
-                  // Com fonte grande o rótulo reduz em vez de ser cortado.
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: color,
-                      ),
-                    ),
-                  ),
-                ],
+                  duration: motion.short,
+                  curve: AppMotion.standard,
+                  builder: (context, color, _) =>
+                      Icon(tab.icon, size: 24, color: color),
+                ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CenterItem extends StatelessWidget {
-  const _CenterItem({
-    required this.tab,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final AppTab tab;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: tab.labelKey.tr(),
-      excludeSemantics: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: context.colors.primary,
-            shape: BoxShape.circle,
-            boxShadow: context.colors.shadowPrimary,
-            border: selected
-                ? Border.all(
-                    color: context.colors.primary.withValues(alpha: 0.3),
-                    width: 4,
-                    strokeAlign: BorderSide.strokeAlignOutside,
-                  )
-                : null,
-          ),
-          child: Icon(
-            tab.icon,
-            size: 28,
-            color: context.colors.textPrimaryForeground,
           ),
         ),
       ),

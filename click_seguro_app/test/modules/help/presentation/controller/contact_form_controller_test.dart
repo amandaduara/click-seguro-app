@@ -5,9 +5,9 @@ import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dart';
-import 'package:click_seguro_app/modules/help/domain/usecases/delete_personal_contact_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/get_personal_contacts_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/save_personal_contact_usecase.dart';
+import 'package:click_seguro_app/modules/help/domain/validation/contact_validation.dart';
 import 'package:click_seguro_app/modules/help/presentation/controller/contact_form_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,6 +15,74 @@ import '../../fakes/fake_help_repository.dart';
 import '../../../../fakes/fake_image_storage_service.dart';
 
 void main() {
+  // Validação em tempo real (validação da usuária, specs/024): o erro
+  // aparece enquanto a pessoa digita (ou ao sair do campo vazio, ou ao
+  // tentar salvar) e some na hora em que o valor fica válido.
+  group('validação em tempo real', () {
+    test('formulário intocado: nenhum erro', () {
+      final controller = _controller(FakeHelpRepository());
+
+      expect(controller.nameError, isNull);
+      expect(controller.phoneError, isNull);
+      controller.dispose();
+    });
+
+    test('digitando: o erro aparece e some na hora', () {
+      final controller = _controller(FakeHelpRepository());
+
+      controller.setPhone('(12) 123');
+      expect(controller.phoneError, ContactValidationError.phone);
+
+      controller.setPhone('(12) 91234-5678');
+      expect(controller.phoneError, isNull);
+
+      controller
+        ..setName('A')
+        ..setName('');
+      expect(controller.nameError, ContactValidationError.name);
+      controller.dispose();
+    });
+
+    test('depois de sair do campo, o erro acompanha a digitação', () {
+      final controller = _controller(FakeHelpRepository());
+
+      controller
+        ..touchName()
+        ..touchPhone();
+      expect(controller.nameError, ContactValidationError.name);
+      expect(controller.phoneError, ContactValidationError.phone);
+
+      controller
+        ..setName('Ana')
+        ..setPhone('(11) 91234-5678');
+      expect(controller.nameError, isNull);
+      expect(controller.phoneError, isNull);
+
+      controller.setPhone('(11');
+      expect(controller.phoneError, ContactValidationError.phone);
+      controller.dispose();
+    });
+
+    test('número curto de emergência vale', () {
+      final controller = _controller(FakeHelpRepository())..touchPhone();
+
+      controller.setPhone('190');
+
+      expect(controller.phoneError, isNull);
+      controller.dispose();
+    });
+
+    test('salvar inválido mostra os dois erros de uma vez', () async {
+      final controller = _controller(FakeHelpRepository());
+
+      expect(await controller.save(), isFalse);
+
+      expect(controller.nameError, ContactValidationError.name);
+      expect(controller.phoneError, ContactValidationError.phone);
+      controller.dispose();
+    });
+  });
+
   test('salva campos normalizados e mantém id estável na edição', () async {
     final repository = FakeHelpRepository()..personal = [person];
     final controller = _controller(repository, contactId: 'p1');
@@ -58,11 +126,12 @@ void main() {
       final controller = _controller(repository);
       controller.setName(' ');
       expect(await controller.save(), isFalse);
-      expect(controller.validationError, isNotNull);
+      expect(controller.nameError, ContactValidationError.name);
       controller.setName('Ana');
       controller.setPhone('11ABC');
       expect(await controller.save(), isFalse);
-      expect(controller.validationError, isNotNull);
+      expect(controller.nameError, isNull);
+      expect(controller.phoneError, ContactValidationError.phone);
       controller.setPhone('11999999999');
       expect(await controller.save(), isFalse);
       expect(controller.saveFailure, isA<CacheFailure>());
@@ -156,6 +225,5 @@ ContactFormController _controller(
   contactId: contactId,
   getPersonalContacts: GetPersonalContactsUseCase(repository),
   savePersonalContact: SavePersonalContactUseCase(repository),
-  deletePersonalContact: DeletePersonalContactUseCase(repository),
   images: images ?? FakeImageStorageService(),
 );

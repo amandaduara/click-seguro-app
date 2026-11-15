@@ -35,6 +35,18 @@ void main() {
       expect(preferences.highContrast, isFalse);
       expect(preferences.autoReadAloud, isFalse);
       expect(preferences.readingSpeed, ReadingSpeed.normal);
+      expect(preferences.reduceMotion, isFalse);
+    });
+
+    test('reduzir animações: padrão desligado e copyWith (FR-024)', () {
+      const preferences = AccessibilityPreferences.defaults();
+
+      final changed = preferences.copyWith(reduceMotion: true);
+
+      expect(changed.reduceMotion, isTrue);
+      expect(changed.highContrast, preferences.highContrast);
+      expect(changed, isNot(preferences));
+      expect(changed.copyWith(highContrast: true).reduceMotion, isTrue);
     });
 
     test('copyWith troca só o campo pedido', () {

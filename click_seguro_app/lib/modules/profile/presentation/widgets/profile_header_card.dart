@@ -4,6 +4,8 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.dart';
 import 'package:click_seguro_app/core/widgets/person_avatar.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -18,7 +20,9 @@ class ProfileHeaderCard extends StatelessWidget {
     required this.footer,
   });
 
-  static const double _avatarSize = 96;
+  /// Lado da foto: quem pré-carrega a imagem usa o mesmo, para a chave do
+  /// cache bater.
+  static const double avatarSize = 96;
   static const double _ringWidth = 4;
   static const double _pencilSize = 36;
   static const double _touchSize = 48;
@@ -27,7 +31,7 @@ class ProfileHeaderCard extends StatelessWidget {
   static const double _inset = 8;
 
   /// Quanto da foto (com o aro) fica acima do cartão: a metade.
-  static const double _overlap = _avatarSize / 2 + _ringWidth + _inset;
+  static const double _overlap = avatarSize / 2 + _ringWidth + _inset;
 
   final ProfileEntity profile;
   final VoidCallback onEdit;
@@ -36,7 +40,7 @@ class ProfileHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
-    const double photoBox = _avatarSize + 2 * (_ringWidth + _inset);
+    const double photoBox = avatarSize + 2 * (_ringWidth + _inset);
     // A foto fica dentro do Stack (e não com overflow), para o toque no
     // lápis funcionar também na parte de fora do cartão.
     return Stack(
@@ -49,12 +53,7 @@ class ProfileHeaderCard extends StatelessWidget {
             AppSpacing.s4,
             AppSpacing.s4,
           ),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: AppSpacing.radius3xl,
-            border: Border.all(color: colors.border),
-            boxShadow: colors.shadowSm,
-          ),
+          decoration: SafeCard.decoration(colors),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -64,7 +63,7 @@ class ProfileHeaderCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontSize: 24,
+                  fontSize: AppTypography.title2.fontSize,
                   fontWeight: FontWeight.w800,
                   color: colors.secondary,
                 ),
@@ -88,12 +87,12 @@ class ProfileHeaderCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: colors.card,
                       shape: BoxShape.circle,
-                      boxShadow: colors.shadowSm,
+                      boxShadow: colors.shadow,
                     ),
                     child: PersonAvatar(
                       initials: profile.initials,
                       imageUrl: profile.avatarUrl,
-                      size: _avatarSize,
+                      size: avatarSize,
                     ),
                   ),
                 ),

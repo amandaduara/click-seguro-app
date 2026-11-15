@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/extensions/alert_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Resumo fixo no alto da tela ("Você tem 3 alertas novos") e, havendo não
@@ -38,7 +39,7 @@ class AlertsSummaryBar extends StatelessWidget {
             child: Text(
               summaryText(unreadCount),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontSize: 20,
+                fontSize: AppTypography.title3.fontSize,
                 fontWeight: FontWeight.bold,
                 color: context.colors.secondary,
               ),

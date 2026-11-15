@@ -1,5 +1,7 @@
 import 'dart:ui' show Tristate;
 
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_switch_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,8 +18,10 @@ void main() {
     WidgetTester tester, {
     bool value = false,
     bool enabled = true,
+    ThemeData? theme,
   }) => pumpLocalized(
     tester,
+    theme: theme,
     child: Scaffold(
       body: SettingsSwitchTile(
         icon: LucideIcons.contrast,
@@ -74,5 +78,44 @@ void main() {
       tester.getSize(find.byType(SettingsSwitchTile)).height,
       greaterThanOrEqualTo(64),
     );
+  });
+
+  group('cores da paleta (nada de verde)', () {
+    for (final (name, theme, palette) in [
+      ('padrão', AppTheme.lightTheme, AppPalette.light),
+      ('alto contraste', AppTheme.highContrastTheme, AppPalette.highContrast),
+    ]) {
+      testWidgets('$name: ligada na cor da marca', (tester) async {
+        await pumpTile(tester, value: true, theme: theme);
+        final Switch toggle = tester.widget<Switch>(find.byType(Switch));
+
+        expect(toggle.activeTrackColor, palette.primary);
+        expect(toggle.activeTrackColor, isNot(palette.success));
+        expect(toggle.activeThumbColor, palette.card);
+        expect(
+          toggle.trackOutlineColor!.resolve({WidgetState.selected}),
+          palette.primary,
+        );
+      });
+
+      testWidgets('$name: desligada creme com contorno', (tester) async {
+        await pumpTile(tester, theme: theme);
+        final Switch toggle = tester.widget<Switch>(find.byType(Switch));
+
+        expect(toggle.inactiveTrackColor, palette.surfaceStrong);
+        expect(toggle.inactiveThumbColor, palette.textMutedForeground);
+        expect(toggle.trackOutlineColor!.resolve({}), palette.inputBorder);
+      });
+    }
+
+    test('alto contraste: trilho ligado contrasta 4,5:1 com a bolinha', () {
+      const AppPalette hc = AppPalette.highContrast;
+      double luminance(Color c) => c.computeLuminance();
+      final double l1 = luminance(hc.card);
+      final double l2 = luminance(hc.primary);
+      final double ratio =
+          (l1 > l2 ? l1 + 0.05 : l2 + 0.05) / (l1 > l2 ? l2 + 0.05 : l1 + 0.05);
+      expect(ratio, greaterThanOrEqualTo(4.5));
+    });
   });
 }

@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/main.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences.dart';
@@ -63,6 +64,31 @@ void main() {
 
     expect(screen.colors, AppPalette.light);
     expect(textScale(), 1.0);
+  });
+
+  testWidgets(
+    'reduzir animações do app desliga as animações (FR-021, FR-024)',
+    (tester) async {
+      await pumpApp(tester);
+      expect(AppMotion.of(screen).reduced, isFalse);
+
+      notifier.value = notifier.value.copyWith(reduceMotion: true);
+      await tester.pumpAndSettle();
+
+      expect(AppMotion.of(screen).reduced, isTrue);
+    },
+  );
+
+  testWidgets('reduzir movimento do aparelho vale mesmo com o do app '
+      'desligado (FR-021)', (tester) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+
+    await pumpApp(tester);
+
+    expect(notifier.value.reduceMotion, isFalse);
+    expect(AppMotion.of(screen).reduced, isTrue);
   });
 
   testWidgets('cada nível aumenta a letra na hora (US1, FR-006)', (

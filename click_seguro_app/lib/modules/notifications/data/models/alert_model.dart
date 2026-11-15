@@ -8,6 +8,7 @@ class AlertModel {
     required this.title,
     required this.source,
     required this.publishedAt,
+    this.imageUrl,
     this.isRead = false,
   });
 
@@ -19,6 +20,7 @@ class AlertModel {
     title: _requiredText(json, 'title'),
     source: _requiredText(json, 'source'),
     publishedAt: _date(json['publishedAt'] ?? json['originalPublishedAt']),
+    imageUrl: _optionalText(json, 'imageUrl'),
   );
 
   /// Alerta do registro local (`toJson`); item ilegível lança
@@ -28,6 +30,7 @@ class AlertModel {
     title: _requiredText(json, 'title'),
     source: _requiredText(json, 'source'),
     publishedAt: _date(json['publishedAt']),
+    imageUrl: _optionalText(json, 'imageUrl'),
     isRead: json['isRead'] == true,
   );
 
@@ -36,6 +39,7 @@ class AlertModel {
     title: entity.title,
     source: entity.source,
     publishedAt: entity.publishedAt.toUtc(),
+    imageUrl: entity.imageUrl,
     isRead: entity.isRead,
   );
 
@@ -43,6 +47,7 @@ class AlertModel {
   final String title;
   final String source;
   final DateTime publishedAt;
+  final String? imageUrl;
   final bool isRead;
 
   Map<String, dynamic> toJson() => {
@@ -50,6 +55,7 @@ class AlertModel {
     'title': title,
     'source': source,
     'publishedAt': publishedAt.toIso8601String(),
+    'imageUrl': ?imageUrl,
     'isRead': isRead,
   };
 
@@ -58,8 +64,15 @@ class AlertModel {
     title: title,
     source: source,
     publishedAt: publishedAt,
+    imageUrl: imageUrl,
     isRead: isRead,
   );
+
+  /// Texto opcional: ausente, vazio ou de outro tipo vira `null`.
+  static String? _optionalText(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    return value is String && value.trim().isNotEmpty ? value : null;
+  }
 
   static String _requiredText(Map<String, dynamic> json, String key) {
     final value = json[key];

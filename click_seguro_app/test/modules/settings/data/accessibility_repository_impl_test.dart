@@ -14,6 +14,7 @@ void main() {
     highContrast: true,
     autoReadAloud: false,
     readingSpeed: ReadingSpeed.fast,
+    reduceMotion: true,
   );
 
   late FakeLocalCacheService cache;
@@ -46,7 +47,7 @@ void main() {
       'highContrast': true,
       'autoReadAloud': false,
       'readingSpeed': 'fast',
-      'reduceMotion': false,
+      'reduceMotion': true,
     });
     expect(await repository.getPreferences(), custom);
   });

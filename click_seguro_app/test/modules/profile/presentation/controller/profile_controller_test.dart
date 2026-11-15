@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/achievement_entity.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/news_counts_entity.dart';
+import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.dart';
 import 'package:click_seguro_app/modules/profile/presentation/controller/area_state.dart';
 import 'package:click_seguro_app/modules/profile/presentation/controller/profile_controller.dart';
 import 'package:click_seguro_app/modules/profile/presentation/controller/profile_status.dart';
@@ -139,6 +140,44 @@ void main() {
     expect(statuses, isNot(contains(ProfileStatus.loading)));
     expect(controller.counts, isNot(isA<AreaLoading<NewsCountsEntity>>()));
     expect(countsOf(controller)!.read, 13);
+  });
+
+  test(
+    'refresh mostra já o perfil que a edição buscou, antes da resposta',
+    () async {
+      await controller.load();
+      const ProfileEntity withNewPhoto = ProfileEntity(
+        name: 'Maria da Silva',
+        email: 'maria@exemplo.com',
+        avatarUrl: 'https://img.test/nova.png?v=1',
+      );
+      // A edição buscou o perfil depois de trocar a foto.
+      repository.lastProfile = withNewPhoto;
+      repository.profileGate = Completer<void>();
+
+      final refreshing = controller.refresh();
+
+      expect(controller.profile, same(withNewPhoto));
+      expect(controller.status, ProfileStatus.loaded);
+      repository.profileGate!.complete();
+      await refreshing;
+    },
+  );
+
+  test('na primeira carga, não usa o perfil guardado', () async {
+    repository
+      ..lastProfile = const ProfileEntity(
+        name: 'Outra Pessoa',
+        email: 'o@x.com',
+      )
+      ..profileGate = Completer<void>();
+
+    final loading = controller.load();
+
+    expect(controller.profile, isNull);
+    repository.profileGate!.complete();
+    await loading;
+    expect(controller.profile, testProfile);
   });
 
   test('achievedCount e totalCount', () async {

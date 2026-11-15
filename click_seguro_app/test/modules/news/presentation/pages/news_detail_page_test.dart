@@ -6,8 +6,6 @@ import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
-import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
@@ -20,10 +18,15 @@ import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/news_detail_page.dart';
 import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
+import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_actions.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_cover_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/related_activity_card.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -143,15 +146,31 @@ void main() {
   NewsDetailController controllerOf(WidgetTester tester) =>
       tester.element(find.byType(NewsDetailPage)).read<NewsDetailController>();
 
+  Finder backButton() => find.byKey(NewsDetailCoverBar.backKey);
+
+  Future<void> signIn() => session.saveSession(
+    accessToken: 'tk',
+    refreshToken: 'rf',
+    email: 'ana@test.com',
+    userName: 'Ana',
+  );
+
   group('leitura', () {
-    testWidgets('carregando com barra superior e voltar', (tester) async {
+    testWidgets('carregando: sem barra com título, com o voltar redondo', (
+      tester,
+    ) async {
       repository.detailGate = Completer<void>();
 
       await pumpPage(tester, settle: false);
 
-      expect(find.byType(AppBar), findsOneWidget);
-      expect(find.byType(BackButton), findsOneWidget);
-      expect(find.byType(SafeSkeleton), findsOneWidget);
+      expect(find.text('Notícia'), findsNothing);
+      expect(backButton(), findsOneWidget);
+      // Esqueleto da capa e do conteúdo, sem imagem.
+      expect(find.byType(SafeSkeleton), findsNWidgets(2));
+      expect(find.byType(NewsCover), findsNothing);
+      // Sem detalhe ainda: sem curtir, compartilhar e salvar.
+      expect(find.byKey(NewsDetailActions.likeKey), findsNothing);
+      expect(find.byKey(NewsDetailActions.shareKey), findsNothing);
       repository.detailGate!.complete();
       await tester.pumpAndSettle();
     });
@@ -162,29 +181,37 @@ void main() {
         heroTag: 'news-image-recent-n1',
       );
 
-      testWidgets('com a prévia: título, fonte e imagem antes da carga; '
-          'esqueleto só do corpo', (tester) async {
-        repository.detailGate = Completer<void>();
+      Finder coverHero() => find.byWidgetPredicate(
+        (w) => w is Hero && w.tag == 'news-image-recent-n1',
+      );
+
+      testWidgets('com a prévia: enquanto carrega, só o esqueleto no lugar '
+          'da capa e do conteúdo, sem imagem; a capa (com o Hero de volta ao '
+          'cartão) só com o detalhe', (tester) async {
+        repository
+          ..detailGate = Completer<void>()
+          ..detailResults.add(
+            Right(
+              NewsDetailResult(
+                detail: newsDetail('n1', imageUrl: 'https://img.test/n.jpg'),
+                isFromCache: false,
+              ),
+            ),
+          );
 
         await pumpPage(tester, settle: false, preview: preview);
 
-        expect(find.text('Notícia n1'), findsOneWidget);
-        expect(find.text('Folha de Teste · 20 de set.'), findsOneWidget);
-        expect(find.text('Phishing'), findsOneWidget);
-        expect(
-          find.byWidgetPredicate(
-            (w) => w is Hero && w.tag == 'news-image-recent-n1',
-          ),
-          findsOneWidget,
-        );
-        final Finder skeleton = find.byType(SafeSkeleton);
-        expect(skeleton, findsOneWidget);
-        expect(
-          find.descendant(of: skeleton, matching: find.text('Notícia n1')),
-          findsNothing,
-        );
+        expect(find.byType(NewsCover), findsNothing);
+        expect(coverHero(), findsNothing);
+        expect(find.text('Notícia n1'), findsNothing);
+        expect(find.text('Phishing'), findsNothing);
+        expect(find.byType(SafeSkeleton), findsNWidgets(2));
+        expect(backButton(), findsOneWidget);
+
         repository.detailGate!.complete();
         await tester.pumpAndSettle();
+        expect(find.byType(NewsCover), findsOneWidget);
+        expect(coverHero(), findsOneWidget);
         expect(find.text('Notícia n1'), findsOneWidget);
         expect(find.byType(SafeSkeleton), findsNothing);
         expect(find.text('Texto'), findsOneWidget);
@@ -197,7 +224,7 @@ void main() {
 
         await pumpPage(tester, settle: false);
 
-        expect(find.byType(SafeSkeleton), findsOneWidget);
+        expect(find.byType(SafeSkeleton), findsNWidgets(2));
         expect(find.text('Notícia n1'), findsNothing);
         expect(find.byType(Hero), findsNothing);
         repository.detailGate!.complete();
@@ -221,20 +248,91 @@ void main() {
       });
     });
 
-    testWidgets('"Conectando ao servidor…" depois de alguns segundos', (
+    group('aberto por um Reel', () {
+      final reelPreview = NewsDetailPreview(
+        item: newsItem('n1'),
+        actions: const NewsActionsPreview(
+          isLiked: true,
+          likesCount: 7,
+          isSaved: true,
+        ),
+      );
+      final NewsActionTags tags = NewsActionsPreview.tagsFor('n1');
+
+      Finder heroWith(String tag) =>
+          find.byWidgetPredicate((w) => w is Hero && w.tag == tag);
+
+      testWidgets('antes da carga: curtir, compartilhar e salvar já no topo, '
+          'com o estado do Reel e as tags do Hero', (tester) async {
+        await signIn();
+        repository.detailGate = Completer<void>();
+
+        await pumpPage(tester, settle: false, preview: reelPreview);
+
+        expect(find.byKey(NewsDetailActions.likeKey), findsOneWidget);
+        expect(find.byKey(NewsDetailActions.shareKey), findsOneWidget);
+        expect(find.byKey(NewsDetailActions.saveKey), findsOneWidget);
+        expect(find.byIcon(Icons.favorite), findsOneWidget);
+        expect(find.byIcon(LucideIcons.bookmarkCheck), findsOneWidget);
+        for (final String tag in [tags.like, tags.share, tags.save]) {
+          expect(heroWith(tag), findsOneWidget, reason: tag);
+        }
+        // Sem detalhe, desativados: tocar não faz nada.
+        expect(
+          tester
+              .widget<SafeIconButton>(find.byKey(NewsDetailActions.shareKey))
+              .onPressed,
+          isNull,
+        );
+        await tester.tap(find.byKey(NewsDetailActions.likeKey));
+        await tester.tap(find.byKey(NewsDetailActions.shareKey));
+        await tester.pump();
+        expect(repository.likeCalls, isEmpty);
+        expect(share.shared, isEmpty);
+
+        repository.detailGate!.complete();
+        await tester.pumpAndSettle();
+        // Com o detalhe, o estado é o do serviço e os Hero continuam únicos.
+        expect(find.byIcon(LucideIcons.heart), findsOneWidget);
+        for (final String tag in [tags.like, tags.share, tags.save]) {
+          expect(heroWith(tag), findsOneWidget, reason: tag);
+        }
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('visitante: coração e marcador vazios', (tester) async {
+        repository.detailGate = Completer<void>();
+
+        await pumpPage(tester, settle: false, preview: reelPreview);
+
+        expect(find.byIcon(LucideIcons.heart), findsOneWidget);
+        expect(find.byIcon(LucideIcons.bookmark), findsOneWidget);
+        repository.detailGate!.complete();
+        await tester.pumpAndSettle();
+      });
+
+      testWidgets('aberto por um cartão: botões sem Hero', (tester) async {
+        await pumpPage(
+          tester,
+          preview: NewsDetailPreview(item: newsItem('n1')),
+        );
+
+        expect(find.byKey(NewsDetailActions.likeKey), findsOneWidget);
+        expect(find.byType(Hero), findsNothing);
+      });
+    });
+
+    testWidgets('carregando demorado: sem aviso de servidor lento', (
       tester,
     ) async {
       repository.detailGate = Completer<void>();
       await pumpPage(tester, settle: false);
-      const slow = 'Conectando ao servidor. Isso pode levar até um minuto.';
 
-      expect(find.text(slow), findsNothing);
-      await tester.pump(SlowRequestNotice.delay);
+      await tester.pump(const Duration(seconds: 10));
 
-      expect(find.text(slow), findsOneWidget);
+      expect(find.textContaining('Conectando ao servidor'), findsNothing);
       repository.detailGate!.complete();
       await tester.pumpAndSettle();
-      expect(find.text(slow), findsNothing);
     });
 
     testWidgets('erro com "Tentar novamente" recarrega', (tester) async {
@@ -263,10 +361,13 @@ void main() {
 
       expect(find.text('Notícia não encontrada'), findsOneWidget);
       expect(find.text('Tentar novamente'), findsNothing);
-      expect(find.byType(BackButton), findsOneWidget);
+      expect(backButton(), findsOneWidget);
+      expect(find.byKey(NewsDetailActions.likeKey), findsNothing);
       expect(
         find.byWidgetPredicate(
-          (widget) => widget is SafeStateIllustration && !widget.isError,
+          (widget) =>
+              widget is SafeIllustration &&
+              widget.illustration == AppIllustration.stateEmpty,
         ),
         findsOneWidget,
       );
@@ -288,7 +389,7 @@ void main() {
     });
 
     testWidgets('detalhe completo: imagem, categorias, título, fonte, data, '
-        'curtidas e texto', (tester) async {
+        'tempo de leitura, curtidas e texto', (tester) async {
       repository.detailResults.add(
         Right(
           NewsDetailResult(
@@ -307,8 +408,17 @@ void main() {
       expect(find.byType(Image), findsOneWidget);
       expect(find.text('Phishing'), findsOneWidget);
       expect(find.text('Notícia n1'), findsOneWidget);
-      expect(find.text('Folha de Teste · 20 de set.'), findsOneWidget);
-      expect(find.text('2 curtidas'), findsOneWidget);
+      expect(
+        find.text('Folha de Teste · 20 de set. · 1 min de leitura'),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(NewsDetailActions.likeKey),
+          matching: find.text('2'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Texto completo da notícia'), findsOneWidget);
       expect(find.byType(SafeOfflineBanner), findsNothing);
     });
@@ -368,7 +478,7 @@ void main() {
     testWidgets('voltar mantém a tela anterior', (tester) async {
       await pumpPage(tester);
 
-      await tester.tap(find.byType(BackButton));
+      await tester.tap(backButton());
       await tester.pumpAndSettle();
 
       expect(find.text('tela anterior'), findsOneWidget);
@@ -379,7 +489,12 @@ void main() {
   group('ouvir', () {
     const spokenN1 = 'Notícia n1.\n\nTexto';
 
-    testWidgets('com voz: "Ouvir" e velocidades, na velocidade guardada', (
+    // O botão redondo de tocar não tem texto: tocar ou parar pelo ícone.
+    Finder listen() => find.byKey(ReadAloudBar.listenKey);
+    Finder playIcon() => find.byIcon(LucideIcons.play);
+    Finder stopIcon() => find.byIcon(LucideIcons.square);
+
+    testWidgets('com voz: "Ouvir" e a velocidade guardada no cartão', (
       tester,
     ) async {
       preferences.value = preferences.value.copyWith(
@@ -388,18 +503,48 @@ void main() {
 
       await pumpPage(tester);
 
-      expect(find.text('Ouvir'), findsOneWidget);
+      expect(playIcon(), findsOneWidget);
       expect(find.text('Velocidade: rápida'), findsOneWidget);
-      expect(find.text('lenta'), findsOneWidget);
-      expect(find.text('normal'), findsOneWidget);
-      expect(find.text('rápida'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(ReadAloudBar.speedKey),
+          matching: find.text('2x'),
+        ),
+        findsOneWidget,
+      );
+      // A pílula fica dentro do cartão "Ouvir notícia", na mesma linha.
+      final listen = tester.getRect(find.byKey(ReadAloudBar.listenKey));
+      final speed = tester.getRect(find.byKey(ReadAloudBar.speedKey));
+      expect(speed.center.dy, closeTo(listen.center.dy, 1));
+      expect(find.text('lenta'), findsNothing);
       expect(tts.spoken, isEmpty);
+    });
+
+    testWidgets('a pílula alterna 1x, 2x, 0,5x e volta a 1x', (tester) async {
+      await pumpPage(tester);
+      Finder pill(String text) => find.descendant(
+        of: find.byKey(ReadAloudBar.speedKey),
+        matching: find.text(text),
+      );
+
+      expect(pill('1x'), findsOneWidget);
+      expect(find.text('Velocidade: normal'), findsOneWidget);
+      for (final (label, name) in [
+        ('2x', 'rápida'),
+        ('0,5x', 'lenta'),
+        ('1x', 'normal'),
+      ]) {
+        await tester.tap(find.byKey(ReadAloudBar.speedKey));
+        await tester.pump();
+        expect(pill(label), findsOneWidget);
+        expect(find.text('Velocidade: $name'), findsOneWidget);
+      }
     });
 
     testWidgets('"Ouvir" lê título e texto e vira "Parar"', (tester) async {
       await pumpPage(tester);
 
-      await tester.tap(find.text('Ouvir'));
+      await tester.tap(listen());
       await tester.pump();
 
       expect(tts.spoken.single, (
@@ -407,30 +552,30 @@ void main() {
         language: SpeechLanguage.ptBr,
         speed: ReadingSpeed.normal,
       ));
-      expect(find.text('Parar'), findsOneWidget);
-      expect(find.text('Ouvir'), findsNothing);
+      expect(stopIcon(), findsOneWidget);
+      expect(playIcon(), findsNothing);
     });
 
     testWidgets('"Parar" para a voz e volta a "Ouvir"', (tester) async {
       await pumpPage(tester);
-      await tester.tap(find.text('Ouvir'));
+      await tester.tap(listen());
       await tester.pump();
 
-      await tester.tap(find.text('Parar'));
+      await tester.tap(listen());
       await tester.pump();
 
       expect(tts.stopCalls, 1);
-      expect(find.text('Ouvir'), findsOneWidget);
+      expect(playIcon(), findsOneWidget);
     });
 
     testWidgets('trocar a velocidade vale para a próxima leitura e não muda '
         'a preferência', (tester) async {
       await pumpPage(tester);
 
-      await tester.tap(find.text('rápida'));
+      await tester.tap(find.byKey(ReadAloudBar.speedKey));
       await tester.pump();
       expect(find.text('Velocidade: rápida'), findsOneWidget);
-      await tester.tap(find.text('Ouvir'));
+      await tester.tap(listen());
       await tester.pump();
 
       expect(tts.spoken.single.speed, ReadingSpeed.fast);
@@ -448,7 +593,7 @@ void main() {
       );
       await pumpPage(tester);
 
-      await tester.tap(find.text('Ouvir'));
+      await tester.tap(listen());
       await tester.pump();
 
       expect(tts.spoken.single.text, 'Notícia n1');
@@ -462,7 +607,7 @@ void main() {
       await pumpPage(tester);
 
       expect(tts.spoken.single.text, spokenN1);
-      expect(find.text('Parar'), findsOneWidget);
+      expect(stopIcon(), findsOneWidget);
 
       tts.finishSpeaking();
       await tester.pump();
@@ -478,13 +623,13 @@ void main() {
       preferences.value = preferences.value.copyWith(autoReadAloud: true);
       await pumpPage(tester);
 
-      await tester.tap(find.text('Parar'));
+      await tester.tap(listen());
       await tester.pump();
       await controllerOf(tester).retry();
       await tester.pumpAndSettle();
 
       expect(tts.spoken, hasLength(1));
-      expect(find.text('Ouvir'), findsOneWidget);
+      expect(playIcon(), findsOneWidget);
     });
 
     testWidgets('sem voz: sem "Ouvir", sem velocidade, sem leitura '
@@ -494,7 +639,7 @@ void main() {
 
       await pumpPage(tester);
 
-      expect(find.text('Ouvir'), findsNothing);
+      expect(listen(), findsNothing);
       expect(find.byType(ReadAloudBar), findsOneWidget);
       expect(find.textContaining('Velocidade'), findsNothing);
       expect(tts.spoken, isEmpty);
@@ -505,7 +650,7 @@ void main() {
     testWidgets('app em inglês: voz em inglês', (tester) async {
       await pumpPage(tester, locale: const Locale('en', 'US'));
 
-      await tester.tap(find.text('Listen'));
+      await tester.tap(listen());
       await tester.pump();
 
       expect(tts.spoken.single.language, SpeechLanguage.enUs);
@@ -514,10 +659,10 @@ void main() {
 
     testWidgets('sair da tela para a voz', (tester) async {
       await pumpPage(tester);
-      await tester.tap(find.text('Ouvir'));
+      await tester.tap(listen());
       await tester.pump();
 
-      await tester.tap(find.byType(BackButton));
+      await tester.tap(backButton());
       await tester.pumpAndSettle();
 
       expect(tts.stopCalls, greaterThanOrEqualTo(1));
@@ -528,16 +673,23 @@ void main() {
       await pumpPage(tester);
 
       expect(find.bySemanticsLabel('Ouvir'), findsOneWidget);
-      expect(find.bySemanticsLabel('Velocidade: normal'), findsOneWidget);
-      final listen = tester.getSize(find.byKey(ReadAloudBar.listenKey));
-      expect(listen.height, greaterThanOrEqualTo(48));
-      for (final speed in ReadingSpeed.values) {
-        final size = tester.getSize(find.byKey(ReadAloudBar.speedKey(speed)));
-        expect(size.width, greaterThanOrEqualTo(48), reason: '$speed');
-        expect(size.height, greaterThanOrEqualTo(48), reason: '$speed');
-      }
+      expect(
+        tester.getSemantics(find.byKey(ReadAloudBar.speedKey)),
+        isSemantics(
+          label: 'Velocidade: normal, 1x',
+          hint: 'Toque para mudar a velocidade',
+          isButton: true,
+          hasTapAction: true,
+        ),
+      );
+      final listenSize = tester.getSize(listen());
+      expect(listenSize.height, greaterThanOrEqualTo(48));
+      expect(listenSize.width, greaterThanOrEqualTo(48));
+      final speedSize = tester.getSize(find.byKey(ReadAloudBar.speedKey));
+      expect(speedSize.width, greaterThanOrEqualTo(48));
+      expect(speedSize.height, greaterThanOrEqualTo(48));
 
-      await tester.tap(find.text('Ouvir'));
+      await tester.tap(listen());
       await tester.pump();
       expect(find.bySemanticsLabel('Parar'), findsOneWidget);
       handle.dispose();
@@ -545,12 +697,10 @@ void main() {
   });
 
   group('salvar', () {
-    Future<void> signIn() => session.saveSession(
-      accessToken: 'tk',
-      refreshToken: 'rf',
-      email: 'ana@test.com',
-      userName: 'Ana',
-    );
+    /// "Salvar" ou "Salvo": o rótulo do botão redondo sobre a capa.
+    String saveLabel(WidgetTester tester) => tester
+        .widget<SafeIconButton>(find.byKey(NewsDetailActions.saveKey))
+        .semanticLabel;
 
     void detailSaved({required bool isSaved}) => repository.detailResults.add(
       Right(
@@ -570,15 +720,14 @@ void main() {
         'isSaved no JSON', (tester) async {
       detailSaved(isSaved: true);
       await pumpPage(tester);
-      expect(find.text('Salvar'), findsOneWidget);
-      expect(find.text('Salvo'), findsNothing);
+      expect(saveLabel(tester), 'Salvar');
       expect(find.byIcon(LucideIcons.bookmark), findsOneWidget);
 
       await tapSave(tester);
 
       expect(find.byType(AccountRequiredSheet), findsOneWidget);
       expect(repository.saveCalls, isEmpty);
-      expect(find.text('Salvo'), findsNothing);
+      expect(find.byIcon(LucideIcons.bookmarkCheck), findsNothing);
     });
 
     testWidgets('com conta: o marcador reflete o isSaved do serviço', (
@@ -589,7 +738,7 @@ void main() {
 
       await pumpPage(tester);
 
-      expect(find.text('Salvo'), findsOneWidget);
+      expect(saveLabel(tester), 'Salvo');
       expect(find.byIcon(LucideIcons.bookmarkCheck), findsOneWidget);
     });
 
@@ -606,21 +755,63 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('Salvo'), findsOneWidget);
       expect(find.byType(SnackBar), findsNothing);
 
       repository.saveGate!.complete();
       await tester.pumpAndSettle();
 
       expect(find.text('Notícia salva'), findsOneWidget);
-      expect(find.text('Salvo'), findsOneWidget);
+      expect(saveLabel(tester), 'Salvo');
 
       repository.saveGate = null;
       await tapSave(tester);
 
       expect(find.text('Removida dos salvos'), findsOneWidget);
-      expect(find.text('Salvar'), findsOneWidget);
+      expect(saveLabel(tester), 'Salvar');
       expect(repository.saveCalls, ['n1', 'n1']);
+    });
+
+    testWidgets('em andamento: carregando no lugar do marcador, botão '
+        'desativado e "carregando" para o leitor de tela', (tester) async {
+      final handle = tester.ensureSemantics();
+      await signIn();
+      await pumpPage(tester);
+      repository.saveGate = Completer<void>();
+
+      await tester.tap(find.byKey(NewsDetailActions.saveKey));
+      await tester.pump();
+
+      final Finder save = find.byKey(NewsDetailActions.saveKey);
+      expect(
+        find.descendant(
+          of: save,
+          matching: find.byKey(NewsDetailActions.loadingKey),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(SafeIconButton), findsNWidgets(2)); // voltar e
+      // compartilhar: o salvar não é mais o botão comum.
+      expect(
+        tester.getSemantics(save),
+        matchesSemantics(
+          label: 'Salvar: carregando, aguarde',
+          isButton: true,
+          hasEnabledState: true,
+          isLiveRegion: true,
+        ),
+      );
+      expect(tester.getSize(save).width, greaterThanOrEqualTo(48));
+
+      // Novo toque durante o pedido: nenhum pedido a mais.
+      await tester.tap(save);
+      await tester.pump();
+      expect(repository.saveCalls, ['n1']);
+
+      repository.saveGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.byKey(NewsDetailActions.loadingKey), findsNothing);
+      expect(saveLabel(tester), 'Salvo');
+      handle.dispose();
     });
 
     testWidgets('falha: o marcador volta e o aviso mostra o erro', (
@@ -636,8 +827,7 @@ void main() {
         find.text('Sem conexão com a internet. Verifique sua rede.'),
         findsOneWidget,
       );
-      expect(find.text('Salvar'), findsOneWidget);
-      expect(find.text('Salvo'), findsNothing);
+      expect(saveLabel(tester), 'Salvar');
     });
 
     testWidgets('404 ao salvar mostra "Notícia não encontrada"', (
@@ -668,13 +858,13 @@ void main() {
           ),
         );
       await pumpPage(tester);
-      expect(find.text('Salvar'), findsOneWidget);
+      expect(saveLabel(tester), 'Salvar');
 
       await signIn();
       await tester.pumpAndSettle();
 
       expect(repository.detailCalls, ['n1', 'n1']);
-      expect(find.text('Salvo'), findsOneWidget);
+      expect(saveLabel(tester), 'Salvo');
     });
 
     testWidgets('rótulos "Salvar"/"Salvo" e área de 48 dp', (tester) async {
@@ -693,9 +883,126 @@ void main() {
     });
   });
 
+  group('curtir', () {
+    Finder likeButton() => find.byKey(NewsDetailActions.likeKey);
+    Finder likeText(String count) =>
+        find.descendant(of: likeButton(), matching: find.text(count));
+
+    testWidgets('visitante: convite, sem pedido e coração vazio mesmo com '
+        'isLiked no JSON', (tester) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail('n1', isLiked: true),
+            isFromCache: false,
+          ),
+        ),
+      );
+      await pumpPage(tester);
+      expect(find.byIcon(LucideIcons.heart), findsOneWidget);
+
+      await tester.tap(likeButton());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AccountRequiredSheet), findsOneWidget);
+      expect(repository.likeCalls, isEmpty);
+      expect(likeText('2'), findsOneWidget);
+    });
+
+    testWidgets('com conta: +1 na hora e depois o número do serviço', (
+      tester,
+    ) async {
+      await signIn();
+      await pumpPage(tester);
+      repository.likeGate = Completer<void>();
+
+      await tester.tap(likeButton());
+      await tester.pump();
+      await tester.pump();
+
+      expect(likeText('3'), findsOneWidget);
+
+      repository.likeGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(likeText('4'), findsOneWidget);
+      expect(find.byIcon(Icons.favorite), findsOneWidget);
+      expect(repository.likeCalls, ['n1']);
+    });
+
+    testWidgets('em andamento: carregando no lugar do coração, botão '
+        'desativado e "carregando" para o leitor de tela', (tester) async {
+      final handle = tester.ensureSemantics();
+      await signIn();
+      await pumpPage(tester);
+      repository.likeGate = Completer<void>();
+
+      await tester.tap(likeButton());
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: likeButton(),
+          matching: find.byKey(NewsDetailActions.loadingKey),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: likeButton(), matching: find.byType(Icon)),
+        findsNothing,
+      );
+      expect(
+        tester.getSemantics(likeButton()),
+        matchesSemantics(
+          label: 'Curtir: carregando, aguarde',
+          isButton: true,
+          hasEnabledState: true,
+          isLiveRegion: true,
+        ),
+      );
+
+      await tester.tap(likeButton());
+      await tester.pump();
+      expect(repository.likeCalls, ['n1']);
+
+      repository.likeGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.byKey(NewsDetailActions.loadingKey), findsNothing);
+      expect(find.bySemanticsLabel('Curtido, 4 curtidas'), findsOneWidget);
+      handle.dispose();
+    });
+
+    testWidgets('falha: volta a contagem e avisa', (tester) async {
+      await signIn();
+      repository.likeResults.add(const Left(ConnectionFailure()));
+      await pumpPage(tester);
+
+      await tester.tap(likeButton());
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(likeText('2'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.heart), findsOneWidget);
+    });
+
+    testWidgets('rótulo "Curtir, 2 curtidas" e área de 48 dp', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpPage(tester);
+
+      expect(find.bySemanticsLabel('Curtir, 2 curtidas'), findsOneWidget);
+      final size = tester.getSize(likeButton());
+      expect(size.width, greaterThanOrEqualTo(48));
+      expect(size.height, greaterThanOrEqualTo(48));
+      handle.dispose();
+    });
+  });
+
   group('compartilhar e fonte', () {
     Finder shareButton() => find.byKey(NewsDetailActions.shareKey);
-    Finder sourceButton() => find.byKey(NewsDetailActions.sourceKey);
+    Finder sourceButton() => find.byKey(NewsDetailPage.sourceKey);
 
     testWidgets('"Compartilhar" abre o menu com texto e título', (
       tester,
@@ -766,7 +1073,7 @@ void main() {
 
       expect(find.text('Abrir fonte'), findsNothing);
       expect(sourceButton(), findsNothing);
-      expect(find.text('Compartilhar'), findsOneWidget);
+      expect(shareButton(), findsOneWidget);
     });
 
     testWidgets('texto vazio mantém "Abrir fonte"', (tester) async {
@@ -816,6 +1123,24 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    // Sem perder a ação no leitor de tela (excludeSemantics sem onTap).
+    testWidgets('"Abrir fonte" pelo leitor de tela: botão com toque', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await pumpPage(tester);
+
+      expect(
+        tester.getSemantics(sourceButton()),
+        isSemantics(label: 'Abrir fonte', isButton: true, hasTapAction: true),
+      );
+      tester.semantics.tap(find.semantics.byLabel('Abrir fonte'));
+      await tester.pumpAndSettle();
+
+      expect(launcher.openedUrls, ['https://fonte.test/n']);
+      handle.dispose();
+    });
+
     testWidgets('rótulos e botões de 48 dp', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpPage(tester);
@@ -826,7 +1151,7 @@ void main() {
       expect(find.byIcon(LucideIcons.externalLink), findsOneWidget);
       for (final key in [
         NewsDetailActions.shareKey,
-        NewsDetailActions.sourceKey,
+        NewsDetailPage.sourceKey,
       ]) {
         final size = tester.getSize(find.byKey(key));
         expect(size.width, greaterThanOrEqualTo(48));
@@ -918,6 +1243,38 @@ void main() {
       expect(find.text('módulo m1'), findsNothing);
     });
 
+    testWidgets('no fim, o bloco fica acima da barra de navegação do '
+        'aparelho, com respiro', (tester) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail(
+              'n1',
+              content: List<String>.filled(600, 'palavra').join(' '),
+              suggestedModule: const SuggestedModuleEntity(
+                id: 'm1',
+                title: 'Golpes no WhatsApp',
+                description: 'Aprenda a reconhecer',
+                lessonsCount: 3,
+              ),
+            ),
+            isFromCache: false,
+          ),
+        ),
+      );
+      // Barra de navegação do Android de 48 dp sobre a tela.
+      tester.view.padding = const FakeViewPadding(bottom: 48);
+      await pumpPage(tester, size: const Size(400, 800));
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -20000));
+      await tester.pumpAndSettle();
+
+      final double cardBottom = tester
+          .getBottomLeft(find.byType(RelatedActivityCard))
+          .dy;
+      expect(800 - cardBottom, moreOrLessEquals(48 + 24));
+    });
+
     testWidgets('sem módulo sugerido: sem bloco', (tester) async {
       detailWith(suggested: null);
 
@@ -925,6 +1282,25 @@ void main() {
 
       expect(card(), findsNothing);
       expect(find.text('Pratique o que aprendeu'), findsNothing);
+      expect(find.byKey(NewsDetailActions.likeKey), findsOneWidget);
+    });
+
+    testWidgets('sem barra fixa embaixo: a atividade só no bloco do texto', (
+      tester,
+    ) async {
+      detailWith();
+      await pumpPage(tester);
+
+      expect(find.text('Praticar com quiz'), findsNothing);
+      final Scaffold scaffold = tester.widget<Scaffold>(
+        find
+            .ancestor(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scaffold),
+            )
+            .first,
+      );
+      expect(scaffold.bottomNavigationBar, isNull);
     });
 
     testWidgets('descrição vazia não deixa buraco', (tester) async {
@@ -1005,21 +1381,15 @@ void main() {
       );
     }
 
-    Future<void> signIn() => session.saveSession(
-      accessToken: 'tk',
-      refreshToken: 'rf',
-      email: 'ana@test.com',
-      userName: 'Ana',
-    );
-
     final interactive = <Finder>[
-      find.byKey(ReadAloudBar.listenKey),
-      for (final speed in ReadingSpeed.values)
-        find.byKey(ReadAloudBar.speedKey(speed)),
-      find.byKey(NewsDetailActions.saveKey),
+      find.byKey(NewsDetailCoverBar.backKey),
       find.byKey(NewsDetailActions.shareKey),
-      find.byKey(NewsDetailActions.sourceKey),
+      find.byKey(NewsDetailActions.saveKey),
+      find.byKey(NewsDetailPage.sourceKey),
+      find.byKey(ReadAloudBar.listenKey),
+      find.byKey(ReadAloudBar.speedKey),
       find.byKey(RelatedActivityCard.cardKey),
+      find.byKey(NewsDetailActions.likeKey),
     ];
 
     /// Todo controle com pelo menos 48×48 dp, visível na tela.
@@ -1033,9 +1403,6 @@ void main() {
     }
 
     /// Topo, na tela, do nó de acessibilidade com o rótulo.
-    double semanticsTop(WidgetTester tester, Pattern label) =>
-        tester.getTopLeft(find.bySemanticsLabel(label)).dy;
-
     testWidgets('padrão: todos os controles com 48×48 dp ou mais', (
       tester,
     ) async {
@@ -1047,7 +1414,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('fonte 2×: sem sobreposição, botões empilhados e texto '
+    testWidgets('fonte 2×: sem sobreposição, sem estourar a largura e texto '
         'quebrando de linha', (tester) async {
       tester.platformDispatcher.textScaleFactorTestValue = 2.0;
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
@@ -1071,30 +1438,27 @@ void main() {
       expectTouchTargets(tester);
       // O título quebra em várias linhas.
       expect(tester.getSize(find.text(longTitle)).height, greaterThan(100));
-      // Ouvir e as ações: uma abaixo da outra, em largura total, sem tocar.
-      final keys = [
-        ReadAloudBar.listenKey,
-        NewsDetailActions.saveKey,
-        NewsDetailActions.shareKey,
-        NewsDetailActions.sourceKey,
-      ];
-      for (var i = 0; i < keys.length; i++) {
-        final rect = tester.getRect(find.byKey(keys[i]));
-        expect(rect.left, greaterThanOrEqualTo(0), reason: '${keys[i]}');
-        expect(rect.right, lessThanOrEqualTo(360), reason: '${keys[i]}');
-        if (i == 0) continue;
-        final previous = tester.getRect(find.byKey(keys[i - 1]));
-        expect(
-          rect.top,
-          greaterThanOrEqualTo(previous.bottom),
-          reason: '${keys[i]}',
-        );
-      }
-      // As velocidades passam para a linha de baixo, sem estourar a largura.
-      for (final speed in ReadingSpeed.values) {
-        final rect = tester.getRect(find.byKey(ReadAloudBar.speedKey(speed)));
-        expect(rect.right, lessThanOrEqualTo(360), reason: '$speed');
-      }
+      // Botões sobre a capa: lado a lado, sem tocar, dentro da tela.
+      final back = tester.getRect(find.byKey(NewsDetailCoverBar.backKey));
+      final like = tester.getRect(find.byKey(NewsDetailActions.likeKey));
+      final share = tester.getRect(find.byKey(NewsDetailActions.shareKey));
+      final save = tester.getRect(find.byKey(NewsDetailActions.saveKey));
+      expect(back.left, greaterThanOrEqualTo(0));
+      expect(like.left, greaterThanOrEqualTo(back.right));
+      expect(share.left, greaterThanOrEqualTo(like.right));
+      expect(save.left, greaterThanOrEqualTo(share.right));
+      expect(save.right, lessThanOrEqualTo(360));
+      // Fonte, depois o cartão de ouvir, um abaixo do outro.
+      await tester.ensureVisible(find.byKey(ReadAloudBar.listenKey));
+      await tester.pumpAndSettle();
+      final source = tester.getRect(find.byKey(NewsDetailPage.sourceKey));
+      final listen = tester.getRect(find.byKey(ReadAloudBar.listenKey));
+      expect(listen.top, greaterThanOrEqualTo(source.bottom));
+      expect(source.right, lessThanOrEqualTo(360));
+      // A pílula de velocidade fica dentro do cartão, sem estourar.
+      final speed = tester.getRect(find.byKey(ReadAloudBar.speedKey));
+      expect(speed.left, greaterThanOrEqualTo(listen.right));
+      expect(speed.right, lessThanOrEqualTo(360));
       // Rolando até o fim, o bloco de atividade também cabe.
       await tester.scrollUntilVisible(
         find.byKey(RelatedActivityCard.cardKey),
@@ -1106,25 +1470,41 @@ void main() {
       expect(card.right, lessThanOrEqualTo(360));
     });
 
-    testWidgets('ordem de leitura: título, fonte e data, ações, texto e '
-        'atividade', (tester) async {
+    testWidgets('ordem de leitura: botões da capa, categoria, título, fonte, '
+        'ouvir, velocidade, texto e atividade', (tester) async {
       final handle = tester.ensureSemantics();
       await signIn();
       fullDetail();
       await pumpPage(tester, size: const Size(800, 3200));
 
-      final order = [
-        semanticsTop(tester, RegExp('^Notícia n1, Folha de Teste, ')),
-        semanticsTop(tester, 'Ouvir'),
-        semanticsTop(tester, 'Velocidade: normal'),
-        semanticsTop(tester, 'Salvar'),
-        semanticsTop(tester, 'Compartilhar'),
-        semanticsTop(tester, 'Abrir fonte'),
-        semanticsTop(tester, RegExp('^Texto completo da notícia')),
-        semanticsTop(tester, RegExp('^Pratique o que aprendeu')),
+      // Ordem de leitura: de cima para baixo e, na mesma linha (voltar,
+      // curtir, compartilhar e salvar; ouvir e velocidade), da esquerda para
+      // a direita.
+      Offset at(Pattern label) =>
+          tester.getTopLeft(find.bySemanticsLabel(label));
+      final List<Offset> order = [
+        at('Voltar'),
+        at('Curtir, 2 curtidas'),
+        at('Compartilhar'),
+        at('Salvar'),
+        at('Phishing'),
+        at(RegExp('^Notícia n1, Folha de Teste, ')),
+        at('Abrir fonte'),
+        at('Ouvir'),
+        at('Velocidade: normal, 1x'),
+        at(RegExp('^Texto completo da notícia')),
+        at(RegExp('^Pratique o que aprendeu')),
       ];
-      expect(order, orderedEquals([...order]..sort()));
-      expect(order.toSet(), hasLength(order.length));
+      for (int i = 1; i < order.length; i++) {
+        final Offset before = order[i - 1];
+        final Offset after = order[i];
+        expect(
+          after.dy > before.dy ||
+              (after.dy == before.dy && after.dx > before.dx),
+          isTrue,
+          reason: 'item $i ($after) deveria vir depois de $before',
+        );
+      }
       handle.dispose();
     });
 
@@ -1138,7 +1518,9 @@ void main() {
       expect(context.colors, AppPalette.highContrast);
       expect(
         tester.widget<Text>(find.text('Notícia n1')).style?.color,
-        AppPalette.highContrast.secondary,
+        // Redesign 2.0: títulos na cor de texto principal (preto no alto
+        // contraste).
+        AppPalette.highContrast.textForeground,
       );
       expect(
         tester.widget<Text>(find.text(longContent)).style?.color,
@@ -1146,6 +1528,77 @@ void main() {
       );
       expectTouchTargets(tester);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('saída durante curtir ou salvar', () {
+    const String wait = 'Aguarde: salvando sua escolha.';
+
+    testWidgets('salvando: o voltar do aparelho não sai e avisa; depois sai', (
+      tester,
+    ) async {
+      await signIn();
+      await pumpPage(tester);
+      repository.saveGate = Completer<void>();
+      await tester.tap(find.byKey(NewsDetailActions.saveKey));
+      await tester.pump();
+
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+
+      expect(find.text(wait), findsOneWidget);
+      expect(find.byType(NewsDetailPage), findsOneWidget);
+      expect(find.text('tela anterior'), findsNothing);
+
+      repository.saveGate!.complete();
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela anterior'), findsOneWidget);
+      expect(find.byType(NewsDetailPage), findsNothing);
+    });
+
+    testWidgets('curtindo: o botão voltar fica desativado e avisa; depois '
+        'volta a funcionar', (tester) async {
+      final handle = tester.ensureSemantics();
+      await signIn();
+      await pumpPage(tester);
+      repository.likeGate = Completer<void>();
+      await tester.tap(find.byKey(NewsDetailActions.likeKey));
+      await tester.pump();
+
+      expect(
+        tester.getSemantics(backButton()),
+        isSemantics(
+          label: 'Voltar',
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: false,
+        ),
+      );
+      expect(tester.getSize(backButton()).width, greaterThanOrEqualTo(48));
+
+      await tester.tap(backButton());
+      await tester.pump();
+
+      expect(find.text(wait), findsOneWidget);
+      expect(find.byType(NewsDetailPage), findsOneWidget);
+
+      repository.likeGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSemantics(backButton()),
+        isSemantics(label: 'Voltar', isEnabled: true),
+      );
+
+      await tester.tap(backButton());
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela anterior'), findsOneWidget);
+      handle.dispose();
     });
   });
 }

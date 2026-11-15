@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Regras da senha com check nas atendidas (FR-005). Recebe os textos já
 /// traduzidos, na ordem de exibição, e se cada um foi atendido.
@@ -22,9 +23,7 @@ class PasswordRulesList extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    rule.met
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
+                    rule.met ? LucideIcons.circleCheck : LucideIcons.circle,
                     size: 20,
                     color: rule.met
                         ? context.colors.success

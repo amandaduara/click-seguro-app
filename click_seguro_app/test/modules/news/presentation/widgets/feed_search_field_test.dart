@@ -49,4 +49,69 @@ void main() {
     expect(clears, 1);
     expect(find.text('pix'), findsNothing);
   });
+
+  // Validação da usuária (specs/024): espaço em branco não é busca; o
+  // campo avisa num toast curto.
+  group('busca inválida', () {
+    testWidgets('só espaços: o campo fica vazio e avisa', (tester) async {
+      await pumpField(tester);
+
+      await tester.enterText(find.byType(TextField), '   ');
+      await tester.pump();
+
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        isEmpty,
+      );
+      expect(changes, isEmpty);
+      expect(
+        find.text('Digite pelo menos 2 letras para buscar.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('espaço no começo sai; o resto fica', (tester) async {
+      await pumpField(tester);
+
+      await tester.enterText(find.byType(TextField), '  pix');
+
+      expect(changes, ['pix']);
+    });
+
+    testWidgets('buscar com uma letra só avisa', (tester) async {
+      await pumpField(tester);
+
+      await tester.enterText(find.byType(TextField), 'p');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+
+      expect(
+        find.text('Digite pelo menos 2 letras para buscar.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('buscar com texto válido não avisa', (tester) async {
+      await pumpField(tester);
+
+      await tester.enterText(find.byType(TextField), 'pix');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
+      await tester.pump();
+
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('o aviso some sozinho', (tester) async {
+      await pumpField(tester);
+
+      await tester.enterText(find.byType(TextField), ' ');
+      await tester.pump();
+      expect(find.byType(SnackBar), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byType(SnackBar), findsNothing);
+    });
+  });
 }

@@ -4,7 +4,6 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
@@ -19,13 +18,14 @@ import 'package:click_seguro_app/modules/common/presentation/controller/read_alo
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:animations/animations.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_progress_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../../../fakes/hanging_http_client.dart';
@@ -35,6 +35,21 @@ import '../../../../helpers/localized_app.dart';
 import '../../fakes/activities_fixtures.dart';
 import '../../fakes/fake_activities_remote_data_source.dart';
 import '../../fakes/fake_activities_repository.dart';
+
+/// Respondidas: os segmentos coral do progresso da pergunta (redesign 2.0,
+/// specs/024).
+int answeredSegments(WidgetTester tester) => tester
+    .widgetList<Container>(
+      find.descendant(
+        of: find.byType(LessonProgressIndicator),
+        matching: find.byType(Container),
+      ),
+    )
+    .where(
+      (c) =>
+          (c.decoration as BoxDecoration?)?.color == AppPalette.light.primary,
+    )
+    .length;
 
 void main() {
   late UserSessionService session;
@@ -305,7 +320,7 @@ void main() {
       useModule(answered: {'l1'});
       await open(tester);
 
-      expect(find.byIcon(LucideIcons.check), findsOneWidget);
+      expect(answeredSegments(tester), 1);
       expect(
         find.bySemanticsLabel('Pergunta 2 de 3, 1 concluídas'),
         findsOneWidget,
@@ -646,7 +661,7 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('Pergunta 1 de 3'), findsOneWidget);
-      expect(find.byIcon(LucideIcons.check), findsOneWidget);
+      expect(answeredSegments(tester), 1);
       expect(card(tester, 'Enviar').state, LessonOptionState.wrong);
       expect(card(tester, 'Enviar').onTap, isNull);
       await reveal(tester, find.text('Ignorar e denunciar'));
@@ -1284,16 +1299,16 @@ void main() {
       expect(find.text('Pergunta 1 de 3'), findsOneWidget);
     });
 
-    testWidgets('envio demorado: aviso de serviço acordando', (tester) async {
+    // Sem aviso de serviço acordando (validação da usuária, specs/024).
+    testWidgets('envio demorado: sem aviso de serviço', (tester) async {
       await open(tester);
       await chooseSecond(tester);
       repository.answerGate = Completer<void>();
 
       await tester.tap(find.text('Confirmar resposta'));
       await tester.pump();
+      await tester.pump(const Duration(seconds: 6));
       expect(find.textContaining('O serviço está acordando'), findsNothing);
-      await tester.pump(SlowRequestNotice.delay);
-      expect(find.textContaining('O serviço está acordando'), findsOneWidget);
 
       repository.answerGate!.complete();
       await tester.pumpAndSettle();
@@ -1376,16 +1391,13 @@ void main() {
   });
 
   group('estados (US4)', () {
-    testWidgets('carregando e, depois de 5 s, o aviso de serviço acordando', (
-      tester,
-    ) async {
+    testWidgets('carregando: sem aviso de serviço acordando', (tester) async {
       repository.moduleDetailGate = Completer<void>();
       await pumpLocalized(tester, router: router, settle: false);
 
       expect(find.byType(SafeLoadingState), findsOneWidget);
+      await tester.pump(const Duration(seconds: 6));
       expect(find.textContaining('O serviço está acordando'), findsNothing);
-      await tester.pump(SlowRequestNotice.delay);
-      expect(find.textContaining('O serviço está acordando'), findsOneWidget);
 
       repository.moduleDetailGate!.complete();
       await tester.pumpAndSettle();

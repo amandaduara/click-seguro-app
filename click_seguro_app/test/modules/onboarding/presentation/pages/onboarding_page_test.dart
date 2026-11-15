@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/onboarding/domain/usecases/complete_onboarding_usecase.dart';
 import 'package:click_seguro_app/modules/onboarding/onboarding.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/controller/onboarding_controller.dart';
@@ -72,11 +73,11 @@ void main() {
     tester,
   ) async {
     await pumpLocalized(tester, router: buildRouter());
-    // Sem a margem de 4 de cada lado.
+    // Sem a margem de 8 à direita; pontos de 10, o ativo de 32 (redesign).
     double width(int index) =>
         tester.getSize(find.byKey(ValueKey('onboarding-dot-$index'))).width - 8;
-    expect(width(0), 24);
-    expect(width(1), 8);
+    expect(width(0), 32);
+    expect(width(1), 10);
 
     final double half = tester.getSize(find.byType(PageView)).width / 2;
     final gesture = await tester.startGesture(
@@ -85,11 +86,11 @@ void main() {
     await gesture.moveBy(Offset(-half, 0));
     await tester.pump();
 
-    expect(width(0), inExclusiveRange(8, 24));
-    expect(width(1), inExclusiveRange(8, 24));
+    expect(width(0), inExclusiveRange(10, 32));
+    expect(width(1), inExclusiveRange(10, 32));
     await gesture.up();
     await tester.pumpAndSettle();
-    expect(width(1), 24);
+    expect(width(1), 32);
   });
 
   testWidgets('"Começar" abre o login', (tester) async {
@@ -104,6 +105,28 @@ void main() {
 
     expect(find.text('login'), findsOneWidget);
     expect(repository.seen, isTrue);
+  });
+
+  testWidgets('"Pular" é lido como botão, não como filtro', (tester) async {
+    await pumpLocalized(tester, router: buildRouter());
+    final SemanticsHandle semantics = tester.ensureSemantics();
+
+    expect(
+      tester.getSemantics(find.text('Pular')),
+      isSemantics(
+        label: 'Pular',
+        isButton: true,
+        hasEnabledState: true,
+        isEnabled: true,
+        hasTapAction: true,
+        hasSelectedState: false,
+      ),
+    );
+    expect(
+      tester.getSize(find.widgetWithText(SafeButton, 'Pular')).height,
+      greaterThanOrEqualTo(48),
+    );
+    semantics.dispose();
   });
 
   testWidgets('"Pular" no 1º slide abre o login', (tester) async {

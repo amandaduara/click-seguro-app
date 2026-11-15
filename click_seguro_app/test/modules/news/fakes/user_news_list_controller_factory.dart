@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_user_news_list_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/watch_news_interactions_usecase.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/user_news_list_controller.dart';
 
 import 'fake_news_repository.dart';
@@ -11,4 +12,5 @@ UserNewsListController buildUserNewsListController(
 }) => UserNewsListController(
   kind: kind,
   getUserNewsList: GetUserNewsListUseCase(repository),
+  watchInteractions: WatchNewsInteractionsUseCase(repository),
 );

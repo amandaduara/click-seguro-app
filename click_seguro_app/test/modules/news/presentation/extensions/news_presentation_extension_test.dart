@@ -65,6 +65,24 @@ void main() {
     });
   });
 
+  group('illustrationText', () {
+    test('categorias e título, para o tema da capa', () {
+      final item = newsItem(
+        'n1',
+        categories: [category('Phishing'), category('Pix')],
+      );
+
+      expect(item.illustrationText, 'Phishing Pix Notícia n1');
+    });
+
+    test('sem categoria, só o título', () {
+      expect(
+        newsItem('n1', categories: const []).illustrationText,
+        'Notícia n1',
+      );
+    });
+  });
+
   group('semanticLabel', () {
     testWidgets('título, fonte, data e categorias', (tester) async {
       await localized(tester);

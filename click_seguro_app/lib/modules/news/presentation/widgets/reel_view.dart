@@ -11,8 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Um Reel em tela cheia (design system §7.10): imagem ao fundo com
-/// gradiente, categorias, título, trecho, fonte e data, "Ler notícia
-/// completa" e, à direita, as [actions].
+/// gradiente, categorias, título, trecho, fonte e data e, à direita, as
+/// [actions]. Tocar no Reel (no texto ou na imagem) abre a notícia completa.
 class ReelView extends StatelessWidget {
   const ReelView({
     super.key,
@@ -26,6 +26,7 @@ class ReelView extends StatelessWidget {
 
   static const double _actionsWidth = 64;
   static const Key doubleTapKey = ValueKey('reel-double-tap');
+  static const Key readFullKey = ValueKey('reel-read-full');
 
   /// Põe a imagem do Reel no cache no tamanho em que ele a mostra, para
   /// aparecer sem tela preta (specs/022 R10, R11).
@@ -46,8 +47,9 @@ class ReelView extends StatelessWidget {
   /// Aviso no último Reel: fim da lista ou falha ao carregar mais.
   final Widget? footer;
 
-  /// Dois toques na imagem: curtir (specs/022 FR-021). Só o fundo responde;
-  /// textos e botões por cima ficam com os próprios toques.
+  /// Dois toques na imagem: curtir (specs/022 FR-021); um toque abre a
+  /// notícia, como no texto. Só o fundo responde; textos e botões por cima
+  /// ficam com os próprios toques.
   final VoidCallback? onDoubleTap;
 
   @override
@@ -91,6 +93,7 @@ class ReelView extends StatelessWidget {
               child: GestureDetector(
                 key: doubleTapKey,
                 behavior: HitTestBehavior.opaque,
+                onTap: onReadFull,
                 onDoubleTap: onDoubleTap,
               ),
             ),
@@ -110,74 +113,66 @@ class ReelView extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // O texto é o botão de abrir a notícia: título,
+                        // fonte e data, com a dica "Ler notícia completa".
                         Semantics(
+                          button: true,
                           label: reel.semanticLabel(now),
+                          hint: AppStrings.newsReelsReadFull.tr(),
+                          onTap: onReadFull,
                           excludeSemantics: true,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (categories.isNotEmpty) ...[
-                                Wrap(
-                                  spacing: AppSpacing.s1,
-                                  runSpacing: AppSpacing.s1,
-                                  children: [
-                                    for (final label in categories)
-                                      _CategoryChip(label: label),
-                                  ],
-                                ),
-                                const SizedBox(height: AppSpacing.s3),
-                              ],
-                              Text(
-                                reel.news.title,
-                                maxLines: 4,
-                                overflow: TextOverflow.ellipsis,
-                                style: textTheme.headlineSmall?.copyWith(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                  color: onDark,
-                                ),
-                              ),
-                              if (reel.content.isNotEmpty) ...[
-                                const SizedBox(height: AppSpacing.s2),
+                          child: GestureDetector(
+                            key: readFullKey,
+                            behavior: HitTestBehavior.opaque,
+                            onTap: onReadFull,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (categories.isNotEmpty) ...[
+                                  Wrap(
+                                    spacing: AppSpacing.s1,
+                                    runSpacing: AppSpacing.s1,
+                                    children: [
+                                      for (final label in categories)
+                                        _CategoryChip(label: label),
+                                    ],
+                                  ),
+                                  const SizedBox(height: AppSpacing.s3),
+                                ],
                                 Text(
-                                  reel.content,
+                                  reel.news.title,
                                   maxLines: 4,
                                   overflow: TextOverflow.ellipsis,
-                                  style: textTheme.bodyMedium?.copyWith(
-                                    fontSize: 14,
-                                    color: onDark.withValues(alpha: 0.9),
+                                  style: textTheme.headlineSmall?.copyWith(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    color: onDark,
+                                  ),
+                                ),
+                                if (reel.content.isNotEmpty) ...[
+                                  const SizedBox(height: AppSpacing.s2),
+                                  Text(
+                                    reel.content,
+                                    maxLines: 4,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      fontSize: 14,
+                                      color: onDark.withValues(alpha: 0.9),
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: AppSpacing.s2),
+                                Text(
+                                  '${reel.news.source} · '
+                                  '${reel.news.relativeDate(now)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: onDark.withValues(alpha: 0.8),
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: AppSpacing.s2),
-                              Text(
-                                '${reel.news.source} · '
-                                '${reel.news.relativeDate(now)}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: onDark.withValues(alpha: 0.8),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.s4),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 48),
-                          child: FilledButton(
-                            onPressed: onReadFull,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: onDark,
-                              foregroundColor: context.colors.secondary,
-                              minimumSize: const Size(48, 48),
-                              shape: const StadiumBorder(),
-                              textStyle: textTheme.bodyMedium?.copyWith(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
                             ),
-                            child: Text(AppStrings.newsReelsReadFull.tr()),
                           ),
                         ),
                         if (footer != null) ...[

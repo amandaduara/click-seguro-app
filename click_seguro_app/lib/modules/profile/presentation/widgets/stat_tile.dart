@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/profile/presentation/extensions/count_format.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Um dos números do perfil (lidas, salvas ou curtidas), que abre a lista.
@@ -35,7 +36,7 @@ class StatTile extends StatelessWidget {
       child: Material(
         color: colors.card,
         shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.radius2xl,
+          borderRadius: AppSpacing.radiusLg,
           side: BorderSide(color: colors.border),
         ),
         clipBehavior: Clip.antiAlias,
@@ -63,7 +64,7 @@ class StatTile extends StatelessWidget {
                   child: Text(
                     formatCount(count),
                     style: textTheme.titleLarge?.copyWith(
-                      fontSize: 26,
+                      fontSize: AppTypography.title1.fontSize,
                       fontWeight: FontWeight.w800,
                       color: colors.secondary,
                     ),
@@ -73,7 +74,7 @@ class StatTile extends StatelessWidget {
                   label,
                   textAlign: TextAlign.center,
                   style: textTheme.bodyMedium?.copyWith(
-                    fontSize: 15,
+                    fontSize: AppTypography.caption.fontSize,
                     fontWeight: FontWeight.w600,
                     color: colors.textMutedForeground,
                   ),

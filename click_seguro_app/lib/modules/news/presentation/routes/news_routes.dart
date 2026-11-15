@@ -4,7 +4,9 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dar
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_user_news_list_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/watch_news_interactions_usecase.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/user_news_list_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/news_detail_page.dart';
@@ -42,6 +44,7 @@ final List<RouteBase> newsRoutes = [
         create: (_) => UserNewsListController(
           kind: kind,
           getUserNewsList: GetIt.instance<GetUserNewsListUseCase>(),
+          watchInteractions: GetIt.instance<WatchNewsInteractionsUseCase>(),
         ),
         child: UserNewsListPage(kind: kind),
       ),
@@ -58,6 +61,7 @@ final List<RouteBase> newsRoutes = [
           getNewsDetail: injector<GetNewsDetailUseCase>(),
           markAsRead: injector<MarkNewsAsReadUseCase>(),
           toggleSave: injector<ToggleSaveUseCase>(),
+          toggleLike: injector<ToggleLikeUseCase>(),
           sessionStatus: injector<UserSessionService>().sessionStatus,
           newsId: id,
         )..load(),

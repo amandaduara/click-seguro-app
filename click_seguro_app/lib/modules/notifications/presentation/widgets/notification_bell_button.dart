@@ -1,7 +1,9 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
 import 'package:click_seguro_app/modules/notifications/presentation/controller/notifications_controller.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -26,42 +28,29 @@ class NotificationBellButton extends StatelessWidget {
     final int unread = context.select<NotificationsController, int>(
       (controller) => controller.unreadCount,
     );
-    return Semantics(
-      button: true,
-      label: _label(unread),
-      excludeSemantics: true,
-      child: SizedBox(
-        width: 48,
-        height: 48,
-        child: Stack(
-          // Com fonte 2× o círculo cresce para a esquerda: sem cortar o número.
-          clipBehavior: Clip.none,
-          children: [
-            Material(
-              color: context.colors.input,
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: onPressed,
-                child: SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: Icon(
-                    LucideIcons.bell,
-                    size: 20,
-                    color: context.colors.secondary,
-                  ),
-                ),
+    // O mesmo botão redondo do Assistente ao lado (SafeIconButton, com o
+    // toque também para o leitor de tela); o número fica por cima.
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: Stack(
+        // Com fonte 2× o círculo cresce para a esquerda: sem cortar o número.
+        clipBehavior: Clip.none,
+        children: [
+          SafeIconButton(
+            icon: LucideIcons.bell,
+            semanticLabel: _label(unread),
+            onPressed: onPressed,
+          ),
+          if (unread > 0)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: ExcludeSemantics(child: _Badge(count: unread)),
               ),
             ),
-            if (unread > 0)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: IgnorePointer(child: _Badge(count: unread)),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -95,7 +84,7 @@ class _Badge extends StatelessWidget {
       child: Text(
         count > 99 ? '99+' : '$count',
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          fontSize: 14,
+          fontSize: AppTypography.caption.fontSize,
           height: 1,
           fontWeight: FontWeight.bold,
           color: context.colors.textPrimaryForeground,

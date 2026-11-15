@@ -1,14 +1,20 @@
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/press_scale.dart';
 import 'package:flutter/material.dart';
 
-enum SafeButtonSize { large, compact, pill }
+/// Altura mínima: `large` 60, `compact` 48 (RNF-003, FR-006).
+enum SafeButtonSize { large, compact }
 
-enum SafeButtonTone { primary, gradient, secondary, ghost }
+/// Tons do redesign 2.0 (FR-006): `primary` coral (uma ação principal por
+/// tela), `secondary` creme, `ghost` contorno tinta, `link` texto sublinhado.
+enum SafeButtonTone { primary, secondary, ghost, link }
 
-/// SafeButton — botão de ação com hover, active:scale-95, loading e disabled.
+/// SafeButton — botão com estado pressionado (cor mais escura e escala 0,98),
+/// carregando e desativado. Cresce em altura quando o rótulo quebra a linha
+/// (fonte ampliada).
 class SafeButton extends StatefulWidget {
   const SafeButton({
     super.key,
@@ -18,7 +24,6 @@ class SafeButton extends StatefulWidget {
     this.tone = SafeButtonTone.primary,
     this.icon,
     this.iconRight,
-    this.shadow = false,
     this.loading = false,
     this.disabled = false,
   });
@@ -29,7 +34,6 @@ class SafeButton extends StatefulWidget {
   final SafeButtonTone tone;
   final Widget? icon;
   final Widget? iconRight;
-  final bool shadow;
   final bool loading;
   final bool disabled;
 
@@ -38,100 +42,92 @@ class SafeButton extends StatefulWidget {
 }
 
 class _SafeButtonState extends State<SafeButton> {
-  bool get _isDisabled => widget.disabled || widget.loading;
+  /// Canto do botão compacto: entre o `radiusSm` (12) e o `radiusMd` (16).
+  static const BorderRadius _compactRadius = BorderRadius.all(
+    Radius.circular(14),
+  );
 
-  EdgeInsets get _padding {
-    switch (widget.size) {
-      case SafeButtonSize.large:
-        return const EdgeInsets.symmetric(vertical: 16);
-      case SafeButtonSize.compact:
-        return const EdgeInsets.symmetric(horizontal: 20, vertical: 10);
-      case SafeButtonSize.pill:
-        return const EdgeInsets.symmetric(horizontal: 14, vertical: 8);
-    }
-  }
+  bool _pressed = false;
 
-  double get _fontSize {
-    switch (widget.size) {
-      case SafeButtonSize.large:
-        return 16;
-      case SafeButtonSize.compact:
-        return 14;
-      case SafeButtonSize.pill:
-        return 12;
-    }
-  }
+  bool get _isDisabled =>
+      widget.disabled || widget.loading || widget.onPressed == null;
+  bool get _large => widget.size == SafeButtonSize.large;
 
-  ({Color? bg, Color fg, Gradient? gradient}) get _toneStyle {
+  ({Color bg, Color fg, BorderSide? border}) _style(AppPalette colors) {
     switch (widget.tone) {
-      case SafeButtonTone.gradient:
+      case SafeButtonTone.primary:
         return (
-          bg: null,
-          fg: context.colors.textPrimaryForeground,
-          gradient: context.colors.gradient,
+          bg: _pressed ? colors.primaryPressed : colors.primary,
+          fg: colors.textPrimaryForeground,
+          border: null,
         );
       case SafeButtonTone.secondary:
-        // Texto claro sobre o azul-escuro, como no wireframe
-        // (text-secondary-foreground); o escuro sumia no fundo.
         return (
-          bg: context.colors.secondary,
-          fg: context.colors.textPrimaryForeground,
-          gradient: null,
+          bg: colors.surfaceStrong,
+          fg: colors.textForeground,
+          border: null,
         );
       case SafeButtonTone.ghost:
         return (
-          bg: Colors.transparent,
-          fg: context.colors.secondary,
-          gradient: null,
+          bg: colors.card,
+          fg: colors.textForeground,
+          border: BorderSide(color: colors.textForeground, width: 1.5),
         );
-      case SafeButtonTone.primary:
+      case SafeButtonTone.link:
         return (
-          bg: context.colors.primary,
-          fg: context.colors.textPrimaryForeground,
-          gradient: null,
+          bg: Colors.transparent,
+          fg: colors.textForeground,
+          border: null,
         );
     }
+  }
+
+  void _setPressed(bool value) {
+    if (_pressed != value) setState(() => _pressed = value);
   }
 
   @override
   Widget build(BuildContext context) {
-    final style = _toneStyle;
+    final AppPalette colors = context.colors;
+    final style = _style(colors);
     final AppMotion motion = AppMotion.of(context);
-    final opacity = _isDisabled ? 0.4 : 1.0;
+    final TextStyle labelStyle =
+        (_large ? AppTypography.button : AppTypography.label).copyWith(
+          color: style.fg,
+          fontWeight: FontWeight.w700,
+          decoration: widget.tone == SafeButtonTone.link
+              ? TextDecoration.underline
+              : null,
+          decorationColor: style.fg,
+        );
 
-    final Widget? leading = widget.loading
-        ? SizedBox(
-            key: const ValueKey('spinner'),
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(style.fg),
-            ),
-          )
-        : widget.icon == null
-        ? null
-        : IconTheme(
-            key: const ValueKey('icon'),
-            data: IconThemeData(color: style.fg, size: 16),
-            child: widget.icon!,
-          );
-
-    final content = Row(
-      mainAxisSize: widget.size == SafeButtonSize.large
-          ? MainAxisSize.max
-          : MainAxisSize.min,
+    final Widget content = Row(
+      mainAxisSize: _large ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (leading != null) ...[
+        if (widget.loading || widget.icon != null) ...[
           // O ícone dá lugar ao spinner com esmaecimento (specs/022 R13).
           AnimatedSwitcher(
             duration: motion.short,
             switchInCurve: AppMotion.enter,
             switchOutCurve: AppMotion.exit,
-            child: leading,
+            child: widget.loading
+                ? SizedBox(
+                    key: const ValueKey('spinner'),
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(style.fg),
+                    ),
+                  )
+                : IconTheme(
+                    key: const ValueKey('icon'),
+                    data: IconThemeData(color: style.fg, size: 22),
+                    child: widget.icon!,
+                  ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
         ],
         // Flexible: com fonte ampliada (RNF-003) o rótulo quebra a linha em
         // vez de estourar a largura do botão.
@@ -139,17 +135,13 @@ class _SafeButtonState extends State<SafeButton> {
           child: Text(
             widget.label,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontSize: _fontSize,
-              fontWeight: FontWeight.w700,
-              color: style.fg,
-            ),
+            style: labelStyle,
           ),
         ),
         if (widget.iconRight != null) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           IconTheme(
-            data: IconThemeData(color: style.fg, size: 16),
+            data: IconThemeData(color: style.fg, size: 22),
             child: widget.iconRight!,
           ),
         ],
@@ -157,34 +149,41 @@ class _SafeButtonState extends State<SafeButton> {
     );
 
     // Leitor de tela: um botão com o rótulo, desabilitado quando carrega ou
-    // está bloqueado (specs/022 FR-007).
+    // está bloqueado (specs/022 FR-007). A escala vem do [PressScale]; o
+    // [Listener] só escurece o coral enquanto o dedo está em cima.
     return Semantics(
       container: true,
       button: true,
-      enabled: !_isDisabled && widget.onPressed != null,
-      child: PressScale(
-        enabled: !_isDisabled && widget.onPressed != null,
-        pressedScale: 0.95,
-        onTap: widget.onPressed,
-        child: AnimatedOpacity(
-          opacity: opacity,
-          duration: motion.short,
-          curve: AppMotion.standard,
-          child: AnimatedContainer(
-            duration: motion.short,
-            curve: AppMotion.standard,
-            padding: _padding,
-            width: widget.size == SafeButtonSize.large ? double.infinity : null,
-            decoration: BoxDecoration(
-              color: style.bg,
-              gradient: style.gradient,
-              borderRadius: AppSpacing.radiusFull,
-              boxShadow: widget.shadow ? context.colors.shadowPrimary : null,
-              border: widget.tone == SafeButtonTone.ghost
-                  ? Border.all(color: context.colors.border, width: 1)
-                  : null,
+      enabled: !_isDisabled,
+      child: Listener(
+        onPointerDown: _isDisabled ? null : (_) => _setPressed(true),
+        onPointerUp: (_) => _setPressed(false),
+        onPointerCancel: (_) => _setPressed(false),
+        child: PressScale(
+          enabled: !_isDisabled,
+          pressedScale: 0.98,
+          onTap: widget.onPressed,
+          child: Opacity(
+            opacity: _isDisabled && !widget.loading ? 0.45 : 1.0,
+            child: Container(
+              constraints: BoxConstraints(minHeight: _large ? 60 : 48),
+              padding: EdgeInsets.symmetric(
+                horizontal: _large ? AppSpacing.s6 : AppSpacing.s5,
+                vertical: AppSpacing.s3,
+              ),
+              width: _large ? double.infinity : null,
+              decoration: BoxDecoration(
+                color: style.bg,
+                borderRadius: _large ? AppSpacing.radiusMd : _compactRadius,
+                border: style.border == null
+                    ? null
+                    : Border.fromBorderSide(style.border!),
+              ),
+              // Só o grande se estica; o compacto fica do tamanho do texto
+              // (com `alignment`, o Container ocuparia a largura toda).
+              alignment: _large ? Alignment.center : null,
+              child: content,
             ),
-            child: content,
           ),
         ),
       ),

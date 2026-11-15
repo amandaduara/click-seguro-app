@@ -38,13 +38,9 @@ void main() {
     'shell_tab_help',
     'shell_tab_profile',
     'shell_nav_label',
-    'shell_greeting',
-    'shell_welcome',
     'shell_notifications',
-    'shell_settings',
     'news_title',
     'news_reels_title',
-    'news_detail_title',
     'notifications_title',
     'notifications_group_today',
     'notifications_group_yesterday',
@@ -84,7 +80,6 @@ void main() {
         expect(json[key], isA<String>(), reason: '$locale sem $key');
         expect((json[key] as String).trim(), isNotEmpty, reason: key);
       }
-      expect(json['shell_greeting'], contains('{}'));
       expect(json['notifications_summary_many'], contains('{}'));
       expect(json['notifications_bell_label'], contains('{}'));
       expect(json['notifications_semantic_new'], contains('{}'));

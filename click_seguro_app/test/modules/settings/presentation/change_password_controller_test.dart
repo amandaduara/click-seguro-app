@@ -53,14 +53,77 @@ void main() {
     expect(controller.rulesMet, PasswordRule.values.toSet());
   });
 
-  test('canSave só com os três preenchidos', () {
+  test('canSave só com o formulário todo válido', () {
     expect(controller.canSave, isFalse);
     controller
-      ..current.text = 'a'
-      ..newPassword.text = 'b';
+      ..current.text = 'Senha@123'
+      ..newPassword.text = 'NovaSenha@456';
     expect(controller.canSave, isFalse);
-    controller.confirmation.text = 'c';
+    controller.confirmation.text = 'Outra';
+    expect(controller.canSave, isFalse, reason: 'confirmação diferente');
+    controller.confirmation.text = 'NovaSenha@456';
     expect(controller.canSave, isTrue);
+    controller.newPassword.text = 'fraca';
+    expect(controller.canSave, isFalse, reason: 'regras faltando');
+  });
+
+  group('validação enquanto digita', () {
+    test('tela abre sem erros', () {
+      expect(controller.errors, isEmpty);
+    });
+
+    test('só o campo alterado mostra erro', () {
+      controller.newPassword.text = 'fraca';
+
+      expect(controller.errors, {
+        PasswordField.newPassword: PasswordFieldError.rulesNotMet,
+      });
+    });
+
+    test('erro some quando o campo fica válido', () {
+      controller.newPassword.text = 'fraca';
+      controller.newPassword.text = 'NovaSenha@456';
+
+      expect(controller.errors, isEmpty);
+    });
+
+    test('apagar tudo mostra "obrigatório"', () {
+      controller.current.text = 'abc';
+      controller.current.text = '';
+
+      expect(controller.errors, {
+        PasswordField.current: PasswordFieldError.required,
+      });
+    });
+
+    test('confirmação acompanha a nova senha', () {
+      controller
+        ..newPassword.text = 'NovaSenha@456'
+        ..confirmation.text = 'NovaSenha@45';
+      expect(
+        controller.errors[PasswordField.confirmation],
+        PasswordFieldError.mismatch,
+      );
+
+      controller.confirmation.text = 'NovaSenha@456';
+      expect(controller.errors[PasswordField.confirmation], isNull);
+
+      controller.newPassword.text = 'NovaSenha@4567';
+      expect(
+        controller.errors[PasswordField.confirmation],
+        PasswordFieldError.mismatch,
+      );
+    });
+
+    test('avisa a tela a cada letra', () {
+      int notified = 0;
+      controller.addListener(() => notified++);
+
+      controller.newPassword.text = 'a';
+      controller.newPassword.text = 'ab';
+
+      expect(notified, 2);
+    });
   });
 
   test('hasInput com qualquer campo preenchido', () {
@@ -122,6 +185,18 @@ void main() {
       controller.confirmation.text = 'NovaSenha@456';
 
       expect(controller.errors[PasswordField.confirmation], isNull);
+    });
+
+    test('erro do serviço some ao editar o campo', () async {
+      repository.changeResults[0] = const Left(WrongCurrentPasswordFailure());
+      fill();
+      await controller.save();
+      expect(controller.canSave, isFalse);
+
+      controller.current.text = 'Senha@1234';
+
+      expect(controller.errors[PasswordField.current], isNull);
+      expect(controller.canSave, isTrue);
     });
   });
 
