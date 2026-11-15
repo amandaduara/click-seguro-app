@@ -4,7 +4,6 @@ import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dart';
 import 'package:click_seguro_app/modules/help/domain/failures/contact_validation_failure.dart';
-import 'package:click_seguro_app/modules/help/domain/usecases/delete_personal_contact_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/get_personal_contacts_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/save_personal_contact_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/validation/contact_validation.dart';
@@ -14,13 +13,11 @@ class ContactFormController extends ChangeNotifier {
   ContactFormController({
     required GetPersonalContactsUseCase getPersonalContacts,
     required SavePersonalContactUseCase savePersonalContact,
-    required DeletePersonalContactUseCase deletePersonalContact,
     required ImageStorageService images,
     String? contactId,
   }) : _contactId = contactId,
        _getPersonalContacts = getPersonalContacts,
        _savePersonalContact = savePersonalContact,
-       _deletePersonalContact = deletePersonalContact,
        _images = images,
        _id = contactId ?? _newId(),
        // Editando, o formulário só aparece com o contato carregado.
@@ -34,12 +31,10 @@ class ContactFormController extends ChangeNotifier {
   final String _id;
   final GetPersonalContactsUseCase _getPersonalContacts;
   final SavePersonalContactUseCase _savePersonalContact;
-  final DeletePersonalContactUseCase _deletePersonalContact;
   final ImageStorageService _images;
   bool _disposed = false;
   bool _loading;
   bool _saving = false;
-  bool _deleting = false;
   bool _photoLoading = false;
   bool _permissionDenied = false;
   bool _notFound = false;
@@ -51,12 +46,10 @@ class ContactFormController extends ChangeNotifier {
   ContactValidationError? _validationError;
   Failure? _loadFailure;
   Failure? _saveFailure;
-  Failure? _deleteFailure;
 
   bool get isEditing => _contactId != null;
   bool get isLoading => _loading;
   bool get isSaving => _saving;
-  bool get isDeleting => _deleting;
   bool get isPhotoLoading => _photoLoading;
   bool get permissionDenied => _permissionDenied;
   bool get notFound => _notFound;
@@ -66,8 +59,9 @@ class ContactFormController extends ChangeNotifier {
   String? get photoPath => _photoPath;
   ContactValidationError? get validationError => _validationError;
 
-  /// A pessoa já saiu do campo (ou tentou salvar): daí em diante o erro
-  /// acompanha a digitação (validação da usuária, specs/023).
+  /// A pessoa já mexeu no campo (digitou, saiu dele ou tentou salvar): daí
+  /// em diante o erro acompanha a digitação (validação da usuária,
+  /// specs/023).
   bool _nameTouched = false;
   bool _phoneTouched = false;
 
@@ -80,6 +74,17 @@ class ContactFormController extends ChangeNotifier {
       _phoneTouched && ContactValidation.normalizePhone(_phone) == null
       ? ContactValidationError.phone
       : null;
+
+  /// "Salvar contato" disponível só com nome e telefone válidos e nada em
+  /// andamento, como na edição de perfil (validação da usuária, specs/023).
+  bool get canSave =>
+      !_saving &&
+      !_photoLoading &&
+      !_loading &&
+      !_notFound &&
+      _loadFailure == null &&
+      ContactValidation.validateName(_name) == null &&
+      ContactValidation.normalizePhone(_phone) != null;
 
   void touchName() {
     if (_nameTouched) return;
@@ -95,7 +100,6 @@ class ContactFormController extends ChangeNotifier {
 
   Failure? get loadFailure => _loadFailure;
   Failure? get saveFailure => _saveFailure;
-  Failure? get deleteFailure => _deleteFailure;
 
   Future<void> load() async {
     if (!isEditing) return;
@@ -128,6 +132,8 @@ class ContactFormController extends ChangeNotifier {
 
   void setName(String value) {
     _name = value;
+    // O erro acompanha a digitação (validação da usuária, specs/023).
+    _nameTouched = true;
     _validationError = null;
     _saveFailure = null;
     _notify();
@@ -135,6 +141,7 @@ class ContactFormController extends ChangeNotifier {
 
   void setPhone(String value) {
     _phone = value;
+    _phoneTouched = true;
     _validationError = null;
     _saveFailure = null;
     _notify();
@@ -147,7 +154,7 @@ class ContactFormController extends ChangeNotifier {
   }
 
   Future<void> pickPhoto(PhotoSource source) async {
-    if (_photoLoading || _saving || _deleting) return;
+    if (_photoLoading || _saving) return;
     _photoLoading = true;
     _permissionDenied = false;
     _notify();
@@ -171,7 +178,7 @@ class ContactFormController extends ChangeNotifier {
   }
 
   Future<void> removePhoto() async {
-    if (_photoLoading || _saving || _deleting) return;
+    if (_photoLoading || _saving) return;
     final temporary = _temporaryPhotoPath;
     _temporaryPhotoPath = null;
     _photoPath = null;
@@ -182,7 +189,6 @@ class ContactFormController extends ChangeNotifier {
   Future<bool> save() async {
     if (_saving ||
         _photoLoading ||
-        _deleting ||
         _loading ||
         _notFound ||
         _loadFailure != null) {
@@ -224,29 +230,6 @@ class ContactFormController extends ChangeNotifier {
     }
     if (_disposed) return result.isRight();
     _saving = false;
-    _notify();
-    return result.isRight();
-  }
-
-  Future<bool> delete() async {
-    if (!isEditing ||
-        _deleting ||
-        _saving ||
-        _photoLoading ||
-        _loading ||
-        _loadFailure != null ||
-        _notFound) {
-      return false;
-    }
-    final id = _contactId;
-    if (id == null) return false;
-    _deleting = true;
-    _deleteFailure = null;
-    _notify();
-    final result = await _deletePersonalContact(id);
-    if (_disposed) return false;
-    result.match((failure) => _deleteFailure = failure, (_) {});
-    _deleting = false;
     _notify();
     return result.isRight();
   }

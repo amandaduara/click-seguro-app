@@ -50,6 +50,7 @@ class HelpModule implements ModuleInterface {
         () => HelpController(
           getOfficialContacts: injector<GetOfficialContactsUseCase>(),
           getPersonalContacts: injector<GetPersonalContactsUseCase>(),
+          deletePersonalContact: injector<DeletePersonalContactUseCase>(),
           launcher: injector<ExternalLauncherService>(),
         ),
       )
@@ -58,7 +59,6 @@ class HelpModule implements ModuleInterface {
           contactId: contactId,
           getPersonalContacts: injector<GetPersonalContactsUseCase>(),
           savePersonalContact: injector<SavePersonalContactUseCase>(),
-          deletePersonalContact: injector<DeletePersonalContactUseCase>(),
           images: injector<ImageStorageService>(),
         ),
       );

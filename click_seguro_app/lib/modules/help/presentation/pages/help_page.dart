@@ -1,3 +1,5 @@
+import 'package:click_seguro_app/core/utils/phone_format.dart';
+import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
@@ -64,10 +66,10 @@ class _HelpPageContentState extends State<_HelpPageContent> {
     final HelpController controller = context.watch<HelpController>();
     final bool official = _tab == 0;
     return Scaffold(
-      // "Adicionar contato" no canto de baixo à esquerda, ao alcance do
+      // "Adicionar contato" no canto de baixo à direita, ao alcance do
       // polegar, na aba dos contatos pessoais (validação da usuária,
       // specs/023).
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: official
           ? null
           : _AddContactButton(onPressed: () => _openForm(context, controller)),
@@ -160,9 +162,16 @@ class _HelpPageContentState extends State<_HelpPageContent> {
         fill(
           official
               ? SafeEmptyState(message: AppStrings.helpOfficialUnavailable.tr())
-              // Aviso curto, no tamanho do texto da tela: o botão de
-              // adicionar fica no canto (validação da usuária).
-              : const _PersonalEmptyNote(),
+              // Igual ao vazio dos "Oficiais": a ilustração e um texto
+              // curto; o botão de adicionar fica no canto.
+              : Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: _AddContactButton.clearance,
+                  ),
+                  child: SafeEmptyState(
+                    message: AppStrings.helpPersonalEmpty.tr(),
+                  ),
+                ),
         ),
       ];
     }
@@ -184,6 +193,7 @@ class _HelpPageContentState extends State<_HelpPageContent> {
                 child: _ContactCard(
                   contact: contact,
                   onCall: () => _callNumber(context, controller, contact.phone),
+                  // Pessoais: tocar no cartão edita; a lixeira remove.
                   onEdit: official
                       ? null
                       : () => _openForm(
@@ -191,6 +201,10 @@ class _HelpPageContentState extends State<_HelpPageContent> {
                           controller,
                           contactId: contact.id,
                         ),
+                  onDelete: official
+                      ? null
+                      : () => _confirmDelete(context, controller, contact),
+                  deleting: controller.isDeleting(contact.id),
                 ),
               ),
           ],
@@ -208,6 +222,40 @@ class _HelpPageContentState extends State<_HelpPageContent> {
       helpContactPath(contactId: contactId),
     );
     if (saved == true && context.mounted) await controller.refresh();
+  }
+
+  /// Confirma e remove o contato pela lixeira do cartão; a falha vira um
+  /// aviso (validação da usuária, specs/023).
+  Future<void> _confirmDelete(
+    BuildContext context,
+    HelpController controller,
+    ContactEntity contact,
+  ) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(AppStrings.helpDeleteContact.tr()),
+        content: SingleChildScrollView(
+          child: Text(AppStrings.helpDeleteConfirm.tr()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(AppStrings.helpCancel.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(AppStrings.helpConfirm.tr()),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final Failure? failure = await controller.deleteContact(contact.id);
+    if (failure == null || !context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(failure.message.tr())));
   }
 
   /// Liga; sem discador, mostra o número para copiar (CB-009). Vale para
@@ -259,63 +307,94 @@ class _ContactCard extends StatelessWidget {
     required this.contact,
     required this.onCall,
     this.onEdit,
+    this.onDelete,
+    this.deleting = false,
   });
 
   final ContactEntity contact;
   final VoidCallback onCall;
+
+  /// Tocar no cartão abre a edição (só os pessoais).
   final VoidCallback? onEdit;
 
+  /// A lixeira, ao lado de ligar (só os pessoais).
+  final VoidCallback? onDelete;
+  final bool deleting;
+
   @override
-  Widget build(BuildContext context) => SafeCard(
-    child: Column(
-      children: [
-        Row(
-          children: [
-            PersonAvatar(
-              name: contact.name,
-              size: 56,
-              photoPath: contact.photoPath,
-            ),
-            const SizedBox(width: AppSpacing.s3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    contact.name,
-                    style: Theme.of(context).textTheme.titleMedium,
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    final VoidCallback? edit = onEdit;
+    final VoidCallback? delete = onDelete;
+    return SafeCard(
+      interactive: edit != null,
+      onTap: edit,
+      child: Row(
+        children: [
+          PersonAvatar(
+            name: contact.name,
+            size: 56,
+            photoPath: contact.photoPath,
+          ),
+          const SizedBox(width: AppSpacing.s3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  contact.name,
+                  style: AppTypography.title3.copyWith(
+                    color: colors.textForeground,
                   ),
-                  Text(contact.phone),
-                  if (contact.relationship case final String relationship)
-                    Text(relationship),
-                ],
-              ),
+                ),
+                Text(
+                  formatPhone(contact.phone, shortCodes: true),
+                  style: AppTypography.body.copyWith(color: colors.textBody),
+                ),
+                if (contact.relationship case final String relationship)
+                  Text(
+                    relationship,
+                    style: AppTypography.caption.copyWith(
+                      color: colors.textMutedForeground,
+                    ),
+                  ),
+              ],
             ),
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            IconButton(
-              tooltip: AppStrings.helpCall.tr(args: [contact.name]),
-              onPressed: onCall,
-              icon: const Icon(LucideIcons.phone),
-            ),
-            if (onEdit != null)
-              IconButton(
-                tooltip: AppStrings.helpEditContact.tr(),
-                onPressed: onEdit,
-                icon: const Icon(LucideIcons.pencil),
-              ),
-          ],
-        ),
-      ],
-    ),
-  );
+          ),
+          IconButton(
+            tooltip: AppStrings.helpCall.tr(args: [contact.name]),
+            onPressed: onCall,
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            icon: Icon(LucideIcons.phone, color: colors.primary),
+          ),
+          if (delete != null)
+            deleting
+                ? const SizedBox.square(
+                    dimension: 48,
+                    child: Center(
+                      child: SizedBox.square(
+                        dimension: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      ),
+                    ),
+                  )
+                : IconButton(
+                    tooltip: AppStrings.helpDeleteContact.tr(),
+                    onPressed: delete,
+                    constraints: const BoxConstraints(
+                      minWidth: 48,
+                      minHeight: 48,
+                    ),
+                    icon: Icon(LucideIcons.trash2, color: colors.destructive),
+                  ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Botão "Adicionar contato" da aba dos pessoais: pílula coral no canto de
-/// baixo à esquerda, ao alcance do polegar.
+/// baixo à direita, ao alcance do polegar.
 class _AddContactButton extends StatelessWidget {
   const _AddContactButton({required this.onPressed});
 
@@ -337,48 +416,6 @@ class _AddContactButton extends StatelessWidget {
       extendedTextStyle: AppTypography.button,
       icon: const Icon(LucideIcons.userPlus),
       label: Text(AppStrings.helpAddContact.tr()),
-    );
-  }
-}
-
-/// Sem contatos pessoais: um aviso curto no tamanho do texto da tela, num
-/// cartão creme, em vez da ilustração grande (validação da usuária).
-class _PersonalEmptyNote extends StatelessWidget {
-  const _PersonalEmptyNote();
-
-  @override
-  Widget build(BuildContext context) {
-    final AppPalette colors = context.colors;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s5,
-        AppSpacing.s3,
-        AppSpacing.s5,
-        _AddContactButton.clearance,
-      ),
-      child: SafeCard(
-        elevation: SafeCardElevation.flat,
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: colors.primarySoft,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(LucideIcons.users, size: 22, color: colors.primary),
-            ),
-            const SizedBox(width: AppSpacing.s4),
-            Expanded(
-              child: Text(
-                AppStrings.helpPersonalEmpty.tr(),
-                style: AppTypography.body.copyWith(color: colors.textBody),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

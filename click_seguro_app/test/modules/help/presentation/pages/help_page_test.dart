@@ -9,6 +9,9 @@ import 'package:click_seguro_app/modules/help/presentation/routes/help_routes.da
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_top_bar.dart';
 import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
+import 'package:click_seguro_app/core/widgets/editable_avatar.dart';
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/person_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
@@ -114,15 +117,16 @@ void main() {
 
   // As duas abas rolam do mesmo jeito: "Meus contatos" vazio não ganha uma
   // rolagem própria nem espaço da tela inteira (validação da usuária).
-  testWidgets('"Meus contatos" vazio: aviso curto, sem rolar demais', (
+  // Igual ao vazio dos "Oficiais" e das listas do perfil: ilustração e
+  // texto de 16 (validação da usuária, specs/023).
+  testWidgets('"Meus contatos" vazio: o mesmo estado vazio, sem rolar demais', (
     tester,
   ) async {
     await open(tester);
     await tester.tap(find.text('Meus contatos'));
     await tester.pumpAndSettle();
 
-    // Texto do tamanho do corpo da tela, sem a ilustração grande.
-    expect(find.byType(SafeEmptyState), findsNothing);
+    expect(find.byType(SafeEmptyState), findsOneWidget);
     final Text note = tester.widget<Text>(
       find.text(
         'Cadastre contatos de confiança para encontrá-los rapidamente.',
@@ -136,7 +140,7 @@ void main() {
     expect(outer.maxScrollExtent, lessThan(200));
   });
 
-  testWidgets('"Adicionar contato" no canto de baixo à esquerda, só nos '
+  testWidgets('"Adicionar contato" no canto de baixo à direita, só nos '
       'pessoais', (tester) async {
     await open(tester);
     expect(find.byKey(const ValueKey('help_add_contact')), findsNothing);
@@ -148,7 +152,7 @@ void main() {
     expect(button, findsOneWidget);
     final Size screen = tester.getSize(find.byType(Scaffold).first);
     final Rect rect = tester.getRect(button);
-    expect(rect.center.dx, lessThan(screen.width / 2));
+    expect(rect.center.dx, greaterThan(screen.width / 2));
     expect(rect.bottom, greaterThan(screen.height * 0.8));
     expect(rect.height, greaterThanOrEqualTo(48));
   });
@@ -168,12 +172,11 @@ void main() {
     await tester.pump();
     expect(find.text('(11) 91234-5678'), findsOneWidget);
 
-    await tester.enterText(phone, '11');
+    // Incompleto: o erro aparece enquanto digita, sem precisar sair do
+    // campo nem tentar salvar.
+    await tester.enterText(phone, '12123');
     await tester.pump();
-    expect(find.textContaining('Informe um telefone válido'), findsNothing);
-    // Sai do campo: o erro aparece e acompanha a digitação.
-    await tester.tap(find.byType(TextField).at(2));
-    await tester.pump();
+    expect(find.text('(12) 123'), findsOneWidget);
     expect(find.textContaining('Informe um telefone válido'), findsOneWidget);
     await tester.enterText(phone, '190');
     await tester.pump();
@@ -263,44 +266,85 @@ void main() {
     final fields = find.byType(TextField);
     await tester.enterText(fields.at(0), 'Ana');
     await tester.enterText(fields.at(1), '(11) 99999-1234');
-    // O formulário ficou mais alto (campos de 60): rola até o botão.
-    await tester.ensureVisible(find.text('Salvar contato'));
-    await tester.pumpAndSettle();
+    await tester.pump();
     await tester.tap(find.text('Salvar contato'));
     await tester.pumpAndSettle();
     expect(repository.personal.single.name, 'Ana');
     expect(find.text('Ana'), findsOneWidget);
+    // Sem o lápis: tocar no cartão abre a edição (validação da usuária).
+    expect(find.byIcon(LucideIcons.pencil), findsNothing);
 
-    await tester.tap(find.byTooltip('Editar contato'));
+    await tester.tap(find.text('Ana'));
     await tester.pumpAndSettle();
     expect(find.text('Editar contato'), findsWidgets);
     expect(
       tester.widget<TextField>(find.byType(TextField).first).controller?.text,
       'Ana',
     );
-    Future<void> revealRemoveButton() => tester.scrollUntilVisible(
-      find.text('Remover contato'),
-      250,
-      scrollable: find
-          .descendant(
-            of: find.byType(ContactFormPage),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await revealRemoveButton();
-    await tester.tap(find.text('Remover contato'));
+    // O formulário não tem mais "Remover contato": a lixeira fica no cartão.
+    expect(find.text('Remover contato'), findsNothing);
+    router.pop();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Remover contato'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cancelar'));
     await tester.pumpAndSettle();
     expect(repository.personal, hasLength(1));
 
-    await revealRemoveButton();
-    await tester.tap(find.text('Remover contato'));
+    await tester.tap(find.byTooltip('Remover contato'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Remover').last);
     await tester.pumpAndSettle();
     expect(repository.personal, isEmpty);
+    expect(find.text('Ana'), findsNothing);
+  });
+
+  // A foto trocada ou removida no cadastro aparece no cartão ao voltar
+  // (validação da usuária, specs/023).
+  testWidgets('trocar e remover a foto atualiza o cartão', (tester) async {
+    repository.personal = [
+      const ContactEntity(
+        id: 'p1',
+        name: 'Ana',
+        phone: '11912345678',
+        type: ContactType.personal,
+        photoPath: '/fotos/antiga.jpg',
+      ),
+    ];
+    await open(tester);
+    await tester.tap(find.text('Meus contatos'));
+    await tester.pumpAndSettle();
+    String? cardPhoto() => tester
+        .widget<PersonAvatar>(
+          find.descendant(
+            of: find.byType(SafeCard),
+            matching: find.byType(PersonAvatar),
+          ),
+        )
+        .photoPath;
+    expect(cardPhoto(), '/fotos/antiga.jpg');
+
+    await tester.tap(find.text('Ana'));
+    await tester.pumpAndSettle();
+    images.nextResult = const PickedImage('/fotos/nova.jpg');
+    await tester.tap(find.byType(EditableAvatar));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Galeria'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Salvar contato'));
+    await tester.pumpAndSettle();
+    expect(cardPhoto(), '/fotos/nova.jpg');
+
+    await tester.tap(find.text('Ana'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(EditableAvatar));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remover foto'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Salvar contato'));
+    await tester.pumpAndSettle();
+    expect(cardPhoto(), isNull);
   });
 
   testWidgets('discador indisponível mostra número e copia', (tester) async {
@@ -398,27 +442,49 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Adicionar contato').last);
     await tester.pumpAndSettle();
-    // O formulário ficou mais alto (campos de 60): rola até o botão.
-    await tester.ensureVisible(find.text('Salvar contato'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Salvar contato'));
-    await tester.pumpAndSettle();
+    // Vazio: "Salvar contato" indisponível, como na edição de perfil, e
+    // fixo no fim da tela (validação da usuária, specs/023).
+    SafeButton save() => tester.widget<SafeButton>(
+      find.ancestor(
+        of: find.text('Salvar contato'),
+        matching: find.byType(SafeButton),
+      ),
+    );
+    expect(save().disabled, isTrue);
+    final double screenBottom = tester
+        .getBottomLeft(find.byType(ContactFormPage))
+        .dy;
+    expect(
+      tester.getBottomLeft(find.text('Salvar contato')).dy,
+      greaterThan(screenBottom - 120),
+    );
+
+    // Sai do nome vazio: o erro aparece na hora.
+    await tester.tap(find.byType(TextField).at(0));
+    await tester.tap(find.byType(TextField).at(1));
+    await tester.pump();
     expect(find.text('Informe o nome do contato.'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField).at(0), 'Ana');
     await tester.enterText(find.byType(TextField).at(1), '12');
-    // O formulário ficou mais alto (campos de 60): rola até o botão.
-    await tester.ensureVisible(find.text('Salvar contato'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Salvar contato'));
-    await tester.pumpAndSettle();
+    await tester.tap(find.byType(TextField).at(2));
+    await tester.pump();
+    expect(find.text('Informe o nome do contato.'), findsNothing);
     expect(
       find.text('Informe um telefone válido, como (11) 91234-5678 ou 190.'),
       findsOneWidget,
     );
+    expect(save().disabled, isTrue);
 
+    await tester.enterText(find.byType(TextField).at(1), '11912345678');
+    await tester.pump();
+    expect(save().disabled, isFalse);
+
+    // A foto é a mesma da edição de perfil: círculo com a câmera.
+    expect(find.text('Escolher foto'), findsNothing);
+    expect(find.byIcon(LucideIcons.camera), findsOneWidget);
     images.nextResult = const PickImagePermissionDenied();
-    await tester.tap(find.text('Escolher foto'));
+    await tester.tap(find.byType(EditableAvatar));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Galeria'));
     await tester.pumpAndSettle();

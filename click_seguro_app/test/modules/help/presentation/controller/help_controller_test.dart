@@ -1,4 +1,6 @@
 import 'package:click_seguro_app/modules/help/domain/entities/contact_entity.dart';
+import 'package:click_seguro_app/core/errors/cache_failure.dart';
+import 'package:click_seguro_app/modules/help/domain/usecases/delete_personal_contact_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/get_official_contacts_usecase.dart';
 import 'package:click_seguro_app/modules/help/domain/usecases/get_personal_contacts_usecase.dart';
 import 'package:click_seguro_app/modules/help/presentation/controller/help_controller.dart';
@@ -8,11 +10,58 @@ import '../../fakes/fake_help_repository.dart';
 import '../../../../fakes/fake_external_launcher_service.dart';
 
 void main() {
+  // Remover pelo cartão da lista, com a lixeira ao lado de ligar
+  // (validação da usuária, specs/023).
+  group('remover contato pessoal', () {
+    const ContactEntity ana = ContactEntity(
+      id: 'p1',
+      name: 'Ana',
+      phone: '11912345678',
+      type: ContactType.personal,
+    );
+
+    HelpController build(FakeHelpRepository repository) => HelpController(
+      getOfficialContacts: GetOfficialContactsUseCase(repository),
+      getPersonalContacts: GetPersonalContactsUseCase(repository),
+      deletePersonalContact: DeletePersonalContactUseCase(repository),
+      launcher: FakeExternalLauncherService(),
+    );
+
+    test('remove da lista e do repositório', () async {
+      final repository = FakeHelpRepository()..personal = [ana];
+      final controller = build(repository);
+      await controller.load();
+
+      final Future<Object?> deleting = controller.deleteContact('p1');
+      expect(controller.isDeleting('p1'), isTrue);
+      expect(await deleting, isNull);
+
+      expect(controller.isDeleting('p1'), isFalse);
+      expect(controller.personalContacts, isEmpty);
+      expect(repository.deletedId, 'p1');
+      controller.dispose();
+    });
+
+    test('falha: o contato fica e a falha volta', () async {
+      final repository = FakeHelpRepository()..personal = [ana];
+      final controller = build(repository);
+      await controller.load();
+      repository.writeFailure = const CacheFailure();
+
+      expect(await controller.deleteContact('p1'), isA<CacheFailure>());
+
+      expect(controller.personalContacts.single.id, 'p1');
+      expect(controller.isDeleting('p1'), isFalse);
+      controller.dispose();
+    });
+  });
+
   test('carrega as listas e expõe falha para repetir', () async {
     final repository = FakeHelpRepository()..official = [official];
     final controller = HelpController(
       getOfficialContacts: GetOfficialContactsUseCase(repository),
       getPersonalContacts: GetPersonalContactsUseCase(repository),
+      deletePersonalContact: DeletePersonalContactUseCase(repository),
       launcher: FakeExternalLauncherService(),
     );
 
@@ -27,6 +76,7 @@ void main() {
     final controller = HelpController(
       getOfficialContacts: GetOfficialContactsUseCase(FakeHelpRepository()),
       getPersonalContacts: GetPersonalContactsUseCase(FakeHelpRepository()),
+      deletePersonalContact: DeletePersonalContactUseCase(FakeHelpRepository()),
       launcher: FakeExternalLauncherService()..canCallResult = false,
     );
 
@@ -40,6 +90,7 @@ void main() {
     final controller = HelpController(
       getOfficialContacts: GetOfficialContactsUseCase(FakeHelpRepository()),
       getPersonalContacts: GetPersonalContactsUseCase(FakeHelpRepository()),
+      deletePersonalContact: DeletePersonalContactUseCase(FakeHelpRepository()),
       launcher: FakeExternalLauncherService()..openResult = false,
     );
 
@@ -58,6 +109,7 @@ void callNumberTests() {
     final controller = HelpController(
       getOfficialContacts: GetOfficialContactsUseCase(FakeHelpRepository()),
       getPersonalContacts: GetPersonalContactsUseCase(FakeHelpRepository()),
+      deletePersonalContact: DeletePersonalContactUseCase(FakeHelpRepository()),
       launcher: launcher,
     );
 
@@ -71,6 +123,7 @@ void callNumberTests() {
     final controller = HelpController(
       getOfficialContacts: GetOfficialContactsUseCase(FakeHelpRepository()),
       getPersonalContacts: GetPersonalContactsUseCase(FakeHelpRepository()),
+      deletePersonalContact: DeletePersonalContactUseCase(FakeHelpRepository()),
       launcher: launcher,
     );
 

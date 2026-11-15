@@ -11,11 +11,10 @@ import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/help/domain/validation/contact_validation.dart';
 import 'package:click_seguro_app/modules/help/presentation/controller/contact_form_controller.dart';
-import 'package:click_seguro_app/core/widgets/person_avatar.dart';
+import 'package:click_seguro_app/core/widgets/editable_avatar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -113,7 +112,29 @@ class _ContactFormContentState extends State<_ContactFormContent> {
               );
             }
             if (controller.isLoading) return const SafeLoadingState();
-            return _form(context, controller);
+            // O botão principal fica no fim da tela; o formulário rola acima
+            // dele (validação da usuária, specs/023).
+            return Column(
+              children: [
+                Expanded(child: _form(context, controller)),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s5,
+                    AppSpacing.s3,
+                    AppSpacing.s5,
+                    AppSpacing.s5,
+                  ),
+                  child: SafeButton(
+                    label: AppStrings.helpSaveContact.tr(),
+                    loading: controller.isSaving,
+                    // Só com nome e telefone válidos, como na edição de
+                    // perfil.
+                    disabled: !controller.canSave,
+                    onPressed: _save,
+                  ),
+                ),
+              ],
+            );
           },
         ),
       ),
@@ -124,27 +145,15 @@ class _ContactFormContentState extends State<_ContactFormContent> {
       ListView(
         padding: const EdgeInsets.all(AppSpacing.s5),
         children: [
+          // A mesma foto da edição de perfil: círculo com o selo da câmera.
           Center(
-            child: Semantics(
-              button: true,
-              label: AppStrings.helpPhoto.tr(),
-              child: InkWell(
-                onTap: _showPhotoOptions,
-                customBorder: const CircleBorder(),
-                child: PersonAvatar(
-                  name: controller.name,
-                  size: 104,
-                  photoPath: controller.photoPath,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s3),
-          Center(
-            child: TextButton.icon(
-              onPressed: _showPhotoOptions,
-              icon: const Icon(LucideIcons.camera),
-              label: Text(AppStrings.helpChoosePhoto.tr()),
+            child: EditableAvatar(
+              name: controller.name,
+              photoPath: controller.photoPath,
+              size: 104,
+              busy: controller.isPhotoLoading,
+              semanticLabel: AppStrings.helpPhoto.tr(),
+              onTap: _showPhotoOptions,
             ),
           ),
           const SizedBox(height: AppSpacing.s4),
@@ -197,60 +206,11 @@ class _ContactFormContentState extends State<_ContactFormContent> {
               style: TextStyle(color: context.colors.destructive),
             ),
           ],
-          if (controller.deleteFailure case final deleteFailure?) ...[
-            const SizedBox(height: AppSpacing.s3),
-            Text(
-              deleteFailure.message.tr(),
-              style: TextStyle(color: context.colors.destructive),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.s6),
-          SafeButton(
-            label: AppStrings.helpSaveContact.tr(),
-            loading: controller.isSaving,
-            disabled: controller.isSaving || controller.isPhotoLoading,
-            onPressed: _save,
-          ),
-          if (widget.contactId != null) ...[
-            const SizedBox(height: AppSpacing.s3),
-            SafeButton(
-              label: AppStrings.helpDeleteContact.tr(),
-              tone: SafeButtonTone.ghost,
-              loading: controller.isDeleting,
-              disabled: controller.isDeleting,
-              onPressed: _confirmDelete,
-            ),
-          ],
         ],
       );
 
   Future<void> _save() async {
     if (await _controller.save() && mounted) context.pop(true);
-  }
-
-  Future<void> _confirmDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(AppStrings.helpDeleteContact.tr()),
-        content: SingleChildScrollView(
-          child: Text(AppStrings.helpDeleteConfirm.tr()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(AppStrings.helpCancel.tr()),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(AppStrings.helpConfirm.tr()),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true && await _controller.delete() && mounted) {
-      context.pop(true);
-    }
   }
 
   Future<void> _showPhotoOptions() async {
