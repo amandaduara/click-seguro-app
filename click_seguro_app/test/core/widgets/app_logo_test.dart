@@ -1,30 +1,48 @@
 import 'package:click_seguro_app/core/constants/app_identity.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/app_logo.dart';
+import 'package:click_seguro_app/core/widgets/brand_mark.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+BrandMarkPainter _painter(WidgetTester tester) =>
+    tester
+            .widget<CustomPaint>(
+              find.descendant(
+                of: find.byType(AppLogo),
+                matching: find.byType(CustomPaint),
+              ),
+            )
+            .painter!
+        as BrandMarkPainter;
+
 void main() {
-  testWidgets('carrega a arte oficial preservando proporção', (tester) async {
+  testWidgets('desenha a marca em primary, no tamanho pedido', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: Center(child: AppLogo(size: 96))),
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: const Center(child: AppLogo(size: 96)),
+      ),
     );
-    // Asset loading and PNG decoding complete outside the fake test clock.
-    for (
-      var i = 0;
-      i < 30 && tester.widget<RawImage>(find.byType(RawImage)).image == null;
-      i++
-    ) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 20)),
-      );
-      await tester.pump();
-    }
-    expect(tester.widget<RawImage>(find.byType(RawImage)).image, isNotNull);
-    final image = tester.widget<Image>(find.byType(Image));
-    expect((image.image as AssetImage).assetName, AppLogo.asset);
-    expect(image.fit, BoxFit.contain);
+
     expect(tester.getSize(find.byType(AppLogo)), const Size(96, 96));
+    expect(_painter(tester).color, AppPalette.light.primary);
+    expect(find.byType(Image), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('no alto contraste usa o primary do alto contraste', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.highContrastTheme,
+        home: const Center(child: AppLogo(size: 96)),
+      ),
+    );
+
+    expect(_painter(tester).color, AppPalette.highContrast.primary);
   });
 
   testWidgets('logo decorativa não duplica o nome para leitor de tela', (

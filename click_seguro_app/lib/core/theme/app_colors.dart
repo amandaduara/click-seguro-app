@@ -11,6 +11,9 @@ abstract class AppColors {
   static const Color primaryPressed = Color(0xFFC2112F);
   static const Color primarySoft = Color(0xFFFFE8EB);
 
+  /// Coral mais claro, para a onda de trás da splash.
+  static const Color primaryGlow = Color(0xFFF0566C);
+
   // Texto
   static const Color secondary = Color(0xFF1B2440);
   static const Color textForeground = Color(0xFF1B2440);

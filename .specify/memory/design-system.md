@@ -58,6 +58,7 @@ Nos widgets, leia a cor do tema em uso com `context.colors.<token>` (`AppPalette
 | `primary` | `#E31C3D` | Botão principal, aba ativa da barra inferior, chave ligada, links de ação, cartão de emergência, logo |
 | `primaryPressed` | `#C2112F` | Botão principal pressionado; texto coral sobre `primarySoft` |
 | `primarySoft` | `#FFE8EB` | Fundo de selo de alerta/erro e de seleção leve |
+| `primaryGlow` | `#F0566C` | Onda de trás da splash animada (alto contraste: `#9E0019`) |
 | `secondary` | `#1B2440` | Tinta: chip selecionado, faixa sem internet, aviso curto (toast) |
 | `textForeground` | `#1B2440` | Títulos, rótulos, ícones e texto de destaque |
 | `textBody` | `#3D4457` | Texto corrido (parágrafos) |
@@ -85,7 +86,8 @@ de texto e fundo são conferidos no `app_palette_test.dart` (AA no normal, AAA n
 
 ### 2.3 Gradientes
 
-O gradiente coral (`primaryGlow`, botão "gradient") **saiu** no 2.0. Ficam só os gradientes
+O gradiente coral (botão "gradient") **saiu** no 2.0; o `primaryGlow` ficou só como a cor da onda
+de trás da splash animada (§6.3, §7.13). Ficam só os gradientes
 escuros de legibilidade sobre imagem: no cartão do carrossel de Reels e na tela de Reels.
 
 ### 2.4 Tema escuro e alto contraste
@@ -207,7 +209,7 @@ componente ganha borda. Não existem mais `shadow-sm`, `shadow-md` nem `shadow-p
 
 | Onde | Ícone |
 |---|---|
-| Marca (splash, login, Sobre) | logo oficial (`AppLogo`, arte de `assets/branding/click_seguro_logo.svg`), sempre decorativa ao lado do nome |
+| Marca (splash, login, Sobre) | logo oficial desenhado em código (`BrandMark`/`AppLogo`, paths de `assets/branding/click_seguro_logo.svg`) na cor `primary` do tema, sempre decorativo ao lado do nome |
 | Barra inferior | `house` (Início), `graduationCap` (Atividades), `newspaper` (Notícias/Reels), `lifeBuoy` (Ajuda), `user` (Perfil) |
 | Barra superior | `bell` (Alertas), `messageCircle` (Assistente) |
 | Perfil | `settings` (Configurações; só aqui) |
@@ -292,7 +294,7 @@ tela sem transição.
 | Conclusão | confete e contagem do placar (1200 ms, uma vez) |
 | "Ouvir" | halo pulsa 3 vezes (2 s cada) e fica como anel parado enquanto lê |
 | Curtir | pulso no coração (1 → 1,3 → 1) e vibração leve; dois toques na imagem do Reel curtem |
-| Splash | logo e título esmaecem e crescem de 0,9 a 1 |
+| Abertura do app (splash) | "Mancha e onda" em 1,8 s (feature 023): toque `primary` → mancha ondulada cobre a tela → escudo se desenha em `background` e o idoso entra → o vermelho escorre em onda (com uma onda `primaryGlow` 60 ms atrás) → logo `primary`, nome e frase; só toca na abertura a frio. Navega quando a animação **e** a validação terminam; se a validação demorar, a marca respira (1 → 1,035, 2,6 s). Com "Reduzir animações": estado final direto, sem respirar. Exceção ao teto de 400 ms: é animação de assinatura, com tempos próprios em `SplashTimeline`, e a saída continua um esmaecimento |
 | Foco em campo | borda de `inputBorder` para tinta (2,5) |
 
 Vibrações passam por `AppHaptics` (`core/utils`): no máximo uma por ação. Na web, respeitar
@@ -425,12 +427,13 @@ nesta ordem: Início (`house`), Atividades (`graduationCap`), Notícias/Reels (`
 
 ### 7.13 Splash
 
-Fundo `surface` (creme); centralizados: a logo oficial (96) num círculo branco de 168 com a
-sombra única, o nome "Click Seguro" (`display` em 32, tinta) e a frase "Sua segurança em primeiro
-lugar" (`bodyLarge`, `textBody`). Entrada: esmaece e cresce de 0,9 a 1.
-
-> A splash animada da feature 023 (branch `023-splash-animada`, ainda não incorporada a esta
-> branch) atualiza esta seção, o §5.1 e o §6.3 quando entrar.
+Fundo `background`, sem círculo atrás do logo. A animação "Mancha e onda" (§6.3, feature
+023) termina com: logo oficial em `primary` (164 px, 96–164 conforme a altura da tela), nome
+"Click Seguro" em `display` (`textForeground`), frase "Sua segurança em primeiro lugar" em
+`bodyLarge` (`textBody`) e uma onda `primaryGlow`/`primary` no rodapé. Dura 1,8 s e só sai
+quando a validação da sessão também terminou (sem mínimo fixo). A abertura nativa (Android e
+iOS) mostra só o fundo `background` (`#FFFFFF`), para emendar sem piscar; os ícones do app e
+o SVG da marca usam o `primary` da 2.0 (`#E31C3D`).
 
 ### 7.14 Onboarding
 
@@ -550,7 +553,7 @@ Pílula com borda e ícone coral ("Ouvir"/"Parar"); com `round`, o círculo cora
 
 ### 10.2 O que saiu da 1.x
 
-Paleta `#FE3152`/`#182A4E` e fundo `#FFFDFB`; `primaryGlow`, botão `gradient` e tamanho `pill`;
+Paleta `#FE3152`/`#182A4E` e fundo `#FFFDFB`; botão `gradient` e tamanho `pill`;
 `shadow-sm`/`shadow-md`/`shadow-primary`; Montserrat (nunca empacotada); escala 30/24/18/16/14/12;
 botão central elevado da barra inferior; indicador circular girando nos carregamentos;
 `SafeStateIllustration` pintado à mão (feature 021); `SlowRequestNotice`; botões de navegação e

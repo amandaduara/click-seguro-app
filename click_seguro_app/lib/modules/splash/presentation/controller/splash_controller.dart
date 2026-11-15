@@ -7,15 +7,11 @@ import 'package:flutter/foundation.dart';
 class SplashController extends ChangeNotifier {
   SplashController(
     this._checkOnboardingSeenUseCase,
-    this._validateStoredSessionUseCase, {
-    Duration minimumDisplayDuration = defaultMinimumDisplayDuration,
-  }) : _minimumDisplayDuration = minimumDisplayDuration;
-
-  static const Duration defaultMinimumDisplayDuration = Duration(seconds: 2);
+    this._validateStoredSessionUseCase,
+  );
 
   final CheckOnboardingSeenUseCase _checkOnboardingSeenUseCase;
   final ValidateStoredSessionUseCase _validateStoredSessionUseCase;
-  final Duration _minimumDisplayDuration;
 
   Future<void>? _resolving;
 
@@ -27,11 +23,11 @@ class SplashController extends ChangeNotifier {
   Future<void> resolveDestination() => _resolving ??= _resolve();
 
   Future<void> _resolve() async {
-    // Os três começam juntos: o splash dura max(mínimo, conferência).
-    final delay = Future<void>.delayed(_minimumDisplayDuration);
+    // As duas conferências começam juntas; quanto a splash dura (animação e
+    // espera) é decidido pela página, que conhece a animação.
     final checkResult = _checkOnboardingSeenUseCase();
     final sessionStatus = _validateStoredSessionUseCase();
-    await Future.wait<void>([delay, checkResult, sessionStatus]);
+    await Future.wait<void>([checkResult, sessionStatus]);
 
     // Falha na leitura é tratada como "não visto" (fallback seguro), em vez
     // de travar a splash.

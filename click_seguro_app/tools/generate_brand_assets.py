@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Render the official SVG into app, launcher and splash assets.
+"""Render the official SVG into the launcher icons (Android, iOS and web).
 
 Requires Python 3, Pillow, libcairo and librsvg (no network access).
 Run from any directory: python3 tools/generate_brand_assets.py
-The original SVG remains the source of truth; its paths and colors are unchanged.
+The original SVG remains the source of truth: its paths are the official ones and
+its color is the design system primary (#E31C3D, palette 2.0 of specs/024).
+The native launch screens (Android and iOS) carry no logo, only the background,
+so no launch images are generated (specs/023-splash-animada).
 """
 
 import ctypes as c
@@ -15,7 +18,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "assets/branding/click_seguro_logo.svg"
-BACKGROUND = "#FFFDFB"
+BACKGROUND = "#FFFFFF"
 
 
 class Rectangle(c.Structure):
@@ -74,7 +77,6 @@ def main():
         png = Path(temporary) / "logo.png"
         render_source(png)
         source = Image.open(png).convert("RGBA")
-        source.save(ROOT / "assets/branding/click_seguro_logo.png")
 
         res = ROOT / "android/app/src/main/res"
         for density, factor in {"mdpi": 1, "hdpi": 1.5, "xhdpi": 2,
@@ -82,23 +84,17 @@ def main():
             write_icon(source, res / f"mipmap-{density}/ic_launcher.png", round(48 * factor))
             write_icon(source, res / f"mipmap-{density}/ic_launcher_foreground.png",
                        round(108 * factor), scale=0.60, opaque=False)
-            write_icon(source, res / f"drawable-{density}/launch_logo.png",
-                       round(144 * factor), scale=1, opaque=False)
 
         icons = ROOT / "ios/Runner/Assets.xcassets/AppIcon.appiconset"
         for item in json.loads((icons / "Contents.json").read_text())["images"]:
             size = round(float(item["size"].split("x")[0]) * float(item["scale"][:-1]))
             write_icon(source, icons / item["filename"], size)
-        launch = ROOT / "ios/Runner/Assets.xcassets/LaunchImage.imageset"
-        for factor, suffix in [(1, ""), (2, "@2x"), (3, "@3x")]:
-            write_icon(source, launch / f"LaunchImage{suffix}.png",
-                       144 * factor, scale=1, opaque=False)
 
         for size in (192, 512):
             for name in (f"Icon-{size}.png", f"Icon-maskable-{size}.png"):
                 write_icon(source, ROOT / "web/icons" / name, size, scale=0.60)
         write_icon(source, ROOT / "web/favicon.png", 64, scale=0.88)
-    print("Official logo, launcher icons and launch images generated.")
+    print("Launcher icons generated from the official logo.")
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.primary,
     required this.primaryPressed,
     required this.primarySoft,
+    required this.primaryGlow,
     required this.secondary,
     required this.background,
     required this.card,
@@ -43,6 +44,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     primary: AppColors.primary,
     primaryPressed: AppColors.primaryPressed,
     primarySoft: AppColors.primarySoft,
+    primaryGlow: AppColors.primaryGlow,
     secondary: AppColors.secondary,
     background: AppColors.background,
     card: AppColors.card,
@@ -77,6 +79,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     primary: Color(0xFF9E0019),
     primaryPressed: Color(0xFF7A0013),
     primarySoft: _white,
+    primaryGlow: Color(0xFF9E0019),
     secondary: Color(0xFF0B1A3A),
     background: _white,
     card: _white,
@@ -113,6 +116,9 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
   /// Fundo da aba atual, dos selos de alerta e da seleção.
   final Color primarySoft;
+
+  /// Coral mais claro da onda de trás da splash (specs/023-splash-animada).
+  final Color primaryGlow;
   final Color secondary;
   final Color background;
   final Color card;
@@ -153,6 +159,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     primary,
     primaryPressed,
     primarySoft,
+    primaryGlow,
     secondary,
     background,
     card,
@@ -184,6 +191,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? primary,
     Color? primaryPressed,
     Color? primarySoft,
+    Color? primaryGlow,
     Color? secondary,
     Color? background,
     Color? card,
@@ -213,6 +221,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     primary: primary ?? this.primary,
     primaryPressed: primaryPressed ?? this.primaryPressed,
     primarySoft: primarySoft ?? this.primarySoft,
+    primaryGlow: primaryGlow ?? this.primaryGlow,
     secondary: secondary ?? this.secondary,
     background: background ?? this.background,
     card: card ?? this.card,
@@ -248,6 +257,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       primary: c(primary, other.primary),
       primaryPressed: c(primaryPressed, other.primaryPressed),
       primarySoft: c(primarySoft, other.primarySoft),
+      primaryGlow: c(primaryGlow, other.primaryGlow),
       secondary: c(secondary, other.secondary),
       background: c(background, other.background),
       card: c(card, other.card),

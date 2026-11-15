@@ -41,7 +41,6 @@ flutter:
   assets:
     - assets/translations/
     - assets/data/official_contacts.json
-    - assets/branding/click_seguro_logo.png
     - assets/illustrations/
 
   # Inter (SIL OFL 1.1, assets/fonts/OFL.txt), empacotada para funcionar

@@ -18,12 +18,8 @@ void main() {
     validateSession = FakeValidateStoredSessionUseCase();
   });
 
-  SplashController build({Duration minimum = Duration.zero}) =>
-      SplashController(
-        checkOnboarding,
-        validateSession,
-        minimumDisplayDuration: minimum,
-      );
+  SplashController build() =>
+      SplashController(checkOnboarding, validateSession);
 
   Future<SplashDestination?> resolve() async {
     final controller = build();
@@ -92,28 +88,43 @@ void main() {
     });
   });
 
-  // Relógio falso do testWidgets: tester.pump(Duration) avança o
-  // Future.delayed do controller sem esperar tempo real.
+  // Relógio falso do testWidgets: sem Future.delayed no controller, nenhum
+  // tempo precisa passar para ele decidir.
   group('paralelismo', () {
-    const minimum = Duration(seconds: 2);
+    testWidgets('decide assim que onboarding e sessão respondem, sem espera '
+        'fixa', (tester) async {
+      final controller = build();
 
-    testWidgets('validação rápida espera o tempo mínimo', (tester) async {
-      final controller = build(minimum: minimum);
+      await controller.resolveDestination();
 
-      unawaited(controller.resolveDestination());
-      await tester.pump(const Duration(milliseconds: 1999));
-      expect(controller.destination, isNull);
-
-      await tester.pump(const Duration(milliseconds: 1));
       expect(controller.destination, SplashDestination.home);
     });
 
-    testWidgets('mínimo vencido espera a validação', (tester) async {
+    testWidgets('a conferência do onboarding e a da sessão começam juntas', (
+      tester,
+    ) async {
       validateSession.completer = Completer<UserSessionStatus>();
-      final controller = build(minimum: minimum);
+      final controller = build();
 
       unawaited(controller.resolveDestination());
-      await tester.pump(minimum);
+      await tester.pump();
+
+      expect(validateSession.calls, 1);
+      expect(checkOnboarding.calls, 1);
+      expect(controller.destination, isNull);
+
+      validateSession.completer!.complete(UserSessionStatus.authenticated);
+      await tester.pump();
+    });
+
+    testWidgets('espera a validação da sessão enquanto ela não responde', (
+      tester,
+    ) async {
+      validateSession.completer = Completer<UserSessionStatus>();
+      final controller = build();
+
+      unawaited(controller.resolveDestination());
+      await tester.pump(const Duration(seconds: 10));
       expect(controller.destination, isNull);
 
       validateSession.completer!.complete(UserSessionStatus.unauthenticated);
@@ -121,24 +132,13 @@ void main() {
       expect(controller.destination, SplashDestination.login);
     });
 
-    testWidgets('a validação começa junto com o tempo mínimo', (tester) async {
-      final controller = build(minimum: minimum);
-
-      unawaited(controller.resolveDestination());
-      expect(validateSession.calls, 1);
-      expect(checkOnboarding.calls, 1);
-
-      await tester.pump(minimum);
-    });
-
     testWidgets('visto + conta recusada na conferência → login', (
       tester,
     ) async {
       validateSession.status = UserSessionStatus.unauthenticated;
-      final controller = build(minimum: minimum);
+      final controller = build();
 
-      unawaited(controller.resolveDestination());
-      await tester.pump(minimum);
+      await controller.resolveDestination();
 
       expect(controller.destination, SplashDestination.login);
     });
