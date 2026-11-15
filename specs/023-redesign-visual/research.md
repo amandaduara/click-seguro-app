@@ -403,3 +403,45 @@ Pedidos depois de ver a primeira versão no aparelho:
    O formulário tem máscara de telefone (`PhoneInputFormatter(shortCodes: true)`, movido do Perfil
    para `core/utils/phone_format.dart`: aceita 190 e 0800) e validação em tempo real depois que a
    pessoa sai do campo ou tenta salvar.
+
+## R19. Quinta rodada (2026-11-14)
+
+1. **Carregando sem ilustração**: a ilustração da capa (`NewsCover`) é folha do esqueleto
+   (`SafeSkeleton.leaf`): carregando, vira um bloco cinza, como o corpo do cartão.
+2. **Alertas nas Configurações**: switch na cor da marca (`primary`). Na falha, um ícone vermelho
+   de reiniciar ocupa o lugar do switch e refaz a ação que falhou (reenvia o valor desejado ou
+   recarrega a conta); a mensagem vira subtítulo da linha, sem SnackBar.
+3. **Troca de senha**: validação enquanto digita (só nos campos já alterados) e botão desativado
+   até o formulário ficar válido.
+4. **Botão principal no fim da tela**: edição de perfil, troca de senha e formulário de contato.
+5. **Foto do perfil**: não dá para sair da edição durante o envio (aviso curto). O Perfil recarrega
+   ao voltar das Configurações (`pushAndRefresh`), e a URL mostrada ganha `?v=<momento>` depois de
+   uma troca, para o cache não mostrar a foto antiga se o servidor repetir o endereço.
+6. **Listas lidas/salvas/curtidas**: o controller ouve as interações confirmadas
+   (`WatchNewsInteractionsUseCase`) e tira o item desmarcado sem novo pedido; antes, voltar com o
+   pedido ainda em andamento recarregava a lista com o item.
+7. **Estado vazio único**: `SafeStateLayout` com texto de 16 em seminegrito, dica opcional e
+   ilustração de até 180. Usado nas duas abas dos contatos e nas listas do perfil (antes com um
+   vazio próprio).
+8. **Foto do contato**: `EditableAvatar` (core), o mesmo visual da edição de perfil.
+9. **Contatos**: "Adicionar contato" no canto de baixo à direita. Tocar no cartão edita; a lixeira
+   ao lado de ligar remove (com confirmação, pelo `HelpController`); o formulário não tem mais
+   "Remover contato".
+10. **Salvar contato**: disponível só com nome e telefone válidos (`canSave`).
+
+## R20. Sexta rodada (2026-11-14)
+
+1. **Atividades carregando**: a capa do cartão de módulo também é folha do esqueleto (só cinza).
+2. **Alertas (Configurações)**: carregamento no lugar da chave enquanto salva, tenta de novo ou
+   a conta carrega. "Receber alertas" controla os alertas do próprio app (sino e tela de
+   Notificações); a v1 não tem push.
+3. **Validação em tempo real na edição de perfil**: erros a cada letra nos campos alterados
+   (padrão da troca de senha); `canSave` exige mudanças, nada salvando e nenhum erro visível.
+4. **Recuperar senha**: botão principal de cada passo fixo no fim da tela.
+5. **Foto do perfil**: com o avatar carregando, a edição envia, busca o perfil e pré-carrega a
+   imagem nova no tamanho do Perfil; o repositório guarda o último perfil e o Perfil o mostra na
+   volta, já com a foto em cache.
+6. **Detalhe**: não dá para sair com curtir ou salvar em andamento (aviso curto). As listas do
+   perfil mostram os cartões sem os sinais de lida/salva (`NewsCard.showSignals`).
+7. **Telefone do contato**: válido só se completo (3 dígitos, 0800 com 11, fixo/celular com 10
+   ou 11, ou + com 8 a 15); o erro aparece enquanto digita.

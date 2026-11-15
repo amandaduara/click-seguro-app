@@ -192,6 +192,7 @@ abstract class AppStrings {
   static const String newsDetailReadingTime = 'news_detail_reading_time';
   static const String newsDetailSaveLoading = 'news_detail_save_loading';
   static const String newsDetailLikeLoading = 'news_detail_like_loading';
+  static const String newsDetailWaitPending = 'news_detail_wait_pending';
   static const String newsSavedTitle = 'news_saved_title';
   static const String newsSavedEmpty = 'news_saved_empty';
   static const String newsSavedEmptyHint = 'news_saved_empty_hint';
@@ -306,7 +307,6 @@ abstract class AppStrings {
   static const String helpPhone = 'help_phone';
   static const String helpRelationship = 'help_relationship';
   static const String helpPhoto = 'help_photo';
-  static const String helpChoosePhoto = 'help_choose_photo';
   static const String helpSaveContact = 'help_save_contact';
   static const String helpDeleteContact = 'help_delete_contact';
   static const String helpDeleteConfirm = 'help_delete_confirm';
@@ -396,6 +396,7 @@ abstract class AppStrings {
       'profile_photo_remove_confirm';
   static const String profilePhotoRemoveCancel = 'profile_photo_remove_cancel';
   static const String profilePhotoUploading = 'profile_photo_uploading';
+  static const String profilePhotoWaitUpload = 'profile_photo_wait_upload';
   static const String profilePhotoFailed = 'profile_photo_failed';
   static const String profilePhotoInvalid = 'profile_photo_invalid';
 
@@ -415,6 +416,7 @@ abstract class AppStrings {
   static const String settingsAlerts = 'settings_alerts';
   static const String settingsAlertsSub = 'settings_alerts_sub';
   static const String settingsAlertsFailed = 'settings_alerts_failed';
+  static const String settingsAlertsRetry = 'settings_alerts_retry';
   static const String settingsAccountLoadFailed =
       'settings_account_load_failed';
   static const String settingsAccessibility = 'settings_accessibility';

@@ -12,11 +12,15 @@ class SafeEmptyState extends StatelessWidget {
   const SafeEmptyState({
     super.key,
     this.message,
+    this.hint,
     this.actionLabel,
     this.onAction,
   });
 
   final String? message;
+
+  /// Dica abaixo da mensagem, mais clara.
+  final String? hint;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -27,6 +31,7 @@ class SafeEmptyState extends StatelessWidget {
     return SafeStateLayout(
       illustration: AppIllustration.stateEmpty,
       message: message ?? AppStrings.commonEmpty.tr(),
+      hint: hint,
       actions: [
         if (label != null && action != null)
           SafeButton(

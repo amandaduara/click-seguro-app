@@ -13,11 +13,15 @@ class SafeStateLayout extends StatelessWidget {
     super.key,
     required this.illustration,
     required this.message,
+    this.hint,
     this.actions = const [],
   });
 
   final AppIllustration illustration;
   final String message;
+
+  /// Texto de apoio abaixo da mensagem, mais claro.
+  final String? hint;
   final List<Widget> actions;
 
   @override
@@ -25,8 +29,8 @@ class SafeStateLayout extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final double art = constraints.hasBoundedHeight
-            ? (constraints.maxHeight * .32).clamp(96, 200).toDouble()
-            : 200;
+            ? (constraints.maxHeight * .32).clamp(96, 180).toDouble()
+            : 180;
         return Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(
@@ -39,14 +43,29 @@ class SafeStateLayout extends StatelessWidget {
               children: [
                 SafeIllustration(illustration, height: art),
                 const SizedBox(height: AppSpacing.s5),
+                // Mesmo tamanho em todo estado vazio ou de erro do app
+                // (validação da usuária, specs/023): o texto da tela, em
+                // seminegrito, e a dica mais clara embaixo.
                 Text(
                   message,
                   textAlign: TextAlign.center,
-                  style: AppTypography.title2.copyWith(
+                  style: AppTypography.body.copyWith(
+                    fontWeight: FontWeight.w600,
                     color: context.colors.textForeground,
-                    height: 1.3,
+                    height: 1.4,
                   ),
                 ),
+                if (hint case final String text) ...[
+                  const SizedBox(height: AppSpacing.s2),
+                  Text(
+                    text,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.body.copyWith(
+                      color: context.colors.textMutedForeground,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
                 if (actions.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.s6),
                   ...actions,

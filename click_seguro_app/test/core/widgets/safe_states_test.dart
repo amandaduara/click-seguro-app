@@ -108,6 +108,20 @@ void main() {
       expect(find.byType(GestureDetector), findsNothing);
     });
 
+    // O mesmo tamanho das listas do perfil (validação da usuária,
+    // specs/023): 16 em seminegrito e a dica mais clara embaixo.
+    testWidgets('mensagem em 16 seminegrito e dica opcional', (tester) async {
+      await pump(
+        tester,
+        const SafeEmptyState(message: 'Sem contatos.', hint: 'Cadastre um.'),
+      );
+
+      final Text message = tester.widget<Text>(find.text('Sem contatos.'));
+      expect(message.style?.fontSize, 16);
+      expect(message.style?.fontWeight, FontWeight.w600);
+      expect(find.text('Cadastre um.'), findsOneWidget);
+    });
+
     testWidgets('mensagem e ação da tela', (tester) async {
       var actions = 0;
       await pump(
