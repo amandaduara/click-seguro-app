@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="launcher_background">#FFFFFF</color>
+    <!-- Fundo do ícone adaptativo: o vermelho da marca, com o logo branco. -->
+    <color name="ic_launcher_background">#E31C3D</color>
 </resources>

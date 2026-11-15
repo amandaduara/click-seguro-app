@@ -5,6 +5,9 @@ Requires Python 3, Pillow, libcairo and librsvg (no network access).
 Run from any directory: python3 tools/generate_brand_assets.py
 The original SVG remains the source of truth: its paths are the official ones and
 its color is the design system primary (#E31C3D, palette 2.0 of specs/024).
+The launcher icons show the logo in white over the primary color, centered with
+room around it (half of the icon height; 40% of the adaptive foreground layer,
+45% of the web maskable icons).
 The native launch screens (Android and iOS) carry no logo, only the background,
 so no launch images are generated (specs/023-splash-animada).
 """
@@ -18,7 +21,9 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "assets/branding/click_seguro_logo.svg"
-BACKGROUND = "#FFFFFF"
+PRIMARY = "#E31C3D"
+BACKGROUND = PRIMARY
+MARK = "#FFFFFF"
 
 
 class Rectangle(c.Structure):
@@ -44,7 +49,8 @@ def render_source(output):
     ]
     rsvg.rsvg_handle_render_document.restype = c.c_int
     gobject.g_object_unref.argtypes = [c.c_void_p]
-    data = SOURCE.read_bytes()
+    # The icon draws the logo in white over the primary background.
+    data = SOURCE.read_text().replace(PRIMARY, MARK).encode()
     handle = rsvg.rsvg_handle_new_from_data(data, len(data), None)
     if not handle:
         raise RuntimeError("Invalid official SVG")
@@ -63,7 +69,7 @@ def render_source(output):
         gobject.g_object_unref(handle)
 
 
-def write_icon(source, path, size, scale=0.72, opaque=True):
+def write_icon(source, path, size, scale=0.50, opaque=True):
     canvas = Image.new("RGBA", (size, size), BACKGROUND if opaque else (0, 0, 0, 0))
     mark_size = round(size * scale)
     mark = source.resize((mark_size, mark_size), Image.Resampling.LANCZOS)
@@ -83,7 +89,7 @@ def main():
                                 "xxhdpi": 3, "xxxhdpi": 4}.items():
             write_icon(source, res / f"mipmap-{density}/ic_launcher.png", round(48 * factor))
             write_icon(source, res / f"mipmap-{density}/ic_launcher_foreground.png",
-                       round(108 * factor), scale=0.60, opaque=False)
+                       round(108 * factor), scale=0.40, opaque=False)
 
         icons = ROOT / "ios/Runner/Assets.xcassets/AppIcon.appiconset"
         for item in json.loads((icons / "Contents.json").read_text())["images"]:
@@ -91,9 +97,10 @@ def main():
             write_icon(source, icons / item["filename"], size)
 
         for size in (192, 512):
-            for name in (f"Icon-{size}.png", f"Icon-maskable-{size}.png"):
-                write_icon(source, ROOT / "web/icons" / name, size, scale=0.60)
-        write_icon(source, ROOT / "web/favicon.png", 64, scale=0.88)
+            write_icon(source, ROOT / "web/icons" / f"Icon-{size}.png", size)
+            write_icon(source, ROOT / "web/icons" / f"Icon-maskable-{size}.png",
+                       size, scale=0.45)
+        write_icon(source, ROOT / "web/favicon.png", 64)
     print("Launcher icons generated from the official logo.")
 
 

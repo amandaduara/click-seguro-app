@@ -57,6 +57,22 @@ void main() {
     });
   }
 
+  // Ícone do app: logo branco sobre o vermelho da marca. O fundo do ícone
+  // adaptativo tem cor própria; a abertura nativa continua no fundo do app.
+  test('o ícone adaptativo do Android tem o fundo primary', () {
+    const String res = 'android/app/src/main/res';
+    final String adaptive = File(
+      '$res/mipmap-anydpi-v26/ic_launcher.xml',
+    ).readAsStringSync();
+    final String colors = File('$res/values/colors.xml').readAsStringSync();
+
+    expect(adaptive, contains('@color/ic_launcher_background'));
+    expect(
+      colors,
+      contains('<color name="ic_launcher_background">$primary</color>'),
+    );
+  });
+
   test('o fundo da abertura nativa do iOS é o fundo do app', () {
     final String storyboard = File(
       'ios/Runner/Base.lproj/LaunchScreen.storyboard',
