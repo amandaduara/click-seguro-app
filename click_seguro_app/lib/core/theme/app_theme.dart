@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import 'app_page_transitions.dart';
 import 'app_palette.dart';
 import 'app_spacing.dart';
+import 'app_typography.dart';
 
 abstract class AppTheme {
   AppTheme._();
@@ -13,10 +16,14 @@ abstract class AppTheme {
   static ThemeData get highContrastTheme => _build(AppPalette.highContrast);
 
   static ThemeData _build(AppPalette palette) {
+    final OutlineInputBorder idle = OutlineInputBorder(
+      borderRadius: AppSpacing.radiusMd,
+      borderSide: BorderSide(color: palette.inputBorder, width: 1.5),
+    );
     return ThemeData(
       useMaterial3: true,
       extensions: [palette],
-      fontFamily: 'Montserrat',
+      fontFamily: AppTypography.fontFamily,
       scaffoldBackgroundColor: palette.background,
 
       // Telas empilhadas: volta preditiva no Android, deslize no iOS; corte
@@ -43,83 +50,100 @@ abstract class AppTheme {
           ),
         },
       ),
-
-      // Customização das Cores ---
       colorScheme: ColorScheme.light(
         primary: palette.primary,
+        onPrimary: palette.textPrimaryForeground,
         secondary: palette.secondary,
         surface: palette.card,
-        error: palette.primary,
+        onSurface: palette.textForeground,
+        error: palette.destructive,
       ),
-
-      // Customização dos Textos ---
-      textTheme: TextTheme(
-        displayLarge: TextStyle(
-          // text-3xl (30px / bold) - Título de tela grande
-          fontSize: 30,
-          fontWeight: FontWeight.bold,
+      textTheme: AppTypography.textTheme(palette),
+      iconTheme: IconThemeData(color: palette.textForeground, size: 24),
+      // Ícone de voltar da Lucide em todo o app (FR-005).
+      actionIconTheme: ActionIconThemeData(
+        backButtonIconBuilder: (_) => const Icon(LucideIcons.arrowLeft),
+        closeButtonIconBuilder: (_) => const Icon(LucideIcons.x),
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: palette.background,
+        foregroundColor: palette.textForeground,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        titleTextStyle: AppTypography.title3.copyWith(
+          fontWeight: FontWeight.w700,
           color: palette.textForeground,
-          letterSpacing: -0.6,
-        ),
-
-        titleLarge: TextStyle(
-          // text-2xl (24px / bold) - Títulos de header
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: palette.textForeground,
-          letterSpacing: -0.48,
-        ),
-
-        titleMedium: TextStyle(
-          // text-lg (18px / bold) - Títulos de seção / cards
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: palette.textForeground,
-        ),
-
-        bodyLarge: TextStyle(
-          // text-base (16px / regular) - Corpo destacado / Inputs
-          fontSize: 16,
-          fontWeight: FontWeight.normal,
-          color: palette.textForeground,
-        ),
-
-        bodyMedium: TextStyle(
-          // text-sm (14px / regular) - Corpo padrão / botões
-          fontSize: 14,
-          fontWeight: FontWeight.normal,
-          color: palette.textMutedForeground,
-        ),
-
-        bodySmall: TextStyle(
-          // text-xs (12px / regular) - Legendas / metadados
-          fontSize: 12,
-          fontWeight: FontWeight.normal,
-          color: palette.textMutedForeground,
         ),
       ),
-
-      // Customização dos Cards ---
+      dividerTheme: DividerThemeData(color: palette.border, thickness: 1),
       cardTheme: CardThemeData(
         color: palette.card,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: AppSpacing.radius2xl,
-          side: BorderSide(color: palette.border, width: 1),
+          borderRadius: AppSpacing.radiusLg,
+          side: palette.shadow.isEmpty
+              ? BorderSide(color: palette.border)
+              : BorderSide.none,
         ),
       ),
-
-      // Customização dos Inputs ---
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: palette.card,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.s4,
-          vertical: AppSpacing.s3,
+          vertical: 18,
         ),
-        border: OutlineInputBorder(
-          borderRadius: AppSpacing.radius2xl,
-          borderSide: BorderSide(color: palette.border),
+        hintStyle: AppTypography.body.copyWith(
+          color: palette.textMutedForeground,
+        ),
+        border: idle,
+        enabledBorder: idle,
+        focusedBorder: idle.copyWith(
+          borderSide: BorderSide(color: palette.textForeground, width: 2.5),
+        ),
+        errorBorder: idle.copyWith(
+          borderSide: BorderSide(color: palette.destructive, width: 2),
+        ),
+        focusedErrorBorder: idle.copyWith(
+          borderSide: BorderSide(color: palette.destructive, width: 2.5),
+        ),
+        errorStyle: AppTypography.caption.copyWith(color: palette.destructive),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: palette.card,
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: false,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: AppSpacing.radius2xl.topLeft,
+          ),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: palette.secondary,
+        contentTextStyle: AppTypography.body.copyWith(
+          fontWeight: FontWeight.w600,
+          color: palette.textPrimaryForeground,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusMd),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: palette.card,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.radiusXl),
+        titleTextStyle: AppTypography.title2.copyWith(
+          color: palette.textForeground,
+        ),
+        contentTextStyle: AppTypography.body.copyWith(color: palette.textBody),
+      ),
+      switchTheme: SwitchThemeData(
+        trackColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? palette.primary
+              : palette.surfaceStrong,
         ),
       ),
     );

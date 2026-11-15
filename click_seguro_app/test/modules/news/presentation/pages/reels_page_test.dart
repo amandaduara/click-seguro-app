@@ -3,16 +3,18 @@ import 'dart:async';
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
-import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
+import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reels_page_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/reels_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/reels_page.dart';
+import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/reel_actions.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/reel_view.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,8 +24,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-import '../../../../fakes/fake_external_launcher_service.dart';
 import '../../../../fakes/fake_secure_storage_service.dart';
+import '../../../../fakes/fake_share_service.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_news_repository.dart';
 import '../../fakes/reels_controller_factory.dart';
@@ -31,15 +33,15 @@ import '../../fakes/reels_controller_factory.dart';
 void main() {
   late UserSessionService session;
   late FakeNewsRepository repository;
-  late FakeExternalLauncherService launcher;
+  late FakeShareService share;
   late ReelsController controller;
 
   setUp(() async {
     session = UserSessionService(FakeSecureStorageService());
-    launcher = FakeExternalLauncherService();
+    share = FakeShareService();
     GetIt.instance
       ..registerSingleton<UserSessionService>(session)
-      ..registerSingleton<ExternalLauncherService>(launcher);
+      ..registerSingleton<ShareService>(share);
     await session.startGuestSession();
     repository = FakeNewsRepository();
     controller = buildReelsController(repository, session.sessionStatus);
@@ -53,6 +55,9 @@ void main() {
   void firstPage(int count, {String? next}) => repository.reelsResults[null] =
       Right(ReelsPageEntity(items: reels(count), nextCursor: next));
 
+  /// O `extra` com que o detalhe foi aberto pelo Reel.
+  Object? detailExtra;
+
   GoRouter router({String location = '/reels', Object? extra}) => GoRouter(
     initialLocation: location,
     initialExtra: extra,
@@ -63,8 +68,10 @@ void main() {
       ),
       GoRoute(
         path: '/news/:id',
-        builder: (_, state) =>
-            Scaffold(body: Text('detalhe ${state.pathParameters['id']}')),
+        builder: (_, state) {
+          detailExtra = state.extra;
+          return Scaffold(body: Text('detalhe ${state.pathParameters['id']}'));
+        },
       ),
       GoRoute(
         path: '/login',
@@ -183,23 +190,6 @@ void main() {
       expect(title('r1'), findsOneWidget);
     });
 
-    testWidgets('setas navegam; "anterior" não faz nada no primeiro', (
-      tester,
-    ) async {
-      firstPage(2);
-      await pumpPage(tester);
-
-      await tapKey(tester, ReelActions.previousKey);
-      expect(controller.currentIndex, 0);
-
-      await tapKey(tester, ReelActions.nextKey);
-      expect(title('r2'), findsOneWidget);
-      expect(controller.currentIndex, 1);
-
-      await tapKey(tester, ReelActions.previousKey);
-      expect(title('r1'), findsOneWidget);
-    });
-
     testWidgets('start abre no Reel pedido', (tester) async {
       firstPage(3);
 
@@ -264,24 +254,60 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('"Ler notícia completa" abre o detalhe uma vez', (
-      tester,
-    ) async {
+    testWidgets('tocar no texto abre o detalhe uma vez, com a prévia e as '
+        'tags dos botões', (tester) async {
       firstPage(1);
       await pumpPage(tester);
+      expect(find.text('Ler notícia completa'), findsNothing);
 
-      final button = find.text('Ler notícia completa');
-      await tester.tap(button);
-      await tester.tap(button, warnIfMissed: false);
+      final text = find.byKey(ReelView.readFullKey);
+      await tester.tap(text);
+      await tester.tap(text, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       expect(find.text('detalhe r1'), findsOneWidget);
+      final preview = detailExtra! as NewsDetailPreview;
+      expect(preview.item.id, 'r1');
+      expect(preview.heroTag, isNull);
+      expect(preview.actionTags, NewsActionsPreview.tagsFor('r1'));
+      expect(preview.actions!.likesCount, controller.reels.first.likesCount);
       final navigator = tester.state<NavigatorState>(
         find.byType(Navigator).first,
       );
       navigator.pop();
       await tester.pumpAndSettle();
       expect(title('r1'), findsOneWidget);
+    });
+
+    testWidgets('um toque na imagem também abre o detalhe', (tester) async {
+      firstPage(1);
+      await pumpPage(tester);
+
+      await tester.tap(find.byKey(ReelView.doubleTapKey));
+      // Espera o tempo do segundo toque, que curtiria.
+      await tester.pump(kDoubleTapTimeout);
+      await tester.pumpAndSettle();
+
+      expect(find.text('detalhe r1'), findsOneWidget);
+      expect(repository.likeCalls, isEmpty);
+    });
+
+    testWidgets('o texto é um botão "Ler notícia completa" para o leitor de '
+        'tela', (tester) async {
+      final handle = tester.ensureSemantics();
+      firstPage(1);
+      await pumpPage(tester);
+
+      expect(
+        tester.getSemantics(find.byKey(ReelView.readFullKey)),
+        isSemantics(
+          isButton: true,
+          hasTapAction: true,
+          hint: 'Ler notícia completa',
+        ),
+      );
+      expect(find.bySemanticsLabel(RegExp('Notícia r1')), findsOneWidget);
+      handle.dispose();
     });
 
     testWidgets('último Reel com fim: "Você viu todas as notícias"', (
@@ -300,7 +326,8 @@ void main() {
       repository.reelsResults['c2'] = const Left(ServerFailure());
       await pumpPage(tester);
 
-      await tapKey(tester, ReelActions.nextKey);
+      await tester.fling(find.byType(PageView), const Offset(0, -600), 2000);
+      await tester.pumpAndSettle();
 
       expect(find.text('Não foi possível carregar mais.'), findsOneWidget);
       repository.reelsResults['c2'] = Right(
@@ -331,18 +358,18 @@ void main() {
       await pumpPage(tester);
 
       for (final key in [
-        ReelActions.previousKey,
-        ReelActions.nextKey,
         ReelActions.likeKey,
         ReelActions.saveKey,
-        ReelActions.sourceKey,
+        ReelActions.shareKey,
       ]) {
         final size = tester.getSize(find.byKey(key));
         expect(size.width, greaterThanOrEqualTo(48), reason: '$key');
         expect(size.height, greaterThanOrEqualTo(48), reason: '$key');
       }
-      expect(find.bySemanticsLabel('Próxima notícia'), findsOneWidget);
-      expect(find.bySemanticsLabel('Notícia anterior'), findsOneWidget);
+      // Só curtir, salvar e compartilhar ao lado.
+      expect(find.bySemanticsLabel('Próxima notícia'), findsNothing);
+      expect(find.bySemanticsLabel('Notícia anterior'), findsNothing);
+      expect(find.bySemanticsLabel('Abrir fonte'), findsNothing);
     });
   });
 
@@ -511,31 +538,31 @@ void main() {
     });
   });
 
-  group('abrir a fonte', () {
-    testWidgets('visitante abre no navegador externo', (tester) async {
+  group('compartilhar', () {
+    testWidgets('visitante abre o menu com título, fonte e endereço', (
+      tester,
+    ) async {
       onePage([reel('r1')]);
       await pumpPage(tester);
 
-      await tapKey(tester, ReelActions.sourceKey);
+      await tapKey(tester, ReelActions.shareKey);
 
-      expect(launcher.openedUrls, ['https://fonte.test/r1']);
+      expect(share.shared.single.subject, 'Notícia r1');
+      expect(share.shared.single.text, contains('https://fonte.test/r1'));
+      expect(find.byType(AccountRequiredSheet), findsNothing);
     });
 
-    testWidgets('não abriu: aviso', (tester) async {
-      launcher.openResult = false;
+    testWidgets('toque duplo: um menu só', (tester) async {
+      share.gate = Completer<void>();
       onePage([reel('r1')]);
       await pumpPage(tester);
 
-      await tapKey(tester, ReelActions.sourceKey);
+      await tester.tap(find.byKey(ReelActions.shareKey));
+      await tester.tap(find.byKey(ReelActions.shareKey));
+      share.gate!.complete();
+      await tester.pumpAndSettle();
 
-      expect(find.text('Não foi possível abrir a fonte'), findsOneWidget);
-    });
-
-    testWidgets('sem endereço válido: botão ausente', (tester) async {
-      onePage([reel('r1', sourceUrl: ''), reel('r2', sourceUrl: 'ftp://x')]);
-      await pumpPage(tester);
-
-      expect(find.byKey(ReelActions.sourceKey), findsNothing);
+      expect(share.shared, hasLength(1));
     });
   });
 }

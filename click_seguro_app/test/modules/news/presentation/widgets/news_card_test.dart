@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_news_repository.dart';
@@ -17,6 +19,7 @@ void main() {
     WidgetTester tester,
     NewsItemEntity item, {
     bool compact = true,
+    bool showSignals = true,
     Future<void> Function()? onTap,
   }) => pumpLocalized(
     tester,
@@ -26,6 +29,7 @@ void main() {
           NewsCard(
             item: item,
             compact: compact,
+            showSignals: showSignals,
             now: feedNow,
             onTap: onTap ?? () async {},
           ),
@@ -34,11 +38,10 @@ void main() {
     ),
   );
 
-  // Quadro neutro no lugar da imagem: o ícone de jornal.
-  Finder placeholder() => find.ancestor(
-    of: find.byIcon(LucideIcons.newspaper),
-    matching: find.byType(Container),
-  );
+  // Sem imagem, a capa é a ilustração do tema (FR-015 de specs/024).
+  Finder placeholder() => find.byType(SafeIllustration);
+
+  Finder cover() => find.byType(NewsCover);
 
   NewsCategoryEntity category(String name) =>
       NewsCategoryEntity(id: name, name: name, slug: name);
@@ -72,10 +75,21 @@ void main() {
     expect(find.text('Phishing'), findsNothing);
   });
 
-  testWidgets('sem imagem mostra o quadro neutro', (tester) async {
+  testWidgets('sem imagem mostra a capa ilustrada', (tester) async {
     await pumpCard(tester, newsItem('n1'));
 
     expect(placeholder(), findsOneWidget);
+  });
+
+  // O mesmo texto do detalhe: a capa não muda de desenho ao abrir.
+  testWidgets('tema da capa: todas as categorias e o título', (tester) async {
+    final item = newsItem(
+      'n1',
+      categories: [category('Phishing'), category('Pix')],
+    );
+    await pumpCard(tester, item);
+
+    expect(tester.widget<NewsCover>(cover()).themeText, item.illustrationText);
   });
 
   testWidgets('lida e salva aparecem só quando verdadeiras', (tester) async {
@@ -94,10 +108,26 @@ void main() {
     expect(find.byTooltip('Salva'), findsNothing);
   });
 
+  testWidgets('sem os sinais (listas do perfil): nem lida nem salva', (
+    tester,
+  ) async {
+    await pumpCard(
+      tester,
+      newsItem(
+        'n1',
+        interaction: const NewsInteraction(isRead: true, isSaved: true),
+      ),
+      showSignals: false,
+    );
+
+    expect(find.byTooltip('Lida'), findsNothing);
+    expect(find.byTooltip('Salva'), findsNothing);
+  });
+
   testWidgets('completo mostra a imagem grande', (tester) async {
     await pumpCard(tester, newsItem('n1'), compact: false);
 
-    expect(tester.getSize(placeholder().first).height, 176);
+    expect(tester.getSize(cover()).height, 190);
   });
 
   // specs/022 FR-010: com "Reduzir animações", a imagem não voa.

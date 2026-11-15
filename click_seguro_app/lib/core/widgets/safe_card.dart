@@ -4,11 +4,14 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/press_scale.dart';
 import 'package:flutter/material.dart';
 
-enum SafeCardElevation { flat, sm, md }
+enum SafeCardElevation { flat, sm }
 
-/// SafeCard — contêiner com bordas arredondadas (rounded-3xl), elevação e
-/// modo interativo (hover: shadow-md · active: scale 0.99).
-class SafeCard extends StatefulWidget {
+/// SafeCard — cartão do redesign 2.0 (FR-004): branco, borda de 1 px, canto
+/// 20 e a sombra única; `flat` é creme e sem sombra. É o padrão de todo
+/// cartão do app (notícias, perfil, configurações, alertas): quem desenha a
+/// própria caixa usa [SafeCard.decoration]. Tocável: encolhe para 98% (FR-020), sem movimento com reduzir
+/// animações (FR-021), e é lido como botão (specs/022 FR-007).
+class SafeCard extends StatelessWidget {
   const SafeCard({
     super.key,
     required this.child,
@@ -24,51 +27,40 @@ class SafeCard extends StatefulWidget {
   final bool interactive;
   final VoidCallback? onTap;
 
-  @override
-  State<SafeCard> createState() => _SafeCardState();
-}
-
-class _SafeCardState extends State<SafeCard> {
-  List<BoxShadow>? get _shadow {
-    if (widget.interactive) return context.colors.shadowMd;
-    switch (widget.elevation) {
-      case SafeCardElevation.flat:
-        return null;
-      case SafeCardElevation.sm:
-        return context.colors.shadowSm;
-      case SafeCardElevation.md:
-        return context.colors.shadowMd;
-    }
-  }
+  /// A caixa do cartão: branca (creme se [flat]), borda, canto 20 e sombra.
+  static BoxDecoration decoration(AppPalette colors, {bool flat = false}) =>
+      BoxDecoration(
+        color: flat ? colors.surface : colors.card,
+        borderRadius: AppSpacing.radiusLg,
+        border: Border.all(color: colors.border),
+        boxShadow: flat ? null : colors.shadow,
+      );
 
   @override
   Widget build(BuildContext context) {
-    final AppMotion motion = AppMotion.of(context);
-    final card = AnimatedContainer(
-      duration: motion.short,
+    final Widget card = AnimatedContainer(
+      duration: AppMotion.of(context).short,
       curve: AppMotion.standard,
-      padding: widget.padded
-          ? const EdgeInsets.all(AppSpacing.s5)
-          : EdgeInsets.zero,
-      decoration: BoxDecoration(
-        color: context.colors.card,
-        border: Border.all(color: context.colors.border),
-        borderRadius: AppSpacing.radius3xl,
-        boxShadow: _shadow,
+      padding: padded ? const EdgeInsets.all(AppSpacing.s5) : EdgeInsets.zero,
+      decoration: decoration(
+        context.colors,
+        flat: elevation == SafeCardElevation.flat,
       ),
-      child: widget.child,
+      // Conteúdo sem margem (capa de notícia) respeita o canto.
+      clipBehavior: padded ? Clip.none : Clip.antiAlias,
+      child: child,
     );
 
-    if (!widget.interactive) return card;
+    if (!interactive) return card;
 
     return Semantics(
       container: true,
       button: true,
-      enabled: widget.onTap != null,
+      enabled: onTap != null,
       child: PressScale(
-        enabled: widget.onTap != null,
-        pressedScale: 0.99,
-        onTap: widget.onTap,
+        enabled: onTap != null,
+        pressedScale: 0.98,
+        onTap: onTap,
         child: card,
       ),
     );

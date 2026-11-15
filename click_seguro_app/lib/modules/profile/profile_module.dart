@@ -9,6 +9,7 @@ import 'package:click_seguro_app/modules/profile/data/datasources/profile_remote
 import 'package:click_seguro_app/modules/profile/data/repositories/profile_repository_impl.dart';
 import 'package:click_seguro_app/modules/profile/domain/repositories/profile_repository.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/get_activity_progress_usecase.dart';
+import 'package:click_seguro_app/modules/profile/domain/usecases/get_cached_profile_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/get_news_counts_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/get_profile_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/remove_avatar_usecase.dart';
@@ -27,10 +28,16 @@ class ProfileModule implements ModuleInterface {
         () => ProfileRemoteDataSourceImpl(injector<ApiClient>()),
       )
       ..registerLazySingleton<ProfileRepository>(
-        () => ProfileRepositoryImpl(injector<ProfileRemoteDataSource>()),
+        () => ProfileRepositoryImpl(
+          injector<ProfileRemoteDataSource>(),
+          sessionStatus: injector<UserSessionService>().sessionStatus,
+        ),
       )
       ..registerLazySingleton(
         () => GetProfileUseCase(injector<ProfileRepository>()),
+      )
+      ..registerLazySingleton(
+        () => GetCachedProfileUseCase(injector<ProfileRepository>()),
       )
       ..registerLazySingleton(
         () => GetNewsCountsUseCase(injector<ProfileRepository>()),
@@ -57,6 +64,7 @@ class ProfileModule implements ModuleInterface {
       ..registerFactory(
         () => ProfileController(
           getProfile: injector<GetProfileUseCase>(),
+          getCachedProfile: injector<GetCachedProfileUseCase>(),
           getNewsCounts: injector<GetNewsCountsUseCase>(),
           getActivityProgress: injector<GetActivityProgressUseCase>(),
         ),

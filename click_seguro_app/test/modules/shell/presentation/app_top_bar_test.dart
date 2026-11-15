@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_top_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -37,10 +38,6 @@ void main() {
         ),
       ),
       GoRoute(
-        path: '/settings',
-        builder: (_, _) => const Scaffold(body: Text('tela configurações')),
-      ),
-      GoRoute(
         path: '/notifications',
         builder: (_, _) => const Scaffold(body: Text('tela alertas')),
       ),
@@ -51,112 +48,102 @@ void main() {
     ],
   );
 
-  group('saudação', () {
-    testWidgets('nome salvo no perfil aparece sem outra mudança de sessão', (
+  // Só o Início cumprimenta (validação da usuária, specs/024): ele passa a
+  // saudação como subtítulo; as outras abas mostram só o título.
+  group('título e subtítulo', () {
+    testWidgets('sem subtítulo: só o título, sem saudação', (tester) async {
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      expect(find.text('Notícias seguras'), findsOneWidget);
+      expect(find.textContaining('Olá'), findsNothing);
+      expect(find.text('Bem-vindo'), findsNothing);
+    });
+
+    testWidgets('com subtítulo: a saudação do Início em cima do título', (
       tester,
     ) async {
       await signIn();
       await pumpLocalized(
         tester,
-        router: buildRouter(),
+        router: buildRouter(subtitle: 'Olá, Maria! 3 notícias novas'),
         providers: [fakeNotificationsProvider()],
       );
 
-      await session.updateProfile(
-        name: 'Maria Souza',
-        email: 'maria@exemplo.com',
+      final Rect subtitle = tester.getRect(
+        find.text('Olá, Maria! 3 notícias novas'),
       );
-      await tester.pump();
-
-      expect(find.text('Olá, Maria Souza'), findsOneWidget);
-    });
-
-    testWidgets('conectada → "Olá, Maria" e o título', (tester) async {
-      await signIn();
-      await pumpLocalized(
-        tester,
-        router: buildRouter(),
-        providers: [fakeNotificationsProvider()],
+      final Rect title = tester.getRect(find.text('Notícias seguras'));
+      expect(subtitle.bottom, lessThanOrEqualTo(title.top));
+      expect(
+        tester
+            .widget<Text>(find.text('Olá, Maria! 3 notícias novas'))
+            .style
+            ?.fontSize,
+        16,
       );
-
-      expect(find.text('Olá, Maria'), findsOneWidget);
-      expect(find.text('Notícias seguras'), findsOneWidget);
-    });
-
-    testWidgets('visitante → "Bem-vindo"', (tester) async {
-      await session.startGuestSession();
-      await pumpLocalized(
-        tester,
-        router: buildRouter(),
-        providers: [fakeNotificationsProvider()],
-      );
-
-      expect(find.text('Bem-vindo'), findsOneWidget);
-    });
-
-    testWidgets('subtítulo da tela substitui a saudação', (tester) async {
-      await signIn();
-      await pumpLocalized(
-        tester,
-        router: buildRouter(subtitle: '3 notícias novas para você'),
-        providers: [fakeNotificationsProvider()],
-      );
-
-      expect(find.text('3 notícias novas para você'), findsOneWidget);
-      expect(find.text('Olá, Maria'), findsNothing);
-    });
-
-    testWidgets('acompanha a mudança da sessão', (tester) async {
-      await session.startGuestSession();
-      await pumpLocalized(
-        tester,
-        router: buildRouter(),
-        providers: [fakeNotificationsProvider()],
-      );
-      expect(find.text('Bem-vindo'), findsOneWidget);
-
-      await signIn();
-      await tester.pumpAndSettle();
-
-      expect(find.text('Olá, Maria'), findsOneWidget);
-    });
-
-    testWidgets('subtítulo com 14 px e título com 24 px', (tester) async {
-      await signIn();
-      await pumpLocalized(
-        tester,
-        router: buildRouter(),
-        providers: [fakeNotificationsProvider()],
-      );
-
-      expect(tester.widget<Text>(find.text('Olá, Maria')).style?.fontSize, 14);
       expect(
         tester.widget<Text>(find.text('Notícias seguras')).style?.fontSize,
-        24,
+        28,
       );
     });
+
+    for (final width in [320.0, 360.0, 412.0]) {
+      testWidgets('sem subtítulo, título e botões na mesma linha, em '
+          '$width dp', (tester) async {
+        tester.view.physicalSize = Size(width, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await signIn();
+        await pumpLocalized(
+          tester,
+          router: buildRouter(),
+          providers: [fakeNotificationsProvider()],
+        );
+
+        final title = tester.getRect(find.text('Notícias seguras'));
+        final assistant = tester.getRect(find.bySemanticsLabel('Assistente'));
+        expect(assistant.left, greaterThan(title.left));
+        expect(title.right, lessThanOrEqualTo(assistant.left));
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('com subtítulo, botões na linha dele e título embaixo, em '
+          '$width dp', (tester) async {
+        tester.view.physicalSize = Size(width, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await signIn();
+        await pumpLocalized(
+          tester,
+          router: buildRouter(subtitle: 'Olá, Maria'),
+          providers: [fakeNotificationsProvider()],
+        );
+
+        final greeting = tester.getRect(find.text('Olá, Maria'));
+        final title = tester.getRect(find.text('Notícias seguras'));
+        final assistant = tester.getRect(find.bySemanticsLabel('Assistente'));
+        expect(assistant.left, greaterThan(greeting.right));
+        expect(title.top, greaterThan(assistant.bottom));
+        expect(tester.takeException(), isNull);
+      });
+    }
   });
 
   group('botões', () {
-    testWidgets('conectada: "Configurações" abre /settings', (tester) async {
-      await signIn();
-      await pumpLocalized(
-        tester,
-        router: buildRouter(),
-        providers: [fakeNotificationsProvider()],
-      );
-
-      await tester.tap(find.bySemanticsLabel('Configurações'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('tela configurações'), findsOneWidget);
-    });
-
     for (final (label, enter) in [
+      ('conectada', (UserSessionService s) async {}),
       ('visitante', (UserSessionService s) => s.startGuestSession()),
-      ('desconectada', (UserSessionService s) => s.logout()),
     ]) {
-      testWidgets('$label: a engrenagem abre /settings', (tester) async {
+      // A engrenagem fica só no Perfil (validação da usuária, specs/024).
+      testWidgets('$label: sem a engrenagem das configurações', (tester) async {
+        if (label == 'conectada') await signIn();
         await enter(session);
         await pumpLocalized(
           tester,
@@ -164,10 +151,7 @@ void main() {
           providers: [fakeNotificationsProvider()],
         );
 
-        await tester.tap(find.bySemanticsLabel('Configurações'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('tela configurações'), findsOneWidget);
+        expect(find.bySemanticsLabel('Configurações'), findsNothing);
       });
     }
 
@@ -183,6 +167,28 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('tela alertas'), findsOneWidget);
+    });
+
+    testWidgets('conectada, o leitor de tela toca em "Assistente"', (
+      tester,
+    ) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      final SemanticsNode node = tester.getSemantics(
+        find.bySemanticsLabel('Assistente'),
+      );
+      expect(node, isSemantics(isButton: true, hasTapAction: true));
+      node.owner!.performAction(node.id, SemanticsAction.tap);
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela assistente'), findsOneWidget);
+      handle.dispose();
     });
 
     testWidgets('visitante: "Alertas" mostra o convite e não abre', (
@@ -264,7 +270,7 @@ void main() {
       expect(find.text('Notícias seguras'), findsOneWidget);
     });
 
-    testWidgets('os três botões medem pelo menos 48×48', (tester) async {
+    testWidgets('os dois botões medem pelo menos 48×48', (tester) async {
       await signIn();
       await pumpLocalized(
         tester,
@@ -272,7 +278,7 @@ void main() {
         providers: [fakeNotificationsProvider()],
       );
 
-      for (final label in ['Alertas', 'Assistente', 'Configurações']) {
+      for (final label in ['Alertas', 'Assistente']) {
         final size = tester.getSize(find.bySemanticsLabel(label));
         expect(size.width, greaterThanOrEqualTo(48), reason: label);
         expect(size.height, greaterThanOrEqualTo(48), reason: label);
@@ -296,7 +302,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Notícias seguras'), findsOneWidget);
-      for (final label in ['Alertas', 'Assistente', 'Configurações']) {
+      for (final label in ['Alertas', 'Assistente']) {
         final button = find.bySemanticsLabel(label);
         expect(button, findsOneWidget, reason: label);
         final size = tester.getSize(button);
@@ -334,27 +340,5 @@ void main() {
       expect(find.text('Entre na sua conta'), findsOneWidget);
       expect(find.text('tela assistente'), findsNothing);
     });
-
-    for (final width in [320.0, 360.0, 412.0]) {
-      testWidgets('fonte padrão mantém ações ao lado do título em $width dp', (
-        tester,
-      ) async {
-        tester.view.physicalSize = Size(width, 800);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        await signIn();
-        await pumpLocalized(
-          tester,
-          router: buildRouter(),
-          providers: [fakeNotificationsProvider()],
-        );
-
-        final title = tester.getRect(find.text('Notícias seguras'));
-        final assistant = tester.getRect(find.bySemanticsLabel('Assistente'));
-        expect(assistant.left, greaterThan(title.right));
-        expect(tester.takeException(), isNull);
-      });
-    }
   });
 }

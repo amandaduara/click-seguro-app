@@ -1,17 +1,29 @@
-import 'package:click_seguro_app/core/widgets/safe_empty_state.dart'
-    show SafeEmptyState;
-import 'package:click_seguro_app/core/widgets/safe_error_state.dart'
-    show SafeErrorState;
-import 'package:click_seguro_app/core/widgets/safe_loading_state.dart'
-    show SafeLoadingState;
-import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart'
-    show SafeOfflineBanner;
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_theme.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_badge.dart';
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
+import 'package:click_seguro_app/core/widgets/safe_chip.dart';
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
+import 'package:click_seguro_app/core/widgets/safe_progress.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-// Com EasyLocalization, como no app: os estados comuns usam textos padrão
-// traduzidos ("Tentar novamente", faixa de sem internet).
+/// Guia de estilo do redesign 2.0 (specs/024-redesign-visual), montado com
+/// os componentes reais do `core`, na ordem da prancha "Componentes" do
+/// Figma. Rodar com `flutter run -t lib/style_guide/style_guide.dart`.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -25,1093 +37,288 @@ Future<void> main() async {
   );
 }
 
-class StyleGuideApp extends StatelessWidget {
+class StyleGuideApp extends StatefulWidget {
   const StyleGuideApp({super.key});
+
+  @override
+  State<StyleGuideApp> createState() => _StyleGuideAppState();
+}
+
+class _StyleGuideAppState extends State<StyleGuideApp> {
+  bool _highContrast = false;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Click Seguro Style Guide',
+      theme: _highContrast ? AppTheme.highContrastTheme : AppTheme.lightTheme,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      home: const StyleguideWebScreen(),
+      home: _StyleGuideScreen(
+        highContrast: _highContrast,
+        onHighContrast: (value) => setState(() => _highContrast = value),
+      ),
     );
   }
 }
 
-// --- TOKENS DE CORES ---
-class DSColors {
-  static const primary = Color(0xFFFE3152);
-  static const secondary = Color(0xFF182A4E);
-  static const background = Color(0xFFFFFDFB);
-  static const card = Color(0xFFFFFFFF);
-  static const foreground = Color(0xFF121932);
-  static const mutedForeground = Color(0xFF596475);
-  static const border = Color(0xFFDADEE5);
-}
+class _StyleGuideScreen extends StatefulWidget {
+  const _StyleGuideScreen({
+    required this.highContrast,
+    required this.onHighContrast,
+  });
 
-// --- TOKENS DE TIPOGRAFIA ---
-class DSTypography {
-  static const titleLarge = TextStyle(
-    fontSize: 28,
-    fontWeight: FontWeight.bold,
-    color: DSColors.foreground,
-    fontFamily: 'Montserrat',
-  );
-  static const titleMedium = TextStyle(
-    fontSize: 18,
-    fontWeight: FontWeight.w600,
-    color: DSColors.secondary,
-    fontFamily: 'Montserrat',
-  );
-  static const bodyMedium = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.normal,
-    color: DSColors.mutedForeground,
-    fontFamily: 'Montserrat',
-  );
-}
-
-// --- TOKENS DE ESPAÇAMENTO ---
-class DSSpacing {
-  static const double xs = 4.0;
-  static const double sm = 8.0;
-  static const double md = 16.0;
-  static const double lg = 24.0;
-
-  static final radiusLg = BorderRadius.circular(12);
-  static final radius2xl = BorderRadius.circular(16);
-  static final radiusFull = BorderRadius.circular(99);
-}
-
-// --- TELA DO STYLEGUIDE WEB ---
-class StyleguideWebScreen extends StatefulWidget {
-  const StyleguideWebScreen({super.key});
+  final bool highContrast;
+  final ValueChanged<bool> onHighContrast;
 
   @override
-  State<StyleguideWebScreen> createState() => _StyleguideWebScreenState();
+  State<_StyleGuideScreen> createState() => _StyleGuideScreenState();
 }
 
-class _StyleguideWebScreenState extends State<StyleguideWebScreen> {
-  int _activeSectionIndex = 0;
-
-  // Estrutura de dados do Menu dividida por Categorias e Submenus
-  final List<Map<String, dynamic>> _menuStructure = [
-    {
-      'category': 'FUNDAÇÃO',
-      'items': [
-        {'label': '🎨 Cores Semânticas', 'index': 0},
-        {'label': '🔤 Tipografia', 'index': 1},
-      ],
-    },
-    {
-      'category': 'INPUTS & AÇÕES',
-      'items': [
-        {'label': '🔘 SafeButton', 'index': 2},
-        {'label': '📝 SafeTextField', 'index': 3},
-      ],
-    },
-    {
-      'category': 'LAYOUT & FEEDBACK',
-      'items': [
-        {'label': '📦 SafeCard', 'index': 4},
-        {'label': '🏷️ SafeBadge', 'index': 5},
-      ],
-    },
-    {
-      'category': 'ESTADOS',
-      'items': [
-        {'label': '⏳ SafeLoadingState', 'index': 6},
-        {'label': '⚠️ SafeErrorState', 'index': 7},
-        {'label': '📭 SafeEmptyState', 'index': 8},
-        {'label': '📡 SafeOfflineBanner', 'index': 9},
-      ],
-    },
-  ];
-
-  // Helper para buscar o nome do componente ativo de forma dinâmica
-  String _getActiveTitle() {
-    for (var cat in _menuStructure) {
-      for (var item in cat['items']) {
-        if (item['index'] == _activeSectionIndex) {
-          return (item['label'] as String).substring(
-            2,
-          ); // Remove o emoji do título
-        }
-      }
-    }
-    return 'Componente';
-  }
+class _StyleGuideScreenState extends State<_StyleGuideScreen> {
+  int _tab = 0;
+  bool _chip = true;
+  bool _speaking = false;
 
   @override
   Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
     return Scaffold(
-      backgroundColor: DSColors.background,
-      body: Row(
-        children: [
-          // 1. BARRA LATERAL CATEGORIZADA
-          Container(
-            width: 290,
-            color: DSColors.secondary,
-            padding: const EdgeInsets.symmetric(
-              horizontal: DSSpacing.lg,
-              vertical: 32,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header do App
-                Row(
-                  children: [
-                    const Text(
-                      'Click Seguro',
-                      style: TextStyle(
-                        color: DSColors.primary,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: DSColors.primary.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Docs v1.2',
-                        style: TextStyle(
-                          color: DSColors.primary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 40),
-
-                // Menu de Navegação com Submenus
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _menuStructure.length,
-                    itemBuilder: (context, catIndex) {
-                      final category = _menuStructure[catIndex];
-                      final List<Map<String, dynamic>> items =
-                          category['items'];
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Título da Categoria (Ex: FUNDAÇÃO)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 8.0,
-                              top: 16.0,
-                              bottom: 8.0,
-                            ),
-                            child: Text(
-                              category['category'],
-                              style: const TextStyle(
-                                color: Colors.white38,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                          // Submenus da Categoria
-                          ...items.map((item) {
-                            final isSelected =
-                                _activeSectionIndex == item['index'];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 4.0),
-                              child: InkWell(
-                                onTap: () => setState(
-                                  () => _activeSectionIndex = item['index'],
-                                ),
-                                borderRadius: DSSpacing.radiusLg,
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 10,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? Colors.white.withOpacity(0.08)
-                                        : Colors.transparent,
-                                    borderRadius: DSSpacing.radiusLg,
-                                  ),
-                                  child: Text(
-                                    item['label'],
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : Colors.white70,
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      fontSize: 13.5,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                          const SizedBox(height: 8),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                const Divider(color: Colors.white12),
-                const Text(
-                  'Click Seguro Design System\nSistema de Design Modular',
-                  style: TextStyle(color: Colors.white30, fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-
-          // 2. PAINEL DE CONTEÚDO PRINCIPAL
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(40),
-              child: Center(
-                child: SizedBox(
-                  width: 1000,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(),
-                      const SizedBox(height: 30),
-                      _buildActiveContent(),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
+      appBar: AppBar(
+        title: const Text('Design System 2.0'),
+        actions: [
+          Switch(value: widget.highContrast, onChanged: widget.onHighContrast),
         ],
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _getActiveTitle(),
-          style: const TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: DSColors.secondary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Documentação detalhada com exemplo visual, regras de uso e código fonte.',
-          style: TextStyle(color: DSColors.mutedForeground, fontSize: 14),
-        ),
-        const Divider(height: 40, color: DSColors.border),
-      ],
-    );
-  }
-
-  Widget _buildActiveContent() {
-    switch (_activeSectionIndex) {
-      case 0:
-        return _buildCoresSection();
-      case 1:
-        return _buildTipografiaSection();
-      case 2:
-        return _buildBotoesSection();
-      case 3:
-        return _buildInputsSection();
-      case 4:
-        return _buildCardsSection();
-      case 5:
-        return _buildBadgesSection();
-      case 6:
-        return _buildLoadingStateSection();
-      case 7:
-        return _buildErrorStateSection();
-      case 8:
-        return _buildEmptyStateSection();
-      case 9:
-        return _buildOfflineBannerSection();
-      default:
-        return const SizedBox();
-    }
-  }
-
-  // --- RENDERS DAS SEÇÕES ---
-
-  Widget _buildCoresSection() {
-    return _buildComponentDocumentation(
-      componentName: 'DSColors',
-      description:
-          'A paleta de cores centraliza a identidade do Click Seguro, assegurando conformidade estética em todos os fluxos.',
-      previewWidget: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: ListView(
+        padding: const EdgeInsets.all(AppSpacing.s5),
         children: [
-          _buildColorCircle('Primary', DSColors.primary),
-          _buildColorCircle('Secondary', DSColors.secondary),
-          _buildColorCircle('Background', DSColors.background, hasBorder: true),
-          _buildColorCircle('Card', DSColors.card, hasBorder: true),
-        ],
-      ),
-      properties: [
-        _Prop(
-          'DSColors.primary',
-          'Color',
-          '0xFFFE3152',
-          'Cor de destaque primário para botões ativos e estados de alerta/erro.',
-        ),
-        _Prop(
-          'DSColors.secondary',
-          'Color',
-          '0xFF182A4E',
-          'Azul escuro institucional para contrastes de barras, fontes e menus.',
-        ),
-        _Prop(
-          'DSColors.background',
-          'Color',
-          '0xFFFFFDFB',
-          'Cor do canvas do aplicativo (off-white) para máxima legibilidade.',
-        ),
-        _Prop(
-          'DSColors.card',
-          'Color',
-          '0xFFFFFFFF',
-          'Cor padrão de superfícies elevadas e agrupamentos de conteúdo.',
-        ),
-      ],
-      codeExample: '''
-// Importe a classe de tokens de cores no seu widget:
-import 'package:click_seguro_app/core/theme/ds_colors.dart';
-
-Container(
-  padding: const EdgeInsets.all(16),
-  color: DSColors.background,
-  child: Text(
-    'Alerta Critíco',
-    style: TextStyle(
-      color: DSColors.primary,
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-);''',
-    );
-  }
-
-  Widget _buildTipografiaSection() {
-    return _buildComponentDocumentation(
-      componentName: 'DSTypography',
-      description:
-          'Definições tipográficas padronizadas usando a fonte Montserrat para estruturação hierárquica clara.',
-      previewWidget: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Título de Página', style: DSTypography.titleLarge),
-          const SizedBox(height: 8),
-          Text('Subtítulo de Seção', style: DSTypography.titleMedium),
-          const SizedBox(height: 8),
-          Text(
-            'Este é o corpo de texto padrão para descrições.',
-            style: DSTypography.bodyMedium,
-          ),
-        ],
-      ),
-      properties: [
-        _Prop(
-          'DSTypography.titleLarge',
-          'TextStyle',
-          '28px • Bold',
-          'Ideal para títulos principais de telas e cabeçalhos de destaque.',
-        ),
-        _Prop(
-          'DSTypography.titleMedium',
-          'TextStyle',
-          '18px • SemiBold',
-          'Ideal para cabeçalhos internos de cards ou sessões secundárias.',
-        ),
-        _Prop(
-          'DSTypography.bodyMedium',
-          'TextStyle',
-          '14px • Regular',
-          'Estilo padrão para parágrafos de texto corrido e informativos.',
-        ),
-      ],
-      codeExample: '''
-// Importe a classe de tokens tipográficos:
-import 'package:click_seguro_app/core/theme/ds_typography.dart';
-
-Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Text(
-      'Título do Conteúdo',
-      style: DSTypography.titleLarge,
-    ),
-    const SizedBox(height: 12),
-    Text(
-      'Este parágrafo descreve os detalhes adicionais do componente.',
-      style: DSTypography.bodyMedium,
-    ),
-  ],
-);''',
-    );
-  }
-
-  Widget _buildBotoesSection() {
-    return _buildComponentDocumentation(
-      componentName: 'SafeButton',
-      description:
-          'Botão primário e secundário parametrizável com feedback tátil integrado.',
-      previewWidget: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SafeButton(
-            label: 'Ação Principal',
-            onPressed: () {},
-            isPrimary: true,
-          ),
-          const SizedBox(height: 16),
-          SafeButton(
-            label: 'Ação Secundária',
-            onPressed: () {},
-            isPrimary: false,
-          ),
-        ],
-      ),
-      properties: [
-        _Prop(
-          'label',
-          'String',
-          'Obrigatório',
-          'Título do botão exibido de forma centralizada.',
-        ),
-        _Prop(
-          'onPressed',
-          'VoidCallback',
-          'Obrigatório',
-          'Evento executado no clique do usuário.',
-        ),
-        _Prop(
-          'isPrimary',
-          'bool',
-          'true',
-          'Alterna o estilo entre a cor primária (true) ou secundária (false).',
-        ),
-      ],
-      codeExample: '''
-SafeButton(
-  label: 'Próxima Etapa',
-  isPrimary: true,
-  onPressed: () {
-    print('Botão acionado');
-  },
-)''',
-    );
-  }
-
-  Widget _buildInputsSection() {
-    return _buildComponentDocumentation(
-      componentName: 'SafeTextField',
-      description:
-          'Elemento de input otimizado com alteração visual de bordas em foco.',
-      previewWidget: SafeTextField(
-        label: 'Usuário',
-        controller: TextEditingController(),
-        prefixIcon: Icons.person_outline,
-      ),
-      properties: [
-        _Prop(
-          'label',
-          'String',
-          'Obrigatório',
-          'Texto flutuante identificador do input.',
-        ),
-        _Prop(
-          'controller',
-          'TextEditingController',
-          'Obrigatório',
-          'Controlador de leitura do texto digitado.',
-        ),
-        _Prop(
-          'isPassword',
-          'bool',
-          'false',
-          'Se ativo, mascara os caracteres (ocultar senha).',
-        ),
-        _Prop(
-          'prefixIcon',
-          'IconData?',
-          'null',
-          'Ícone auxiliar exibido no início do campo de texto.',
-        ),
-      ],
-      codeExample: '''
-SafeTextField(
-  label: 'Senha de Acesso',
-  controller: senhaController,
-  isPassword: true,
-  prefixIcon: Icons.lock_open_outlined,
-)''',
-    );
-  }
-
-  Widget _buildCardsSection() {
-    return _buildComponentDocumentation(
-      componentName: 'SafeCard',
-      description:
-          'Contêiner de isolamento visual com sombra minimalista e bordas responsivas.',
-      previewWidget: const SafeCard(
-        child: Text(
-          'Conteúdo envelopado de forma padronizada.',
-          style: TextStyle(color: DSColors.foreground),
-        ),
-      ),
-      properties: [
-        _Prop(
-          'child',
-          'Widget',
-          'Obrigatório',
-          'Conteúdo interno a ser renderizado na área útil do card.',
-        ),
-      ],
-      codeExample: '''
-SafeCard(
-  child: Text(
-    'Alocado dentro da estrutura com espaçamento interno padrão.',
-  ),
-)''',
-    );
-  }
-
-  Widget _buildBadgesSection() {
-    return _buildComponentDocumentation(
-      componentName: 'SafeBadge',
-      description:
-          'Pequena etiqueta semitransparente usada para status rápidos e tags categorizadoras.',
-      previewWidget: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SafeBadge(label: 'Falso', color: DSColors.primary),
-          SizedBox(width: 12),
-          SafeBadge(label: 'Fato', color: Colors.green),
-        ],
-      ),
-      properties: [
-        _Prop(
-          'label',
-          'String',
-          'Obrigatório',
-          'Texto curto de identificação.',
-        ),
-        _Prop(
-          'color',
-          'Color',
-          'Obrigatório',
-          'Cor base do texto (que gera também o preenchimento de fundo com 10% de opacidade).',
-        ),
-      ],
-      codeExample: '''
-SafeBadge(
-  label: 'Análise Concluída',
-  color: Colors.green,
-)''',
-    );
-  }
-
-  // --- ESTADOS (componentes reais de lib/core/widgets) ---
-
-  Widget _buildLoadingStateSection() {
-    return _buildComponentDocumentation(
-      componentName: 'SafeLoadingState',
-      description:
-          'Enquanto a tela busca dados. O leitor de tela anuncia "Carregando".',
-      previewWidget: const SizedBox(
-        height: 160,
-        child: SafeLoadingState(message: 'Buscando notícias'),
-      ),
-      properties: const [
-        _Prop(
-          'message',
-          'String?',
-          'Opcional',
-          'Texto já traduzido abaixo do indicador (16 sp).',
-        ),
-      ],
-      codeExample: '''
-if (controller.isLoading)
-  const SafeLoadingState()''',
-    );
-  }
-
-  Widget _buildErrorStateSection() {
-    return _buildComponentDocumentation(
-      componentName: 'SafeErrorState',
-      description:
-          'Falha ao buscar dados: mensagem e "Tentar novamente" (área de toque de 48 dp).',
-      previewWidget: SizedBox(
-        height: 220,
-        child: SafeErrorState(
-          message: 'Sem conexão com a internet. Verifique sua rede.',
-          onRetry: () {},
-        ),
-      ),
-      properties: const [
-        _Prop(
-          'message',
-          'String',
-          'Obrigatório',
-          'Mensagem já traduzida, ex.: failure.message.tr().',
-        ),
-        _Prop('onRetry', 'VoidCallback', 'Obrigatório', 'Repete a busca.'),
-      ],
-      codeExample: '''
-SafeErrorState(
-  message: failure.message.tr(),
-  onRetry: controller.load,
-)''',
-    );
-  }
-
-  Widget _buildEmptyStateSection() {
-    return _buildComponentDocumentation(
-      componentName: 'SafeEmptyState',
-      description:
-          'Lista sem itens. Mensagem padrão "Nada por aqui ainda." e ação opcional.',
-      previewWidget: SizedBox(
-        height: 220,
-        child: SafeEmptyState(
-          message: 'Nenhum contato cadastrado',
-          actionLabel: 'Adicionar contato',
-          onAction: () {},
-        ),
-      ),
-      properties: const [
-        _Prop('icon', 'IconData', 'Opcional', 'Padrão: LucideIcons.inbox.'),
-        _Prop(
-          'message',
-          'String?',
-          'Opcional',
-          'Texto já traduzido; padrão common_empty.',
-        ),
-        _Prop(
-          'actionLabel',
-          'String?',
-          'Opcional',
-          'Rótulo do botão; aparece só com onAction.',
-        ),
-        _Prop('onAction', 'VoidCallback?', 'Opcional', 'Ação do botão.'),
-      ],
-      codeExample: '''
-const SafeEmptyState()''',
-    );
-  }
-
-  Widget _buildOfflineBannerSection() {
-    return _buildComponentDocumentation(
-      componentName: 'SafeOfflineBanner',
-      description: 'Faixa no topo do conteúdo guardado quando não há internet.',
-      previewWidget: const SafeOfflineBanner(),
-      properties: [],
-      codeExample: '''
-Column(
-  children: [
-    if (controller.isFromCache) const SafeOfflineBanner(),
-    Expanded(child: lista),
-  ],
-)''',
-    );
-  }
-
-  // --- COMPONENTE DE DOCUMENTAÇÃO PADRÃO ---
-
-  Widget _buildComponentDocumentation({
-    required String componentName,
-    required String description,
-    required Widget previewWidget,
-    required List<_Prop> properties,
-    required String codeExample,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          description,
-          style: const TextStyle(fontSize: 14, color: DSColors.mutedForeground),
-        ),
-        const SizedBox(height: 24),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Painel Vivo (Esquerda)
-            Expanded(
-              flex: 4,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Visualização Viva',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: DSColors.secondary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    height: 220,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: DSColors.card,
-                      borderRadius: DSSpacing.radius2xl,
-                      border: Border.all(color: DSColors.border),
-                    ),
-                    child: Center(child: previewWidget),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 24),
-            // Bloco de Código (Direita)
-            Expanded(
-              flex: 5,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Exemplo de Implementação',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: DSColors.secondary,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.copy_all,
-                          size: 20,
-                          color: DSColors.primary,
-                        ),
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: codeExample));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Código copiado com sucesso!'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
-                        },
-                        tooltip: 'Copiar código',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    height: 220,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E2E),
-                      borderRadius: DSSpacing.radius2xl,
-                    ),
-                    child: SingleChildScrollView(
-                      child: Text(
-                        codeExample,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 12,
-                          color: Color(0xFFA6ADC8),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 32),
-        // Tabela Técnica de Atributos/Tokens
-        const Text(
-          'Especificações Técnicas',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            color: DSColors.secondary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: DSColors.card,
-            borderRadius: DSSpacing.radius2xl,
-            border: Border.all(color: DSColors.border),
-          ),
-          child: Table(
-            columnWidths: const {
-              0: FlexColumnWidth(2.5),
-              1: FlexColumnWidth(2),
-              2: FlexColumnWidth(2),
-              3: FlexColumnWidth(4.5),
-            },
+          _section('Cores'),
+          Wrap(
+            spacing: AppSpacing.s3,
+            runSpacing: AppSpacing.s3,
             children: [
-              TableRow(
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                ),
-                children: [
-                  _buildTableCell('Token / Atributo', isHeader: true),
-                  _buildTableCell('Tipo', isHeader: true),
-                  _buildTableCell('Padrão', isHeader: true),
-                  _buildTableCell('Aplicação / Uso', isHeader: true),
-                ],
+              for (final (String name, Color color) in [
+                ('primary', colors.primary),
+                ('primarySoft', colors.primarySoft),
+                ('textForeground', colors.textForeground),
+                ('textBody', colors.textBody),
+                ('surface', colors.surface),
+                ('surfaceStrong', colors.surfaceStrong),
+                ('success', colors.success),
+                ('warning', colors.warning),
+                ('info', colors.info),
+                ('destructive', colors.destructive),
+              ])
+                _Swatch(name: name, color: color),
+            ],
+          ),
+          _section('Tipografia · Inter'),
+          for (final (String name, TextStyle style) in [
+            ('display 32', AppTypography.display),
+            ('title1 28', AppTypography.title1),
+            ('title2 22', AppTypography.title2),
+            ('title3 20', AppTypography.title3),
+            ('bodyLarge 20', AppTypography.bodyLarge),
+            ('body 18', AppTypography.body),
+            ('label 16', AppTypography.label),
+            ('caption 15', AppTypography.caption),
+          ])
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s2),
+              child: Text(
+                'Proteja-se de golpes · $name',
+                style: style.copyWith(color: colors.textForeground),
               ),
-              ...properties.map(
-                (prop) => TableRow(
-                  decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: DSColors.border)),
-                  ),
-                  children: [
-                    _buildTableCell(prop.name, isToken: true),
-                    _buildTableCell(prop.type, isType: true),
-                    _buildTableCell(prop.defaultValue),
-                    _buildTableCell(prop.description),
-                  ],
+            ),
+          _section('Botões'),
+          SafeButton(label: 'Continuar', onPressed: () {}),
+          const SizedBox(height: AppSpacing.s3),
+          SafeButton(
+            label: 'Continuar sem login',
+            tone: SafeButtonTone.secondary,
+            onPressed: () {},
+          ),
+          const SizedBox(height: AppSpacing.s3),
+          SafeButton(
+            label: 'Editar perfil',
+            tone: SafeButtonTone.ghost,
+            onPressed: () {},
+          ),
+          const SizedBox(height: AppSpacing.s3),
+          SafeButton(
+            label: 'Confirmar resposta',
+            disabled: true,
+            onPressed: () {},
+          ),
+          SafeButton(
+            label: 'Ver todas',
+            tone: SafeButtonTone.link,
+            onPressed: () {},
+          ),
+          _section('Botões redondos, Ouvir e chips'),
+          Wrap(
+            spacing: AppSpacing.s3,
+            runSpacing: AppSpacing.s3,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SafeIconButton(
+                icon: LucideIcons.chevronLeft,
+                semanticLabel: 'Voltar',
+                onPressed: () {},
+              ),
+              SafeIconButton(
+                icon: LucideIcons.bookmark,
+                semanticLabel: 'Salvar',
+                onImage: true,
+                onPressed: () {},
+              ),
+              ListenButton(
+                isSpeaking: _speaking,
+                onPressed: () => setState(() => _speaking = !_speaking),
+              ),
+              SafeChip(
+                label: 'Todas',
+                selected: _chip,
+                onTap: () => setState(() => _chip = !_chip),
+              ),
+              SafeChip(
+                label: 'WhatsApp',
+                selected: !_chip,
+                onTap: () => setState(() => _chip = !_chip),
+              ),
+            ],
+          ),
+          _section('Selos'),
+          const Wrap(
+            spacing: AppSpacing.s2,
+            runSpacing: AppSpacing.s2,
+            children: [
+              SafeBadge(
+                tone: SafeBadgeTone.warning,
+                child: Text('Em andamento'),
+              ),
+              SafeBadge(tone: SafeBadgeTone.success, child: Text('Concluído')),
+              SafeBadge(
+                tone: SafeBadgeTone.neutral,
+                child: Text('Não iniciado'),
+              ),
+              SafeBadge(child: Text('Golpe novo')),
+              SafeBadge(
+                tone: SafeBadgeTone.onImage,
+                child: Text('Sobre imagem'),
+              ),
+            ],
+          ),
+          _section('Campos'),
+          const SafeTextField(label: 'E-mail', placeholder: 'seu@email.com'),
+          const SizedBox(height: AppSpacing.s4),
+          const SafeTextField(
+            label: 'E-mail',
+            error: 'Digite um e-mail válido.',
+          ),
+          _section('Progresso e abas'),
+          const SafeProgressBar(value: 0.6),
+          const SizedBox(height: AppSpacing.s4),
+          const Row(
+            children: [
+              SafeProgressRing(value: 0.4, label: '40%'),
+              SizedBox(width: AppSpacing.s5),
+              Expanded(
+                child: SafeSegmentedProgress(
+                  completed: [true, true, false, false, false],
+                  current: 2,
                 ),
               ),
             ],
           ),
-        ),
-        const Divider(height: 60, color: DSColors.border),
-      ],
-    );
-  }
-
-  Widget _buildTableCell(
-    String text, {
-    bool isHeader = false,
-    bool isType = false,
-    bool isToken = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: isHeader || isToken ? FontWeight.bold : FontWeight.normal,
-          color: isHeader
-              ? DSColors.secondary
-              : (isType || isToken ? DSColors.primary : DSColors.foreground),
-          fontFamily: isType || isToken ? 'monospace' : null,
-        ),
-      ),
-    );
-  }
-
-  // --- AUXILIARES ---
-
-  Widget _buildColorCircle(String name, Color color, {bool hasBorder = false}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: hasBorder
-                ? Border.all(color: DSColors.border, width: 2)
-                : null,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
+          const SizedBox(height: AppSpacing.s4),
+          SafePillTabs(
+            tabs: const ['Oficiais', 'Meus contatos'],
+            selectedIndex: _tab,
+            onChanged: (index) => setState(() => _tab = index),
+          ),
+          _section('Cartões e avisos'),
+          const SafeCard(child: Text('Cartão padrão')),
+          const SizedBox(height: AppSpacing.s3),
+          const SafeCard(
+            elevation: SafeCardElevation.flat,
+            child: Text('Cartão plano (creme)'),
+          ),
+          const SizedBox(height: AppSpacing.s3),
+          const SafeOfflineBanner(),
+          const SizedBox(height: AppSpacing.s3),
+          const SafeSkeleton(
+            enabled: true,
+            child: SafeCard(child: Text('Cartão carregando')),
+          ),
+          _section('Ilustrações'),
+          Wrap(
+            spacing: AppSpacing.s3,
+            runSpacing: AppSpacing.s3,
+            children: [
+              for (final AppIllustration illustration in AppIllustration.values)
+                SizedBox(
+                  width: 150,
+                  child: SafeIllustration(illustration, height: 100),
+                ),
             ],
           ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          name,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-            color: DSColors.foreground,
+          _section('Estados'),
+          SizedBox(
+            height: 420,
+            child: SafeErrorState(
+              message: 'Não foi possível carregar.',
+              onRetry: () {},
+            ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _Prop {
-  final String name;
-  final String type;
-  final String defaultValue;
-  final String description;
-
-  const _Prop(this.name, this.type, this.defaultValue, this.description);
-}
-
-// =========================================================================
-// 🚀 COMPONENTES DO DESIGN SYSTEM (Prontos para reuso global)
-// =========================================================================
-
-class SafeCard extends StatelessWidget {
-  final Widget child;
-  const SafeCard({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(DSSpacing.md),
-      decoration: BoxDecoration(
-        color: DSColors.card,
-        borderRadius: DSSpacing.radius2xl,
-        border: Border.all(color: DSColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.01),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+          const SizedBox(
+            height: 360,
+            child: SafeEmptyState(message: 'Nada por aqui.'),
           ),
         ],
       ),
-      child: child,
     );
   }
-}
 
-class SafeButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-  final bool isPrimary;
-
-  const SafeButton({
-    super.key,
-    required this.label,
-    required this.onPressed,
-    this.isPrimary = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary ? DSColors.primary : DSColors.secondary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: DSSpacing.radius2xl),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
+  Widget _section(String title) => Padding(
+    padding: const EdgeInsets.only(top: AppSpacing.s7, bottom: AppSpacing.s3),
+    child: Text(
+      title.toUpperCase(),
+      style: AppTypography.caption.copyWith(
+        color: context.colors.primary,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.4,
       ),
-    );
-  }
+    ),
+  );
 }
 
-class SafeTextField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final bool isPassword;
-  final IconData? prefixIcon;
+class _Swatch extends StatelessWidget {
+  const _Swatch({required this.name, required this.color});
 
-  const SafeTextField({
-    super.key,
-    required this.label,
-    required this.controller,
-    this.isPassword = false,
-    this.prefixIcon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword,
-      cursorColor: DSColors.primary,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(
-          color: DSColors.mutedForeground,
-          fontSize: 14,
-        ),
-        floatingLabelStyle: const TextStyle(color: DSColors.primary),
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: DSColors.mutedForeground)
-            : null,
-        filled: true,
-        fillColor: DSColors.card,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 18,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: DSSpacing.radius2xl,
-          borderSide: const BorderSide(color: DSColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: DSSpacing.radius2xl,
-          borderSide: const BorderSide(color: DSColors.primary, width: 2),
-        ),
-      ),
-    );
-  }
-}
-
-class SafeBadge extends StatelessWidget {
-  final String label;
+  final String name;
   final Color color;
 
-  const SafeBadge({super.key, required this.label, required this.color});
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: DSSpacing.radiusFull,
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
+  Widget build(BuildContext context) => SizedBox(
+    width: 140,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 64,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: AppSpacing.radiusMd,
+            border: Border.all(color: context.colors.border),
+          ),
         ),
-      ),
-    );
-  }
+        const SizedBox(height: AppSpacing.s1),
+        Text(name, style: AppTypography.caption),
+      ],
+    ),
+  );
 }

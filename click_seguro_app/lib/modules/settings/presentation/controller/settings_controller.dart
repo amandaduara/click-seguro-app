@@ -52,6 +52,25 @@ class SettingsController extends ChangeNotifier {
   /// A chave de alertas fica parada até a resposta.
   bool get isSavingAlerts => _isSavingAlerts;
 
+  /// Valor que a pessoa escolheu para os alertas e não foi salvo (falha);
+  /// `null` = nada pendente. [retryAlerts] reenvia este valor.
+  bool? _pendingAlertsValue;
+
+  /// Salvar a escolha dos alertas falhou.
+  bool get alertsSaveFailed => _pendingAlertsValue != null;
+
+  bool _isRetryingAlerts = false;
+
+  /// [retryAlerts] em andamento: a tela mostra o carregamento no lugar do
+  /// botão de tentar de novo.
+  bool get isRetryingAlerts => _isRetryingAlerts;
+
+  /// A conta não carregou: a chave de alertas dá lugar ao tentar de novo.
+  bool get alertsLoadFailed => _account is AccountFailed;
+
+  /// A conta não carregou ou salvar os alertas falhou.
+  bool get _alertsNeedRetry => alertsSaveFailed || alertsLoadFailed;
+
   bool _loggingOut = false;
   bool _disposed = false;
 
@@ -67,8 +86,9 @@ class SettingsController extends ChangeNotifier {
   /// Também ao voltar da edição de dados: nome e foto podem ter mudado.
   Future<void> retryAccount() => _loadAccount();
 
-  /// Muda a chave na hora e salva; em falha, volta ao valor anterior e
-  /// devolve a falha (FR-016). Durante o envio, novos toques são ignorados.
+  /// Muda a chave na hora e salva; em falha, volta ao valor anterior, guarda
+  /// o valor pedido em [_pendingAlertsValue] e devolve a falha (FR-016).
+  /// Durante o envio, novos toques são ignorados.
   Future<Failure?> setReceiveAlerts(bool value) async {
     final AccountState current = _account;
     if (current is! AccountLoaded || _isSavingAlerts) return null;
@@ -80,8 +100,24 @@ class SettingsController extends ChangeNotifier {
     _isSavingAlerts = false;
     final Failure? failure = result.fold((failure) => failure, (_) => null);
     if (failure != null) _account = current;
+    _pendingAlertsValue = failure == null ? null : value;
     _notify();
     return failure;
+  }
+
+  /// Refaz o que falhou nos alertas: recarrega a conta, se ela não veio, e
+  /// reenvia o valor de [_pendingAlertsValue], se salvar falhou. Durante o
+  /// pedido, [isRetryingAlerts] fica ligado.
+  Future<void> retryAlerts() async {
+    if (_isRetryingAlerts || _isSavingAlerts || !_alertsNeedRetry) return;
+    _isRetryingAlerts = true;
+    _notify();
+    if (alertsLoadFailed) await _loadAccount();
+    final bool? pending = _pendingAlertsValue;
+    if (!_disposed && pending != null) await setReceiveAlerts(pending);
+    if (_disposed) return;
+    _isRetryingAlerts = false;
+    _notify();
   }
 
   Future<void> setLanguage(LanguageChoice choice) async {

@@ -54,17 +54,29 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final OnboardingPageContent currentContent =
         OnboardingPageContent.pages[controller.currentPage];
 
+    // Redesign 2.0 (Figma, quadro 02): "Pular" no topo, o slide,
+    // o indicador alinhado ao texto e o botão principal embaixo.
     return Scaffold(
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s4),
-                child: TextButton(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s5,
+                AppSpacing.s3,
+                AppSpacing.s5,
+                0,
+              ),
+              child: Align(
+                alignment: Alignment.centerRight,
+                // Botão de texto: o leitor de tela anuncia "botão", não um
+                // filtro (alvo de 48 dp do tamanho compacto).
+                child: SafeButton(
+                  label: AppStrings.onboardingSkip.tr(),
+                  size: SafeButtonSize.compact,
+                  tone: SafeButtonTone.link,
                   onPressed: () => _handleSkip(controller),
-                  child: Text(AppStrings.onboardingSkip.tr()),
                 ),
               ),
             ),
@@ -77,13 +89,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     .toList(),
               ),
             ),
-            OnboardingPageIndicator(
-              pageCount: OnboardingPageContent.pages.length,
-              currentPage: controller.currentPage,
-              controller: _pageController,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s6,
+                AppSpacing.s4,
+                AppSpacing.s6,
+                0,
+              ),
+              child: OnboardingPageIndicator(
+                pageCount: OnboardingPageContent.pages.length,
+                currentPage: controller.currentPage,
+                controller: _pageController,
+              ),
             ),
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.s6),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s6,
+                AppSpacing.s6,
+                AppSpacing.s6,
+                AppSpacing.s7,
+              ),
               // "Continuar" vira "Começar" esmaecendo; o fundo é o mesmo,
               // então só o rótulo parece trocar.
               child: AnimatedSwitcher(
@@ -93,7 +118,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 child: SafeButton(
                   key: ValueKey(currentContent.buttonLabelKey),
                   label: currentContent.buttonLabelKey.tr(),
-                  iconRight: const Icon(LucideIcons.chevronRight, size: 16),
+                  iconRight: const Icon(LucideIcons.arrowRight),
                   onPressed: () => _handleNext(controller),
                 ),
               ),

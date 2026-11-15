@@ -4,11 +4,12 @@ import 'dart:ui' as ui;
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/brand_mark.dart';
+import 'package:click_seguro_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const Rect _viewBox = Rect.fromLTWH(88, 440, 444, 492);
-const Color _red = Color(0xFFFE3152);
+const Color _red = AppColors.primary;
 
 /// Pinta a marca em escala 1 (um pixel por unidade do `viewBox`) e devolve o
 /// alfa de cada ponto pedido, em coordenadas do `viewBox`.

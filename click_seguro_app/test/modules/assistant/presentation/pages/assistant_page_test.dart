@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/connection_failure.dart';
@@ -11,6 +13,10 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/modules/assistant/domain/entities/ai_history_page_entity.dart';
+import 'package:click_seguro_app/core/errors/failure.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -19,6 +25,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../fakes/fake_image_storage_service.dart';
 import '../../../../fakes/fake_secure_storage_service.dart';
+import '../../../../fakes/fake_text_to_speech_service.dart';
 import '../../../../helpers/assistant_dependencies.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_assistant_repository.dart';
@@ -28,12 +35,28 @@ Finder _verificationScrollable() {
   return find.descendant(of: list, matching: find.byType(Scrollable)).first;
 }
 
-Future<void> _scrollToVerificationTarget(WidgetTester tester, Finder target) =>
-    tester.scrollUntilVisible(
-      target,
-      120,
-      scrollable: _verificationScrollable(),
-    );
+/// Rola a lista da aba Verificar pela posição, não por arrasto: com a fonte
+/// ampliada o campo de texto fica no meio da tela e consumiria o arrasto.
+Future<void> _scrollToVerificationTarget(
+  WidgetTester tester,
+  Finder target,
+) async {
+  final ScrollPosition position = tester
+      .state<ScrollableState>(_verificationScrollable())
+      .position;
+  if (target.evaluate().isEmpty) {
+    position.jumpTo(0);
+    await tester.pump();
+  }
+  while (target.evaluate().isEmpty &&
+      position.pixels < position.maxScrollExtent) {
+    position.jumpTo(math.min(position.pixels + 120, position.maxScrollExtent));
+    await tester.pump();
+  }
+  // No meio da tela: na borda, o botão pode ficar sob a barra inferior.
+  await Scrollable.ensureVisible(tester.element(target.first), alignment: 0.5);
+  await tester.pumpAndSettle();
+}
 
 Future<void> _tapAnalyzeButton(WidgetTester tester) async {
   final label = find.text('Analisar mensagem');
@@ -41,8 +64,6 @@ Future<void> _tapAnalyzeButton(WidgetTester tester) async {
   final button = find
       .ancestor(of: label, matching: find.byType(SafeButton))
       .first;
-  await tester.ensureVisible(button);
-  await tester.pumpAndSettle();
   await tester.tap(button);
 }
 
@@ -51,16 +72,22 @@ void main() {
   late FakeAssistantRepository repository;
   late FakeImageStorageService imageStorage;
   late GoRouter router;
+  late FakeTextToSpeechService tts;
+  late AccessibilityPreferencesNotifier preferences;
 
   setUp(() {
     session = UserSessionService(FakeSecureStorageService());
     GetIt.instance.registerSingleton<UserSessionService>(session);
     repository = FakeAssistantRepository();
     imageStorage = FakeImageStorageService();
+    tts = FakeTextToSpeechService();
+    preferences = AccessibilityPreferencesNotifier();
     registerAssistantDependencies(
       GetIt.instance,
       repository: repository,
       imageStorage: imageStorage,
+      tts: tts,
+      preferences: preferences,
     );
     router = GoRouter(
       initialLocation: '/assistant',
@@ -81,6 +108,66 @@ void main() {
 
   Future<void> open(WidgetTester tester) =>
       pumpLocalized(tester, router: router, theme: AppTheme.lightTheme);
+
+  // Leitura automática (validação da usuária, specs/024): como nas outras
+  // telas, com a opção ligada a resposta e o resultado são lidos.
+  group('leitura automática', () {
+    Future<void> signIn() => session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+
+    Future<void> sendHello(WidgetTester tester) async {
+      await tester.enterText(
+        find.byKey(const ValueKey('assistant-chat-input')),
+        'Como saber se um link é seguro?',
+      );
+      await tester.tap(find.byKey(const ValueKey('assistant-chat-send')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('ligada: lê a resposta do assistente, não a da pessoa', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await signIn();
+      await open(tester);
+
+      await sendHello(tester);
+
+      expect(tts.spoken.map((s) => s.text), ['Resposta segura']);
+    });
+
+    testWidgets('desligada: não lê', (tester) async {
+      await signIn();
+      await open(tester);
+
+      await sendHello(tester);
+
+      expect(tts.spoken, isEmpty);
+    });
+
+    testWidgets('ligada: lê o resultado da verificação', (tester) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await signIn();
+      await open(tester);
+      await tester.tap(find.text('Verificar'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('assistant-analysis-text')),
+        'Recebi esta mensagem suspeita hoje',
+      );
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+
+      await _tapAnalyzeButton(tester);
+      await tester.pumpAndSettle();
+
+      expect(tts.spoken, hasLength(1));
+      expect(tts.spoken.single.text, startsWith('Alto risco de golpe.'));
+    });
+  });
 
   testWidgets('visitante vê convite e não chama API nem seletor de imagem', (
     tester,
@@ -118,6 +205,85 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.chatCalls, hasLength(1));
     expect(find.text('Resposta segura'), findsOneWidget);
+  });
+
+  testWidgets('conversa vazia mostra aviso curto e duas sugestões; com '
+      'mensagens, só os balões e "Nova conversa" no topo', (tester) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    await open(tester);
+    const privacy =
+        'O que você enviar é analisado pelo serviço. A conversa some ao sair.';
+    const suggestions = [
+      'Como saber se um link é seguro?',
+      'Recebi um prêmio por mensagem. Pode ser golpe?',
+    ];
+    const newConversation = ValueKey('assistant-new-conversation');
+    expect(find.text(privacy), findsOneWidget);
+    for (final suggestion in suggestions) {
+      expect(find.text(suggestion), findsOneWidget);
+    }
+    expect(find.byKey(newConversation), findsNothing);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-chat-input')),
+      'Isso é golpe?',
+    );
+    await tester.tap(find.byKey(const ValueKey('assistant-chat-send')));
+    await tester.pumpAndSettle();
+    expect(find.text('Resposta segura'), findsOneWidget);
+    expect(find.text(privacy), findsNothing);
+    expect(find.text(suggestions.first), findsNothing);
+
+    final handle = tester.ensureSemantics();
+    final Size size = tester.getSize(find.byKey(newConversation));
+    expect(size.width, greaterThanOrEqualTo(48));
+    expect(size.height, greaterThanOrEqualTo(48));
+    expect(
+      tester.getSemantics(find.byKey(newConversation)),
+      isSemantics(label: 'Nova conversa', isButton: true),
+    );
+    handle.dispose();
+
+    await tester.tap(find.byKey(newConversation));
+    await tester.pumpAndSettle();
+    expect(find.text('Começar uma nova conversa?'), findsOneWidget);
+    await tester.tap(find.text('Começar de novo'));
+    await tester.pumpAndSettle();
+    expect(find.text('Resposta segura'), findsNothing);
+    expect(find.text(suggestions.first), findsOneWidget);
+    expect(find.byKey(newConversation), findsNothing);
+  });
+
+  testWidgets('contador de caracteres só aparece perto do limite', (
+    tester,
+  ) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    await open(tester);
+    final chatInput = find.byKey(const ValueKey('assistant-chat-input'));
+    await tester.enterText(chatInput, 'a' * 50);
+    await tester.pump();
+    expect(find.textContaining('caracteres'), findsNothing);
+    await tester.enterText(chatInput, 'a' * 800);
+    await tester.pump();
+    expect(find.text('800/1000 caracteres'), findsOneWidget);
+
+    await tester.tap(find.text('Verificar'));
+    await tester.pumpAndSettle();
+    final analysisInput = find.byKey(const ValueKey('assistant-analysis-text'));
+    await tester.enterText(analysisInput, 'a' * 50);
+    await tester.pump();
+    expect(find.textContaining('caracteres'), findsNothing);
+    await tester.enterText(analysisInput, 'a' * 4000);
+    await tester.pump();
+    expect(find.text('4000/5000 caracteres'), findsOneWidget);
   });
 
   testWidgets('erro do chat permite tentar de novo sem duplicar a mensagem', (
@@ -231,6 +397,110 @@ void main() {
     expect(tester.binding.hasScheduledFrame, isFalse);
   });
 
+  testWidgets('topo: voltar e histórico redondos, com rótulo e 48 dp; '
+      'abas só Conversar e Verificar', (tester) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    await open(tester);
+    final handle = tester.ensureSemantics();
+    for (final key in ['assistant-back', 'assistant-history-button']) {
+      final Size size = tester.getSize(find.byKey(ValueKey(key)));
+      expect(size.width, greaterThanOrEqualTo(48), reason: key);
+      expect(size.height, greaterThanOrEqualTo(48), reason: key);
+    }
+    expect(
+      tester.getSemantics(
+        find.byKey(const ValueKey('assistant-history-button')),
+      ),
+      isSemantics(label: 'Histórico', isButton: true),
+    );
+    expect(find.text('Conversar'), findsOneWidget);
+    expect(find.text('Verificar'), findsOneWidget);
+    expect(find.text('Histórico'), findsNothing);
+    handle.dispose();
+  });
+
+  testWidgets('enviar: botão redondo coral com rótulo, 48 dp e desativado '
+      'enquanto responde', (tester) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    final gate = Completer<void>();
+    repository.chatGate = gate;
+    await open(tester);
+    final handle = tester.ensureSemantics();
+    final send = find.byKey(const ValueKey('assistant-chat-send'));
+    final Size size = tester.getSize(send);
+    expect(size.width, greaterThanOrEqualTo(48));
+    expect(size.height, greaterThanOrEqualTo(48));
+    expect(
+      tester.getSemantics(send),
+      matchesSemantics(
+        label: 'Enviar',
+        isButton: true,
+        hasEnabledState: true,
+        isEnabled: true,
+        hasTapAction: true,
+      ),
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('assistant-chat-input')),
+      'É golpe?',
+    );
+    await tester.tap(send);
+    await tester.pump();
+    expect(
+      tester.getSemantics(send),
+      matchesSemantics(label: 'Enviar', isButton: true, hasEnabledState: true),
+    );
+    gate.complete();
+    await tester.pumpAndSettle();
+    handle.dispose();
+  });
+
+  testWidgets('câmera do rodapé leva à verificação de imagem e abre a câmera', (
+    tester,
+  ) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    imageStorage.nextResult = const PickedImage('/tmp/assistant-camera.png');
+    await open(tester);
+    await tester.tap(find.byKey(const ValueKey('assistant-chat-camera')));
+    await tester.pumpAndSettle();
+    expect(imageStorage.pickedSources, [PhotoSource.camera]);
+    expect(find.text('Remover imagem'), findsOneWidget);
+    expect(repository.imageCalls, isEmpty);
+  });
+
+  testWidgets('histórico carregando mostra os blocos em lista', (tester) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    final gate = Completer<Either<Failure, AiHistoryPageEntity>>();
+    repository.historyGates.add(gate);
+    await open(tester);
+    await tester.tap(find.byKey(const ValueKey('assistant-history-button')));
+    await tester.pump();
+    final loading = tester.widget<SafeLoadingState>(
+      find.byType(SafeLoadingState),
+    );
+    expect(loading.layout, SafeLoadingLayout.list);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    gate.complete(Right(historyPage()));
+    await tester.pumpAndSettle();
+    expect(find.text('Seu histórico aparecerá aqui.'), findsOneWidget);
+  });
+
   testWidgets('verificação de texto só chama API após toque em analisar', (
     tester,
   ) async {
@@ -267,7 +537,7 @@ void main() {
     );
     await open(tester);
     expect(repository.historyCalls, isEmpty);
-    await tester.tap(find.text('Histórico'));
+    await tester.tap(find.byKey(const ValueKey('assistant-history-button')));
     await tester.pumpAndSettle();
     expect(repository.historyCalls, hasLength(1));
     await tester.tap(find.text('Conversas'));
@@ -288,7 +558,7 @@ void main() {
       ..add(const Left(ConnectionFailure()))
       ..add(Right(historyPage()));
     await open(tester);
-    await tester.tap(find.text('Histórico'));
+    await tester.tap(find.byKey(const ValueKey('assistant-history-button')));
     await tester.pumpAndSettle();
     expect(
       find.text('Sem conexão com a internet. Verifique sua rede.'),
@@ -321,6 +591,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.imageCalls, hasLength(1));
     expect(imageStorage.deletedPaths, ['/tmp/assistant-test.png']);
+    // O resultado fica abaixo do botão, que ficou mais alto: rola até ele.
+    await _scrollToVerificationTarget(tester, find.text('Phishing'));
     expect(find.text('Phishing'), findsOneWidget);
   });
 
@@ -359,8 +631,11 @@ void main() {
       );
       expect(tester.takeException(), isNull);
       for (final tab in ['Verificar', 'Histórico', 'Conversar']) {
-        await tester.ensureVisible(find.text(tab));
-        await tester.tap(find.text(tab));
+        final Finder target = tab == 'Histórico'
+            ? find.byKey(const ValueKey('assistant-history-button'))
+            : find.text(tab);
+        await tester.ensureVisible(target);
+        await tester.tap(target);
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull, reason: tab);
         if (tab == 'Verificar') {

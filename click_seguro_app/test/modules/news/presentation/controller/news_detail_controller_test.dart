@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/like_result_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_detail_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/failures/news_failures.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/news_detail_controller.dart';
@@ -12,6 +13,22 @@ import 'package:fpdart/fpdart.dart';
 
 import '../../fakes/fake_news_repository.dart';
 import '../../fakes/news_detail_controller_factory.dart';
+
+/// Usecase que lança fora do `Either` (erro inesperado), para conferir que a
+/// trava de toque duplo sempre libera.
+class _ThrowingNewsRepository extends FakeNewsRepository {
+  @override
+  Future<Either<Failure, bool>> toggleSave(String newsId) async {
+    saveCalls.add(newsId);
+    throw StateError('inesperado');
+  }
+
+  @override
+  Future<Either<Failure, LikeResultEntity>> toggleLike(String newsId) async {
+    likeCalls.add(newsId);
+    throw StateError('inesperado');
+  }
+}
 
 void main() {
   late FakeNewsRepository repository;
@@ -341,6 +358,43 @@ void main() {
       expect(messages.single.failureKey, const ConnectionFailure().message);
     });
 
+    test('falha com o pedido em andamento: isSaving fica ligado até a '
+        'resposta e depois volta o marcador', () async {
+      await loadWith();
+      repository
+        ..saveGate = Completer<void>()
+        ..saveResults.add(const Left(ConnectionFailure()));
+
+      final pending = controller.toggleSave();
+      expect(controller.isSaving, isTrue);
+
+      repository.saveGate!.complete();
+      await pending;
+
+      expect(controller.isSaving, isFalse);
+      expect(controller.detail?.isSaved, isFalse);
+    });
+
+    test('erro inesperado no usecase: libera a trava, volta o marcador e '
+        'avisa', () async {
+      final throwing = _ThrowingNewsRepository();
+      final other = buildNewsDetailController(throwing, session);
+      addTearDown(other.dispose);
+      await other.load();
+      final List<NewsDetailMessage> received = [];
+      other.messages.listen(received.add);
+
+      await other.toggleSave();
+      await pumpEventQueue();
+
+      expect(other.isSaving, isFalse);
+      expect(other.detail?.isSaved, isFalse);
+      expect(received.single.type, NewsDetailMessageType.saveFailed);
+
+      await other.toggleSave();
+      expect(throwing.saveCalls, ['n1', 'n1']);
+    });
+
     test('404 volta o marcador e vira notFound', () async {
       await loadWith(isSaved: true);
       repository.saveResults.add(const Left(NewsNotFoundFailure()));
@@ -387,6 +441,157 @@ void main() {
       final pending = other.toggleSave();
       other.dispose();
       repository.saveGate!.complete();
+
+      await expectLater(pending, completes);
+    });
+  });
+
+  group('curtir', () {
+    late List<NewsDetailMessage> messages;
+
+    Future<void> loadWith({bool isLiked = false, int likesCount = 2}) async {
+      repository.detailResults.add(
+        Right(
+          NewsDetailResult(
+            detail: newsDetail('n1', isLiked: isLiked, likesCount: likesCount),
+            isFromCache: false,
+          ),
+        ),
+      );
+      await controller.load();
+      messages = [];
+      controller.messages.listen(messages.add);
+    }
+
+    test(
+      'na hora curte (+1) e marca isLiking; depois mostra o do servidor',
+      () async {
+        await loadWith();
+        repository.likeGate = Completer<void>();
+
+        final pending = controller.toggleLike();
+
+        expect(controller.detail?.isLiked, isTrue);
+        expect(controller.detail?.likesCount, 3);
+        expect(controller.isLiking, isTrue);
+        repository.likeGate!.complete();
+        await pending;
+        await pumpEventQueue();
+
+        // O fake devolve {liked: true, likesCount: 4}.
+        expect(controller.detail?.isLiked, isTrue);
+        expect(controller.detail?.likesCount, 4);
+        expect(controller.isLiking, isFalse);
+        expect(messages, isEmpty);
+        expect(repository.likeCalls, ['n1']);
+      },
+    );
+
+    test('descurtir tira 1 na hora, sem ficar negativo', () async {
+      await loadWith(isLiked: true, likesCount: 0);
+      repository.likeGate = Completer<void>();
+
+      final pending = controller.toggleLike();
+
+      expect(controller.detail?.isLiked, isFalse);
+      expect(controller.detail?.likesCount, 0);
+      repository.likeGate!.complete();
+      await pending;
+    });
+
+    test('segundo toque durante o pedido é ignorado', () async {
+      await loadWith();
+      repository.likeGate = Completer<void>();
+
+      final first = controller.toggleLike();
+      await controller.toggleLike();
+      repository.likeGate!.complete();
+      await first;
+
+      expect(repository.likeCalls, ['n1']);
+    });
+
+    test('falha volta ao estado anterior e avisa com a falha', () async {
+      await loadWith();
+      repository.likeResults.add(const Left(ConnectionFailure()));
+
+      await controller.toggleLike();
+      await pumpEventQueue();
+
+      expect(controller.detail?.isLiked, isFalse);
+      expect(controller.detail?.likesCount, 2);
+      expect(controller.isLiking, isFalse);
+      expect(messages.single.type, NewsDetailMessageType.likeFailed);
+      expect(messages.single.failureKey, const ConnectionFailure().message);
+    });
+
+    test('falha com o pedido em andamento: isLiking fica ligado até a '
+        'resposta e depois volta a contagem', () async {
+      await loadWith();
+      repository
+        ..likeGate = Completer<void>()
+        ..likeResults.add(const Left(ConnectionFailure()));
+
+      final pending = controller.toggleLike();
+      expect(controller.isLiking, isTrue);
+      expect(controller.detail?.likesCount, 3);
+
+      repository.likeGate!.complete();
+      await pending;
+
+      expect(controller.isLiking, isFalse);
+      expect(controller.detail?.isLiked, isFalse);
+      expect(controller.detail?.likesCount, 2);
+    });
+
+    test(
+      'erro inesperado no usecase: libera a trava e volta a contagem',
+      () async {
+        final throwing = _ThrowingNewsRepository();
+        final other = buildNewsDetailController(throwing, session);
+        addTearDown(other.dispose);
+        await other.load();
+        final List<NewsDetailMessage> received = [];
+        other.messages.listen(received.add);
+
+        await other.toggleLike();
+        await pumpEventQueue();
+
+        expect(other.isLiking, isFalse);
+        expect(other.detail?.isLiked, isFalse);
+        expect(other.detail?.likesCount, 2);
+        expect(received.single.type, NewsDetailMessageType.likeFailed);
+
+        await other.toggleLike();
+        expect(throwing.likeCalls, ['n1', 'n1']);
+      },
+    );
+
+    test('404 vira notFound', () async {
+      await loadWith();
+      repository.likeResults.add(const Left(NewsNotFoundFailure()));
+
+      await controller.toggleLike();
+      await pumpEventQueue();
+
+      expect(controller.status, NewsDetailStatus.notFound);
+      expect(messages.single.type, NewsDetailMessageType.notFound);
+    });
+
+    test('sem detalhe carregado o toque é ignorado', () async {
+      await controller.toggleLike();
+
+      expect(repository.likeCalls, isEmpty);
+    });
+
+    test('dispose durante o pedido não dispara erro', () async {
+      final other = buildNewsDetailController(repository, session);
+      await other.load();
+      repository.likeGate = Completer<void>();
+
+      final pending = other.toggleLike();
+      other.dispose();
+      repository.likeGate!.complete();
 
       await expectLater(pending, completes);
     });

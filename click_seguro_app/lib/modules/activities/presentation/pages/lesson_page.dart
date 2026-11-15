@@ -10,7 +10,6 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
@@ -29,10 +28,10 @@ import 'package:click_seguro_app/modules/common/presentation/controller/read_alo
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:animations/animations.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Perguntas de um módulo, uma por vez (B2, specs/017-perguntas-atividades).
@@ -289,22 +288,14 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       ),
       body: SafeArea(
         child: switch (controller.status) {
-          // O servidor gratuito leva até ~40 s para acordar.
-          LessonStatus.loading => Column(
-            children: [
-              SlowRequestNotice(
-                active: true,
-                message: AppStrings.activitiesSlow.tr(),
-              ),
-              const Expanded(child: SafeLoadingState()),
-            ],
+          LessonStatus.loading => const SafeLoadingState(
+            layout: SafeLoadingLayout.detail,
           ),
           LessonStatus.error => SafeErrorState(
             message: AppStrings.activitiesErrorTitle.tr(),
             onRetry: () => controller.load(widget.moduleId),
           ),
           LessonStatus.empty => SafeEmptyState(
-            icon: LucideIcons.graduationCap,
             message: AppStrings.activitiesModuleUnavailable.tr(),
           ),
           LessonStatus.loaded when lesson != null => Column(
@@ -332,11 +323,6 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
                     listen: _listenButton(lesson.spokenText),
                   ),
                 ),
-              ),
-              // O envio também pode esperar o servidor acordar (FR-014).
-              SlowRequestNotice(
-                active: controller.isSubmitting,
-                message: AppStrings.activitiesSlow.tr(),
               ),
               ConfirmAnswerFooter(controller: controller, onConfirm: _confirm),
             ],
@@ -380,7 +366,6 @@ class _LessonBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
-    final TextTheme textTheme = Theme.of(context).textTheme;
     final String? image = lesson.imageUrl;
     return ListView(
       // Cada pergunta que aparece começa no topo, com o enunciado.
@@ -399,7 +384,7 @@ class _LessonBody extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: maxImageHeight),
               child: ClipRRect(
-                borderRadius: AppSpacing.radius2xl,
+                borderRadius: AppSpacing.radiusLg,
                 // O espaço depois da imagem só existe com ela (FR-013).
                 child: SafeNetworkImage(
                   url: image,
@@ -414,14 +399,13 @@ class _LessonBody extends StatelessWidget {
           header: true,
           child: Text(
             lesson.question,
-            style: textTheme.titleMedium?.copyWith(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: colors.secondary,
+            style: AppTypography.title2.copyWith(
+              height: 1.3,
+              color: colors.textForeground,
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.s4),
+        const SizedBox(height: AppSpacing.s5),
         for (final (index, option) in lesson.options.indexed)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s3),

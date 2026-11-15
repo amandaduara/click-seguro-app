@@ -291,14 +291,14 @@ void main() {
       expect(painter.colors.background, AppPalette.highContrast.background);
       expect(
         tester.widget<Text>(find.text('Click Seguro')).style?.color,
-        AppPalette.highContrast.secondary,
+        AppPalette.highContrast.textForeground,
       );
       expect(
         tester
             .widget<Text>(find.text('Sua segurança em primeiro lugar'))
             .style
             ?.color,
-        AppPalette.highContrast.textMutedForeground,
+        AppPalette.highContrast.textBody,
       );
 
       validateSession.completer!.complete(UserSessionStatus.authenticated);

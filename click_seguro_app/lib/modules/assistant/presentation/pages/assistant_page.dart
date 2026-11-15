@@ -2,23 +2,30 @@ import 'dart:async';
 
 import 'dart:io';
 
-import 'package:click_seguro_app/core/constants/app_identity.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
-import 'package:click_seguro_app/core/widgets/safe_card.dart';
+import 'package:click_seguro_app/core/widgets/safe_chip.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
+import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_entity.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_chat_turn.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/assistant_constants.dart';
 import 'package:click_seguro_app/modules/assistant/domain/failures/assistant_failures.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/controller/assistant_controller.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/controller/assistant_controller_status.dart';
+import 'package:click_seguro_app/modules/assistant/presentation/extensions/ai_analysis_presentation_extension.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_analysis_card.dart';
+import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_chat_bubble.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_history_tab.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_typing_bubble.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/widgets/chat_message_entrance.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
@@ -61,13 +68,15 @@ class _AssistantGuestView extends StatelessWidget {
       const _AssistantHeader(),
       Expanded(
         child: SafeEmptyState(
-          icon: LucideIcons.shieldCheck,
           message: AppStrings.assistantGuestTitle.tr(),
           actionLabel: AppStrings.assistantGuestAction.tr(),
           onAction: () => requireAccount(context),
         ),
       ),
-      const _PrivacyNote(),
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+        child: _PrivacyNote(),
+      ),
     ],
   );
 }
@@ -88,22 +97,75 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
   /// Quantas mensagens já estavam na tela: só as seguintes entram animadas.
   int? _shownMessages;
 
+  /// Leitura em voz alta das respostas, como nas outras telas (validação da
+  /// usuária, specs/024): com a leitura automática ligada na
+  /// Acessibilidade, a resposta nova e o resultado da verificação são lidos.
+  final ReadAloudController _readAloud = GetIt.instance<ReadAloudController>();
+  Locale? _locale;
+
+  /// Mensagens da conversa já vistas: só as novas do assistente são lidas.
+  int _readMessages = 0;
+
+  /// O resultado já lido (cada análise nova é lida uma vez).
+  AiAnalysisEntity? _readAnalysis;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    final Locale locale = context.locale;
+    if (locale != _locale) {
+      _locale = locale;
+      unawaited(_readAloud.prepare(locale));
+    }
     final next = context.read<AssistantController>();
     if (identical(next, _controller)) return;
-    _controller?.removeListener(_scrollChatToEnd);
-    _controller = next..addListener(_scrollChatToEnd);
+    _controller
+      ?..removeListener(_scrollChatToEnd)
+      ..removeListener(_autoRead);
+    _controller = next
+      ..addListener(_scrollChatToEnd)
+      ..addListener(_autoRead);
+    _readMessages = next.chatMessages.length;
+    _readAnalysis = next.analysis;
   }
 
   @override
   void dispose() {
-    _controller?.removeListener(_scrollChatToEnd);
+    _controller
+      ?..removeListener(_scrollChatToEnd)
+      ..removeListener(_autoRead);
+    _readAloud.dispose();
     _chatInput.dispose();
     _analysisInput.dispose();
     _chatScroll.dispose();
     super.dispose();
+  }
+
+  /// Lê o que chegou de novo: a resposta do assistente ou o resultado.
+  void _autoRead() {
+    final AssistantController? controller = _controller;
+    if (!mounted || controller == null) return;
+    final List<AiChatTurn> messages = controller.chatMessages;
+    final bool newReply =
+        messages.length > _readMessages &&
+        messages.last.role == AiChatRole.model;
+    _readMessages = messages.length;
+    final AiAnalysisEntity? analysis = controller.analysis;
+    final bool newAnalysis =
+        analysis != null && !identical(analysis, _readAnalysis);
+    _readAnalysis = analysis;
+    if (!newReply && !newAnalysis) return;
+    if (!_readAloud.isAvailable ||
+        !GetIt.instance<AccessibilityPreferencesNotifier>()
+            .value
+            .autoReadAloud) {
+      return;
+    }
+    unawaited(
+      _readAloud.speak(
+        newAnalysis ? analysis.spokenText : messages.last.content,
+      ),
+    );
   }
 
   void _scrollChatToEnd() {
@@ -123,7 +185,14 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
     final AssistantController controller = context.watch<AssistantController>();
     return Column(
       children: [
-        const _AssistantHeader(),
+        _AssistantHeader(
+          onHistory: () => controller.activateTab(AssistantTab.history),
+          // "Nova conversa" só faz sentido com mensagens na tela.
+          showNewConversation:
+              controller.activeTab == AssistantTab.chat &&
+              controller.chatMessages.isNotEmpty,
+          onNewConversation: controller.isSendingChat ? null : _newConversation,
+        ),
         _AssistantTabs(
           activeTab: controller.activeTab,
           onSelect: controller.activateTab,
@@ -148,71 +217,37 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
         controller: _chatScroll,
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.s5,
-          AppSpacing.s2,
+          AppSpacing.s5,
           AppSpacing.s5,
           AppSpacing.s3,
         ),
         children: [
-          SafeCard(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _AssistantShield(size: 44),
-                const SizedBox(width: AppSpacing.s3),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppStrings.assistantGreeting.tr(),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: context.colors.secondary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.s1),
-                      Text(
-                        AppStrings.assistantChatIntro.tr(),
-                        style: TextStyle(
-                          color: context.colors.textMutedForeground,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          // Boas-vindas como o primeiro balão do assistente (redesign 2.0).
+          AssistantChatBubble(
+            text:
+                '${AppStrings.assistantGreeting.tr()} '
+                '${AppStrings.assistantChatIntro.tr()}',
+            fromUser: false,
           ),
-          const _PrivacyNote(),
+          // Conversa vazia: um aviso curto e duas sugestões. Depois da
+          // primeira mensagem, só os balões.
           if (controller.chatMessages.isEmpty) ...[
             const SizedBox(height: AppSpacing.s3),
-            Text(
-              AppStrings.assistantHeaderDescription.tr(),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: context.colors.secondary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s2),
+            const _PrivacyNote(),
+            const SizedBox(height: AppSpacing.s4),
             Wrap(
               spacing: AppSpacing.s2,
               runSpacing: AppSpacing.s2,
               children: [
-                _SuggestionChip(
-                  label: AppStrings.assistantSuggestionLink.tr(),
-                  onTap: () =>
-                      _fillSuggestion(AppStrings.assistantSuggestionLink.tr()),
-                ),
-                _SuggestionChip(
-                  label: AppStrings.assistantSuggestionPrize.tr(),
-                  onTap: () =>
-                      _fillSuggestion(AppStrings.assistantSuggestionPrize.tr()),
-                ),
-                _SuggestionChip(
-                  label: AppStrings.assistantSuggestionBank.tr(),
-                  onTap: () =>
-                      _fillSuggestion(AppStrings.assistantSuggestionBank.tr()),
-                ),
+                for (final suggestion in [
+                  AppStrings.assistantSuggestionLink,
+                  AppStrings.assistantSuggestionPrize,
+                ])
+                  SafeChip(
+                    label: suggestion.tr(),
+                    selected: false,
+                    onTap: () => _fillSuggestion(suggestion.tr()),
+                  ),
               ],
             ),
           ],
@@ -221,8 +256,11 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
               key: ObjectKey(message),
               animate: index >= animateFrom,
               child: Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.s3),
-                child: _ChatBubble(message: message),
+                padding: const EdgeInsets.only(top: AppSpacing.s4),
+                child: AssistantChatBubble(
+                  text: message.content,
+                  fromUser: message.role == AiChatRole.user,
+                ),
               ),
             ),
           if (controller.isSendingChat)
@@ -230,34 +268,20 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
               key: ValueKey('assistant-typing'),
               animate: true,
               child: Padding(
-                padding: EdgeInsets.only(top: AppSpacing.s3),
+                padding: EdgeInsets.only(top: AppSpacing.s4),
                 child: AssistantTypingBubble(),
               ),
             ),
           if (controller.chatFailure != null) ...[
-            const SizedBox(height: AppSpacing.s3),
-            SafeCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    controller.chatFailure!.message.tr(),
-                    style: TextStyle(color: context.colors.destructive),
-                  ),
-                  if (controller.chatFailure
-                      is! AssistantInvalidInputFailure) ...[
-                    const SizedBox(height: AppSpacing.s2),
-                    SafeButton(
-                      label: AppStrings.assistantChatRetry.tr(),
-                      size: SafeButtonSize.compact,
-                      icon: const Icon(LucideIcons.rotateCcw),
-                      onPressed: controller.isSendingChat
-                          ? null
-                          : controller.retryChatMessage,
-                    ),
-                  ],
-                ],
-              ),
+            const SizedBox(height: AppSpacing.s4),
+            _FailureMessage(
+              message: controller.chatFailure!.message.tr(),
+              retryLabel: AppStrings.assistantChatRetry.tr(),
+              showRetry:
+                  controller.chatFailure is! AssistantInvalidInputFailure,
+              onRetry: controller.isSendingChat
+                  ? null
+                  : controller.retryChatMessage,
             ),
           ],
         ],
@@ -266,7 +290,7 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
         controller: controller,
         textController: _chatInput,
         onSubmit: _submitChat,
-        onNewConversation: _newConversation,
+        onCamera: _openCamera,
       );
       final compact =
           constraints.maxHeight < 480 ||
@@ -311,13 +335,18 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
     }
   }
 
+  /// Câmera do rodapé (redesign 2.0): leva à verificação de imagem, que é
+  /// onde a foto é analisada, e já abre a câmera.
+  Future<void> _openCamera() async {
+    final AssistantController controller = context.read<AssistantController>();
+    controller.activateTab(AssistantTab.verify);
+    await controller.setAnalysisMode(AssistantAnalysisMode.image);
+    await controller.pickImage(PhotoSource.camera);
+  }
+
+  /// Ícone do topo, que só aparece quando já há mensagens na conversa.
   Future<void> _newConversation() async {
     final AssistantController controller = context.read<AssistantController>();
-    if (controller.chatMessages.isEmpty) {
-      controller.startNewConversation();
-      _chatInput.clear();
-      return;
-    }
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -360,86 +389,73 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
 }
 
 class _AssistantHeader extends StatelessWidget {
-  const _AssistantHeader();
+  const _AssistantHeader({
+    this.onHistory,
+    this.showNewConversation = false,
+    this.onNewConversation,
+  });
 
+  /// Abre o histórico; sem ele (visitante), o botão de relógio não aparece.
+  final VoidCallback? onHistory;
+
+  /// Mostra o ícone de "Nova conversa"; [onNewConversation] nulo o desativa.
+  final bool showNewConversation;
+  final VoidCallback? onNewConversation;
+
+  // Topo do redesign 2.0: voltar redondo, título e o histórico à direita.
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(
-      AppSpacing.s4,
+      AppSpacing.s5,
       AppSpacing.s3,
-      AppSpacing.s4,
-      AppSpacing.s2,
+      AppSpacing.s5,
+      AppSpacing.s3,
     ),
     child: Row(
       children: [
-        Semantics(
-          button: true,
-          label: MaterialLocalizations.of(context).backButtonTooltip,
-          child: Material(
-            color: context.colors.card,
-            shape: CircleBorder(side: BorderSide(color: context.colors.border)),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () =>
-                  context.canPop() ? context.pop() : context.go('/home'),
-              child: const SizedBox.square(
-                dimension: 48,
-                child: Icon(LucideIcons.arrowLeft),
+        SafeIconButton(
+          key: const ValueKey('assistant-back'),
+          icon: LucideIcons.chevronLeft,
+          semanticLabel: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/home'),
+        ),
+        const SizedBox(width: AppSpacing.s4),
+        Expanded(
+          child: Semantics(
+            header: true,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                AppStrings.assistantTitle.tr(),
+                maxLines: 1,
+                style: AppTypography.title1.copyWith(
+                  color: context.colors.textForeground,
+                ),
               ),
             ),
           ),
         ),
-        const SizedBox(width: AppSpacing.s3),
-        const _AssistantShield(size: 48),
-        const SizedBox(width: AppSpacing.s3),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppIdentity.name,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: context.colors.primary,
-                ),
-              ),
-              Text(
-                AppStrings.assistantTitle.tr(),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: context.colors.secondary,
-                ),
-              ),
-              Text(
-                AppStrings.assistantSubtitle.tr(),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: context.colors.textMutedForeground,
-                ),
-              ),
-            ],
+        if (showNewConversation) ...[
+          const SizedBox(width: AppSpacing.s3),
+          SafeIconButton(
+            key: const ValueKey('assistant-new-conversation'),
+            icon: LucideIcons.messageSquarePlus,
+            semanticLabel: AppStrings.assistantNewConversation.tr(),
+            onPressed: onNewConversation,
           ),
-        ),
+        ],
+        if (onHistory case final VoidCallback open) ...[
+          const SizedBox(width: AppSpacing.s3),
+          SafeIconButton(
+            key: const ValueKey('assistant-history-button'),
+            icon: LucideIcons.history,
+            semanticLabel: AppStrings.assistantTabHistory.tr(),
+            onPressed: open,
+          ),
+        ],
       ],
-    ),
-  );
-}
-
-class _AssistantShield extends StatelessWidget {
-  const _AssistantShield({required this.size});
-  final double size;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      color: context.colors.primary.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Icon(
-      LucideIcons.shieldCheck,
-      size: size * 0.5,
-      color: context.colors.primary,
     ),
   );
 }
@@ -449,155 +465,22 @@ class _AssistantTabs extends StatelessWidget {
   final AssistantTab activeTab;
   final ValueChanged<AssistantTab> onSelect;
 
+  /// O histórico saiu das abas e foi para o botão do topo (redesign 2.0);
+  /// enquanto ele está aberto, nenhuma das duas abas fica marcada.
+  static const List<(AssistantTab, String)> _tabs = [
+    (AssistantTab.chat, AppStrings.assistantTabChat),
+    (AssistantTab.verify, AppStrings.assistantTabVerify),
+  ];
+
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.s5,
-      vertical: AppSpacing.s2,
-    ),
-    child: Row(
-      children: [
-        for (final (tab, label, icon) in [
-          (
-            AssistantTab.chat,
-            AppStrings.assistantTabChat,
-            LucideIcons.messageCircle,
-          ),
-          (
-            AssistantTab.verify,
-            AppStrings.assistantTabVerify,
-            LucideIcons.scanSearch,
-          ),
-          (
-            AssistantTab.history,
-            AppStrings.assistantTabHistory,
-            LucideIcons.clock3,
-          ),
-        ]) ...[
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: ChoiceChip(
-              avatar: Icon(
-                icon,
-                size: 18,
-                color: activeTab == tab
-                    ? context.colors.textPrimaryForeground
-                    : context.colors.textMutedForeground,
-              ),
-              label: Text(label.tr()),
-              selected: activeTab == tab,
-              onSelected: (_) => onSelect(tab),
-              labelStyle: TextStyle(
-                color: activeTab == tab
-                    ? context.colors.textPrimaryForeground
-                    : context.colors.textMutedForeground,
-                fontWeight: FontWeight.w700,
-              ),
-              selectedColor: context.colors.secondary,
-              backgroundColor: context.colors.card,
-              side: BorderSide(color: context.colors.border),
-              showCheckmark: false,
-            ),
-          ),
-          if (tab != AssistantTab.history) const SizedBox(width: AppSpacing.s2),
-        ],
-      ],
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+    child: SafePillTabs(
+      tabs: [for (final (_, label) in _tabs) label.tr()],
+      selectedIndex: _tabs.indexWhere((t) => t.$1 == activeTab),
+      onChanged: (index) => onSelect(_tabs[index].$1),
     ),
   );
-}
-
-class _SuggestionChip extends StatelessWidget {
-  const _SuggestionChip({required this.label, required this.onTap});
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => ConstrainedBox(
-    constraints: BoxConstraints(
-      maxWidth: MediaQuery.sizeOf(context).width - AppSpacing.s5 * 2,
-      minHeight: 48,
-    ),
-    child: Material(
-      color: context.colors.card,
-      shape: StadiumBorder(side: BorderSide(color: context.colors.border)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const StadiumBorder(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s4,
-            vertical: AppSpacing.s3,
-          ),
-          child: Text(
-            label,
-            softWrap: true,
-            style: TextStyle(color: context.colors.textForeground),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-class _ChatBubble extends StatelessWidget {
-  const _ChatBubble({required this.message});
-  final AiChatTurn message;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool user = message.role == AiChatRole.user;
-    return Align(
-      alignment: user ? Alignment.centerRight : Alignment.centerLeft,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.86,
-        ),
-        child: user
-            ? DecoratedBox(
-                decoration: BoxDecoration(
-                  color: context.colors.primary,
-                  borderRadius: AppSpacing.radius2xl,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.s4),
-                  child: SelectableText(
-                    message.content,
-                    style: TextStyle(
-                      color: context.colors.textPrimaryForeground,
-                    ),
-                  ),
-                ),
-              )
-            : SafeCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const _AssistantShield(size: 32),
-                        const SizedBox(width: AppSpacing.s2),
-                        Text(
-                          AppIdentity.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: context.colors.secondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s2),
-                    SelectableText(
-                      message.content,
-                      style: TextStyle(color: context.colors.textForeground),
-                    ),
-                  ],
-                ),
-              ),
-      ),
-    );
-  }
 }
 
 class _ChatComposer extends StatelessWidget {
@@ -605,104 +488,213 @@ class _ChatComposer extends StatelessWidget {
     required this.controller,
     required this.textController,
     required this.onSubmit,
-    required this.onNewConversation,
+    required this.onCamera,
   });
   final AssistantController controller;
   final TextEditingController textController;
   final VoidCallback onSubmit;
-  final VoidCallback onNewConversation;
+  final VoidCallback onCamera;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      AppSpacing.s4,
-      AppSpacing.s2,
-      AppSpacing.s4,
-      AppSpacing.s2,
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(AppSpacing.s2),
-          decoration: BoxDecoration(
-            color: context.colors.card,
-            border: Border.all(color: context.colors.border),
-            borderRadius: AppSpacing.radius2xl,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: TextField(
-                  key: const ValueKey('assistant-chat-input'),
-                  controller: textController,
-                  minLines: 1,
-                  maxLines: 4,
-                  maxLength: AssistantLimits.chatMessageMax,
-                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                  textInputAction: TextInputAction.newline,
-                  style: TextStyle(color: context.colors.textForeground),
-                  decoration: InputDecoration(
-                    hintText: AppStrings.assistantChatPlaceholder.tr(),
-                    border: InputBorder.none,
-                    counterText: '',
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s2,
-                      vertical: AppSpacing.s2,
-                    ),
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    final bool canSend =
+        !controller.isSendingChat &&
+        (controller.chatFailure == null ||
+            controller.chatFailure is AssistantInvalidInputFailure);
+    final OutlineInputBorder pill = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(26),
+      borderSide: BorderSide(color: colors.inputBorder, width: 1.5),
+    );
+    // Rodapé do redesign 2.0: câmera, campo em pílula e o botão coral.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.background,
+        border: Border(top: BorderSide(color: colors.border)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s4,
+          AppSpacing.s3,
+          AppSpacing.s4,
+          AppSpacing.s3,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: SafeIconButton(
+                key: const ValueKey('assistant-chat-camera'),
+                icon: LucideIcons.camera,
+                semanticLabel: AppStrings.assistantImageCamera.tr(),
+                onPressed: controller.isAnalyzing || controller.isPickingImage
+                    ? null
+                    : onCamera,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s3),
+            Expanded(
+              child: TextField(
+                key: const ValueKey('assistant-chat-input'),
+                controller: textController,
+                minLines: 1,
+                maxLines: 4,
+                maxLength: AssistantLimits.chatMessageMax,
+                maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                buildCounter: _nearLimitCounter,
+                textInputAction: TextInputAction.newline,
+                style: AppTypography.bodyLarge.copyWith(
+                  color: colors.textForeground,
+                ),
+                decoration: InputDecoration(
+                  hintText: AppStrings.assistantChatPlaceholder.tr(),
+                  hintStyle: AppTypography.bodyLarge.copyWith(
+                    color: colors.textMutedForeground,
+                  ),
+                  filled: true,
+                  fillColor: colors.card,
+                  border: pill,
+                  enabledBorder: pill,
+                  focusedBorder: pill.copyWith(
+                    borderSide: BorderSide(color: colors.secondary, width: 2.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s4,
+                    vertical: 13,
                   ),
                 ),
               ),
-              IconButton.filled(
-                key: const ValueKey('assistant-chat-send'),
-                tooltip: AppStrings.assistantChatSend.tr(),
-                onPressed:
-                    controller.isSendingChat ||
-                        controller.chatFailure != null &&
-                            controller.chatFailure
-                                is! AssistantInvalidInputFailure
-                    ? null
-                    : onSubmit,
-                icon: controller.isSendingChat
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(LucideIcons.send),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: AppSpacing.s3),
+            _SendButton(
+              sending: controller.isSendingChat,
+              onPressed: canSend ? onSubmit : null,
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.s1),
-        ListenableBuilder(
-          listenable: textController,
-          builder: (context, _) => Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              AppStrings.assistantCharacters.tr(
-                namedArgs: {
-                  'count': '${textController.text.length}',
-                  'limit': '${AssistantLimits.chatMessageMax}',
-                },
-              ),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: context.colors.textMutedForeground,
+      ),
+    );
+  }
+}
+
+/// Contador de caracteres que só aparece perto do limite (a partir de 80%),
+/// para não ocupar a tela enquanto a mensagem é curta.
+Widget? _nearLimitCounter(
+  BuildContext context, {
+  required int currentLength,
+  required bool isFocused,
+  required int? maxLength,
+}) {
+  if (maxLength == null || currentLength < maxLength * 0.8) return null;
+  return Text(
+    AppStrings.assistantCharacters.tr(
+      namedArgs: {'count': '$currentLength', 'limit': '$maxLength'},
+    ),
+    style: AppTypography.caption.copyWith(
+      color: currentLength >= maxLength
+          ? context.colors.destructive
+          : context.colors.textMutedForeground,
+    ),
+  );
+}
+
+/// Mensagem de erro sem caixa em volta, com o botão de tentar de novo.
+class _FailureMessage extends StatelessWidget {
+  const _FailureMessage({
+    required this.message,
+    required this.retryLabel,
+    required this.onRetry,
+    this.showRetry = true,
+  });
+
+  final String message;
+  final String retryLabel;
+  final VoidCallback? onRetry;
+  final bool showRetry;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        message,
+        style: AppTypography.body.copyWith(color: context.colors.destructive),
+      ),
+      if (showRetry) ...[
+        const SizedBox(height: AppSpacing.s2),
+        SafeButton(
+          label: retryLabel,
+          size: SafeButtonSize.compact,
+          tone: SafeButtonTone.ghost,
+          icon: const Icon(LucideIcons.rotateCcw),
+          onPressed: onRetry,
+        ),
+      ],
+    ],
+  );
+}
+
+/// Botão redondo coral de enviar (52 dp, acima do mínimo de 48). Enquanto a
+/// resposta chega, mostra o progresso no lugar do ícone.
+class _SendButton extends StatelessWidget {
+  const _SendButton({required this.sending, required this.onPressed});
+
+  final bool sending;
+  final VoidCallback? onPressed;
+
+  static const double size = 52;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    final bool enabled = onPressed != null;
+    return Semantics(
+      key: const ValueKey('assistant-chat-send'),
+      button: true,
+      enabled: enabled,
+      label: AppStrings.assistantChatSend.tr(),
+      // O excludeSemantics tira a ação do InkWell: ela vem daqui.
+      onTap: onPressed,
+      excludeSemantics: true,
+      child: SizedBox.square(
+        dimension: size,
+        child: Material(
+          type: MaterialType.transparency,
+          child: Ink(
+            decoration: BoxDecoration(
+              color: enabled || sending ? colors.primary : colors.surfaceStrong,
+              shape: BoxShape.circle,
+              border: colors.shadow.isEmpty
+                  ? Border.all(color: colors.border)
+                  : null,
+            ),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onPressed,
+              child: Center(
+                child: sending
+                    ? SizedBox.square(
+                        dimension: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: colors.textPrimaryForeground,
+                        ),
+                      )
+                    : Icon(
+                        LucideIcons.send,
+                        size: 22,
+                        color: enabled
+                            ? colors.textPrimaryForeground
+                            : colors.textMutedForeground,
+                      ),
               ),
             ),
           ),
         ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: controller.isSendingChat ? null : onNewConversation,
-            icon: const Icon(LucideIcons.plus, size: 18),
-            label: Text(AppStrings.assistantNewConversation.tr()),
-          ),
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
 class _VerifyArea extends StatelessWidget {
@@ -729,55 +721,34 @@ class _VerifyArea extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.fromLTRB(
       AppSpacing.s5,
-      AppSpacing.s2,
+      AppSpacing.s5,
       AppSpacing.s5,
       AppSpacing.s5,
     ),
     children: [
-      Text(
-        AppStrings.assistantVerifyingTitle.tr(),
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: context.colors.secondary,
-        ),
-      ),
-      const SizedBox(height: AppSpacing.s3),
-      Wrap(
-        spacing: AppSpacing.s2,
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: ChoiceChip(
-              label: Text(AppStrings.assistantVerifyText.tr()),
-              selected: !imageMode,
-              onSelected: controller.isAnalyzing || controller.isPickingImage
-                  ? null
-                  : (_) => onModeChanged(false),
-            ),
-          ),
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: ChoiceChip(
-              label: Text(AppStrings.assistantVerifyImage.tr()),
-              selected: imageMode,
-              onSelected: controller.isAnalyzing || controller.isPickingImage
-                  ? null
-                  : (_) => onModeChanged(true),
-            ),
-          ),
+      // Texto ou imagem: as mesmas abas em pílula do topo, sem troca enquanto
+      // analisa ou escolhe a foto.
+      SafePillTabs(
+        tabs: [
+          AppStrings.assistantVerifyText.tr(),
+          AppStrings.assistantVerifyImage.tr(),
         ],
+        selectedIndex: imageMode ? 1 : 0,
+        onChanged: (index) {
+          if (controller.isAnalyzing || controller.isPickingImage) return;
+          onModeChanged(index == 1);
+        },
       ),
-      const SizedBox(height: AppSpacing.s4),
+      const SizedBox(height: AppSpacing.s5),
       if (imageMode)
-        _ImagePickerCard(controller: controller)
+        _ImagePicker(controller: controller)
       else
         _TextAnalysisField(controller: textController),
-      const SizedBox(height: AppSpacing.s4),
+      const SizedBox(height: AppSpacing.s5),
       Text(
         AppStrings.assistantSource.tr(),
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: context.colors.secondary,
+        style: AppTypography.label.copyWith(
+          color: context.colors.textForeground,
         ),
       ),
       const SizedBox(height: AppSpacing.s2),
@@ -794,18 +765,14 @@ class _VerifyArea extends StatelessWidget {
             (AssistantAnalysisSources.email, AppStrings.assistantSourceEmail),
             (AssistantAnalysisSources.other, AppStrings.assistantSourceOther),
           ])
-            ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 48),
-              child: ChoiceChip(
-                label: Text(key.tr()),
-                selected: source == value,
-                onSelected: (_) =>
-                    onSourceChanged(source == value ? null : value),
-              ),
+            SafeChip(
+              label: key.tr(),
+              selected: source == value,
+              onTap: () => onSourceChanged(source == value ? null : value),
             ),
         ],
       ),
-      const SizedBox(height: AppSpacing.s4),
+      const SizedBox(height: AppSpacing.s5),
       if (imageMode)
         SafeButton(
           label: AppStrings.assistantAnalyze.tr(),
@@ -831,30 +798,18 @@ class _VerifyArea extends StatelessWidget {
           ),
         ),
       if (controller.analysisFailure != null) ...[
-        const SizedBox(height: AppSpacing.s3),
-        SafeCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                controller.analysisFailure!.message.tr(),
-                style: TextStyle(color: context.colors.destructive),
-              ),
-              const SizedBox(height: AppSpacing.s2),
-              SafeButton(
-                label: AppStrings.commonTryAgain.tr(),
-                size: SafeButtonSize.compact,
-                icon: const Icon(LucideIcons.rotateCcw),
-                onPressed: onRetry,
-              ),
-            ],
-          ),
+        const SizedBox(height: AppSpacing.s4),
+        _FailureMessage(
+          message: controller.analysisFailure!.message.tr(),
+          retryLabel: AppStrings.commonTryAgain.tr(),
+          onRetry: onRetry,
         ),
       ],
       if (controller.analysis != null) ...[
-        const SizedBox(height: AppSpacing.s4),
+        const SizedBox(height: AppSpacing.s5),
         AssistantAnalysisCard(analysis: controller.analysis!),
       ],
+      const SizedBox(height: AppSpacing.s5),
       const _PrivacyNote(),
     ],
   );
@@ -865,121 +820,95 @@ class _TextAnalysisField extends StatelessWidget {
   final TextEditingController controller;
 
   @override
-  Widget build(BuildContext context) => SafeCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          key: const ValueKey('assistant-analysis-text'),
-          controller: controller,
-          minLines: 5,
-          maxLines: 9,
-          maxLength: AssistantLimits.analysisTextMax,
-          maxLengthEnforcement: MaxLengthEnforcement.enforced,
-          style: TextStyle(color: context.colors.textForeground),
-          decoration: InputDecoration(
-            hintText: AppStrings.assistantTextPlaceholder.tr(),
-            alignLabelWithHint: true,
-          ),
-        ),
-        ListenableBuilder(
-          listenable: controller,
-          builder: (context, _) => Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              AppStrings.assistantCharacters.tr(
-                namedArgs: {
-                  'count': '${controller.text.length}',
-                  'limit': '${AssistantLimits.analysisTextMax}',
-                },
-              ),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: context.colors.textMutedForeground,
-              ),
-            ),
-          ),
-        ),
-      ],
+  Widget build(BuildContext context) => TextField(
+    key: const ValueKey('assistant-analysis-text'),
+    controller: controller,
+    minLines: 5,
+    maxLines: 9,
+    maxLength: AssistantLimits.analysisTextMax,
+    maxLengthEnforcement: MaxLengthEnforcement.enforced,
+    buildCounter: _nearLimitCounter,
+    style: AppTypography.bodyLarge.copyWith(
+      color: context.colors.textForeground,
+    ),
+    decoration: InputDecoration(
+      hintText: AppStrings.assistantTextPlaceholder.tr(),
+      alignLabelWithHint: true,
     ),
   );
 }
 
-class _ImagePickerCard extends StatelessWidget {
-  const _ImagePickerCard({required this.controller});
+/// Galeria ou câmera; com a foto escolhida, a prévia e o botão de remover.
+/// Os formatos e o limite de 5 MB aparecem no erro, se a foto não servir.
+class _ImagePicker extends StatelessWidget {
+  const _ImagePicker({required this.controller});
   final AssistantController controller;
 
   @override
-  Widget build(BuildContext context) => SafeCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppStrings.assistantImageLimit.tr(),
-          style: TextStyle(color: context.colors.textMutedForeground),
-        ),
-        const SizedBox(height: AppSpacing.s3),
-        if (controller.selectedImagePath case final path?) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 220),
-              child: Image.file(
-                File(path),
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const SizedBox(
-                  height: 120,
-                  child: Center(child: Icon(LucideIcons.imageOff)),
-                ),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (controller.selectedImagePath case final path?) ...[
+        ClipRRect(
+          borderRadius: AppSpacing.radiusMd,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 220),
+            child: Image.file(
+              File(path),
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => const SizedBox(
+                height: 120,
+                child: Center(child: Icon(LucideIcons.imageOff)),
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.s2),
-          SafeButton(
-            label: AppStrings.assistantImageRemove.tr(),
-            size: SafeButtonSize.compact,
-            tone: SafeButtonTone.ghost,
-            icon: const Icon(LucideIcons.trash2),
-            disabled: controller.isAnalyzing,
-            onPressed: controller.removeSelectedImage,
-          ),
-        ] else
-          Wrap(
-            spacing: AppSpacing.s2,
-            runSpacing: AppSpacing.s2,
-            children: [
-              SafeButton(
-                label: AppStrings.assistantImageGallery.tr(),
-                size: SafeButtonSize.compact,
-                icon: const Icon(LucideIcons.images),
-                loading: controller.isPickingImage,
-                disabled: controller.isAnalyzing,
-                onPressed: () => controller.pickImage(PhotoSource.gallery),
-              ),
-              SafeButton(
-                label: AppStrings.assistantImageCamera.tr(),
-                size: SafeButtonSize.compact,
-                icon: const Icon(LucideIcons.camera),
-                disabled: controller.isAnalyzing || controller.isPickingImage,
-                onPressed: () => controller.pickImage(PhotoSource.camera),
-              ),
-            ],
-          ),
-        if (controller.imagePermissionDenied) ...[
-          const SizedBox(height: AppSpacing.s2),
-          Text(
-            AppStrings.assistantImagePermission.tr(),
-            style: TextStyle(color: context.colors.warning),
-          ),
-        ],
-        if (controller.imagePickFailed) ...[
-          const SizedBox(height: AppSpacing.s2),
-          Text(
-            AppStrings.assistantImagePickFailed.tr(),
-            style: TextStyle(color: context.colors.destructive),
-          ),
-        ],
+        ),
+        const SizedBox(height: AppSpacing.s2),
+        SafeButton(
+          label: AppStrings.assistantImageRemove.tr(),
+          size: SafeButtonSize.compact,
+          tone: SafeButtonTone.ghost,
+          icon: const Icon(LucideIcons.trash2),
+          disabled: controller.isAnalyzing,
+          onPressed: controller.removeSelectedImage,
+        ),
+      ] else
+        Wrap(
+          spacing: AppSpacing.s2,
+          runSpacing: AppSpacing.s2,
+          children: [
+            SafeButton(
+              label: AppStrings.assistantImageGallery.tr(),
+              size: SafeButtonSize.compact,
+              icon: const Icon(LucideIcons.images),
+              loading: controller.isPickingImage,
+              disabled: controller.isAnalyzing,
+              onPressed: () => controller.pickImage(PhotoSource.gallery),
+            ),
+            SafeButton(
+              label: AppStrings.assistantImageCamera.tr(),
+              size: SafeButtonSize.compact,
+              icon: const Icon(LucideIcons.camera),
+              disabled: controller.isAnalyzing || controller.isPickingImage,
+              onPressed: () => controller.pickImage(PhotoSource.camera),
+            ),
+          ],
+        ),
+      if (controller.imagePermissionDenied) ...[
+        const SizedBox(height: AppSpacing.s2),
+        Text(
+          AppStrings.assistantImagePermission.tr(),
+          style: AppTypography.body.copyWith(color: context.colors.warning),
+        ),
       ],
-    ),
+      if (controller.imagePickFailed) ...[
+        const SizedBox(height: AppSpacing.s2),
+        Text(
+          AppStrings.assistantImagePickFailed.tr(),
+          style: AppTypography.body.copyWith(color: context.colors.destructive),
+        ),
+      ],
+    ],
   );
 }
 
@@ -988,12 +917,7 @@ class _PrivacyNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      AppSpacing.s5,
-      AppSpacing.s1,
-      AppSpacing.s5,
-      AppSpacing.s2,
-    ),
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s1),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1006,7 +930,7 @@ class _PrivacyNote extends StatelessWidget {
         Expanded(
           child: Text(
             AppStrings.assistantPrivacy.tr(),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            style: AppTypography.caption.copyWith(
               color: context.colors.textMutedForeground,
             ),
           ),

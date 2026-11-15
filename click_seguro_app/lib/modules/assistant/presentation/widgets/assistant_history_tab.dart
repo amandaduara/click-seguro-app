@@ -1,8 +1,10 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_card.dart';
+import 'package:click_seguro_app/core/widgets/safe_chip.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
@@ -23,7 +25,27 @@ class AssistantHistoryTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final AssistantController controller = context.watch<AssistantController>();
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Aberto pelo botão de relógio do topo (redesign 2.0): o título diz
+        // onde a pessoa está, já que nenhuma aba fica marcada.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s5,
+            AppSpacing.s4,
+            AppSpacing.s5,
+            0,
+          ),
+          child: Semantics(
+            header: true,
+            child: Text(
+              AppStrings.assistantTabHistory.tr(),
+              style: AppTypography.title2.copyWith(
+                color: context.colors.textForeground,
+              ),
+            ),
+          ),
+        ),
         _HistoryFilters(controller: controller),
         Expanded(child: _HistoryContent(controller: controller)),
       ],
@@ -55,28 +77,10 @@ class _HistoryFilters extends StatelessWidget {
             AppStrings.assistantHistoryConversations,
           ),
         ]) ...[
-          // O ChoiceChip já se anuncia com o rótulo e o estado selecionado.
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: ChoiceChip(
-              label: Text(label.tr()),
-              selected: controller.historyFilter == filter,
-              onSelected: (_) => controller.setHistoryFilter(filter),
-              labelStyle: TextStyle(
-                color: controller.historyFilter == filter
-                    ? context.colors.textPrimaryForeground
-                    : context.colors.textMutedForeground,
-                fontWeight: FontWeight.w600,
-              ),
-              selectedColor: context.colors.secondary,
-              backgroundColor: context.colors.input,
-              side: BorderSide(color: context.colors.border),
-              showCheckmark: false,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s2,
-                vertical: AppSpacing.s1,
-              ),
-            ),
+          SafeChip(
+            label: label.tr(),
+            selected: controller.historyFilter == filter,
+            onTap: () => controller.setHistoryFilter(filter),
           ),
           if (filter != AssistantHistoryFilter.conversations)
             const SizedBox(width: AppSpacing.s2),
@@ -94,7 +98,7 @@ class _HistoryContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = controller.historyItems;
     if (controller.isHistoryLoading && items.isEmpty) {
-      return const SafeLoadingState();
+      return const SafeLoadingState(layout: SafeLoadingLayout.list);
     }
     if (controller.historyFailure != null && items.isEmpty) {
       return _scrollableState(
@@ -109,7 +113,6 @@ class _HistoryContent extends StatelessWidget {
       return _scrollableState(
         controller,
         SafeEmptyState(
-          icon: LucideIcons.clock3,
           message:
               (controller.historyFilter == AssistantHistoryFilter.all
                       ? AppStrings.assistantHistoryEmpty
@@ -165,19 +168,16 @@ class _HistoryFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (controller.isHistoryLoading) {
-      return const Padding(
-        padding: EdgeInsets.all(AppSpacing.s4),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (controller.historyFailure != null) {
+    if (controller.historyFailure != null && !controller.isHistoryLoading) {
       return SafeCard(
         child: Column(
           children: [
             Text(
               controller.historyFailure!.message.tr(),
               textAlign: TextAlign.center,
+              style: AppTypography.body.copyWith(
+                color: context.colors.textForeground,
+              ),
             ),
             const SizedBox(height: AppSpacing.s2),
             SafeButton(
@@ -194,6 +194,8 @@ class _HistoryFooter extends StatelessWidget {
         label: AppStrings.assistantHistoryLoadMore.tr(),
         size: SafeButtonSize.compact,
         tone: SafeButtonTone.ghost,
+        // Carregando a próxima página: o próprio botão mostra o progresso.
+        loading: controller.isHistoryLoading,
         onPressed: controller.loadNextHistoryPage,
       ),
     );
@@ -216,11 +218,15 @@ class _HistoryItem extends StatelessWidget {
           leading: const _IconTile(icon: LucideIcons.messageCircle),
           title: Text(
             AppStrings.assistantHistoryConversationRecorded.tr(),
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: AppTypography.title3.copyWith(
+              color: context.colors.textForeground,
+            ),
           ),
           subtitle: Text(
             date,
-            style: TextStyle(color: context.colors.textMutedForeground),
+            style: AppTypography.caption.copyWith(
+              color: context.colors.textMutedForeground,
+            ),
           ),
         ),
       );
@@ -231,11 +237,15 @@ class _HistoryItem extends StatelessWidget {
         leading: const _IconTile(icon: LucideIcons.shieldCheck),
         title: Text(
           analysis.threatType.labelKey.tr(),
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: AppTypography.title3.copyWith(
+            color: context.colors.textForeground,
+          ),
         ),
         subtitle: Text(
           date,
-          style: TextStyle(color: context.colors.textMutedForeground),
+          style: AppTypography.caption.copyWith(
+            color: context.colors.textMutedForeground,
+          ),
         ),
         childrenPadding: const EdgeInsets.fromLTRB(
           AppSpacing.s3,
@@ -261,8 +271,8 @@ class _IconTile extends StatelessWidget {
     width: 44,
     height: 44,
     decoration: BoxDecoration(
-      color: context.colors.primary.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(16),
+      color: context.colors.primarySoft,
+      shape: BoxShape.circle,
     ),
     child: Icon(icon, color: context.colors.primary),
   );

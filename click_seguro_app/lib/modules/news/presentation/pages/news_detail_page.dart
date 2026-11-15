@@ -4,12 +4,14 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
-import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
@@ -23,6 +25,7 @@ import 'package:click_seguro_app/modules/news/presentation/extensions/news_detai
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_placeholders.dart';
 import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_actions.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_cover_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_header.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/read_aloud_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/related_activity_card.dart';
@@ -35,14 +38,24 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 /// Detalhe da notícia (RF-014, RF-015, RF-019, specs/010-detalhe-noticia):
-/// notícia completa, "Ouvir", "Salvar", "Compartilhar", "Abrir fonte" e a
-/// atividade relacionada. O [NewsDetailController] vem da rota (um por
-/// abertura).
+/// notícia completa, "Ouvir", "Salvar", "Compartilhar", "Abrir fonte",
+/// curtir e a atividade relacionada. O [NewsDetailController] vem da rota
+/// (um por abertura).
 ///
-/// Com [preview] (aberto por um cartão), o cabeçalho aparece na hora e só o
-/// corpo espera a carga (specs/022 R9); sem ela, a tela toda é esqueleto.
+/// Redesign 2.0 (Figma quadro 05): capa até a borda com curtir,
+/// compartilhar e salvar sobre ela e a folha branca com o texto; a atividade
+/// relacionada fica no fim do texto.
+///
+/// Enquanto carrega, a capa e o conteúdo são esqueleto, com ou sem
+/// [preview]: a imagem só aparece com o detalhe carregado (e voa de volta ao
+/// cartão pelo `Hero` ao voltar). Aberto por um Reel, a prévia traz curtir e
+/// salvar, e os botões voam da coluna do Reel para o topo
+/// ([NewsActionsPreview]), desativados até a carga. Com erro, a prévia dá o
+/// título acima do erro.
 class NewsDetailPage extends StatefulWidget {
   const NewsDetailPage({super.key, required this.newsId, this.preview});
+
+  static const Key sourceKey = ValueKey('detail-source');
 
   final String newsId;
   final NewsDetailPreview? preview;
@@ -58,6 +71,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
   Locale? _locale;
   bool _isSharing = false;
   bool _isOpeningSource = false;
+  bool _isOpeningPractice = false;
 
   @override
   void initState() {
@@ -113,7 +127,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     final String? text = switch (message.type) {
       NewsDetailMessageType.saved => AppStrings.newsReelsSavedToast.tr(),
       NewsDetailMessageType.removed => AppStrings.newsReelsRemovedToast.tr(),
-      NewsDetailMessageType.saveFailed =>
+      NewsDetailMessageType.saveFailed || NewsDetailMessageType.likeFailed =>
         (message.failureKey ?? AppStrings.errorGeneric).tr(),
       NewsDetailMessageType.notFound => null,
     };
@@ -160,6 +174,23 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     if (await requireAccount(context)) unawaited(_controller.toggleSave());
   }
 
+  /// Visitante vê o convite e nenhum pedido sai (RN-003).
+  Future<void> _like() async {
+    if (await requireAccount(context)) unawaited(_controller.toggleLike());
+  }
+
+  /// Abre o módulo sugerido; toques novos são ignorados até voltar.
+  Future<void> _openPractice(SuggestedModuleEntity module) async {
+    if (_isOpeningPractice) return;
+    _isOpeningPractice = true;
+    try {
+      // Por caminho, sem importar `activities` (constituição I).
+      await context.push<void>('/activities/${module.id}');
+    } finally {
+      _isOpeningPractice = false;
+    }
+  }
+
   void _toggleListen(NewsDetailEntity detail) {
     if (_readAloud.isSpeaking) {
       _controller.markAutoReadDone();
@@ -173,58 +204,52 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
   Widget build(BuildContext context) {
     final NewsDetailController controller = context
         .watch<NewsDetailController>();
-    return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.newsDetailTitle.tr())),
-      body: SafeArea(child: _content(controller)),
-    );
-  }
-
-  Widget _content(NewsDetailController controller) {
-    if (controller.status == NewsDetailStatus.notFound) {
-      return const _NotFound();
-    }
     final NewsDetailEntity? detail =
         controller.status == NewsDetailStatus.loaded ? controller.detail : null;
-    final NewsItemEntity? news = detail?.news ?? widget.preview?.item;
-    // Sem prévia, a troca é da tela inteira; com ela, o cabeçalho fica parado
-    // (e o `Hero`, que não pode aparecer duas vezes, não entra na troca).
-    return SafeStateSwitcher(
-      stateKey: news != null,
-      child: news == null
-          ? _withoutHeader(controller)
-          : _withHeader(controller, news, detail),
+    // Com curtir ou salvar em andamento, não sai (nem pelo voltar do
+    // aparelho): as listas de lidas, salvas e curtidas só ficam certas com o
+    // pedido terminado. Tentar sair mostra o aviso.
+    final bool busy = controller.isSaving || controller.isLiking;
+    return PopScope(
+      canPop: !busy,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _warnPending();
+      },
+      child: Scaffold(
+        backgroundColor: context.colors.card,
+        body: _content(controller, detail, busy: busy),
+      ),
     );
   }
 
-  /// Sem cabeçalho para mostrar: esqueleto da tela toda ou o erro.
-  Widget _withoutHeader(NewsDetailController controller) {
-    if (controller.status == NewsDetailStatus.error) return _error(controller);
-    return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(AppSpacing.s5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SlowRequestNotice(
-            active: true,
-            message: AppStrings.newsSlowServer.tr(),
-          ),
-          SafeSkeleton(
-            enabled: true,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                NewsDetailHeader(
-                  news: NewsPlaceholders.item(0),
-                  now: DateTime.now(),
-                  likesCount: 0,
-                ),
-                const _BodyPlaceholder(),
-              ],
+  /// "Aguarde: salvando sua escolha." ao tentar sair durante um pedido.
+  void _warnPending() => _snack(AppStrings.newsDetailWaitPending.tr());
+
+  Widget _content(
+    NewsDetailController controller,
+    NewsDetailEntity? detail, {
+    required bool busy,
+  }) {
+    if (controller.status == NewsDetailStatus.notFound) {
+      return const _WithBackButton(child: _NotFound());
+    }
+    final NewsItemEntity? previewItem = widget.preview?.item;
+    final bool failed = controller.status == NewsDetailStatus.error;
+    // Erro sem prévia: sem cabeçalho para mostrar, só o "Voltar" e o erro.
+    // No resto, a capa fica parada (os `Hero` dos botões e da capa nunca
+    // aparecem duas vezes) e só o que está abaixo dela troca.
+    final bool bareError = failed && previewItem == null;
+    return SafeStateSwitcher(
+      stateKey: bareError,
+      child: bareError
+          ? _WithBackButton(child: _error(controller))
+          : _page(
+              controller,
+              detail,
+              previewItem,
+              loading: detail == null && !failed,
+              busy: busy,
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -236,64 +261,124 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
     );
   }
 
-  /// Cabeçalho (da prévia ou do detalhe) e, abaixo, o corpo, o esqueleto do
-  /// corpo ou o erro.
-  Widget _withHeader(
+  /// Capa e, abaixo, o cabeçalho e o corpo; o esqueleto de tudo enquanto
+  /// carrega (a imagem só aparece com o detalhe, mesmo com a prévia); ou,
+  /// com a prévia, o título dela e o erro.
+  Widget _page(
     NewsDetailController controller,
-    NewsItemEntity news,
     NewsDetailEntity? detail,
-  ) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (detail != null && controller.isFromCache)
-            const SafeOfflineBanner(),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.s5),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                NewsDetailHeader(
-                  news: news,
-                  now: DateTime.now(),
-                  likesCount: detail?.likesCount,
-                  heroTag: widget.preview?.heroTag,
-                ),
-                SafeStateSwitcher(
-                  stateKey: controller.status,
-                  child: switch (controller.status) {
-                    NewsDetailStatus.error => _error(controller),
-                    _ when detail != null => _body(controller, detail),
-                    _ => Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SafeSkeleton(
-                          enabled: true,
-                          child: _BodyPlaceholder(),
-                        ),
-                        SlowRequestNotice(
-                          active: true,
-                          message: AppStrings.newsSlowServer.tr(),
-                        ),
-                      ],
+    NewsItemEntity? previewItem, {
+    required bool loading,
+    required bool busy,
+  }) {
+    // Respiro no fim acima da barra de navegação do aparelho (área segura).
+    final double bottom = MediaQuery.paddingOf(context).bottom + AppSpacing.s6;
+    return CustomScrollView(
+      physics: loading ? const NeverScrollableScrollPhysics() : null,
+      slivers: [
+        NewsDetailCoverBar(
+          news: detail?.news,
+          heroTag: widget.preview?.heroTag,
+          actions: _actions(controller, detail),
+          loading: loading,
+          onBlockedBack: busy ? _warnPending : null,
+        ),
+        if (detail != null && controller.isFromCache)
+          const SliverToBoxAdapter(child: SafeOfflineBanner()),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(AppSpacing.s5, 0, AppSpacing.s5, bottom),
+          sliver: SliverToBoxAdapter(
+            child: SafeStateSwitcher(
+              stateKey: controller.status,
+              child: switch (detail) {
+                final NewsDetailEntity detail => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    NewsDetailHeader(
+                      news: detail.news,
+                      now: DateTime.now(),
+                      readingMinutes: detail.readingMinutes,
                     ),
-                  },
+                    _body(detail),
+                  ],
                 ),
-              ],
+                null when !loading && previewItem != null => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    NewsDetailHeader(news: previewItem, now: DateTime.now()),
+                    _error(controller),
+                  ],
+                ),
+                null => SafeSkeleton(
+                  enabled: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      NewsDetailHeader(
+                        news: NewsPlaceholders.item(0),
+                        now: DateTime.now(),
+                      ),
+                      const _BodyPlaceholder(),
+                    ],
+                  ),
+                ),
+              },
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  /// O que vem abaixo do cabeçalho: ouvir, ações, texto e atividade.
-  Widget _body(NewsDetailController controller, NewsDetailEntity detail) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
+  /// Curtir, compartilhar e salvar, sobre a capa. Antes da carga, só com a
+  /// prévia de um Reel: o estado que ele mostrava, desativados, para os
+  /// botões já estarem no lugar quando voam ([NewsActionsPreview]). Com um
+  /// pedido em andamento, o botão mostra o carregando.
+  Widget? _actions(NewsDetailController controller, NewsDetailEntity? detail) {
+    final NewsActionsPreview? preview = widget.preview?.actions;
+    if (detail == null && preview == null) return null;
+    return ValueListenableBuilder<UserSessionStatus>(
+      valueListenable: GetIt.instance<UserSessionService>().sessionStatus,
+      // O visitante vê sempre o coração e o marcador vazios (FR-012).
+      builder: (context, status, _) {
+        final bool signedIn = status == UserSessionStatus.authenticated;
+        return NewsDetailActions(
+          heroTags: widget.preview?.actionTags,
+          isLiked: signedIn && (detail?.isLiked ?? preview!.isLiked),
+          likesCount: detail?.likesCount ?? preview!.likesCount,
+          isSaved: signedIn && (detail?.isSaved ?? preview!.isSaved),
+          isLiking: controller.isLiking,
+          isSaving: controller.isSaving,
+          onLike: detail == null ? null : () => unawaited(_like()),
+          onSave: detail == null ? null : () => unawaited(_save()),
+          onShare: detail == null ? null : () => unawaited(_share(detail)),
+        );
+      },
+    );
+  }
+
+  /// O que vem abaixo do cabeçalho: abrir a fonte, ouvir, texto e atividade.
+  Widget _body(NewsDetailEntity detail) {
+    final AppPalette colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (detail.hasSource) ...[
+          const SizedBox(height: AppSpacing.s2),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            // O SafeButton já é lido como botão, com o rótulo e o toque.
+            child: SafeButton(
+              key: NewsDetailPage.sourceKey,
+              label: AppStrings.newsReelsOpenSource.tr(),
+              tone: SafeButtonTone.link,
+              size: SafeButtonSize.compact,
+              icon: const Icon(LucideIcons.externalLink),
+              onPressed: () => unawaited(_openSource(detail)),
+            ),
+          ),
+        ],
+        const SizedBox(height: AppSpacing.s4),
         ListenableBuilder(
           listenable: _readAloud,
           builder: (context, _) => ReadAloudBar(
@@ -304,43 +389,22 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
             onSpeedChanged: _readAloud.setSpeed,
           ),
         ),
-        ValueListenableBuilder<UserSessionStatus>(
-          valueListenable: GetIt.instance<UserSessionService>().sessionStatus,
-          // O visitante vê sempre o marcador vazio (FR-012).
-          builder: (context, status, _) => NewsDetailActions(
-            isSaved:
-                status == UserSessionStatus.authenticated && detail.isSaved,
-            onSave: () => unawaited(_save()),
-            onShare: () => unawaited(_share(detail)),
-            onOpenSource: detail.hasSource
-                ? () => unawaited(_openSource(detail))
-                : null,
+        const SizedBox(height: AppSpacing.s5),
+        Text(
+          detail.hasContent
+              ? detail.content.trim()
+              : AppStrings.newsDetailNoContent.tr(),
+          style: AppTypography.bodyLarge.copyWith(
+            color: detail.hasContent
+                ? colors.textForeground
+                : colors.textMutedForeground,
           ),
         ),
-        const SizedBox(height: AppSpacing.s5),
-        if (detail.hasContent)
-          Text(
-            detail.content.trim(),
-            style: textTheme.bodyLarge?.copyWith(
-              fontSize: 18,
-              height: 1.5,
-              color: context.colors.textForeground,
-            ),
-          )
-        else
-          Text(
-            AppStrings.newsDetailNoContent.tr(),
-            style: textTheme.bodyLarge?.copyWith(
-              fontSize: 16,
-              color: context.colors.textMutedForeground,
-            ),
-          ),
         if (detail.suggestedModule case final module?) ...[
-          const SizedBox(height: AppSpacing.s5),
+          const SizedBox(height: AppSpacing.s6),
           RelatedActivityCard(
             module: module,
-            // Por caminho, sem importar `activities` (constituição I).
-            onTap: () => context.push<void>('/activities/${module.id}'),
+            onTap: () => _openPractice(module),
           ),
         ],
       ],
@@ -348,7 +412,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
   }
 }
 
-/// Corpo em esqueleto: as ações e algumas linhas de texto.
+/// Corpo em esqueleto: o cartão de ouvir e algumas linhas de texto.
 class _BodyPlaceholder extends StatelessWidget {
   const _BodyPlaceholder();
 
@@ -357,50 +421,66 @@ class _BodyPlaceholder extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       const SizedBox(height: AppSpacing.s5),
-      NewsDetailActions(
-        isSaved: false,
-        onSave: () {},
-        onShare: () {},
-        onOpenSource: () {},
+      SafeSkeleton.leaf(
+        Container(
+          height: 80,
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: AppSpacing.radiusLg,
+          ),
+        ),
       ),
       const SizedBox(height: AppSpacing.s5),
       Text(
         SafeSkeleton.text(60),
-        style: Theme.of(
-          context,
-        ).textTheme.bodyLarge?.copyWith(fontSize: 18, height: 1.5),
+        style: AppTypography.bodyLarge.copyWith(
+          color: context.colors.textForeground,
+        ),
       ),
     ],
   );
 }
 
-/// "Notícia não encontrada": sem "Tentar novamente"; a barra superior leva
-/// de volta.
+/// Erro ou "não encontrada": sem capa, só o "Voltar" redondo no topo.
+class _WithBackButton extends StatelessWidget {
+  const _WithBackButton({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s5,
+            AppSpacing.s2,
+            AppSpacing.s5,
+            0,
+          ),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: SafeIconButton(
+              key: NewsDetailCoverBar.backKey,
+              icon: LucideIcons.chevronLeft,
+              semanticLabel: AppStrings.newsDetailBack.tr(),
+              onPressed: () => Navigator.maybePop(context),
+            ),
+          ),
+        ),
+        Expanded(child: child),
+      ],
+    ),
+  );
+}
+
+/// "Notícia não encontrada": sem "Tentar novamente"; o "Voltar" leva de
+/// volta.
 class _NotFound extends StatelessWidget {
   const _NotFound();
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.s6),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SafeStateIllustration(
-            isError: false,
-            icon: LucideIcons.newspaper,
-          ),
-          const SizedBox(height: AppSpacing.s3),
-          Text(
-            AppStrings.newsErrorNotFound.tr(),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontSize: 16,
-              color: context.colors.textForeground,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) =>
+      SafeEmptyState(message: AppStrings.newsErrorNotFound.tr());
 }

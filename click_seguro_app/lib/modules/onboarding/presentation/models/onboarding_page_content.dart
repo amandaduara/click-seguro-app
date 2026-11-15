@@ -1,51 +1,39 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_palette.dart';
-import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
 
+/// Um slide do onboarding (RF-002): ilustração do redesign 2.0 e as chaves
+/// dos textos, que não mudam.
 class OnboardingPageContent {
   const OnboardingPageContent({
-    required this.icon,
-    required this.iconBackgroundColor,
+    required this.illustration,
     required this.titleKey,
     required this.descriptionKey,
     required this.buttonLabelKey,
   });
 
-  final IconData icon;
-
-  /// Cor do círculo do ícone, lida da paleta do tema em uso (light ou alto
-  /// contraste).
-  final Color Function(AppPalette colors) iconBackgroundColor;
+  final AppIllustration illustration;
   final String titleKey;
   final String descriptionKey;
   final String buttonLabelKey;
 
   static const List<OnboardingPageContent> pages = [
     OnboardingPageContent(
-      icon: LucideIcons.shield,
-      iconBackgroundColor: _primary,
+      illustration: AppIllustration.onboardingProtect,
       titleKey: AppStrings.onboardingPage1Title,
       descriptionKey: AppStrings.onboardingPage1Description,
       buttonLabelKey: AppStrings.onboardingButtonContinue,
     ),
     OnboardingPageContent(
-      icon: LucideIcons.newspaper,
-      iconBackgroundColor: _secondary,
+      illustration: AppIllustration.onboardingNews,
       titleKey: AppStrings.onboardingPage2Title,
       descriptionKey: AppStrings.onboardingPage2Description,
       buttonLabelKey: AppStrings.onboardingButtonContinue,
     ),
     OnboardingPageContent(
-      icon: LucideIcons.graduationCap,
-      iconBackgroundColor: _muted,
+      illustration: AppIllustration.onboardingPractice,
       titleKey: AppStrings.onboardingPage3Title,
       descriptionKey: AppStrings.onboardingPage3Description,
       buttonLabelKey: AppStrings.onboardingButtonStart,
     ),
   ];
-
-  static Color _primary(AppPalette colors) => colors.primary;
-  static Color _secondary(AppPalette colors) => colors.secondary;
-  static Color _muted(AppPalette colors) => colors.textMutedForeground;
 }

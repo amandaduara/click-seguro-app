@@ -9,7 +9,6 @@ import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
@@ -25,6 +24,7 @@ import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dar
 import 'package:click_seguro_app/modules/news/presentation/widgets/reels_carousel.dart';
 import 'package:click_seguro_app/modules/shell/shell.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -79,54 +79,71 @@ class _NewsHomePageState extends State<NewsHomePage> {
   Widget build(BuildContext context) {
     final FeedController controller = context.watch<FeedController>();
     final UserSessionService session = GetIt.instance<UserSessionService>();
+    final AppPalette colors = context.colors;
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            ValueListenableBuilder<UserSessionStatus>(
-              valueListenable: session.sessionStatus,
-              builder: (context, _, _) => AppTopBar(
-                title: AppStrings.newsTitle.tr(),
-                subtitle: _subtitle(session, controller.newCount),
+        // A saudação e a busca sobem junto com as notícias; os filtros ficam
+        // presos no topo (validação da usuária, specs/024).
+        child: NestedScrollView(
+          headerSliverBuilder: (context, _) => [
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  ValueListenableBuilder<UserSessionStatus>(
+                    valueListenable: session.sessionStatus,
+                    builder: (context, _, _) => AppTopBar(
+                      title: AppStrings.newsTitle.tr(),
+                      subtitle: _subtitle(session, controller.newCount),
+                    ),
+                  ),
+                  // Busca e filtros fora da área que troca de estado:
+                  // continuam na tela enquanto a lista carrega.
+                  FeedSearchField(
+                    initialText: controller.filter.search,
+                    onChanged: controller.onSearchChanged,
+                    onCleared: controller.clearSearch,
+                  ),
+                  const SizedBox(height: AppSpacing.s3),
+                ],
               ),
             ),
-            // Busca e filtros fora da área que troca de estado: continuam na
-            // tela enquanto a lista carrega.
-            FeedSearchField(
-              initialText: controller.filter.search,
-              onChanged: controller.onSearchChanged,
-              onCleared: controller.clearSearch,
-            ),
-            const SizedBox(height: AppSpacing.s3),
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s2),
-              child: CategoryFilterBar(
-                categories: controller.categories,
-                selectedSlug: controller.filter.categorySlug,
-                onSelected: controller.selectCategory,
-              ),
-            ),
-            // Troca de categoria ou busca: a lista anterior fica esmaecida
-            // com uma barra fina até a nova chegar (FR-002).
-            SizedBox(
-              height: 2,
-              child: controller.isRefreshing && !_pulling
-                  ? LinearProgressIndicator(
-                      minHeight: 2,
-                      color: context.colors.primary,
-                      backgroundColor: Colors.transparent,
-                    )
-                  : null,
-            ),
-            Expanded(
-              child: AnimatedOpacity(
-                opacity: controller.isRefreshing && !_pulling ? 0.5 : 1,
-                duration: AppMotion.of(context).short,
-                curve: AppMotion.standard,
-                child: _content(context, controller),
+            PinnedHeaderSliver(
+              child: ColoredBox(
+                color: colors.background,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.s2),
+                      child: CategoryFilterBar(
+                        categories: controller.categories,
+                        selectedSlug: controller.filter.categorySlug,
+                        onSelected: controller.selectCategory,
+                      ),
+                    ),
+                    // Troca de categoria ou busca: a lista anterior fica
+                    // esmaecida com uma barra fina até a nova chegar (FR-002).
+                    SizedBox(
+                      height: 2,
+                      child: controller.isRefreshing && !_pulling
+                          ? LinearProgressIndicator(
+                              minHeight: 2,
+                              color: colors.primary,
+                              backgroundColor: Colors.transparent,
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
+          body: AnimatedOpacity(
+            opacity: controller.isRefreshing && !_pulling ? 0.5 : 1,
+            duration: AppMotion.of(context).short,
+            curve: AppMotion.standard,
+            child: _content(context, controller),
+          ),
         ),
       ),
     );
@@ -200,28 +217,45 @@ class _NewsHomePageState extends State<NewsHomePage> {
           extra: NewsDetailPreview(item: item, heroTag: heroTag),
         );
 
-    Widget cards(
+    Widget card(
       _FeedSection section,
-      List<NewsItemEntity> items, {
+      NewsItemEntity item, {
       bool compact = true,
-    }) => SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
-      sliver: SliverList.separated(
-        itemCount: items.length,
-        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s3),
-        itemBuilder: (_, index) {
-          final NewsItemEntity item = items[index];
-          final String tag = NewsDetailPreview.tagFor(section.name, item.id);
-          return NewsCard(
-            item: item,
-            now: now,
-            compact: compact,
-            heroTag: tag,
-            onTap: () => openNews(item, tag),
-          );
-        },
-      ),
-    );
+      double? coverHeight,
+    }) {
+      final String tag = NewsDetailPreview.tagFor(section.name, item.id);
+      return NewsCard(
+        item: item,
+        now: now,
+        compact: compact,
+        coverHeight: coverHeight,
+        heroTag: tag,
+        onTap: () => openNews(item, tag),
+      );
+    }
+
+    // Destaques: cartões grandes, um por linha.
+    Widget large(_FeedSection section, List<NewsItemEntity> items) =>
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+          sliver: SliverList.separated(
+            itemCount: items.length,
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s6),
+            itemBuilder: (_, index) =>
+                card(section, items[index], compact: false),
+          ),
+        );
+
+    // Recomendadas e Tudo recente: grade de 2 colunas (FR-025).
+    Widget cards(_FeedSection section, List<NewsItemEntity> items) =>
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
+          sliver: NewsGrid(
+            items: items,
+            itemBuilder: (item, coverHeight) =>
+                card(section, item, coverHeight: coverHeight),
+          ),
+        );
 
     return [
       // Feed da cópia guardada (CB-001, FR-020).
@@ -244,7 +278,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
         SliverToBoxAdapter(
           child: FeedSectionTitle(AppStrings.newsSectionHighlights.tr()),
         ),
-        cards(_FeedSection.highlights, controller.highlights, compact: false),
+        large(_FeedSection.highlights, controller.highlights),
       ],
       if (controller.recommended.isNotEmpty) ...[
         SliverToBoxAdapter(
@@ -274,8 +308,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
   }
 }
 
-/// Primeira carga: os cartões do feed em esqueleto, com o aviso de servidor
-/// acordando acima deles (FR-011, FR-014).
+/// Primeira carga: os cartões do feed em esqueleto (FR-011).
 class _FeedSkeleton extends StatelessWidget {
   const _FeedSkeleton({required this.now});
 
@@ -284,24 +317,46 @@ class _FeedSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListView(
     physics: const NeverScrollableScrollPhysics(),
-    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s5),
     children: [
-      SlowRequestNotice(active: true, message: AppStrings.newsSlowServer.tr()),
-      SafeSkeleton(
-        enabled: true,
-        child: Column(
-          children: [
-            for (int index = 0; index < 3; index++)
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.s4),
-                child: NewsCard(
-                  item: NewsPlaceholders.item(index),
-                  now: now,
-                  compact: index > 0,
-                  onTap: () async {},
-                ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s5,
+          AppSpacing.s4,
+          AppSpacing.s5,
+          0,
+        ),
+        child: SafeSkeleton(
+          enabled: true,
+          child: Column(
+            children: [
+              NewsCard(
+                item: NewsPlaceholders.item(0),
+                now: now,
+                compact: false,
+                onTap: () async {},
               ),
-          ],
+              const SizedBox(height: AppSpacing.s6),
+              // A mesma grade do feed, em sliver: 4 cartões só.
+              CustomScrollView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                slivers: [
+                  NewsGrid(
+                    items: [
+                      for (int index = 1; index < 5; index++)
+                        NewsPlaceholders.item(index),
+                    ],
+                    itemBuilder: (item, coverHeight) => NewsCard(
+                      item: item,
+                      now: now,
+                      coverHeight: coverHeight,
+                      onTap: () async {},
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     ],

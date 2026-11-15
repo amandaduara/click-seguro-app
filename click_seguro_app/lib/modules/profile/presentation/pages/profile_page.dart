@@ -21,6 +21,7 @@ import 'package:click_seguro_app/modules/profile/presentation/widgets/profile_ct
 import 'package:click_seguro_app/modules/profile/presentation/widgets/profile_header_card.dart';
 import 'package:click_seguro_app/modules/profile/presentation/widgets/stat_tile.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -67,22 +68,25 @@ const EdgeInsets _padding = EdgeInsets.fromLTRB(
 
 /// Título fixo no topo e o conteúdo da aba abaixo.
 class _WithHeader extends StatelessWidget {
-  const _WithHeader({required this.child});
+  const _WithHeader({required this.child, this.onSettings});
 
   final Widget child;
+
+  /// Abre as configurações; sem ele, só empilha a tela.
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
             AppSpacing.s5,
             AppSpacing.s6,
             AppSpacing.s5,
             AppSpacing.s3,
           ),
-          child: _Header(),
+          child: _Header(onSettings: onSettings),
         ),
         Expanded(child: child),
       ],
@@ -93,7 +97,9 @@ class _WithHeader extends StatelessWidget {
 /// Título "Perfil" e a engrenagem das configurações, também para o visitante
 /// (specs/014, R6).
 class _Header extends StatelessWidget {
-  const _Header();
+  const _Header({this.onSettings});
+
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +112,7 @@ class _Header extends StatelessWidget {
             child: Text(
               AppStrings.profileTitle.tr(),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: 30,
+                fontSize: AppTypography.title1.fontSize,
                 fontWeight: FontWeight.w800,
                 color: colors.secondary,
               ),
@@ -120,7 +126,7 @@ class _Header extends StatelessWidget {
             shape: CircleBorder(side: BorderSide(color: colors.border)),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              onTap: () => context.push('/settings'),
+              onTap: onSettings ?? () => context.push('/settings'),
               child: SizedBox.square(
                 dimension: 48,
                 child: Icon(
@@ -158,6 +164,8 @@ class _AccountProfileState extends State<_AccountProfile>
   Widget build(BuildContext context) {
     final ProfileController controller = context.watch<ProfileController>();
     return _WithHeader(
+      // A foto e o nome podem mudar em "Dados pessoais", aberto de lá.
+      onSettings: () => unawaited(pushAndRefresh('/settings')),
       // Carregando, erro e perfil trocam com um esmaecimento (R8).
       child: SafeStateSwitcher(
         stateKey: controller.status,
@@ -281,61 +289,72 @@ class _Stats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppPalette colors = context.colors;
     return switch (state) {
-      AreaLoading() => Padding(
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: Center(child: CircularProgressIndicator(color: colors.primary)),
+      // Tentando de novo: os números em esqueleto, lidos como "Carregando".
+      AreaLoading() => SafeSkeleton(
+        enabled: true,
+        child: _tiles(context, _placeholder),
       ),
       AreaFailed() => AreaNotice(
         message: AppStrings.profileStatsFailed.tr(),
         onRetry: onRetry,
       ),
-      AreaLoaded(:final value) => IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final (index, stat) in [
-              (
-                LucideIcons.bookOpenCheck,
-                colors.secondary,
-                value.read,
-                AppStrings.profileStatRead,
-                AppStrings.profileStatReadSemantic,
-                '/news/read',
-              ),
-              (
-                LucideIcons.bookmark,
-                colors.warning,
-                value.saved,
-                AppStrings.profileStatSaved,
-                AppStrings.profileStatSavedSemantic,
-                '/news/saved',
-              ),
-              (
-                LucideIcons.heart,
-                colors.primary,
-                value.liked,
-                AppStrings.profileStatLiked,
-                AppStrings.profileStatLikedSemantic,
-                '/news/liked',
-              ),
-            ].indexed) ...[
-              if (index > 0) const SizedBox(width: AppSpacing.s3),
-              Expanded(
-                child: StatTile(
-                  icon: stat.$1,
-                  color: stat.$2,
-                  count: stat.$3,
-                  label: stat.$4.tr(),
-                  semanticLabel: stat.$5.tr(args: ['${stat.$3}']),
-                  onTap: () => open(stat.$6),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+      AreaLoaded(:final value) => _tiles(context, value),
     };
+  }
+
+  static const NewsCountsEntity _placeholder = NewsCountsEntity(
+    read: 0,
+    saved: 0,
+    liked: 0,
+  );
+
+  Widget _tiles(BuildContext context, NewsCountsEntity value) {
+    final AppPalette colors = context.colors;
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (index, stat) in [
+            (
+              LucideIcons.bookOpenCheck,
+              colors.secondary,
+              value.read,
+              AppStrings.profileStatRead,
+              AppStrings.profileStatReadSemantic,
+              '/news/read',
+            ),
+            (
+              LucideIcons.bookmark,
+              colors.warning,
+              value.saved,
+              AppStrings.profileStatSaved,
+              AppStrings.profileStatSavedSemantic,
+              '/news/saved',
+            ),
+            (
+              LucideIcons.heart,
+              colors.primary,
+              value.liked,
+              AppStrings.profileStatLiked,
+              AppStrings.profileStatLikedSemantic,
+              '/news/liked',
+            ),
+          ].indexed) ...[
+            if (index > 0) const SizedBox(width: AppSpacing.s3),
+            Expanded(
+              child: StatTile(
+                icon: stat.$1,
+                color: stat.$2,
+                count: stat.$3,
+                label: stat.$4.tr(),
+                semanticLabel: stat.$5.tr(args: ['${stat.$3}']),
+                onTap: () => open(stat.$6),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

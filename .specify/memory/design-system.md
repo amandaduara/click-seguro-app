@@ -1,42 +1,47 @@
-# SafeNews — Design System
+# Click Seguro — Design System
 
-**Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
+**Projeto**: Click Seguro (TCC) — Aplicativo **Click Seguro** (antes "SafeNews")
 
-**Versão**: 1.2.0
+**Versão**: 2.0.0
 
-**Criado em**: 2026-10-04
+**Criado em**: 2026-10-04 · **Última alteração**: 2026-11-15
 
-**Para quem**: quem vai reproduzir o visual do SafeNews em outra plataforma (em especial a
+**Para quem**: quem vai reproduzir o visual do Click Seguro em outra plataforma (em especial a
 **versão web**), e quem cria telas novas no app Flutter.
 
 **Fontes**:
 - **Implementação de referência (canônica)**: o app Flutter, em
-  `click_seguro_app/lib/core/theme/` (`app_colors.dart`, `app_spacing.dart`, `app_theme.dart`) e
-  `click_seguro_app/lib/core/widgets/` (`safe_button.dart`, `safe_card.dart`,
-  `safe_text_field.dart`, `safe_badge.dart`). É o que o usuário vê no celular.
-- **Origem do visual**: o wireframe em `wireframe/` (React + Tailwind v4 + shadcn/ui, estilo
-  "new-york"). Tokens em `wireframe/src/styles.css`; guia em
-  `wireframe/src/components/screens/StyleGuideScreen.tsx`; telas em
-  `wireframe/src/components/screens/`.
+  `click_seguro_app/lib/core/theme/` (`app_colors.dart`, `app_palette.dart`,
+  `app_typography.dart`, `app_spacing.dart`, `app_motion.dart`, `app_theme.dart`),
+  `click_seguro_app/lib/core/widgets/` (os `Safe*`, `EditableAvatar`, `PersonAvatar`,
+  `ListenButton`) e `click_seguro_app/lib/core/illustrations/`. É o que o usuário vê no celular.
+- **Origem do visual 2.0**: o Figma "Redesign 2.0" (16 quadros), gerado a partir de
+  `click-seguro-redesign.html`, fonte das medidas e dos SVGs das ilustrações. Decisões e ajustes
+  da validação da usuária em [specs/024-redesign-visual](../../specs/024-redesign-visual/)
+  (spec, research R1–R20).
+- **Origem do visual 1.x** (só histórico): o wireframe em `wireframe/` (React + Tailwind v4 +
+  shadcn/ui). Não é mais referência de tokens: a paleta, a fonte e a barra inferior mudaram.
 - **Regras de produto que afetam o visual**: RNF-003 (usabilidade para idosos) e RNF-004
   (acessibilidade) da [especificação](specification.md).
 
-Quando o wireframe e o app divergem, **vale o app** (ver [§10](#10-divergências-entre-wireframe-e-app)).
+Quando o Figma e o app divergem, **vale o app** (ver [§10](#10-divergências)).
 
 ---
 
 ## 1. Princípios
 
-1. **Feito para pessoas idosas.** Textos grandes, alvos de toque grandes, linguagem simples,
-   uma ação principal por tela. Na dúvida, maior e mais espaçado.
-2. **Quente e confiável.** Fundo branco levemente quente, vermelho-coral como cor de ação e
-   azul-marinho para títulos. Cantos bem arredondados e sombras suaves ("Airbnb-soft").
-3. **Vermelho = ação, azul = leitura.** O `primary` marca o que se toca (botões, aba ativa,
-   foco). O `secondary` marca o que se lê com destaque (títulos, chips selecionados).
-4. **Conteúdo primeiro.** Notícias em cartões com imagem; Reels em tela escura com vídeo de
-   fundo.
-5. **Acessível por padrão.** Contraste WCAG 2.1 AA, rótulo para leitor de tela em todo elemento
-   interativo e nada que dependa só de cor.
+1. **Feito para pessoas idosas.** Corpo de 16, alvos de toque de 48 ou mais, linguagem simples,
+   **uma ação principal (coral) por tela**. Na dúvida, maior e mais espaçado; quem precisa de
+   letra maior aumenta em Acessibilidade.
+2. **Calmo e confiável.** Fundo branco, creme para superfícies planas, tinta azul-escura para
+   texto e coral só para o que se toca. Cantos arredondados e **uma sombra só**.
+3. **Coral = ação, tinta = leitura.** O `primary` marca a ação principal, a aba ativa e o que
+   está selecionado em destaque. Títulos e texto ficam em tinta (`textForeground`/`textBody`).
+4. **Conteúdo primeiro, sem enfeite.** Toda notícia e todo módulo têm capa (imagem ou
+   ilustração do tema). Textos de apoio fixos que não ajudam a decidir saem da tela.
+5. **Acessível por padrão.** Contraste WCAG 2.1 AA no tema normal e AAA no alto contraste,
+   rótulo para leitor de tela em todo elemento interativo, nada que dependa só de cor e
+   "Reduzir animações" respeitado em todo movimento.
 
 ---
 
@@ -44,181 +49,195 @@ Quando o wireframe e o app divergem, **vale o app** (ver [§10](#10-divergência
 
 ### 2.1 Tokens
 
-Nomes no padrão do shadcn/Tailwind (use-os como variáveis CSS: `--primary`, `--muted-foreground`
-etc.). A coluna "Flutter" é a constante em `AppColors`. Nos widgets, leia a cor do tema em uso
-com `context.colors.<token>` (`AppPalette`, §2.4), nunca `AppColors` direto: assim o alto
-contraste chega à tela.
+Nos widgets, leia a cor do tema em uso com `context.colors.<token>` (`AppPalette`), **nunca**
+`AppColors` direto: assim o alto contraste chega à tela. Na web, use os nomes como variáveis CSS
+(`--primary`, `--surface`...).
 
-| Token | Hex | Flutter | Uso |
-|---|---|---|---|
-| `primary` | `#FE3152` | `primary` | Botões principais, aba ativa, foco, links de ação ("Esqueci minha senha"), selo "Novo", logo da marca (splash, login, Sobre e ícone do app: `#FE3152`, não mais o terracota antigo; no alto contraste segue o `primary` dele) |
-| `primary-foreground` | `#FFFFFF` | `textPrimaryForeground` | Texto e ícone sobre `primary`, `secondary` e fundos escuros |
-| `primary-glow` | `#FF6A7A` | `primaryGlow` | Fim do gradiente do botão "gradient" (`primary → primary-glow`) |
-| `secondary` | `#182A4E` | `secondary` | Títulos, chip/filtro selecionado, botão secundário, texto do botão "ghost" |
-| `secondary-foreground` | `#FFFFFF` | `textPrimaryForeground` | Texto sobre `secondary` |
-| `background` | `#FFFDFB` | `background` | Fundo das telas (branco quente) e dos campos de texto |
-| `foreground` | `#121932` | `textForeground` | Texto corrido principal |
-| `card` | `#FFFFFF` | `card` | Fundo de cartões, convites e menus |
-| `muted` | `#EFF2F5` | — (use `input`) | Fundo de controles neutros: filtros não selecionados, botões redondos da barra superior, seletor "Entrar/Criar conta" |
-| `muted-foreground` | `#596475` | `textMutedForeground` | Texto secundário: subtítulos, legendas, metadados, ícones inativos, placeholder |
-| `border` | `#E6E6EA` | `border` | Bordas de cartões, divisórias, borda da barra inferior |
-| `input` | `#EDEDF1` | `input` | Borda de campo de texto em repouso |
-| `destructive` | `#E5484D` | `destructive` | Erros de campo, ações destrutivas |
-| `success` | `#10B981` | `success` | Selo "Seguro", "lida", resposta certa |
-| `warning` | `#F59E0B` | `warning` | Selo "Atenção" |
-| `accent` | `#DEE9F5` | — | Fundo de destaque leve (pouco usado) |
-| `ring` | = `primary` | — | Anel de foco (teclado/web) |
-
-### 2.2 Tons translúcidos (padrão "10%")
-
-Selos, chips de categoria e fundos de ícone usam a **mesma cor do texto com 10% de opacidade**
-no fundo:
-
-| Uso | Fundo | Texto/ícone |
+| Token (`AppPalette`) | Hex | Uso |
 |---|---|---|
-| Categoria "Golpe", selo primary, fundo de ícone em cartão | `primary` 10% | `primary` |
-| Categoria "Fake news", selo secondary | `secondary` 10% | `secondary` |
-| Selo "Seguro" | `success` 10% | `success` (no wireframe, `#059669`) |
-| Selo "Atenção" | `warning` 10% | `warning` (no wireframe, `#D97706`) |
-| Selo de erro | `destructive` 10% | `destructive` |
+| `primary` | `#E31C3D` | Botão principal, aba ativa da barra inferior, chave ligada, links de ação, cartão de emergência, logo |
+| `primaryPressed` | `#C2112F` | Botão principal pressionado; texto coral sobre `primarySoft` |
+| `primarySoft` | `#FFE8EB` | Fundo de selo de alerta/erro e de seleção leve |
+| `primaryGlow` | `#F0566C` | Onda de trás da splash animada (alto contraste: `#9E0019`) |
+| `secondary` | `#1B2440` | Tinta: chip selecionado, faixa sem internet, aviso curto (toast) |
+| `textForeground` | `#1B2440` | Títulos, rótulos, ícones e texto de destaque |
+| `textBody` | `#3D4457` | Texto corrido (parágrafos) |
+| `textMutedForeground` | `#5E6577` | Apoio: metadados, dicas, ícones inativos, placeholder |
+| `textPrimaryForeground` | `#FFFFFF` | Texto e ícone sobre `primary`, `secondary` e imagens escuras |
+| `background` | `#FFFFFF` | Fundo das telas |
+| `card` | `#FFFFFF` | Fundo de cartões, campos, folhas e diálogos |
+| `surface` | `#F7F5F0` | Creme: cartão plano, chip e botão redondo em repouso, busca, splash |
+| `surfaceStrong` | `#EFEBE3` | Creme forte: botão secundário, trilho das abas em pílula, trilho de progresso |
+| `border` | `#E4E1DA` | Borda de cartões, divisórias, borda da barra inferior, alça da folha |
+| `input` | `#F7F5F0` | Preenchimento neutro (base do esqueleto) |
+| `inputBorder` | `#8A8F9C` | Contorno do campo sem foco (3:1 sobre o fundo, WCAG 1.4.11) |
+| `success` / `successSoft` | `#0F7B4F` / `#DFF3E8` | Resposta certa, selo "Seguro", "lida" |
+| `warning` / `warningSoft` | `#8F5600` / `#FDF0D5` | Selo de atenção |
+| `info` / `infoSoft` | `#2554C7` / `#E4ECFB` | Avisos informativos |
+| `destructive` | `#C4122F` | Erro de campo, ícone de tentar de novo, ações destrutivas (lixeira) |
+| `pastelPeach`, `pastelSage`, `pastelSky`, `pastelButter`, `pastelLilac` | `#FFD9CE`, `#D3E8DA`, `#D8E6F7`, `#FCEBB6`, `#E6DFF6` | Fundo das capas ilustradas (§5.2) |
 
-Outros usos de transparência: sombra do botão com sombra = `primary` 40%; anel da aba central
-ativa = `primary` 30%; campo de busca = `muted` 40%; Reels = branco 20% com desfoque nos botões
-sobre o vídeo.
+### 2.2 Pares "suave + forte"
+
+Selos e avisos usam um fundo **suave** com o texto **forte** da mesma família (no lugar do
+"10% de opacidade" da 1.x): `primarySoft` + `primaryPressed`, `successSoft` + `success`,
+`warningSoft` + `warning`, `infoSoft` + `info`, `surfaceStrong` + `textForeground`. Todos os pares
+de texto e fundo são conferidos no `app_palette_test.dart` (AA no normal, AAA no alto contraste).
 
 ### 2.3 Gradientes
 
-| Nome | Definição | Onde |
-|---|---|---|
-| Botão "gradient" | linear, da esquerda para a direita, `primary → primary-glow` | Ações de destaque ("Premium") |
-| Cartão de Reels (carrossel do Início) | de baixo para cima: preto 90% → preto 40% → preto 10% | Legibilidade do título sobre a imagem |
-| Tela de Reels | de cima para baixo: preto 40% → preto 10% → preto | Legibilidade sobre o vídeo |
+O gradiente coral (botão "gradient") **saiu** no 2.0; o `primaryGlow` ficou só como a cor da onda
+de trás da splash animada (§6.3, §7.13). Ficam só os gradientes
+escuros de legibilidade sobre imagem: no cartão do carrossel de Reels e na tela de Reels.
 
 ### 2.4 Tema escuro e alto contraste
 
-- **Tema escuro**: não faz parte do produto. O bloco `.dark` do `styles.css` é o padrão do
-  shadcn, sem as cores da marca: **não use**.
-- **Alto contraste** (RF-039, feature 009): `AppPalette.highContrast` /
-  `AppTheme.highContrastTheme`. Mesmos tokens, com contraste WCAG AAA medido sobre branco:
+- **Tema escuro**: não faz parte do produto.
+- **Alto contraste** (RF-039): `AppPalette.highContrast`. Mesmos tokens, com contraste AAA:
 
-  | Token | Alto contraste | Razão |
-  |---|---|---|
-  | `foreground` | `#000000` | 21:1 |
-  | `muted-foreground` | `#333333` | 12,6:1 |
-  | `primary`, `primary-glow`, `destructive` | `#9E0019` | 8,5:1 (e branco sobre ele) |
-  | `secondary` | `#0B1A3A` | 17,2:1 |
-  | `background`, `card` | `#FFFFFF` | — |
-  | `input` (preenchimento) | `#F2F2F2` | texto preto 18,8:1 |
-  | `input-border` (contorno do campo) | `#000000` | 21:1 (no tema normal = `input`) |
-  | `border` | `#000000` | 21:1 |
-  | `success` | `#005A3C` | 8,3:1 |
-  | `warning` | `#6E4200` | 8,6:1 |
+  | Token | Alto contraste |
+  |---|---|
+  | `textForeground`, `textBody`, `border`, `inputBorder` | `#000000` |
+  | `textMutedForeground` | `#333333` |
+  | `primary`, `destructive` | `#9E0019` (pressionado `#7A0013`) |
+  | `secondary` | `#0B1A3A` |
+  | `success` / `warning` / `info` | `#005A3C` / `#6E4200` / `#0B3A9E` |
+  | `background`, `card`, `surface`, todos os "suaves" e pastéis | `#FFFFFF` |
+  | `surfaceStrong`, `input` | `#F2F2F2` |
+  | `shadow` | lista vazia |
 
-  O gradiente vira cor sólida e as sombras somem (a borda preta separa os cartões). Na web,
-  o mesmo conjunto como uma classe `.high-contrast` com as variáveis acima.
-- **Tamanho da letra** (RF-038): 100/115/130/150% multiplicados pela escala do sistema, com teto
-  de 200%. Componentes que podem passar da altura da tela (folhas, diálogos) MUST rolar.
+  Sem sombra, os componentes ganham borda preta (o código testa `colors.shadow.isEmpty`). As
+  ilustrações são recoloridas (§5.2). Na web, uma classe `.high-contrast` com as mesmas
+  variáveis.
+- **Tamanho da letra** (RF-038): níveis do app multiplicados pela escala do sistema, com teto de
+  200%. Folhas, diálogos e estados MUST rolar quando passam da altura da tela.
 
 ---
 
 ## 3. Tipografia
 
-- **Família**: **Montserrat** (Google Fonts), pesos 400, 500, 600, 700 e 800. Fallback:
-  `ui-sans-serif, system-ui, sans-serif`. No wireframe também carregam 200 e 300, mas não são
-  usados.
-- **Títulos** ("display"): Montserrat com `letter-spacing: -0.02em`.
-- **Suavização**: `-webkit-font-smoothing: antialiased`.
+- **Família**: **Inter** (SIL OFL 1.1), empacotada em `assets/fonts/` com os pesos 400, 500, 600,
+  700 e 800 (funciona offline). `ThemeData.fontFamily = 'Inter'`. Fallback na web:
+  `ui-sans-serif, system-ui, sans-serif`.
+- Estilos nomeados em `AppTypography`, sem cor (a cor vem do `textTheme` ou de `context.colors`).
+  Nada de `fontSize:` solto nas telas.
 
-### 3.1 Escala
+### 3.1 Escala (revista na validação da usuária, 2026-11-10)
 
-| Estilo (Flutter `textTheme`) | Tamanho | Peso | Cor padrão | Tracking | Uso |
-|---|---|---|---|---|---|
-| `displayLarge` | 30 px | 700 | `foreground` | −0.6 px | Título de tela grande (nome do app no splash, títulos do onboarding) |
-| `titleLarge` | 24 px | 700 | `foreground` | −0.48 px | Título da barra superior, título de tela ("Bem-vindo ao SafeNews") |
-| `titleMedium` | 18 px | 700 | `foreground` | 0 | Título de seção ("Novidades", "Tudo recente") e de cartão grande |
-| `bodyLarge` | 16 px | 400 | `foreground` | 0 | Texto corrido, campos de texto, botão grande |
-| `bodyMedium` | 14 px | 400 | `muted-foreground` | 0 | Texto de apoio, resumo de notícia, botão compacto |
-| `bodySmall` | 12 px | 400 | `muted-foreground` | 0 | Legendas, metadados (fonte, data), rótulo de campo |
+| Estilo (`AppTypography`) | `textTheme` | Tamanho / peso | Tracking / altura | Uso |
+|---|---|---|---|---|
+| `display` | `displayLarge` | 28 / 700 | −0,8 / 1,15 | Título de tela (barra superior, Configurações, Perfil) |
+| `title1` | `displayMedium` | 24 / 700 | −0,5 / 1,2 | Títulos fortes: conclusão, enunciado da pergunta |
+| `title2` | `titleLarge` | 20 / 700 | −0,2 / 1,25 | Seções; título de diálogo |
+| `title3` | `titleMedium` | 18 / 600 | — / 1,3 | Título de cartão; título da `AppBar` (em 700) |
+| `bodyLarge` | `bodyLarge` | 17 / 400 | — / 1,5 | Leitura longa (texto da notícia, explicações) |
+| `body` | `bodyMedium` | 16 / 400 | — / 1,55 | **Padrão** de todo texto |
+| `label` | `labelLarge` | 15 / 600 | — / 1,3 | Rótulos de campo, links, chips, botão compacto, abas |
+| `caption` | `bodySmall`, `labelMedium` | 14 / 500 | — / 1,35 | Metadados: **o menor tamanho do app** |
+| `button` | — | 17 / 700 | — / 1,25 | Botão grande |
+| `score` | — | 64 / 800 | −2 / 1 | Placar da conclusão do módulo |
 
-Equivalência com o Tailwind: 30 = `text-3xl`, 24 = `text-2xl`, 18 = `text-lg`, 16 =
-`text-base`, 14 = `text-sm`, 12 = `text-xs`.
-
-Na prática, os títulos das telas usam a cor `secondary` (azul-marinho), e não `foreground`.
+Cores padrão no `textTheme`: títulos e rótulos em `textForeground`, corpo em `textBody`, legenda
+em `textMutedForeground`.
 
 ### 3.2 Regras
 
-- **Texto que a pessoa precisa ler para usar o app MUST ter no mínimo 16 px** (RNF-003). Os
-  tamanhos 14 px e 12 px ficam para informação complementar (metadados, legendas, selos).
-- Os tamanhos de 10–11 px do wireframe (rótulos das abas, selos "Novo") são o mínimo absoluto e
-  só valem para texto curto e redundante (com ícone ao lado).
-- A interface MUST continuar funcionando com a fonte do sistema/navegador aumentada (até 200%):
-  textos quebram linha em vez de serem cortados.
-- Títulos de notícia: no máximo 2 linhas na lista (`line-clamp-2`); resumo, 2 linhas; texto do
-  Reels, 4 linhas.
+- **Corpo 16, títulos de 18 a 28, nada abaixo de 14** (FR-003 da 024, RNF-003). O 14 fica para
+  metadados, legendas e selos.
+- A interface MUST continuar funcionando com a letra aumentada (até 200%): textos quebram linha
+  em vez de serem cortados; a grade do Início vira uma coluna acima de 1,3×; os rótulos das abas
+  em pílula encolhem numa linha só.
+- Títulos de notícia: no máximo 2 linhas nos cartões; descrição do módulo, 3 linhas no modo
+  compacto (o leitor de tela lê o texto inteiro).
 
 ---
 
-## 4. Espaçamento, raios e sombras
+## 4. Espaçamento, cantos e sombra
 
-### 4.1 Espaçamento (escala de 4 px)
+### 4.1 Espaçamento (escala de 4, `AppSpacing`)
 
 | Token | px | Uso comum |
 |---|---|---|
-| `s1` | 4 | Entre rótulo e campo, entre ícone e texto de selo |
-| `s2` | 8 | Entre ícone e rótulo de botão, entre chips |
-| `s3` | 12 | Entre cartões numa lista, padding de cartão compacto |
-| `s4` | 16 | Padding de cartão de notícia, padding horizontal de campo |
-| `s5` | 20 | **Margem lateral das telas**, padding de cartão padrão |
-| `s6` | 24 | Margem lateral do login/onboarding, espaço entre seções |
-| `s7` | 32 | Espaço antes de títulos grandes, margens do onboarding |
+| `s1` | 4 | Entre ícone e texto de mensagem de erro |
+| `s2` | 8 | Entre rótulo e campo, entre chips, entre botões da barra superior |
+| `s3` | 12 | Entre cartões numa lista, entre ícone e texto do campo |
+| `s4` | 16 | Topo e base da barra superior, espaço da alça ao conteúdo da folha |
+| `s5` | 20 | **Margem lateral das telas**, padding do cartão padrão |
+| `s6` | 24 | Margem das folhas e dos estados, espaço entre seções |
+| `s7` | 32 | Espaços grandes (splash, onboarding) |
+| `s8` | 48 | Respiros maiores |
 
-### 4.2 Raios
+### 4.2 Cantos
 
-O wireframe deriva os raios de `--radius = 14px` (Tailwind v4: `xl` = 18, `2xl` = 22,
-`3xl` = 26). O app arredondou para valores redondos; **use os do app**.
-
-| Nome | App (vale) | Wireframe | Uso |
-|---|---|---|---|
-| campo | 16 | `rounded-2xl` (22) | Campos de texto, imagem do cartão compacto, quadrado de ícone em cartão, menus de sugestão, avisos |
-| `radius2xl` | 20 | `rounded-2xl` (22) | Cartão do tema Material (`cardTheme`) |
-| `radius3xl` | 24 | `rounded-3xl` (26) | **Cartões** (SafeCard, NewsCard, cartão de Reels), ícone do onboarding, topo do convite |
-| ícone grande do onboarding | 24 | `rounded-[2.5rem]` (40) | Quadro do ícone de cada slide |
-| `radiusFull` | 999 | `rounded-full` | **Botões**, chips, selos, botões de ícone, campo de busca, seletor de modo |
-
-### 4.3 Sombras
-
-| Token | Valor | Uso |
+| Token | px | Uso |
 |---|---|---|
-| `shadow-sm` | `0 1px 2px rgba(0,0,0,.04), 0 2px 6px rgba(0,0,0,.04)` | Cartões em repouso |
-| `shadow-md` | `0 4px 12px rgba(0,0,0,.06)` | Cartão interativo, cartões de Reels |
-| `shadow-primary` | `0 10px 24px rgba(254,49,82,.40)` | Botão com sombra, aba central "Notícias" |
-| `shadow-lg` | sombra padrão do Tailwind | Menu de sugestões da busca |
+| `radiusSm` | 12 | Peças internas pequenas |
+| `radiusMd` | 16 | **Botão grande e campos**, aviso curto (toast) |
+| `radiusLg` | 20 | **Cartões** (`SafeCard`, `cardTheme`, cartão "Ouvir notícia") |
+| `radiusXl` | 24 | Destaques e capas grandes, diálogos, cartão do carrossel de Reels |
+| `radius2xl` | 32 | **Folhas inferiores** (canto de cima) |
+| `radiusFull` | 999 | Chips, selos, abas em pílula, busca, barras de progresso, botões redondos |
+
+O botão compacto usa canto 14.
+
+### 4.3 Sombra única
+
+`AppColors.shadow` / `context.colors.shadow`, a **única** sombra do app:
+
+```
+0 0 0 1px rgba(0,0,0,.02)    (spread 1)
+0 2px 6px rgba(0,0,0,.04)
+0 4px 8px rgba(0,0,0,.10)
+```
+
+Usada em cartões, na aba ativa (pílula e barra inferior), no indicador das abas em pílula, nos
+botões e selos sobre imagem e no círculo da splash. No alto contraste, vira lista vazia e o
+componente ganha borda. Não existem mais `shadow-sm`, `shadow-md` nem `shadow-primary`.
 
 ---
 
-## 5. Ícones
+## 5. Ícones e ilustrações
 
-- **Biblioteca**: [Lucide](https://lucide.dev) (`lucide-react` no web, `lucide_icons_flutter` no
-  app). Não misturar com outra biblioteca.
-- **Tamanhos**: 16 px (dentro de botões e selos), 20 px (barra superior, campos, abas), 24 px
-  (marca no login), 28 px (aba central), 40–56 px (ilustração do onboarding), 64–80 px (splash).
-- **Traço**: 1.8 inativo, 2.2–2.4 ativo/destaque.
-- **Ícones de marca e de tela**:
+### 5.1 Ícones
+
+- **Biblioteca**: [Lucide](https://lucide.dev) (`lucide_icons_flutter` no app, `lucide-react` na
+  web), só de traço e **sem emojis** (FR-005). Voltar e fechar usam `arrowLeft` e `x` em todo o
+  app (`actionIconTheme`).
+- **Tamanhos**: 16 (selos, erro do campo), 20 (botões da barra superior), 22 (campo, botões com
+  texto), 24 (padrão, barra inferior, botão redondo de 48), 26 (botão redondo de 56).
+- **Ícones de tela**:
 
 | Onde | Ícone |
 |---|---|
-| Marca (splash, login, Sobre) | logo oficial desenhado em código (`BrandMark`/`AppLogo`), na cor `primary` do tema |
-| Marca no 1º slide do onboarding | `Shield` |
-| Abas | `Home` (Início), `GraduationCap` (Atividades), `Newspaper` (Notícias/Reels), `LifeBuoy` (Ajuda), `User` (Perfil) |
-| Barra superior | `Bell` (Notificações), `Settings` (Configurações) |
-| Onboarding | `Shield`, `Newspaper`, `GraduationCap` |
-| Cartão de notícia | `Heart` (curtir), `Bookmark` (salvar), `CircleCheck` (lida) |
-| Busca | `Search`, `X` (limpar) |
-| Carrossel de Reels | `Play`, `Sparkles` |
-| Botões de avanço | `ChevronRight` |
+| Marca (splash, login, Sobre) | logo oficial desenhado em código (`BrandMark`/`AppLogo`, paths de `assets/branding/click_seguro_logo.svg`) na cor `primary` do tema, sempre decorativo ao lado do nome |
+| Barra inferior | `house` (Início), `graduationCap` (Atividades), `newspaper` (Notícias/Reels), `lifeBuoy` (Ajuda), `user` (Perfil) |
+| Barra superior | `bell` (Alertas), `messageCircle` (Assistente) |
+| Perfil | `settings` (Configurações; só aqui) |
+| Contatos | ligar e lixeira (remover) lado a lado no cartão |
 
-- Botão só com ícone MUST ter rótulo acessível (`aria-label` no web, `Semantics`/`tooltip` no
-  app).
+- Botão só com ícone MUST ter rótulo acessível (`semanticLabel`/`Tooltip` no app, `aria-label`
+  na web).
+
+### 5.2 Ilustrações
+
+SVGs próprios em `assets/illustrations/`, desenhados com `SafeIllustration` (`flutter_svg`),
+sempre **decorativos** (fora da árvore de semântica). Lista (`AppIllustration`):
+
+| Grupo | Ilustrações |
+|---|---|
+| Onboarding | `onboardingProtect`, `onboardingNews`, `onboardingPractice` |
+| Capas por tema | `themeWhatsapp`, `themePix`, `themeLink`, `themeCall`, `themePassword`, `themeFakeNews`, `themeGeneric` |
+| Estados | `stateOffline`, `stateError`, `stateEmpty`, `stateTrophy` (conclusão) |
+| Resposta | `answerCorrect`, `answerWrong` (lâmpada) |
+
+- **Tema da capa**: `IllustrationTheme.fromText` reconhece o tema no título do módulo ou na
+  categoria/título da notícia (pt e en, sem maiúsculas e acentos): WhatsApp (pêssego), Pix/boleto
+  (sálvia), link/phishing (céu), ligação (manteiga), senha (lavanda), fake news (pêssego);
+  nenhum → escudo genérico sobre creme.
+- **Alto contraste**: um `ColorMapper` troca as cores do desenho pelas da paleta AAA (pastéis e
+  claros → branco, tinta → preto, coral → `#9E0019`, verde → `#005A3C`, dourado → `#6E4200`).
+- **Carregando não tem ilustração**: no esqueleto, a capa ilustrada vira bloco cinza
+  (`SafeSkeleton.leaf`), igual ao resto do cartão.
 
 ---
 
@@ -232,8 +251,8 @@ as durações e curvas de `AppMotion.of(context)` (`core/theme/app_motion.dart`)
 
 | Token | Duração | Uso |
 |---|---|---|
-| `short` | 150 ms | pressão de botão e cartão, cor do ícone da aba ativa |
-| `medium` | 250 ms | troca de estado, de aba, entrada de mensagens e campos |
+| `short` | 150 ms | pressão de botão e cartão, cor e círculo da aba ativa |
+| `medium` | 250 ms | troca de estado, de aba, indicador das abas em pílula, entrada de mensagens e campos |
 | `long` | 350 ms | entrada de tela, troca de pergunta, pulso do curtir (teto: 400 ms) |
 
 | Curva | Uso |
@@ -243,288 +262,329 @@ as durações e curvas de `AppMotion.of(context)` (`core/theme/app_motion.dart`)
 | `AppMotion.standard` | troca no lugar (cor, opacidade, tamanho) |
 | `AppMotion.emphasis` (*ease out back*) | ênfase curta, com um leve passar do ponto |
 
+Exceção registrada: a comemoração da conclusão (confete e contagem do placar, 1200 ms) usa uma
+constante local, porque toca uma vez e passa do teto de 400 ms. Nenhuma animação pisca mais de 3
+vezes por segundo.
+
 ### 6.2 "Reduzir animações"
 
 Em Configurações → Acessibilidade, "Reduzir animações" (ou "remover animações" do aparelho)
 zera todas as durações: o código é o mesmo e a troca fica imediata. `AppMotionScope`, no
-`builder` do `MaterialApp`, junta as duas fontes. Animações em laço (brilho do esqueleto, pontos
-do "digitando") ficam paradas.
+`builder` do `MaterialApp`, junta as duas fontes. Com ela ligada: brilho do esqueleto parado,
+sem confete, placar e progresso já no valor final, sem pulso do "Ouvir", sem `Hero` e troca de
+tela sem transição.
 
 ### 6.3 Padrões
 
 | Situação | Efeito |
 |---|---|
-| Abrir e fechar telas | transição do sistema com voltar preditivo no Android (`PredictiveBackPageTransitionsBuilder`); `appFadePage` (esmaecer) nas rotas que trocam a pilha, como a saída da splash |
+| Abrir e fechar telas | transição do sistema com voltar preditivo no Android (`PredictiveBackPageTransitionsBuilder`), deslize no iOS (`MotionAwareTransitionsBuilder`); `appFadePage` (esmaecer) nas rotas que trocam a pilha, como a saída da splash |
 | Troca de abas | *fade-through* na aba que entra (`TabBranchContainer`), mantendo estado e rolagem |
-| Carregando | esqueleto no formato do conteúdo (`SafeSkeleton`), lido como "Carregando"; troca de estado com `SafeStateSwitcher` (esmaecer) |
-| Detalhe da notícia | prévia imediata com `Hero` na imagem do cartão |
-| Pressionar botão / cartão | escala para 95% / 99% (`PressScale`); o afundamento vai até o fim mesmo num toque curto |
+| Carregando | esqueleto cinza no formato do conteúdo (`SafeSkeleton`), lido como "Carregando"; troca de estado com `SafeStateSwitcher` (esmaecer) |
+| Detalhe da notícia | `Hero` da capa só com o detalhe carregado; carregando, só o esqueleto |
+| Reel → detalhe | curtir, salvar e compartilhar voam (`Hero`) até o topo do detalhe |
+| Pressionar botão / cartão | escala para 98% (`PressScale`); o botão principal também escurece (`primaryPressed`) |
 | Ícone ⇄ carregando no botão | `AnimatedSwitcher` |
 | Campos, regras e mensagens que aparecem e somem | crescer e esmaecer (`AnimatedReveal`) |
+| Abas em pílula | um indicador branco só, que desliza até a aba tocada |
+| Barra inferior | o círculo coral e a cor do ícone mudam em `short` |
+| Progresso | enche de 0 ao valor ao aparecer; nas Atividades, de novo a cada volta à aba |
 | Troca de pergunta da lição | deslizar lateral (`SharedAxisTransition`), voltar no sentido oposto |
-| Resultado da resposta | borda e ícone animados; vibração leve no acerto, forte no erro |
-| Curtir um Reel | pulso no coração (1 → 1,3 → 1) e vibração leve; dois toques na imagem curtem |
-| Indicador do onboarding | o ponto ativo alonga (8 → 24 px) acompanhando o arraste |
-| Aba ativa da barra inferior | cor e escala do ícone animadas; fundo com desfoque leve |
-| Assistente | balão "digitando" (três pontos) e mensagens novas subindo e esmaecendo |
-| Seletor "Entrar / Criar conta" | uma pílula branca desliza até a opção tocada |
-| Foco em campo | borda de `input` para `primary` |
-| Abertura do app (splash) | "Mancha e onda" em 1,8 s (feature 023): toque `primary` → mancha ondulada cobre a tela → escudo se desenha em `background` e o idoso entra → o vermelho escorre em onda (com onda `primary-glow` 60 ms atrás) → logo `primary`, nome e frase; só toca na abertura a frio. Navega quando a animação **e** a validação terminam; se a validação demorar, a marca respira (1 → 1,035, 2,6 s). Com "Reduzir animações": estado final direto, sem respirar. Exceção ao teto de 400 ms: é animação de assinatura, com tempos próprios em `SplashTimeline`, e a saída continua um esmaecimento |
+| Resultado da resposta | certa com mola, errada com balanço suave; vibração leve no acerto, forte no erro |
+| Conclusão | confete e contagem do placar (1200 ms, uma vez) |
+| "Ouvir" | halo pulsa 3 vezes (2 s cada) e fica como anel parado enquanto lê |
+| Curtir | pulso no coração (1 → 1,3 → 1) e vibração leve; dois toques na imagem do Reel curtem |
+| Abertura do app (splash) | "Mancha e onda" em 1,8 s (feature 023): toque `primary` → mancha ondulada cobre a tela → escudo se desenha em `background` e o idoso entra → o vermelho escorre em onda (com uma onda `primaryGlow` 60 ms atrás) → logo `primary`, nome e frase; só toca na abertura a frio. Navega quando a animação **e** a validação terminam; se a validação demorar, a marca respira (1 → 1,035, 2,6 s). Com "Reduzir animações": estado final direto, sem respirar. Exceção ao teto de 400 ms: é animação de assinatura, com tempos próprios em `SplashTimeline`, e a saída continua um esmaecimento |
+| Foco em campo | borda de `inputBorder` para tinta (2,5) |
 
-Vibrações passam por `AppHaptics` (`core/utils`): no máximo uma por ação, e o aparelho as
-ignora quando estão desligadas nele. No web, respeitar `prefers-reduced-motion` do mesmo jeito.
+Vibrações passam por `AppHaptics` (`core/utils`): no máximo uma por ação. Na web, respeitar
+`prefers-reduced-motion` do mesmo jeito.
 
 ---
 
 ## 7. Componentes
 
-Medidas em px. "Ação" = `primary`; textos de interface vêm do i18n (`assets/translations/`).
+Medidas em px. Textos de interface vêm do i18n (`assets/translations/`). Use sempre o componente
+do `core/widgets` em vez de redesenhar.
 
 ### 7.1 Botão (`SafeButton`)
 
-Sempre `rounded-full`, texto 700, ícone opcional à esquerda e/ou à direita (16 px, 8 px de
-espaço).
+| Tamanho | Altura mínima | Canto | Texto | Largura |
+|---|---|---|---|---|
+| `large` (padrão) | 60 | 16 | `button` 17/700 | 100% do contêiner |
+| `compact` | 48 | 14 | `label` 15/700 | conteúdo |
 
-| Tamanho | Padding | Fonte | Largura |
+| Tom | Fundo | Texto | Quando usar |
 |---|---|---|---|
-| `large` | 16 vertical | 16 px | 100% do contêiner |
-| `compact` | 20 × 10 | 14 px | conteúdo |
-| `pill` | 14 × 8 | 12 px | conteúdo |
+| `primary` | `primary` (pressionado `primaryPressed`) | branco | **a** ação principal da tela (uma só) |
+| `secondary` | `surfaceStrong` | `textForeground` | ação alternativa ao lado da principal |
+| `ghost` | `card` com contorno tinta 1,5 | `textForeground` | ação neutra ("Continuar sem login") |
+| `link` | transparente | `textForeground` sublinhado | ação de texto ("Esqueci minha senha") |
 
-| Tom | Fundo | Texto |
-|---|---|---|
-| `primary` (padrão) | `primary` | branco |
-| `gradient` | `primary → primary-glow` | branco |
-| `secondary` | `secondary` | branco |
-| `ghost` | transparente, borda 1 px `border` | `secondary` (ex.: "Continuar sem login") |
+- Ícone opcional à esquerda e/ou à direita (22, 10 de espaço). Carregando: o ícone dá lugar a um
+  indicador de 20 e o botão fica desativado para toque e leitor de tela. Desativado: opacidade
+  45%.
+- Cresce em altura quando o rótulo quebra (letra grande).
+- **Botão principal no fim da tela** nos formulários (edição de perfil, troca de senha,
+  recuperar senha, formulário de contato), desativado até o formulário ficar válido.
 
-Estados: desabilitado = opacidade 40% e sem toque; carregando = indicador circular de 16 px no
-lugar do ícone; sombra opcional (`shadow-primary`). Com fonte grande, o rótulo quebra linha.
+### 7.2 Cartão (`SafeCard`) — o padrão único
 
-**Alvo de toque**: mínimo 48 × 48 px (RNF-003). Os tamanhos `compact` e `pill` MUST ter área de
-toque de 48 px mesmo quando o desenho é menor.
-
-### 7.2 Cartão (`SafeCard`)
-
-- Fundo `card`, borda 1 px `border`, raio 24, padding 20.
-- Elevação: `flat` (sem sombra), `sm` (padrão), `md`.
-- Interativo: sombra `md` e escala 99% ao pressionar.
-- Padrão de conteúdo: ícone em quadrado 44 × 44, raio 16, fundo `primary` 10%, ícone `primary`;
-  título 14/700 `secondary`; descrição 12 `muted-foreground`.
+- **Branco, borda 1 px `border`, canto 20, sombra única, padding 20.** É o cartão de todo o app:
+  notícias, Perfil, Configurações, alertas, resultado do Assistente.
+- `elevation: flat` = creme (`surface`), sem sombra (ex.: aviso de "Meus contatos" vazio).
+- `interactive` + `onTap`: lido como botão e encolhe para 98% ao tocar.
+- Quem precisa desenhar a própria caixa (capa no topo, `Hero`, layout próprio) usa
+  **`SafeCard.decoration(colors, flat: ...)`**, nunca uma `BoxDecoration` nova.
 
 ### 7.3 Campo de texto (`SafeTextField`)
 
-- Rótulo acima: 12/600, `secondary` (`destructive` com erro), 4 px até o campo.
-- Caixa: fundo `background`, raio 16, borda **2 px**: `input` em repouso, `primary` no foco,
-  `destructive` com erro. Padding 16 × 12. Texto 16 `foreground`; placeholder `muted-foreground`.
-- Ícone opcional à esquerda (20 px, `muted-foreground`) e ação à direita (ex.: olho para
-  mostrar/ocultar senha, com rótulo "Mostrar senha"/"Ocultar senha").
-- Mensagem de erro abaixo, 12 px, `destructive`, aparece quando a pessoa sai do campo.
-- Variante do login (wireframe): caixa `muted` 40%, borda 1 px `border`, raio 16, padding
-  16 × 14, ícone à esquerda.
+- **Rótulo sempre visível acima** (`label` 15/600, tinta; `destructive` com erro), 8 até a
+  caixa. O rótulo visível é o nome do campo no leitor de tela, lido uma vez só.
+- Caixa: fundo `card`, canto 16, borda `inputBorder` 1,5 em repouso, **tinta 2,5 no foco**,
+  `destructive` 2 com erro. Texto `body` 16 tinta; placeholder `textMutedForeground`.
+- Ícone opcional à esquerda (22, `textMutedForeground`) e ação à direita (24; ex.: olho da senha).
+- Abaixo: dica (`caption` 14, apoio) ou erro (`caption` 14 `destructive` com ícone de alerta de
+  16, para não depender só da cor). Desativado: opacidade 40%.
+- **Validação em tempo real**: o erro aparece enquanto a pessoa digita, só nos campos já
+  alterados (ou depois de tentar salvar). Telefone usa a máscara `PhoneInputFormatter`
+  (`core/utils/phone_format.dart`, aceita 190 e 0800).
 
 ### 7.4 Campo de busca
 
-Raio `full`, borda 1 px `border`, fundo `muted` 40%, padding 14 vertical, 48 à esquerda (ícone
-`Search` 20 px) e 40 à direita (botão `X` redondo `muted` para limpar). Foco: borda `primary`.
-Sugestões: menu `card`, raio 16, borda `border`, `shadow-lg`, itens 16 × 12.
+Pílula (`radiusFull`) com lupa à esquerda e "X" para limpar quando há texto; foco com borda tinta
+2,5. Espaço no começo é descartado com um aviso curto; buscar com menos de 2 letras também avisa.
 
 ### 7.5 Selo (`SafeBadge`)
 
-Raio `full`, padding 12 × 4, texto 12/700 (wireframe: 11/700), fundo = cor do texto 10%
-([§2.2](#22-tons-translúcidos-padrão-10)). Tons: `primary`, `secondary`, `success`, `warning`,
-`destructive`, `neutral`. Ícone opcional de 12 px.
+Pílula de altura mínima 32, padding 12 × 5, texto `caption` 14/700, ícone opcional de 16. Tons
+(fundo suave + texto forte, §2.2): `primary` (`primarySoft`/`primaryPressed`), `secondary`,
+`success`, `warning`, `destructive`, `neutral` e `onImage` (branco com a sombra única, sobre capa).
+Com letra grande, o texto quebra: o selo precisa de largura limitada. No alto contraste, borda
+na cor do texto.
 
-Variantes especiais:
-- **"Novo"** (sobre a imagem do cartão): fundo `primary` sólido, texto branco 10/700, caixa alta.
-- **"Reels"** (carrossel): fundo `primary` sólido, texto branco 10/800, caixa alta, ícone
-  `Sparkles`.
+### 7.6 Chip de filtro (`SafeChip`)
 
-### 7.6 Chip de filtro
+Pílula creme (`surface`) de altura mínima 48, padding 18 × 8, texto `label` 15 tinta.
+**Selecionado: invertido** (fundo `secondary`, texto branco), com a seleção anunciada ao leitor de
+tela. Nos filtros do Início, "Todas" primeiro e rolagem horizontal.
 
-Raio `full`, padding 16 × 8, texto 14/600. Selecionado: fundo `secondary`, texto branco. Não
-selecionado: fundo `muted`, texto `muted-foreground`. Rolagem horizontal sem barra visível, 8 px
-entre chips.
+### 7.7 Abas em pílula (`SafePillTabs`)
 
-### 7.7 Seletor de modo ("Entrar" / "Criar conta")
-
-Trilho `muted`, raio `full`, padding 4. Uma pílula branca com `shadow-sm` desliza até a opção
-tocada; texto da opção ativa `secondary` 600, da inativa `muted-foreground`.
+Trilho `surfaceStrong` em pílula (altura mínima 56, padding 5); a aba atual é um indicador
+branco com a sombra única que **desliza** (`medium`). Rótulo `label` 15 (700 tinta na atual, 600
+apoio nas outras), numa linha só, encolhendo com letra muito grande; cada aba anuncia se está
+selecionada. Usada na Central de ajuda (Oficiais / Meus contatos) e no Assistente. O seletor
+"Entrar / Criar conta" (`AuthModeSwitch`) tem o mesmo visual.
 
 ### 7.8 Cartão de notícia (`NewsCard`)
 
-Fundo `card`, raio 24, `shadow-sm`, escala 99% ao tocar.
+Caixa do cartão padrão (`SafeCard.decoration`): a **capa ocupa o topo** (`NewsCover`: imagem da
+notícia ou ilustração do tema sobre pastel, selo da categoria em `onImage` no canto) e, abaixo,
+título (`title3`, até 2 linhas) e fonte. Sinais de "lida" e "salva" em círculos brancos sobre a
+capa; desligados (`showSignals: false`) nas listas do Perfil, onde o título da lista já diz isso.
+- **Completo**: largura total ("Destaques").
+- **Compacto**: grade de 2 colunas com alturas de capa variadas, estilo Pinterest ("Recomendadas",
+  "Tudo recente"), na ordem da API lida da esquerda para a direita; vira uma coluna com letra
+  acima de 1,3×.
 
-- **Completo**: imagem no topo (altura 176, cobre a largura), selo "Novo" no canto (12, 12) se
-  não lida; corpo com padding 16: linha de categoria (selo de categoria 10/600 + subcategoria
-  11 `muted-foreground`), título 16/600 `secondary` (2 linhas), resumo 14 `muted-foreground`
-  (2 linhas), rodapé com a fonte (11 `muted-foreground`) e as ações.
-- **Compacto** (listas): linha com imagem 80 × 80, raio 16, à esquerda e o texto à direita
-  (padding 12, espaço 12); título 14/600 (2 linhas), sem resumo.
-- **Ações**: botões redondos `Heart` e `Bookmark` (ícone 16). Curtido = coração preenchido
-  `primary`; salvo = marcador preenchido `secondary`; lida = `CircleCheck` `success`. Área de
-  toque de 48 px.
+### 7.9 Cartão de Reels (carrossel "Novidades")
 
-### 7.9 Cartão de Reels (carrossel do Início)
-
-Proporção 9:16, largura 160 (180 em telas maiores), raio 24, `shadow-md`, imagem cobrindo,
-gradiente escuro de baixo para cima, botão `Play` em círculo 32 (preto 40% com desfoque, borda
-branca 20%) no canto superior direito, selo "Reels" no superior esquerdo, título 12/700 branco
-(3 linhas) e fonte 10 branco 75% no rodapé. Carrossel com rolagem horizontal e encaixe
-("snap"), 14 px entre cartões.
+Cartão vertical, canto 24, imagem cobrindo, gradiente escuro de baixo para cima, selo e título
+brancos; 14 entre cartões, rolagem horizontal. Tocar abre a aba de Reels naquela notícia.
 
 ### 7.10 Tela de Reels
 
-Fundo preto, vídeo/imagem cobrindo a tela com opacidade 70% e gradiente escuro; texto branco.
-Botões redondos de 40 px (branco 20% + desfoque) para navegação e ações, empilhados à direita;
-título 24/700 (até 4 linhas no resumo 14, opacidade 90%); botão "Ler notícia completa" branco,
-raio `full`, texto `secondary` 14/600. **Sem barra superior**; a barra inferior continua visível
-(é a aba central).
+Fundo preto, imagem cobrindo com gradiente escuro, texto branco (categorias, título, trecho,
+fonte e data). **À direita, só curtir, salvar e compartilhar** (círculos de 40 com branco 20% e
+desfoque, área de toque de 48). Trocar de Reel é arrastando; tocar no texto ou na imagem abre a
+notícia; dois toques na imagem curtem. Sem barra superior.
 
-### 7.11 Barra superior (`TopBar`)
+### 7.11 Barra superior (`AppTopBar`)
 
-Padding 20 nas laterais, 24 em cima, 12 embaixo.
+Usada no topo de Início, Atividades e Ajuda; **rola junto com o conteúdo** (só o Início prende
+algo no topo: os filtros). Padding 20 nas laterais e 16 em cima e embaixo.
 
-- À esquerda: subtítulo 14/500 `muted-foreground` (wireframe: 12) ("Olá, {nome}" conectado, "Bem-vindo"
-  visitante, ou um texto da tela) e título 24/700 `secondary`.
-- À direita: dois botões redondos de **48 px** (o wireframe usa 44; o app aumenta para o mínimo
-  de toque do RNF-003), fundo `muted`, ícone 20 `secondary`: `Bell`
-  (Alertas) com contador de não lidos (círculo `primary` de no mínimo 24 px, texto branco 14/700,
-  no canto superior direito; maior que o 10/700 do wireframe por legibilidade, RNF-003; "99+"
-  acima de 99; com letra grande o círculo cresce para a esquerda, sem cortar o número) e `Settings`
-  (Configurações).
-- Aparece em Início ("Notícias seguras"), Atividades ("Atividades") e Ajuda ("Central de
-  ajuda"). **Não** aparece em Notícias (Reels) nem em Perfil.
+- **Saudação só no Início**: subtítulo (16/500, apoio) na linha dos botões e o título (`display`
+  28 tinta) embaixo, inteiro. Nas outras abas, sem subtítulo: o título divide a linha com os
+  botões.
+- À direita, dois botões redondos de **48** (fundo `input`, ícone 20): `bell` (Alertas, com
+  contador de não lidos: círculo `primary` de no mínimo 24, texto branco 14/700, "99+" acima de
+  99) e `messageCircle` (Assistente). Os dois pedem conta ao visitante (convite).
+- A engrenagem de Configurações **não** fica aqui: só no Perfil (também para o visitante).
 
-### 7.12 Barra inferior (`BottomNav`)
+### 7.12 Barra inferior (`AppBottomNav`)
 
-Fundo `background` 95% com desfoque, borda superior 1 px `border`, padding 8 nas laterais, 8 em
-cima e 12 embaixo. Cinco abas de mesma largura, nesta ordem:
+Fundo `card`, borda superior 1 px `border`, padding 8. **Cinco abas iguais, só ícones** (24),
+nesta ordem: Início (`house`), Atividades (`graduationCap`), Notícias/Reels (`newspaper`), Ajuda
+(`lifeBuoy`), Perfil (`user`).
 
-| # | Rótulo | Ícone |
-|---|---|---|
-| 1 | Início | `Home` |
-| 2 | Atividades | `GraduationCap` |
-| 3 | **Notícias** (Reels) | `Newspaper` — botão central |
-| 4 | Ajuda | `LifeBuoy` |
-| 5 | Perfil | `User` |
-
-- Aba comum: ícone 20 sobre o rótulo (11/500), 4 px entre eles, raio 18. Ativa: `primary`,
-  traço 2.4. Inativa: `muted-foreground`, traço 1.8.
-- **Aba central**: círculo de 64 px, fundo `primary`, ícone branco 28 (traço 2.2),
-  `shadow-primary`, sobe 32 px acima da barra, sem rótulo visível (mas com rótulo acessível
-  "Notícias"). Ativa: anel de 4 px `primary` 30%.
-- Navegação acessível: `nav` com rótulo "Navegação principal".
+- **Aba ativa: círculo coral de 44** (`primary`, sombra única) com o ícone branco; inativas:
+  ícone `textMutedForeground` sem fundo. Círculo e cor mudam em `short`.
+- Altura do item 56. O nome de cada aba fica no `Semantics` (botão, selecionado) e no `Tooltip`
+  (toque longo). Navegação acessível com rótulo "Navegação principal".
+- Não há mais botão central elevado: todas as abas têm o mesmo tamanho.
 
 ### 7.13 Splash
 
-Fundo `background`, sem círculo atrás do logo. A animação "Mancha e onda" (§6.3) termina com: logo
-oficial em `primary` (164 px, 96–164 conforme a altura da tela), nome "Click Seguro" 34/700
-`secondary`, frase "Sua segurança em primeiro lugar" 16/500 `muted-foreground` e uma onda
-`primary-glow`/`primary` no rodapé. Dura 1,8 s e só sai quando a validação da sessão também
-terminou (sem mínimo fixo). A abertura nativa (Android e iOS) mostra só o fundo `#FFFDFB`, para
-emendar sem piscar.
+Fundo `background`, sem círculo atrás do logo. A animação "Mancha e onda" (§6.3, feature
+023) termina com: logo oficial em `primary` (164 px, 96–164 conforme a altura da tela), nome
+"Click Seguro" em `display` (`textForeground`), frase "Sua segurança em primeiro lugar" em
+`bodyLarge` (`textBody`) e uma onda `primaryGlow`/`primary` no rodapé. Dura 1,8 s e só sai
+quando a validação da sessão também terminou (sem mínimo fixo). A abertura nativa (Android e
+iOS) mostra só o fundo `background` (`#FFFFFF`), para emendar sem piscar; os ícones do app e
+o SVG da marca usam o `primary` da 2.0 (`#E31C3D`).
 
 ### 7.14 Onboarding
 
-Botão "Pular" no topo à direita (texto 14/600 `muted-foreground`). Centro: ícone num quadrado
-de 96–128 px com raio 24–40 (fundos: `primary`, `secondary`, cinza-azulado), título 30/700
-`secondary`, descrição 16 `muted-foreground` (largura máxima ~320). Rodapé: indicador de página
-(pontos de 8 px, ativo alongado 32 px `primary`, inativos `muted`) e botão `large` "Continuar"
-/ "Começar" com `ChevronRight`.
+Três slides com as ilustrações de boas-vindas (`onboarding*`), título, descrição, botão "Ouvir",
+indicador de página (ponto ativo alongado em `primary`), "Pular" e o botão `large` "Continuar" /
+"Começar".
 
-### 7.15 Login
+### 7.15 Login e recuperar senha
 
-Margens 24, topo 40. Cabeçalho: quadrado 48 `primary` raio 16 com `Shield` branco + "SafeNews"
-24/700 `secondary`. Seletor de modo ([§7.7](#77-seletor-de-modo-entrar--criar-conta)), campos
-com ícone ([§7.3](#73-campo-de-texto-safetextfield)), link "Esqueci minha senha" alinhado à
-direita (12/600 `primary`), botão `large`, divisória "ou" (linha `border` + texto 12
-`muted-foreground`) e "Continuar sem login" (botão `ghost` grande).
+Cabeçalho com a logo oficial (44) e "Bem-vindo ao / Click Seguro"; seletor em pílula "Entrar /
+Criar conta" (§7.7); campos `SafeTextField` com rótulo acima; "Esqueci minha senha" como `link`;
+botão `large`; "Continuar sem login" como `ghost`. Na recuperação, o botão principal de cada
+passo fica fixo no fim da tela.
 
-### 7.16 Estados comuns (definidos na feature 005; o wireframe não os desenha)
+### 7.16 Estados comuns
 
 | Estado | Visual |
 |---|---|
-| Carregando | Indicador circular `primary` centralizado e texto opcional 16 `muted-foreground` |
-| Erro | Mensagem 16 `foreground` centralizada e botão `compact` "Tentar novamente" |
-| Vazio | Ícone 40 `muted-foreground`, mensagem 16 ("Nada por aqui ainda.") e ação opcional; na lista do Início, caixa `muted` 40% raio 16 com "Nenhuma notícia encontrada." |
-| Sem internet | Faixa no topo do conteúdo, fundo `warning` 10%, texto 16 `foreground`: "Você está sem internet. Mostrando o conteúdo salvo." |
-| Convite para criar conta | Painel `card` vindo de baixo, raio 24 em cima: título 18/700 `secondary`, explicação 16, botão `large` "Entrar ou criar conta" e botão `ghost` "Agora não" |
+| Carregando | **Esqueleto cinza, sem ilustração**: `SafeSkeleton` com os widgets da tela e dados de exemplo, ou `SafeLoadingState` com blocos nos formatos `cards`, `list` e `detail`. Lido como "Carregando"; brilho parado com movimento reduzido. Botões que salvam mostram o carregando no lugar do ícone. **Sem aviso de servidor lento** |
+| Vazio e erro | `SafeStateLayout` (via `SafeEmptyState` e `SafeErrorState`): ilustração de até 180 (encolhe até 96 em telas curtas), **texto 16 seminegrito** tinta centralizado, dica opcional 16 em apoio e as ações da tela (erro: "Tentar novamente"). Rola com letra grande. Ilustração: `stateEmpty`, `stateError` ou `stateOffline` (falha de conexão) |
+| Sem internet | `SafeOfflineBanner`: faixa `secondary` com ícone e texto brancos (`label`), no topo do conteúdo salvo |
+| Aviso curto | `SnackBar` flutuante `secondary`, canto 16, texto 16 branco |
+| Falha numa chave | O switch dá lugar a um ícone vermelho (`destructive`) de tentar de novo (48), e a mensagem vira subtítulo da linha, sem SnackBar; carregando no lugar da chave enquanto salva |
+| Convite para criar conta | folha inferior (§7.18) com título, explicação, botão `large` e "Agora não" |
+
+### 7.17 Botão redondo de ícone (`SafeIconButton`)
+
+Círculo de 48 (padrão) ou 56, nunca menos. Creme (`surface`) na tela; branco com a sombra única
+sobre imagem (`onImage`). Ícone tinta 24/26. `semanticLabel` obrigatório e ação de toque exposta
+ao leitor de tela. Usado em voltar, ações do detalhe e topo das telas de configuração.
+
+### 7.18 Folha inferior (`SafeSheet`)
+
+Fundo `card`, canto 32 em cima (`bottomSheetTheme`), alça de 44 × 5 em `border`, margens 24.
+Feedback da resposta, convite de conta, escolha de foto e idioma.
+
+### 7.19 Progresso
+
+`SafeProgressBar` (10 de altura, trilho `surfaceStrong`, cheio `primary` ou `success`),
+`SafeProgressRing` (104, rótulo no centro, painel de atividades) e `SafeSegmentedProgress` (um
+segmento por pergunta: respondidas coral, atual coral claro, próximas creme). Enchem ao aparecer.
+
+### 7.20 Avatares
+
+- `PersonAvatar`: foto circular com iniciais de reserva (perfil e contatos), decorativa (o nome
+  aparece ao lado).
+- `EditableAvatar`: o mesmo círculo (96) com selo coral de câmera no canto; tocar abre a escolha
+  da foto; com envio em andamento, carregando por cima e sem toque. Usado na edição de perfil e no
+  formulário de contato.
+
+### 7.21 Ouvir (`ListenButton`)
+
+Pílula com borda e ícone coral ("Ouvir"/"Parar"); com `round`, o círculo coral de 56 do cartão
+"Ouvir notícia". No detalhe, o cartão tem ainda uma pílula branca de velocidade ("0,5x", "1x",
+"2x") que passa para a próxima. Some sem voz no idioma do app.
+
+### 7.22 Cartões das telas
+
+| Cartão | Visual |
+|---|---|
+| Módulo (Atividades) | capa ilustrada pelo tema do título no topo, título, descrição e barra de progresso; carregando, a capa vira bloco cinza |
+| Emergência (Ajuda) | `EmergencyCallCard` no topo da Central de ajuda: cartão `primary` com "Caiu em um golpe?", texto e botão branco "Ligar para 190" |
+| Contato | cartão padrão; tocar edita; à direita, ligar e a lixeira (remover, com confirmação); "Adicionar contato" é um botão flutuante no canto de baixo à direita, só em "Meus contatos" |
+| Alerta | cartão padrão com a capa da notícia à esquerda (ou a ilustração do tema), "Novo" escrito quando não lido, título e "fonte · hora/data" |
+| Linha de configuração | `SettingsScaffold`: voltar redondo, título grande que rola, linhas com ícone em círculo |
 
 ---
 
 ## 8. Layout
 
-- **Mobile (referência)**: uma coluna; margem lateral 20 (24 no login/onboarding); conteúdo
-  rola entre a barra superior fixa e a barra inferior fixa.
-- **Web**: o wireframe é mobile-first (simula um celular). Sugestão para a versão web, sem
-  mudar a identidade:
-  - até 768 px: igual ao mobile, com a barra inferior;
-  - acima de 768 px: conteúdo centralizado com largura máxima de ~720 px para leitura (feed em
-    uma coluna) ou grade de 2–3 colunas de cartões; a navegação pode virar barra lateral ou
-    barra superior com os mesmos 5 destinos, ícones e ordem.
-- **Imagens**: `object-fit: cover`; carregamento preguiçoso; texto alternativo vazio quando a
-  imagem é decorativa (o título já descreve a notícia).
+- **Mobile (referência)**: uma coluna, margem lateral 20; conteúdo entre a barra superior (que
+  rola) e a barra inferior fixa. Telas empilhadas (detalhe, configurações, formulários) não têm
+  barra inferior e respeitam a área da barra de navegação do Android no fim do conteúdo.
+- **Web**: até 768 px, igual ao mobile; acima, conteúdo centralizado (~720 px) ou grade de 2–3
+  colunas de cartões, com os mesmos 5 destinos, ícones e ordem numa barra lateral ou superior.
+- **Imagens**: cobrir (`cover`), carregamento preguiçoso, capa ilustrada quando não há imagem ou
+  ela falha.
 
 ---
 
 ## 9. Acessibilidade (obrigatório)
 
-- **Alvos de toque**: mínimo 48 × 48 px (RNF-003).
-- **Texto**: mínimo 16 px para o que precisa ser lido; nada cortado com fonte a 200%.
-- **Contraste**: WCAG 2.1 AA.
-  - Texto `muted-foreground` (`#596475`) sobre `background`: cerca de 6,0:1, passa AA.
-  - `secondary` (`#182A4E`) sobre `background`: passa AAA.
-  - Branco sobre `primary` (`#FE3152`): cerca de 3,6:1. Passa AA **só para texto grande**
-    (≥ 18,7 px em negrito ou ≥ 24 px). Os botões de 16 px/700 ficam abaixo de 4,5:1: é uma
-    limitação conhecida da cor da marca, a resolver no tema de alto contraste (F0.6/B9). Não use
-    texto branco menor que 16 px/700 sobre `primary`.
-- **Leitor de tela**: rótulo em todo elemento interativo, inclusive botões só com ícone, a aba
-  central e o olho da senha; estados de carregando anunciados.
-- **Foco visível** no web: anel `ring` (= `primary`).
-- **Cor nunca sozinha**: "lida", "curtido", erro e aba ativa também mudam ícone, preenchimento
-  ou texto.
-- **Movimento**: respeitar "reduzir movimento".
-- **Linguagem simples** em todos os textos (RNF-003); confirmação antes de ações destrutivas.
+- **Alvos de toque**: mínimo 48 × 48 (RNF-003): botões, chips, botões redondos, ícone de tentar
+  de novo, ações do Reel (área de 48 em volta do círculo de 40).
+- **Texto**: corpo 16, mínimo 14 para metadados; nada cortado com letra a 200%.
+- **Contraste**: AA para todos os pares de texto e fundo do tema normal (branco sobre `primary`
+  `#E31C3D` passa AA também no texto de 16/700, o que a 1.x não conseguia); AAA no alto
+  contraste. Conferido no `app_palette_test.dart`.
+- **Leitor de tela**: rótulo em todo elemento interativo, inclusive abas da barra inferior (só
+  ícone), botões redondos e o olho da senha; seleção anunciada em chips e abas; carregamento
+  anunciado (esqueleto e botões carregando); ilustrações e avatares decorativos.
+- **Foco visível** na web: borda tinta, como o foco do campo.
+- **Cor nunca sozinha**: "Novo" escrito no alerta, ícone no erro do campo, check/X nas respostas,
+  ícone cheio no curtido e salvo, círculo na aba ativa.
+- **Movimento**: "Reduzir animações" do app ou do aparelho (§6.2); nada pisca mais de 3 vezes por
+  segundo.
+- **Linguagem simples** (RNF-003); confirmação antes de ações destrutivas (remover contato,
+  sair).
 
 ---
 
-## 10. Divergências entre wireframe e app
+## 10. Divergências
 
-Valores em que o app Flutter (canônico) difere do wireframe. Na versão web, use a coluna "App".
+### 10.1 Figma × app (vale o app)
 
-| Item | Wireframe | App (vale) | Observação |
+| Item | Figma | App | Motivo |
 |---|---|---|---|
-| `primary` | `#FF2950` no comentário do CSS; `oklch(0.65 0.235 19)` = `#FE3152` | `#FE3152` | Mesmo valor; o comentário do CSS está desatualizado |
-| `secondary` | `#192E51` no comentário; `oklch(0.29 0.07 263)` = `#182A4E` | `#182A4E` | Idem |
-| `primary-glow` | `oklch(0.75 0.2 30)` = `#FF725C` (mais alaranjado) | `#FF6A7A` (mais rosado) | Gradiente do app é mais rosado |
-| `destructive` | `oklch(0.6 0.25 25)` = `#F20024` | `#E5484D` | App menos saturado |
-| `border` | `oklch(0.9 0.01 255)` = `#DADEE5` | `#E6E6EA` | App mais claro |
-| `input` | `oklch(0.93 0.01 255)` = `#E3E8EF` | `#EDEDF1` | App mais claro |
-| `muted`, `accent` | `#EFF2F5`, `#DEE9F5` | não têm constante | Use os do wireframe |
-| Escala tipográfica | Style guide do wireframe: 28/18/14 | 30/24/18/16/14/12 | O app segue as classes Tailwind usadas nas telas (`text-3xl` etc.) |
-| Nome no splash | "SafeNews" | "SafeNews" (desde a feature 004; antes "Click Seguro") | |
-| Barra inferior | 5 itens, Reels no centro | 5 abas, Reels como aba central (feature 005) | Igual |
-| Cor do 3º ícone do onboarding | `#607698` | `#596475` (`muted-foreground`) | Diferença pequena, sem token novo |
-| Pulsação do escudo no splash | sim | não | Evita animação contínua para o público idoso |
-| Botões da barra superior | 44 px | 48 px | Mínimo de toque do RNF-003 |
-| Subtítulo da barra superior | 12 px | 14 px | Legibilidade para o público idoso |
+| Escala de texto | corpo 18, títulos 20–32, legenda 15 | corpo 16, títulos 18–28, legenda 14 | Validação da usuária: a de 18 ficou grande demais (FR-003 revisto) |
+| Barra inferior | ícone + rótulo, pílula atrás da aba atual | só ícones, círculo coral de 44 na ativa | Validação da usuária (FR-009 revisto) |
+| Engrenagem | topo das abas | só no Perfil | Validação da usuária (R15) |
+| Topo das abas | saudação em todas | saudação só no Início; Atividades e Ajuda rolam o topo | R16, R18 |
+| Assistente | abas de chat e histórico, textos de apoio | histórico num botão do topo, "Nova conversa" em ícone, sem textos fixos | R15, R16 |
+| Aviso de servidor lento | previsto (FR-007/FR-018 originais) | removido | R16 |
+| Estados vazio/erro | ilustração de 200, título `title1` (plano original) | ilustração até 180, texto 16 seminegrito | Estado único (R19) |
+| Perfil | layout novo | layout da feature 012 com os componentes novos | Clarificação da 024 (FR-013) |
+| Placar | 72 | 64 | Ajuste da implementação |
+
+### 10.2 O que saiu da 1.x
+
+Paleta `#FE3152`/`#182A4E` e fundo `#FFFDFB`; botão `gradient` e tamanho `pill`;
+`shadow-sm`/`shadow-md`/`shadow-primary`; Montserrat (nunca empacotada); escala 30/24/18/16/14/12;
+botão central elevado da barra inferior; indicador circular girando nos carregamentos;
+`SafeStateIllustration` pintado à mão (feature 021); `SlowRequestNotice`; botões de navegação e
+de abrir a fonte na coluna do Reel.
 
 ---
 
 ## 11. Como usar este documento
 
-- **Versão web**: copie os tokens das §2–§4 como variáveis CSS (ou tema do Tailwind) usando a
-  coluna "App"/Hex; carregue Montserrat (400–800) e Lucide; implemente os componentes da §7 com
-  os mesmos nomes (`SafeButton`, `SafeCard`, ...) para facilitar a comparação lado a lado com o
-  app.
-- **App Flutter**: componente novo no design system é combinado antes, feito em commit isolado e
-  adicionado ao style guide (plano do produto §6) e **a este documento**.
+- **Versão web**: copie os tokens das §2–§4 como variáveis CSS (ou tema do Tailwind); carregue
+  Inter (400–800) e Lucide; implemente os componentes da §7 com os mesmos nomes (`SafeButton`,
+  `SafeCard`, ...) para comparar lado a lado com o app.
+- **App Flutter**: componente novo é combinado antes, feito em commit isolado e adicionado ao
+  style guide e **a este documento**. Cor por `context.colors`, texto por `AppTypography`, canto
+  e espaço por `AppSpacing`, movimento por `AppMotion.of(context)`: sem números mágicos.
 - **Mudança de token**: altere primeiro o app (`lib/core/theme/`), depois este documento (com
   nova versão abaixo) e avise quem mantém a versão web.
 
 ## Histórico de versões
 
+- **2.0.0 (2026-11-15)**: MAJOR, redesign visual 2.0 (feature 024, validado pela usuária). Nome
+  "Click Seguro" no lugar de "SafeNews". Paleta nova (coral `#E31C3D`, tinta `#1B2440`, creme,
+  pares suave + forte, pastéis) e alto contraste estendido; Inter empacotada com a escala revista
+  (corpo 16, títulos 18–28, mínimo 14); cantos 12/16/20/24/32/pílula e sombra única; cartão
+  padrão único com `SafeCard.decoration`; componentes novos (`SafeIconButton`, `SafeChip`,
+  `SafePillTabs`, `SafeSheet`, progresso, `SafeStateLayout`, `EditableAvatar`) e ilustrações SVG
+  com recoloração no alto contraste; barra inferior só com ícones e aba ativa em círculo coral de
+  44; topo com saudação só no Início e engrenagem só no Perfil; carregando só com esqueleto cinza,
+  vazio/erro com texto 16 seminegrito e ilustração até 180, sem aviso de servidor lento; §6
+  atualizada com os padrões do redesign. Removidos gradiente, sombras múltiplas, Montserrat e o
+  botão central.
 - **1.2.0 (2026-11-08)**: §6 Movimento reescrita com os tokens de `AppMotion`, a opção
   "Reduzir animações" e os padrões de transição, esqueleto e microinterações (feature 022).
 - **1.1.1 (2026-10-09)**: contador do sino com círculo mínimo de 24 px e texto 14/700, no lugar

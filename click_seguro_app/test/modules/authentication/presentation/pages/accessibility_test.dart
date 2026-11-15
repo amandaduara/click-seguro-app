@@ -3,6 +3,7 @@ import 'package:click_seguro_app/modules/authentication/presentation/controller/
 import 'package:click_seguro_app/modules/authentication/presentation/controller/forgot_password_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/forgot_password_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
+import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -73,9 +74,12 @@ void main() {
     expectMinTarget(tester, find.byType(IconButton));
     expectMinTarget(tester, find.byType(TextButton));
     // Um só nó por campo, com o rótulo (não anunciado em dobro).
-    for (final label in ['seu@email.com', 'Senha']) {
+    for (final (hint, label) in [
+      ('seu@email.com', 'E-mail'),
+      ('Digite sua senha', 'Senha'),
+    ]) {
       final field = find.byWidgetPredicate(
-        (w) => w is TextField && w.decoration?.hintText == label,
+        (w) => w is TextField && w.decoration?.hintText == hint,
       );
       expect(tester.getSemantics(field).label, label);
     }
@@ -90,7 +94,7 @@ void main() {
   testWidgets('cadastro sem overflow com a lista de regras', (tester) async {
     await pumpSmallScreen(tester, '/login');
 
-    await tester.tap(find.byKey(const ValueKey('auth-mode-register')));
+    await tester.tap(registerTab);
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
@@ -109,3 +113,9 @@ void main() {
     expectMinTarget(tester, find.byType(SafeButton));
   });
 }
+
+/// A aba "Criar conta" do seletor no topo do login.
+final Finder registerTab = find.descendant(
+  of: find.byType(SafePillTabs),
+  matching: find.text('Criar conta'),
+);

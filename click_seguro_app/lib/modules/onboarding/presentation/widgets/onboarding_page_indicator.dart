@@ -14,8 +14,8 @@ class OnboardingPageIndicator extends StatelessWidget {
     this.controller,
   });
 
-  static const double _dot = 8;
-  static const double _active = 24;
+  static const double _dot = 10;
+  static const double _active = 32;
 
   final int pageCount;
   final int currentPage;
@@ -43,7 +43,6 @@ class OnboardingPageIndicator extends StatelessWidget {
   }
 
   Widget _dots(BuildContext context, double page) => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
     children: List.generate(pageCount, (index) {
       // 1 no ponto da página, 0 a uma página ou mais de distância.
       final double t = (1 - (page - index).abs()).clamp(0.0, 1.0);
@@ -54,7 +53,7 @@ class OnboardingPageIndicator extends StatelessWidget {
             ? AppMotion.of(context).medium
             : Duration.zero,
         curve: AppMotion.standard,
-        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.s1),
+        margin: const EdgeInsets.only(right: AppSpacing.s2),
         width: _dot + (_active - _dot) * t,
         height: _dot,
         decoration: BoxDecoration(

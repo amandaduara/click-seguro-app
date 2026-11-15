@@ -28,6 +28,10 @@ abstract class AppStrings {
   static const String authNamePlaceholder = 'auth_name_placeholder';
   static const String authEmailPlaceholder = 'auth_email_placeholder';
   static const String authPasswordPlaceholder = 'auth_password_placeholder';
+  static const String authNameLabel = 'auth_name_label';
+  static const String authEmailLabel = 'auth_email_label';
+  static const String authPasswordLabel = 'auth_password_label';
+  static const String authGuestNote = 'auth_guest_note';
   static const String authPasswordShow = 'auth_password_show';
   static const String authPasswordHide = 'auth_password_hide';
   static const String authForgotPassword = 'auth_forgot_password';
@@ -67,9 +71,13 @@ abstract class AppStrings {
       'auth_reset_new_password_placeholder';
   static const String authResetConfirmPasswordPlaceholder =
       'auth_reset_confirm_password_placeholder';
+  static const String authResetCodeLabel = 'auth_reset_code_label';
+  static const String authResetNewPasswordLabel =
+      'auth_reset_new_password_label';
+  static const String authResetConfirmPasswordLabel =
+      'auth_reset_confirm_password_label';
   static const String authResetSave = 'auth_reset_save';
   static const String authResetSuccess = 'auth_reset_success';
-  static const String authSlowServer = 'auth_slow_server';
 
   // --- common ---
   static const String commonTryAgain = 'common_try_again';
@@ -107,17 +115,14 @@ abstract class AppStrings {
   static const String shellTabHelp = 'shell_tab_help';
   static const String shellTabProfile = 'shell_tab_profile';
   static const String shellNavLabel = 'shell_nav_label';
-  static const String shellGreeting = 'shell_greeting';
-  static const String shellWelcome = 'shell_welcome';
   static const String shellNotifications = 'shell_notifications';
-  static const String shellSettings = 'shell_settings';
 
   // --- news ---
   static const String newsTitle = 'news_title';
   static const String newsReelsTitle = 'news_reels_title';
-  static const String newsDetailTitle = 'news_detail_title';
   static const String newsSearchHint = 'news_search_hint';
   static const String newsSearchClear = 'news_search_clear';
+  static const String newsSearchInvalid = 'news_search_invalid';
   static const String newsFilterAll = 'news_filter_all';
   static const String newsSectionNew = 'news_section_new';
   static const String newsSectionHighlights = 'news_section_highlights';
@@ -152,9 +157,6 @@ abstract class AppStrings {
   static const String newsEmptySearch = 'news_empty_search';
   static const String newsCardRead = 'news_card_read';
   static const String newsCardSaved = 'news_card_saved';
-  static const String newsSlowServer = 'news_slow_server';
-  static const String newsReelsPrevious = 'news_reels_previous';
-  static const String newsReelsNext = 'news_reels_next';
   static const String newsReelsLike = 'news_reels_like';
   static const String newsReelsLiked = 'news_reels_liked';
   static const String newsReelsSave = 'news_reels_save';
@@ -174,12 +176,23 @@ abstract class AppStrings {
   static const String newsDetailSpeedSlow = 'news_detail_speed_slow';
   static const String newsDetailSpeedNormal = 'news_detail_speed_normal';
   static const String newsDetailSpeedFast = 'news_detail_speed_fast';
-  static const String newsDetailLikes = 'news_detail_likes';
+  static const String newsDetailSpeedShortSlow = 'news_detail_speed_short_slow';
+  static const String newsDetailSpeedShortNormal =
+      'news_detail_speed_short_normal';
+  static const String newsDetailSpeedShortFast = 'news_detail_speed_short_fast';
+  static const String newsDetailSpeedChip = 'news_detail_speed_chip';
+  static const String newsDetailSpeedChange = 'news_detail_speed_change';
   static const String newsDetailShare = 'news_detail_share';
   static const String newsDetailRelatedTitle = 'news_detail_related_title';
   static const String newsDetailRelatedQuestions =
       'news_detail_related_questions';
   static const String newsDetailNoContent = 'news_detail_no_content';
+  static const String newsDetailBack = 'news_detail_back';
+  static const String newsDetailListenTitle = 'news_detail_listen_title';
+  static const String newsDetailReadingTime = 'news_detail_reading_time';
+  static const String newsDetailSaveLoading = 'news_detail_save_loading';
+  static const String newsDetailLikeLoading = 'news_detail_like_loading';
+  static const String newsDetailWaitPending = 'news_detail_wait_pending';
   static const String newsSavedTitle = 'news_saved_title';
   static const String newsSavedEmpty = 'news_saved_empty';
   static const String newsSavedEmptyHint = 'news_saved_empty_hint';
@@ -236,7 +249,6 @@ abstract class AppStrings {
   static const String activitiesEmptyTitle = 'activities_empty_title';
   static const String activitiesEmptyBody = 'activities_empty_body';
   static const String activitiesErrorTitle = 'activities_error_title';
-  static const String activitiesSlow = 'activities_slow';
   static const String activitiesLessonPosition = 'activities_lesson_position';
   static const String activitiesLessonProgressSemantics =
       'activities_lesson_progress_semantics';
@@ -281,6 +293,9 @@ abstract class AppStrings {
       'activities_guest_alert_continue';
 
   // --- help ---
+  static const String helpEmergencyTitle = 'help_emergency_title';
+  static const String helpEmergencyBody = 'help_emergency_body';
+  static const String helpEmergencyCall = 'help_emergency_call';
   static const String helpTitle = 'help_title';
   static const String helpTabOfficial = 'help_tab_official';
   static const String helpTabPersonal = 'help_tab_personal';
@@ -292,7 +307,6 @@ abstract class AppStrings {
   static const String helpPhone = 'help_phone';
   static const String helpRelationship = 'help_relationship';
   static const String helpPhoto = 'help_photo';
-  static const String helpChoosePhoto = 'help_choose_photo';
   static const String helpSaveContact = 'help_save_contact';
   static const String helpDeleteContact = 'help_delete_contact';
   static const String helpDeleteConfirm = 'help_delete_confirm';
@@ -382,6 +396,7 @@ abstract class AppStrings {
       'profile_photo_remove_confirm';
   static const String profilePhotoRemoveCancel = 'profile_photo_remove_cancel';
   static const String profilePhotoUploading = 'profile_photo_uploading';
+  static const String profilePhotoWaitUpload = 'profile_photo_wait_upload';
   static const String profilePhotoFailed = 'profile_photo_failed';
   static const String profilePhotoInvalid = 'profile_photo_invalid';
 
@@ -389,8 +404,6 @@ abstract class AppStrings {
   static const String settingsTitle = 'settings_title';
   static const String settingsAccessibilityTitle =
       'settings_accessibility_title';
-  static const String settingsAccountCardAction =
-      'settings_account_card_action';
   static const String settingsSectionAccount = 'settings_section_account';
   static const String settingsSectionAlerts = 'settings_section_alerts';
   static const String settingsSectionReading = 'settings_section_reading';
@@ -403,6 +416,7 @@ abstract class AppStrings {
   static const String settingsAlerts = 'settings_alerts';
   static const String settingsAlertsSub = 'settings_alerts_sub';
   static const String settingsAlertsFailed = 'settings_alerts_failed';
+  static const String settingsAlertsRetry = 'settings_alerts_retry';
   static const String settingsAccountLoadFailed =
       'settings_account_load_failed';
   static const String settingsAccessibility = 'settings_accessibility';
@@ -503,9 +517,6 @@ abstract class AppStrings {
 
   // --- assistant ---
   static const String assistantTitle = 'assistant_title';
-  static const String assistantSubtitle = 'assistant_subtitle';
-  static const String assistantHeaderDescription =
-      'assistant_header_description';
   static const String assistantPrivacy = 'assistant_privacy';
   static const String assistantTabChat = 'assistant_tab_chat';
   static const String assistantTabVerify = 'assistant_tab_verify';
@@ -516,7 +527,6 @@ abstract class AppStrings {
   static const String assistantChatIntro = 'assistant_chat_intro';
   static const String assistantSuggestionLink = 'assistant_suggestion_link';
   static const String assistantSuggestionPrize = 'assistant_suggestion_prize';
-  static const String assistantSuggestionBank = 'assistant_suggestion_bank';
   static const String assistantChatPlaceholder = 'assistant_chat_placeholder';
   static const String assistantChatSend = 'assistant_chat_send';
   static const String assistantChatRetry = 'assistant_chat_retry';
@@ -530,7 +540,6 @@ abstract class AppStrings {
       'assistant_new_conversation_confirm';
   static const String assistantCancel = 'assistant_cancel';
   static const String assistantCharacters = 'assistant_characters';
-  static const String assistantVerifyingTitle = 'assistant_verifying_title';
   static const String assistantVerifyText = 'assistant_verify_text';
   static const String assistantVerifyImage = 'assistant_verify_image';
   static const String assistantSource = 'assistant_source';
@@ -543,14 +552,13 @@ abstract class AppStrings {
   static const String assistantImageGallery = 'assistant_image_gallery';
   static const String assistantImageCamera = 'assistant_image_camera';
   static const String assistantImageRemove = 'assistant_image_remove';
-  static const String assistantImageLimit = 'assistant_image_limit';
   static const String assistantImagePermission = 'assistant_image_permission';
   static const String assistantImagePickFailed = 'assistant_image_pick_failed';
-  static const String assistantAnalysisResult = 'assistant_analysis_result';
   static const String assistantRisk = 'assistant_risk';
   static const String assistantConfidence = 'assistant_confidence';
-  static const String assistantExplanation = 'assistant_explanation';
-  static const String assistantTips = 'assistant_tips';
+  static const String assistantRiskHigh = 'assistant_risk_high';
+  static const String assistantRiskMedium = 'assistant_risk_medium';
+  static const String assistantRiskLow = 'assistant_risk_low';
   static const String assistantUnavailable = 'assistant_unavailable';
   static const String assistantUnknown = 'assistant_unknown';
   static const String assistantThreatPhishing = 'assistant_threat_phishing';

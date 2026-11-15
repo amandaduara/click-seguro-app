@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/get_activity_progress_usecase.dart';
+import 'package:click_seguro_app/modules/profile/domain/usecases/get_cached_profile_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/get_news_counts_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/get_profile_usecase.dart';
 import 'package:click_seguro_app/modules/profile/domain/usecases/remove_avatar_usecase.dart';
@@ -26,6 +27,7 @@ FakeProfileRepository registerProfileDependencies(
   final FakeProfileRepository fake = repository ?? FakeProfileRepository();
   injector
     ..registerSingleton(GetProfileUseCase(fake))
+    ..registerSingleton(GetCachedProfileUseCase(fake))
     ..registerSingleton(GetNewsCountsUseCase(fake))
     ..registerSingleton(GetActivityProgressUseCase(fake))
     ..registerLazySingleton(
@@ -38,6 +40,7 @@ FakeProfileRepository registerProfileDependencies(
     ..registerFactory(
       () => ProfileController(
         getProfile: injector<GetProfileUseCase>(),
+        getCachedProfile: injector<GetCachedProfileUseCase>(),
         getNewsCounts: injector<GetNewsCountsUseCase>(),
         getActivityProgress: injector<GetActivityProgressUseCase>(),
       ),

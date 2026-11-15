@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/user_news_list_result.dart';
@@ -259,6 +260,108 @@ void main() {
 
       expect(controller.status, FeedStatus.loaded);
       expect(controller.items, hasLength(2));
+    });
+  });
+
+  group('mudança confirmada em outra tela (desmarcar no detalhe)', () {
+    Future<void> emit(NewsInteractionChange change) async {
+      repository.interactions.add(change);
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    test(
+      'salvas: desmarcar salvar tira o item sem pedido nem loading',
+      () async {
+        repository.savedResults.add(pageOf(3));
+        await controller.load();
+        final states = <FeedStatus>[];
+        controller.addListener(() => states.add(controller.status));
+
+        await emit(const NewsInteractionChange(newsId: 'n2', isSaved: false));
+
+        expect(ids(), ['n1', 'n3']);
+        expect(states, [FeedStatus.loaded]);
+        expect(repository.savedCalls, [1]);
+      },
+    );
+
+    test(
+      'resposta montada antes da confirmação não traz o item de volta',
+      () async {
+        repository.savedResults
+          ..add(pageOf(3))
+          ..add(pageOf(3));
+        await controller.load();
+        await emit(const NewsInteractionChange(newsId: 'n1', isSaved: false));
+
+        await controller.refresh();
+
+        expect(ids(), ['n2', 'n3']);
+      },
+    );
+
+    test('salvar de novo deixa o item voltar na próxima carga', () async {
+      repository.savedResults
+        ..add(pageOf(3))
+        ..add(pageOf(3));
+      await controller.load();
+      await emit(const NewsInteractionChange(newsId: 'n1', isSaved: false));
+      await emit(const NewsInteractionChange(newsId: 'n1', isSaved: true));
+
+      await controller.refresh();
+
+      expect(ids(), ['n1', 'n2', 'n3']);
+    });
+
+    test('salvas ignoram curtidas e leituras', () async {
+      repository.savedResults.add(pageOf(2));
+      await controller.load();
+
+      await emit(const NewsInteractionChange(newsId: 'n1', isLiked: false));
+      await emit(const NewsInteractionChange(newsId: 'n2', isRead: true));
+
+      expect(ids(), ['n1', 'n2']);
+    });
+
+    test('curtidas: descurtir tira o item; salvar não mexe', () async {
+      final liked = buildUserNewsListController(
+        repository,
+        kind: NewsListKind.liked,
+      );
+      addTearDown(liked.dispose);
+      repository.savedResults.add(pageOf(3));
+      await liked.load();
+
+      await emit(const NewsInteractionChange(newsId: 'n1', isSaved: false));
+      await emit(const NewsInteractionChange(newsId: 'n3', isLiked: false));
+
+      expect(liked.items.map((item) => item.id), ['n1', 'n2']);
+    });
+
+    test('lidas não mudam com salvar ou curtir', () async {
+      final read = buildUserNewsListController(
+        repository,
+        kind: NewsListKind.read,
+      );
+      addTearDown(read.dispose);
+      repository.savedResults.add(pageOf(2));
+      await read.load();
+
+      await emit(const NewsInteractionChange(newsId: 'n1', isSaved: false));
+      await emit(const NewsInteractionChange(newsId: 'n2', isLiked: false));
+
+      expect(read.items, hasLength(2));
+    });
+
+    test('depois do dispose, para de ouvir as mudanças', () async {
+      final other = buildUserNewsListController(repository);
+      repository.savedResults.add(pageOf(2));
+      await other.load();
+      other.dispose();
+
+      await emit(const NewsInteractionChange(newsId: 'n1', isSaved: false));
+
+      expect(other.items, hasLength(2));
     });
   });
 

@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_user_news_list_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/watch_news_interactions_usecase.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
 import 'package:flutter/foundation.dart';
 
@@ -13,12 +17,22 @@ class UserNewsListController extends ChangeNotifier {
   UserNewsListController({
     required this.kind,
     required GetUserNewsListUseCase getUserNewsList,
-  }) : _getUserNewsList = getUserNewsList;
+    required WatchNewsInteractionsUseCase watchInteractions,
+  }) : _getUserNewsList = getUserNewsList {
+    _interactions = watchInteractions().listen(_applyInteraction);
+  }
 
   /// Salvas, lidas ou curtidas (specs/012-perfil, R8).
   final NewsListKind kind;
 
   final GetUserNewsListUseCase _getUserNewsList;
+
+  late final StreamSubscription<NewsInteractionChange> _interactions;
+
+  /// Desmarcadas (salvar ou curtir, conforme [kind]) desde que a tela abriu:
+  /// saem na hora e não voltam com uma resposta que o servidor montou antes
+  /// de confirmar a mudança.
+  final Set<String> _removed = {};
 
   FeedStatus _status = FeedStatus.loading;
   FeedStatus get status => _status;
@@ -80,7 +94,7 @@ class UserNewsListController extends ChangeNotifier {
 
     result.fold((failure) => _loadMoreFailure = failure, (loaded) {
       final (merged, added) = _items.appendUnique(loaded.page.items);
-      _items = merged;
+      _items = _visible(merged);
       _page = loaded.page.page;
       // Página sem nada novo também encerra: o servidor pode repetir (CB-007).
       _hasMore = loaded.page.hasMore && added > 0;
@@ -92,8 +106,37 @@ class UserNewsListController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    unawaited(_interactions.cancel());
     super.dispose();
   }
+
+  /// Desmarcou salvar (nas salvas) ou curtir (nas curtidas) no detalhe ou
+  /// em outra tela: o item sai sem recarregar. Marcar de novo só libera a
+  /// volta na próxima carga.
+  void _applyInteraction(NewsInteractionChange change) {
+    final bool? kept = switch (kind) {
+      NewsListKind.saved => change.isSaved,
+      NewsListKind.liked => change.isLiked,
+      NewsListKind.read => null,
+    };
+    if (kept == null) return;
+    if (kept) {
+      _removed.remove(change.newsId);
+      return;
+    }
+    _removed.add(change.newsId);
+    final List<NewsItemEntity> visible = _visible(_items);
+    if (visible.length == _items.length) return;
+    _items = visible;
+    _notify();
+  }
+
+  List<NewsItemEntity> _visible(List<NewsItemEntity> items) => _removed.isEmpty
+      ? items
+      : [
+          for (final item in items)
+            if (!_removed.contains(item.id)) item,
+        ];
 
   Future<void> _loadFirst({required bool silent}) async {
     final int requestId = ++_requestId;
@@ -115,7 +158,9 @@ class UserNewsListController extends ChangeNotifier {
         _status = FeedStatus.error;
       },
       (loaded) {
-        _items = const <NewsItemEntity>[].appendUnique(loaded.page.items).$1;
+        _items = const <NewsItemEntity>[]
+            .appendUnique(_visible(loaded.page.items))
+            .$1;
         _page = loaded.page.page;
         _isFromCache = loaded.isFromCache;
         // A cópia do aparelho não pagina.

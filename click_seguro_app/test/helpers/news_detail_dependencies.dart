@@ -3,6 +3,7 @@ import 'package:click_seguro_app/modules/common/presentation/controller/read_alo
 import 'package:click_seguro_app/modules/news/domain/usecases/get_news_detail_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/get_user_news_list_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/mark_news_as_read_usecase.dart';
+import 'package:click_seguro_app/modules/news/domain/usecases/toggle_like_usecase.dart';
 import 'package:click_seguro_app/modules/news/domain/usecases/toggle_save_usecase.dart';
 import 'package:get_it/get_it.dart';
 
@@ -20,6 +21,7 @@ void registerNewsDetailDependencies(GetIt injector) {
     ..registerSingleton(GetNewsDetailUseCase(repository))
     ..registerSingleton(MarkNewsAsReadUseCase(repository))
     ..registerSingleton(ToggleSaveUseCase(repository))
+    ..registerSingleton(ToggleLikeUseCase(repository))
     ..registerSingleton(GetUserNewsListUseCase(repository))
     ..registerSingleton(preferences)
     ..registerFactory(() => ReadAloudController(tts, preferences: preferences));

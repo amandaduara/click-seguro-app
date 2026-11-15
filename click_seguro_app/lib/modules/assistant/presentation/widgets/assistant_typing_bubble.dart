@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/modules/assistant/presentation/widgets/assistant_chat_bubble.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -44,46 +45,49 @@ class _AssistantTypingBubbleState extends State<AssistantTypingBubble>
   @override
   Widget build(BuildContext context) {
     final Color dot = context.colors.textMutedForeground;
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Semantics(
-        liveRegion: true,
-        label: AppStrings.assistantTyping.tr(),
-        excludeSemantics: true,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s4,
-            vertical: AppSpacing.s3,
-          ),
-          decoration: BoxDecoration(
-            color: context.colors.card,
-            border: Border.all(color: context.colors.border),
-            borderRadius: AppSpacing.radius2xl,
-          ),
-          child: AnimatedBuilder(
-            animation: _wave,
-            builder: (context, _) => Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (var i = 0; i < 3; i++)
-                  Padding(
-                    padding: EdgeInsets.only(left: i == 0 ? 0 : AppSpacing.s1),
-                    child: Transform.translate(
-                      offset: Offset(0, -4 * _lift(i)),
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: dot.withValues(alpha: 0.5 + 0.5 * _lift(i)),
-                          shape: BoxShape.circle,
+    // Mesmo formato do balão do assistente (redesign 2.0), com o avatar.
+    return Semantics(
+      liveRegion: true,
+      label: AppStrings.assistantTyping.tr(),
+      excludeSemantics: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const AssistantAvatar(),
+          const SizedBox(width: AppSpacing.s3),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s5,
+              vertical: AppSpacing.s5,
+            ),
+            decoration: assistantBubbleDecoration(context.colors),
+            child: AnimatedBuilder(
+              animation: _wave,
+              builder: (context, _) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < 3; i++)
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: i == 0 ? 0 : AppSpacing.s1,
+                      ),
+                      child: Transform.translate(
+                        offset: Offset(0, -4 * _lift(i)),
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: dot.withValues(alpha: 0.5 + 0.5 * _lift(i)),
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

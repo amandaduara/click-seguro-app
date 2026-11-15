@@ -4,12 +4,17 @@ import 'package:click_seguro_app/modules/activities/domain/entities/answer_resul
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/feedback_sheet.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/activities_fixtures.dart';
+
+// Redesign 2.0: a ilustração no lugar do ícone (specs/024, FR-017).
+AppIllustration illustration(WidgetTester tester) =>
+    tester.widget<SafeIllustration>(find.byType(SafeIllustration)).illustration;
 
 void main() {
   final LessonEntity lesson = ModuleDetailModel.fromJson(
@@ -72,7 +77,7 @@ void main() {
     await openSheet(tester);
 
     expect(find.text('Você acertou!'), findsOneWidget);
-    expect(find.byIcon(LucideIcons.circleCheck), findsOneWidget);
+    expect(illustration(tester), AppIllustration.answerCorrect);
     expect(find.text('Resposta correta: Ignorar e denunciar'), findsOneWidget);
     expect(find.text('Por quê?'), findsOneWidget);
     expect(
@@ -85,7 +90,7 @@ void main() {
     await openSheet(tester, answer: result(isCorrect: false));
 
     expect(find.text('Não foi dessa vez'), findsOneWidget);
-    expect(find.byIcon(LucideIcons.circleX), findsOneWidget);
+    expect(illustration(tester), AppIllustration.answerWrong);
   });
 
   testWidgets('sem explicação: nem título nem texto', (tester) async {

@@ -7,7 +7,9 @@ import 'package:click_seguro_app/modules/authentication/presentation/controller/
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
 import 'package:click_seguro_app/core/widgets/animated_reveal.dart';
+import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
@@ -57,7 +59,7 @@ void main() {
     String email = 'maria@exemplo.com',
   }) async {
     await tester.enterText(field('seu@email.com'), email);
-    await tester.enterText(field('Senha'), 'Senha@123');
+    await tester.enterText(field('Digite sua senha'), 'Senha@123');
     await tester.pump(); // habilita o botão com o formulário válido
   }
 
@@ -74,8 +76,25 @@ void main() {
 
       expect(find.byType(AuthHeader), findsOneWidget);
       expect(field('seu@email.com'), findsOneWidget);
-      expect(field('Senha'), findsOneWidget);
+      expect(field('Digite sua senha'), findsOneWidget);
       expect(find.text('Entrar'), findsWidgets);
+    });
+
+    testWidgets('campos com rótulo acima e o aviso do visitante', (
+      tester,
+    ) async {
+      await pumpLogin(tester);
+
+      expect(find.text('E-mail'), findsOneWidget);
+      expect(find.text('Senha'), findsOneWidget);
+      expect(
+        find.text('Sem conta, seu progresso vale só até fechar o app.'),
+        findsOneWidget,
+      );
+
+      await tester.tap(registerTab);
+      await tester.pumpAndSettle();
+      expect(find.text('Nome'), findsOneWidget);
     });
 
     testWidgets('credenciais válidas levam ao Início', (tester) async {
@@ -124,7 +143,7 @@ void main() {
       await tester.pump();
       expect(find.text('Digite um e-mail válido.'), findsNothing);
 
-      await tester.tap(field('Senha')); // sai do campo de e-mail
+      await tester.tap(field('Digite sua senha')); // sai do campo de e-mail
       await tester.pumpAndSettle();
 
       expect(find.text('Digite um e-mail válido.'), findsOneWidget);
@@ -133,27 +152,33 @@ void main() {
 
     testWidgets('o olho mostra e oculta a senha', (tester) async {
       await pumpLogin(tester);
-      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
 
-      expect(tester.widget<TextField>(field('Senha')).obscureText, isTrue);
+      expect(
+        tester.widget<TextField>(field('Digite sua senha')).obscureText,
+        isTrue,
+      );
       await tester.tap(find.byTooltip('Mostrar senha'));
       await tester.pump();
 
-      expect(tester.widget<TextField>(field('Senha')).obscureText, isFalse);
+      expect(
+        tester.widget<TextField>(field('Digite sua senha')).obscureText,
+        isFalse,
+      );
       expect(find.byTooltip('Ocultar senha'), findsOneWidget);
     });
   });
 
   group('US2', () {
     Future<void> openRegister(WidgetTester tester) async {
-      await tester.tap(find.byKey(const ValueKey('auth-mode-register')));
+      await tester.tap(registerTab);
       await tester.pumpAndSettle();
     }
 
     Future<void> fillRegister(WidgetTester tester) async {
       await tester.enterText(field('Seu nome'), 'Maria Silva');
       await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
-      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
       await tester.pump();
     }
 
@@ -211,11 +236,11 @@ void main() {
       await tester.enterText(field('Seu nome'), 'Maria Silva');
       await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
 
-      await tester.enterText(field('Senha'), 'Senha1234');
+      await tester.enterText(field('Digite sua senha'), 'Senha1234');
       await tester.pump();
       expect(disabled(), isTrue);
 
-      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
       await tester.pump();
       expect(disabled(), isFalse);
     });
@@ -224,10 +249,10 @@ void main() {
       await pumpLogin(tester);
       await openRegister(tester);
 
-      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
       await tester.pump();
 
-      expect(find.byIcon(Icons.check_circle), findsNWidgets(5));
+      expect(find.byIcon(LucideIcons.circleCheck), findsNWidgets(5));
     });
 
     testWidgets('cadastro válido leva ao Início', (tester) async {
@@ -282,18 +307,18 @@ void main() {
       expect(find.text('ou'), findsOneWidget);
       expect(find.text('Continuar sem login'), findsOneWidget);
 
-      await tester.tap(find.byKey(const ValueKey('auth-mode-register')));
+      await tester.tap(registerTab);
       await tester.pumpAndSettle();
       expect(find.text('Continuar sem login'), findsOneWidget);
 
-      // Visual do wireframe: fundo claro, borda fina e texto azul-escuro.
+      // Redesign 2.0 (Figma, quadro 03): o botão creme.
       expect(
         tester
             .widget<SafeButton>(
               find.widgetWithText(SafeButton, 'Continuar sem login'),
             )
             .tone,
-        SafeButtonTone.ghost,
+        SafeButtonTone.secondary,
       );
 
       await tapPrimary(tester, 'Continuar sem login');
@@ -303,8 +328,11 @@ void main() {
     });
   });
 
+  // Sem aviso de servidor lento (validação da usuária, specs/024).
   group('servidor lento', () {
-    testWidgets('mostra o aviso depois de 5 s esperando', (tester) async {
+    testWidgets('esperando, sem aviso de servidor; o botão carrega', (
+      tester,
+    ) async {
       repository.gate = Completer<void>();
       await pumpLogin(tester);
       await fillLogin(tester);
@@ -315,7 +343,7 @@ void main() {
 
       expect(
         find.text('Conectando ao servidor. Isso pode levar até um minuto.'),
-        findsOneWidget,
+        findsNothing,
       );
       repository.gate!.complete();
       await tester.pumpAndSettle();
@@ -340,7 +368,7 @@ void main() {
       await pumpLogin(tester, page: fromAlert);
       await tester.enterText(field('Seu nome'), 'Maria Silva');
       await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
-      await tester.enterText(field('Senha'), 'Senha@123');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
       await tester.pump();
 
       await tapPrimary(tester, 'Criar conta');
@@ -361,3 +389,9 @@ void main() {
     });
   });
 }
+
+/// A aba "Criar conta" do seletor no topo do login.
+final Finder registerTab = find.descendant(
+  of: find.byType(SafePillTabs),
+  matching: find.text('Criar conta'),
+);

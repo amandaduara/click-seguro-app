@@ -3,6 +3,8 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -28,12 +30,7 @@ class GuestInvite extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.all(AppSpacing.s6),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: AppSpacing.radius3xl,
-            border: Border.all(color: colors.border),
-            boxShadow: colors.shadowSm,
-          ),
+          decoration: SafeCard.decoration(colors),
           child: Column(
             children: [
               Container(
@@ -56,7 +53,7 @@ class GuestInvite extends StatelessWidget {
                   AppStrings.profileGuestTitle.tr(),
                   textAlign: TextAlign.center,
                   style: textTheme.titleLarge?.copyWith(
-                    fontSize: 24,
+                    fontSize: AppTypography.title2.fontSize,
                     fontWeight: FontWeight.w800,
                     color: colors.secondary,
                   ),
@@ -67,7 +64,7 @@ class GuestInvite extends StatelessWidget {
                 AppStrings.profileGuestBody.tr(),
                 textAlign: TextAlign.center,
                 style: textTheme.bodyLarge?.copyWith(
-                  fontSize: 16,
+                  fontSize: AppTypography.label.fontSize,
                   color: colors.textMutedForeground,
                 ),
               ),
@@ -82,11 +79,7 @@ class GuestInvite extends StatelessWidget {
         const SizedBox(height: AppSpacing.s4),
         Container(
           padding: const EdgeInsets.all(AppSpacing.s5),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: AppSpacing.radius3xl,
-            border: Border.all(color: colors.border),
-          ),
+          decoration: SafeCard.decoration(colors),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -95,7 +88,7 @@ class GuestInvite extends StatelessWidget {
                 child: Text(
                   AppStrings.profileGuestBenefitsTitle.tr(),
                   style: textTheme.titleMedium?.copyWith(
-                    fontSize: 18,
+                    fontSize: AppTypography.body.fontSize,
                     fontWeight: FontWeight.w700,
                     color: colors.secondary,
                   ),
@@ -117,7 +110,7 @@ class GuestInvite extends StatelessWidget {
                         child: Text(
                           benefit.tr(),
                           style: textTheme.bodyLarge?.copyWith(
-                            fontSize: 16,
+                            fontSize: AppTypography.label.fontSize,
                             color: colors.textForeground,
                           ),
                         ),

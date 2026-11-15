@@ -3,8 +3,11 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/app_logo.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:click_seguro_app/modules/common/services/app_info_service.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
@@ -25,67 +28,67 @@ class _AboutPageState extends State<AboutPage> {
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
     final TextTheme textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.settingsAboutApp.tr())),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.s6),
-          children: [
-            const Center(child: AppLogo(size: 88)),
-            const SizedBox(height: AppSpacing.s3),
-            Semantics(
-              header: true,
-              child: Text(
+    return SettingsScaffold(
+      title: AppStrings.settingsAboutApp.tr(),
+      children: [
+        const SizedBox(height: AppSpacing.s6),
+        SafeCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Center(child: AppLogo(size: 88)),
+              const SizedBox(height: AppSpacing.s3),
+              Text(
                 AppIdentity.name,
                 textAlign: TextAlign.center,
                 style: textTheme.headlineSmall?.copyWith(
-                  fontSize: 28,
+                  fontSize: AppTypography.title1.fontSize,
                   fontWeight: FontWeight.w800,
                   color: colors.secondary,
                 ),
               ),
-            ),
-            FutureBuilder<String>(
-              future: _version,
-              builder: (context, snapshot) {
-                final String version = snapshot.data ?? '';
-                return version.isEmpty
-                    ? const SizedBox(height: AppSpacing.s4)
-                    : Padding(
-                        padding: const EdgeInsets.only(top: AppSpacing.s1),
-                        child: Text(
-                          AppStrings.settingsVersion.tr(args: [version]),
-                          textAlign: TextAlign.center,
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontSize: 14,
-                            color: colors.textMutedForeground,
+              FutureBuilder<String>(
+                future: _version,
+                builder: (context, snapshot) {
+                  final String version = snapshot.data ?? '';
+                  return version.isEmpty
+                      ? const SizedBox(height: AppSpacing.s4)
+                      : Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.s1),
+                          child: Text(
+                            AppStrings.settingsVersion.tr(args: [version]),
+                            textAlign: TextAlign.center,
+                            style: textTheme.bodyMedium?.copyWith(
+                              fontSize: AppTypography.caption.fontSize,
+                              color: colors.textMutedForeground,
+                            ),
                           ),
-                        ),
-                      );
-              },
-            ),
-            const SizedBox(height: AppSpacing.s5),
-            Text(
-              AppStrings.settingsAboutGoal.tr(),
-              textAlign: TextAlign.center,
-              style: textTheme.bodyLarge?.copyWith(
-                fontSize: 16,
-                height: 1.5,
-                color: colors.textForeground,
+                        );
+                },
               ),
-            ),
-            const SizedBox(height: AppSpacing.s6),
-            Text(
-              AppStrings.settingsAboutCredits.tr(),
-              textAlign: TextAlign.center,
-              style: textTheme.bodyMedium?.copyWith(
-                fontSize: 14,
-                color: colors.textMutedForeground,
+              const SizedBox(height: AppSpacing.s5),
+              Text(
+                AppStrings.settingsAboutGoal.tr(),
+                textAlign: TextAlign.center,
+                style: textTheme.bodyLarge?.copyWith(
+                  fontSize: AppTypography.body.fontSize,
+                  height: 1.5,
+                  color: colors.textBody,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: AppSpacing.s6),
+        Text(
+          AppStrings.settingsAboutCredits.tr(),
+          textAlign: TextAlign.center,
+          style: textTheme.bodyMedium?.copyWith(
+            fontSize: AppTypography.caption.fontSize,
+            color: colors.textMutedForeground,
+          ),
+        ),
+      ],
     );
   }
 }

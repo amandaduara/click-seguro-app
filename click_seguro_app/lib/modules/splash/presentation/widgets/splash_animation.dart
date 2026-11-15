@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/modules/splash/presentation/widgets/splash_scene_painter.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -101,17 +102,12 @@ class _SplashAnimationState extends State<SplashAnimation>
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    final TextStyle? titleStyle = textTheme.displayLarge?.copyWith(
-      fontSize: 34,
-      height: 40 / 34,
-      letterSpacing: -0.68,
-      color: colors.secondary,
+    // Tipografia do redesign 2.0 (specs/024): título de tela e leitura.
+    final TextStyle titleStyle = AppTypography.display.copyWith(
+      color: colors.textForeground,
     );
-    final TextStyle? taglineStyle = textTheme.bodyLarge?.copyWith(
-      fontWeight: FontWeight.w500,
-      height: 24 / 16,
-      color: colors.textMutedForeground,
+    final TextStyle taglineStyle = AppTypography.bodyLarge.copyWith(
+      color: colors.textBody,
     );
 
     return LayoutBuilder(

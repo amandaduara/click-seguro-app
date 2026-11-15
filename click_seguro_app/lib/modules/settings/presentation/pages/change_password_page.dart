@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
@@ -11,8 +12,10 @@ import 'package:click_seguro_app/modules/common/validators/password_policy.dart'
 import 'package:click_seguro_app/modules/settings/domain/failures/settings_failures.dart';
 import 'package:click_seguro_app/modules/settings/presentation/controller/change_password_controller.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_guest_invite.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -26,9 +29,9 @@ class ChangePasswordPage extends StatelessWidget {
     final bool hasAccount =
         GetIt.instance<UserSessionService>().isAuthenticated;
     if (!hasAccount) {
-      return Scaffold(
-        appBar: AppBar(title: Text(AppStrings.settingsChangePassword.tr())),
-        body: const SafeArea(child: SettingsGuestInvite()),
+      return SettingsScaffold(
+        title: AppStrings.settingsChangePassword.tr(),
+        children: const [SettingsGuestInvite()],
       );
     }
     return ChangeNotifierProvider<ChangePasswordController>(
@@ -71,11 +74,47 @@ class _ChangePasswordView extends StatelessWidget {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _confirmDiscard(context);
       },
-      child: Scaffold(
-        appBar: AppBar(title: Text(AppStrings.settingsChangePassword.tr())),
-        body: SafeArea(child: _Form(controller: controller)),
+      child: SettingsScaffold(
+        title: AppStrings.settingsChangePassword.tr(),
+        // O botão fica no fim da tela, fora da rolagem; com o teclado aberto,
+        // sobe junto e continua à mão.
+        bottom: SafeButton(
+          label: AppStrings.settingsPasswordSave.tr(),
+          disabled: !controller.canSave,
+          loading: controller.isSaving,
+          onPressed: () => _save(context, controller),
+        ),
+        children: [_Form(controller: controller)],
       ),
     );
+  }
+}
+
+/// Envia a troca e avisa o resultado; com sucesso, volta.
+Future<void> _save(
+  BuildContext context,
+  ChangePasswordController controller,
+) async {
+  FocusScope.of(context).unfocus();
+  // Guardado antes: no novo login que falha, a tela some (vai ao login).
+  final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+  final ChangePasswordResult result = await controller.save();
+  final Failure? failure = controller.saveFailure;
+  final String? message = switch (result) {
+    ChangePasswordResult.invalid => null,
+    ChangePasswordResult.saved => AppStrings.settingsPasswordSaved.tr(),
+    ChangePasswordResult.failed => switch (failure) {
+      PasswordChangedReloginFailure() ||
+      UnauthorizedFailure() => failure!.message.tr(),
+      _ => AppStrings.settingsPasswordFailed.tr(),
+    },
+  };
+  if (message == null) return;
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(message)));
+  if (result == ChangePasswordResult.saved && context.mounted) {
+    context.pop();
   }
 }
 
@@ -98,30 +137,6 @@ class _Form extends StatelessWidget {
       AppStrings.settingsPasswordErrorSame.tr(),
   };
 
-  Future<void> _save(BuildContext context) async {
-    FocusScope.of(context).unfocus();
-    // Guardado antes: no novo login que falha, a tela some (vai ao login).
-    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
-    final ChangePasswordResult result = await controller.save();
-    final Failure? failure = controller.saveFailure;
-    final String? message = switch (result) {
-      ChangePasswordResult.invalid => null,
-      ChangePasswordResult.saved => AppStrings.settingsPasswordSaved.tr(),
-      ChangePasswordResult.failed => switch (failure) {
-        PasswordChangedReloginFailure() ||
-        UnauthorizedFailure() => failure!.message.tr(),
-        _ => AppStrings.settingsPasswordFailed.tr(),
-      },
-    };
-    if (message == null) return;
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-    if (result == ChangePasswordResult.saved && context.mounted) {
-      context.pop();
-    }
-  }
-
   Widget _field(
     BuildContext context,
     PasswordField field,
@@ -139,7 +154,9 @@ class _Form extends StatelessWidget {
       textInputAction: action,
       autofillHints: autofill,
       onSubmitted: action == TextInputAction.done
-          ? (_) => _save(context)
+          ? (_) {
+              if (controller.canSave) _save(context, controller);
+            }
           : null,
       rightIcon: IconButton(
         constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
@@ -147,9 +164,7 @@ class _Form extends StatelessWidget {
         tooltip: visible
             ? AppStrings.settingsPasswordHide.tr()
             : AppStrings.settingsPasswordShow.tr(),
-        icon: Icon(
-          visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-        ),
+        icon: Icon(visible ? LucideIcons.eyeOff : LucideIcons.eye),
       ),
     );
   }
@@ -157,9 +172,18 @@ class _Form extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Set<PasswordRule> met = controller.rulesMet;
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.s5),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const SizedBox(height: AppSpacing.s3),
+        Text(
+          AppStrings.settingsChangePasswordSub.tr(),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            fontSize: AppTypography.body.fontSize,
+            color: context.colors.textMutedForeground,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s6),
         _field(
           context,
           PasswordField.current,
@@ -196,13 +220,6 @@ class _Form extends StatelessWidget {
           controller.confirmation,
           autofill: const [AutofillHints.newPassword],
           action: TextInputAction.done,
-        ),
-        const SizedBox(height: AppSpacing.s6),
-        SafeButton(
-          label: AppStrings.settingsPasswordSave.tr(),
-          disabled: !controller.canSave,
-          loading: controller.isSaving,
-          onPressed: () => _save(context),
         ),
       ],
     );

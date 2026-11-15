@@ -52,8 +52,27 @@ class ChangePasswordController extends ChangeNotifier {
     _notify();
   }
 
-  Map<PasswordField, PasswordFieldError> _errors = const {};
-  Map<PasswordField, PasswordFieldError> get errors => _errors;
+  /// Campos já alterados (ou todos, depois de "Salvar"): só eles mostram
+  /// erro, para a tela não abrir cheia de avisos.
+  final Set<PasswordField> _touched = {};
+
+  /// Erros que só o serviço sabe (senha atual errada, nova igual à atual);
+  /// somem quando o campo muda.
+  Map<PasswordField, PasswordFieldError> _serverErrors = const {};
+
+  /// Erros por campo, recalculados a cada letra digitada (como na edição de
+  /// dados do Perfil): aparecem depois de o campo ser alterado e somem quando
+  /// ele fica válido.
+  Map<PasswordField, PasswordFieldError> get errors {
+    final Map<PasswordField, PasswordFieldError> live = _validate();
+    return {
+      for (final field in PasswordField.values)
+        if (_serverErrors[field] ??
+                (_touched.contains(field) ? live[field] : null)
+            case final PasswordFieldError error)
+          field: error,
+    };
+  }
 
   Set<PasswordRule> get rulesMet => PasswordPolicy.rulesMet(newPassword.text);
 
@@ -63,8 +82,9 @@ class ChangePasswordController extends ChangeNotifier {
   Failure? _saveFailure;
   Failure? get saveFailure => _saveFailure;
 
+  /// Só com o formulário todo válido: o botão fica desativado até lá.
   bool get canSave =>
-      !_isSaving && _texts.values.every((text) => text.text.isNotEmpty);
+      !_isSaving && _serverErrors.isEmpty && _validate().isEmpty;
 
   /// Algo digitado: sair pede confirmação.
   bool get hasInput => _texts.values.any((text) => text.text.isNotEmpty);
@@ -73,8 +93,8 @@ class ChangePasswordController extends ChangeNotifier {
 
   Future<ChangePasswordResult> save() async {
     if (_isSaving) return ChangePasswordResult.invalid;
-    _errors = _validate();
-    if (_errors.isNotEmpty) {
+    _touched.addAll(PasswordField.values);
+    if (_validate().isNotEmpty || _serverErrors.isNotEmpty) {
       _notify();
       return ChangePasswordResult.invalid;
     }
@@ -91,10 +111,12 @@ class ChangePasswordController extends ChangeNotifier {
     final ChangePasswordResult outcome = result.fold((failure) {
       switch (failure) {
         case WrongCurrentPasswordFailure():
-          _errors = {PasswordField.current: PasswordFieldError.wrongCurrent};
+          _serverErrors = {
+            PasswordField.current: PasswordFieldError.wrongCurrent,
+          };
           return ChangePasswordResult.invalid;
         case SamePasswordFailure():
-          _errors = {
+          _serverErrors = {
             PasswordField.newPassword: PasswordFieldError.samePassword,
           };
           return ChangePasswordResult.invalid;
@@ -118,23 +140,24 @@ class ChangePasswordController extends ChangeNotifier {
     if (newPassword.text.isNotEmpty &&
         !PasswordPolicy.isValid(newPassword.text)) {
       errors[PasswordField.newPassword] = PasswordFieldError.rulesNotMet;
-    } else if (confirmation.text.isNotEmpty &&
-        confirmation.text != newPassword.text) {
+    }
+    if (confirmation.text.isNotEmpty && confirmation.text != newPassword.text) {
       errors[PasswordField.confirmation] = PasswordFieldError.mismatch;
     }
     return errors;
   }
 
-  /// Ao mudar o texto (não só o cursor), tira o erro do campo e atualiza as
-  /// regras e o botão.
+  /// Ao mudar o texto (não só o cursor), marca o campo como alterado, tira o
+  /// erro do serviço dele e atualiza erros, regras e botão.
   void _watch(PasswordField field) {
     final TextEditingController text = _texts[field]!;
     String last = text.text;
     text.addListener(() {
       if (text.text == last) return;
       last = text.text;
-      if (_errors.containsKey(field)) {
-        _errors = {..._errors}..remove(field);
+      _touched.add(field);
+      if (_serverErrors.containsKey(field)) {
+        _serverErrors = {..._serverErrors}..remove(field);
       }
       _notify();
     });

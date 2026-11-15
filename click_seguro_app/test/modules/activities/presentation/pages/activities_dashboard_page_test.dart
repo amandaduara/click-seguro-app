@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
-import 'package:click_seguro_app/core/widgets/slow_request_notice.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
@@ -11,12 +10,15 @@ import 'package:click_seguro_app/modules/activities/presentation/controller/acti
 import 'package:click_seguro_app/modules/activities/presentation/pages/activities_dashboard_page.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/module_card.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/core/widgets/safe_progress.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../../../helpers/activities_dependencies.dart';
@@ -95,6 +97,10 @@ void main() {
           ? GetIt.instance<ActivitiesRepository>()
           : repository,
     );
+    if (tester.view.physicalSize == const Size(2400, 1800)) {
+      tester.view.physicalSize = const Size(1170, 4800);
+      addTearDown(tester.view.resetPhysicalSize);
+    }
     await pumpLocalized(
       tester,
       router: router,
@@ -123,10 +129,9 @@ void main() {
 
     expect(find.text('Seu progresso'), findsOneWidget);
     expect(find.text('4 de 9 lições concluídas'), findsOneWidget);
-    final LinearProgressIndicator bar = tester.widget(
-      find.byType(LinearProgressIndicator),
-    );
-    expect(bar.value, closeTo(4 / 9, 0.0001));
+    final SafeProgressRing ring = tester.widget(find.byType(SafeProgressRing));
+    expect(ring.value, closeTo(4 / 9, 0.0001));
+    expect(ring.label, '44%');
   });
 
   testWidgets('cartões na ordem, com progresso e status', (tester) async {
@@ -181,36 +186,38 @@ void main() {
     expect(find.text('Seu progresso'), findsNothing);
   });
 
-  testWidgets('sem ícone ou ícone que falha: ícone padrão, sem erro', (
+  testWidgets('capa com a ilustração do tema do título (FR-014 de specs/024)', (
     tester,
   ) async {
-    repository = FakeActivitiesRepository([
-      Right(dashboard(modules: [moduleJson(iconUrl: null)])),
-    ]);
     await open(tester);
 
+    SafeIllustration coverOf(String title) => tester.widget(
+      find.descendant(of: card(title), matching: find.byType(SafeIllustration)),
+    );
     expect(
-      find.descendant(
-        of: card('Golpes Digitais'),
-        matching: find.byIcon(LucideIcons.graduationCap),
-      ),
-      findsOneWidget,
+      coverOf('Golpes no WhatsApp').illustration,
+      AppIllustration.themeWhatsapp,
+    );
+    expect(coverOf('Fake News').illustration, AppIllustration.themeFakeNews);
+    // Nenhum tema no título: a ilustração genérica de proteção.
+    expect(
+      coverOf('Golpes Digitais').illustration,
+      AppIllustration.themeGeneric,
     );
     expect(tester.takeException(), isNull);
   });
 
   group('layout (FR-003a)', () {
-    testWidgets('letra 100%: duas colunas e o terceiro sozinho', (
-      tester,
-    ) async {
+    testWidgets('letra 100%: uma coluna de cartões grandes (Figma, quadro '
+        '06), descrição em até 3 linhas', (tester) async {
       await open(tester);
 
       final Rect m1 = tester.getRect(card('Golpes Digitais'));
       final Rect m2 = tester.getRect(card('Golpes no WhatsApp'));
       final Rect m3 = tester.getRect(card('Fake News'));
-      expect(m2.top, m1.top);
-      expect(m2.left, greaterThan(m1.left));
-      expect(m3.top, greaterThan(m1.bottom));
+      expect(m2.left, m1.left);
+      expect(m2.top, greaterThan(m1.bottom));
+      expect(m3.top, greaterThan(m2.bottom));
       expect(m3.width, closeTo(m1.width, 0.5));
       final Text description = tester.widget(
         find.text('Aprenda a reconhecer as táticas mais comuns.'),
@@ -222,11 +229,12 @@ void main() {
       await open(tester, textScale: 1.15);
 
       final Rect m1 = tester.getRect(card('Golpes Digitais'));
-      await reveal(tester, card('Golpes no WhatsApp'));
+      // Lida antes de rolar: com a letra maior, o 1º cartão sai da tela.
       final Text description = tester.widget(
         find.text('Aprenda a reconhecer as táticas mais comuns.'),
       );
       expect(description.maxLines, isNull);
+      await reveal(tester, card('Golpes no WhatsApp'));
       final Rect m2 = tester.getRect(card('Golpes no WhatsApp'));
       expect(m2.left, m1.left);
     });
@@ -386,6 +394,33 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('1 de 9 lições concluídas'), findsOneWidget);
     });
+
+    // Validação da usuária (specs/024): a cada volta, o progresso enche de
+    // novo, de 0 até o valor atual.
+    testWidgets('voltar à aba enche o progresso de novo', (tester) async {
+      await open(tester);
+      final Finder ring = find.byType(SafeProgressRing);
+      final Element before = tester.element(ring);
+
+      await tester.tap(find.text('Golpes Digitais'));
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pump();
+      await tester.pump();
+
+      expect(tester.element(ring), isNot(same(before)));
+      final double start = tester
+          .widget<TweenAnimationBuilder<double>>(
+            find.descendant(
+              of: ring,
+              matching: find.byType(TweenAnimationBuilder<double>),
+            ),
+          )
+          .tween
+          .begin!;
+      expect(start, 0);
+      await tester.pumpAndSettle();
+    });
   });
 
   group('visitante (US3)', () {
@@ -530,7 +565,8 @@ void main() {
   });
 
   group('estados (US4)', () {
-    testWidgets('carregando e, depois de 5 s, o aviso de servidor acordando', (
+    // Sem o aviso de servidor acordando (validação da usuária, specs/024).
+    testWidgets('carregando: só o esqueleto, sem aviso de servidor', (
       tester,
     ) async {
       repository = FakeActivitiesRepository()..gate = Completer<void>();
@@ -541,9 +577,19 @@ void main() {
         findsOneWidget,
       );
       expect(find.bySemanticsLabel('Carregando'), findsOneWidget);
+      // Só o cinza do esqueleto: as capas não mostram a ilustração
+      // (validação da usuária, specs/024).
+      for (final Element cover in find.byType(SafeIllustration).evaluate()) {
+        expect(
+          find.ancestor(
+            of: find.byElementPredicate((e) => e == cover),
+            matching: find.byWidgetPredicate((w) => w is Skeleton),
+          ),
+          findsWidgets,
+        );
+      }
+      await tester.pump(const Duration(seconds: 6));
       expect(find.textContaining('O serviço está acordando'), findsNothing);
-      await tester.pump(SlowRequestNotice.delay);
-      expect(find.textContaining('O serviço está acordando'), findsOneWidget);
 
       repository.gate!.complete();
       await tester.pumpAndSettle();

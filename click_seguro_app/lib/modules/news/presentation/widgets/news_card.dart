@@ -1,16 +1,19 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
-import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/press_scale.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Cartão de notícia do design system §7.8: compacto (listas) ou completo
-/// (destaques). Curtir e salvar ficam para A4/A5; aqui só os sinais.
+/// Cartão de notícia do redesign 2.0 (FR-015): caixa com borda, capa com o
+/// selo da categoria e, abaixo, título e fonte. Compacto (grade) ou completo (destaques).
 class NewsCard extends StatefulWidget {
   const NewsCard({
     super.key,
@@ -18,12 +21,10 @@ class NewsCard extends StatefulWidget {
     required this.now,
     required this.onTap,
     this.compact = true,
+    this.coverHeight,
     this.heroTag,
+    this.showSignals = true,
   });
-
-  /// Lado da imagem do cartão compacto; o detalhe usa a mesma miniatura
-  /// enquanto a imagem grande carrega (specs/022 FR-017).
-  static const double compactImageSize = 80;
 
   final NewsItemEntity item;
   final DateTime now;
@@ -32,8 +33,15 @@ class NewsCard extends StatefulWidget {
   final Future<void> Function() onTap;
   final bool compact;
 
-  /// Tag do `Hero` da imagem, a mesma passada na prévia do detalhe.
+  /// Altura da capa na grade de 2 colunas (alturas variadas, FR-025).
+  final double? coverHeight;
+
+  /// Tag do `Hero` da capa, a mesma passada na prévia do detalhe.
   final String? heroTag;
+
+  /// Sinais de "lida" e "salva" na capa. Falso nas listas do perfil (lidas,
+  /// salvas e curtidas), onde o próprio título da lista já diz isso.
+  final bool showSignals;
 
   @override
   State<NewsCard> createState() => _NewsCardState();
@@ -55,60 +63,75 @@ class _NewsCardState extends State<NewsCard> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
+    final AppPalette colors = context.colors;
+    final List<String> labels = item.categoryLabels();
+    final double inset = widget.compact ? AppSpacing.s3 : AppSpacing.s4;
+    // Cartão padrão do redesign (SafeCard): caixa branca com borda; a capa
+    // ocupa o topo e o título e a fonte ficam dentro, abaixo dela.
     return Semantics(
       button: true,
       label: item.semanticLabel(widget.now),
       excludeSemantics: true,
-      child: Material(
-        color: context.colors.card,
-        borderRadius: AppSpacing.radius3xl,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: _open,
-          child: Ink(
-            decoration: BoxDecoration(
-              border: Border.all(color: context.colors.border),
-              borderRadius: AppSpacing.radius3xl,
-              boxShadow: context.colors.shadowSm,
-            ),
-            child: widget.compact ? _compact(item) : _full(item),
+      child: PressScale(
+        enabled: true,
+        pressedScale: 0.98,
+        onTap: _open,
+        child: Container(
+          decoration: SafeCard.decoration(colors),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _hero(
+                NewsCover(
+                  imageUrl: item.imageUrl,
+                  themeText: item.illustrationText,
+                  height: widget.coverHeight ?? (widget.compact ? 150 : 190),
+                  // O canto vem do cartão.
+                  radius: 0,
+                  labels: labels,
+                  trailing: widget.showSignals ? _signals(item, colors) : null,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(inset),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          (widget.compact
+                                  ? AppTypography.label
+                                  : AppTypography.title3.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ))
+                              .copyWith(
+                                color: colors.textForeground,
+                                height: 1.3,
+                              ),
+                    ),
+                    const SizedBox(height: AppSpacing.s1),
+                    Text(
+                      '${item.source} · ${item.relativeDate(widget.now)}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.caption.copyWith(
+                        color: colors.textMutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-
-  Widget _compact(NewsItemEntity item) => Padding(
-    padding: const EdgeInsets.all(AppSpacing.s3),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _hero(
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: _NewsImage(
-              url: item.imageUrl,
-              width: NewsCard.compactImageSize,
-              height: NewsCard.compactImageSize,
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s3),
-        Expanded(child: _details(item)),
-      ],
-    ),
-  );
-
-  Widget _full(NewsItemEntity item) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      _hero(_NewsImage(url: item.imageUrl, height: 176)),
-      Padding(
-        padding: const EdgeInsets.all(AppSpacing.s4),
-        child: _details(item),
-      ),
-    ],
-  );
 
   /// Só com imagem (sem ela o detalhe não tem para onde voar) e com
   /// movimento normal (specs/022 FR-010).
@@ -122,116 +145,39 @@ class _NewsCardState extends State<NewsCard> {
     return Hero(tag: tag, child: child);
   }
 
-  Widget _details(NewsItemEntity item) {
-    final textTheme = Theme.of(context).textTheme;
-    final labels = item.categoryLabels();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (labels.isNotEmpty) ...[
-          Wrap(
-            spacing: AppSpacing.s1,
-            runSpacing: AppSpacing.s1,
-            children: [for (final label in labels) _CategoryChip(label)],
-          ),
-          const SizedBox(height: AppSpacing.s2),
-        ],
-        Text(
-          item.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: textTheme.bodyLarge?.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: context.colors.secondary,
-          ),
+  /// Lida e salva, em círculos brancos sobre a capa.
+  Widget? _signals(NewsItemEntity item, AppPalette colors) {
+    final List<(IconData, String, Color)> signals = [
+      if (item.interaction.isRead)
+        (LucideIcons.circleCheck, AppStrings.newsCardRead.tr(), colors.success),
+      if (item.interaction.isSaved)
+        (
+          LucideIcons.bookmarkCheck,
+          AppStrings.newsCardSaved.tr(),
+          colors.textForeground,
         ),
-        const SizedBox(height: AppSpacing.s2),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                '${item.source} · ${item.relativeDate(widget.now)}',
-                style: textTheme.bodySmall?.copyWith(
-                  color: context.colors.textMutedForeground,
+    ];
+    if (signals.isEmpty) return null;
+    return Column(
+      children: [
+        for (final (icon, message, color) in signals)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Tooltip(
+              message: message,
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  shape: BoxShape.circle,
+                  boxShadow: colors.shadow,
                 ),
+                child: Icon(icon, size: 18, color: color),
               ),
             ),
-            if (item.interaction.isRead)
-              Tooltip(
-                message: AppStrings.newsCardRead.tr(),
-                child: Icon(
-                  LucideIcons.circleCheck,
-                  size: 16,
-                  color: context.colors.success,
-                ),
-              ),
-            if (item.interaction.isSaved) ...[
-              const SizedBox(width: AppSpacing.s1),
-              Tooltip(
-                message: AppStrings.newsCardSaved.tr(),
-                child: Icon(
-                  LucideIcons.bookmarkCheck,
-                  size: 16,
-                  color: context.colors.secondary,
-                ),
-              ),
-            ],
-          ],
-        ),
+          ),
       ],
     );
   }
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: context.colors.primary.withValues(alpha: 0.1),
-        borderRadius: AppSpacing.radiusFull,
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: context.colors.primary,
-        ),
-      ),
-    );
-  }
-}
-
-/// Imagem da notícia, com quadro neutro sem imagem ou se falhar (R8).
-class _NewsImage extends StatelessWidget {
-  const _NewsImage({required this.url, required this.height, this.width});
-
-  final String? url;
-  final double height;
-  final double? width;
-
-  Widget _placeholder(BuildContext context) => Container(
-    width: width,
-    height: height,
-    color: context.colors.input,
-    alignment: Alignment.center,
-    child: Icon(
-      LucideIcons.newspaper,
-      color: context.colors.textMutedForeground,
-    ),
-  );
-
-  @override
-  Widget build(BuildContext context) => SafeNetworkImage(
-    url: url,
-    width: width,
-    height: height,
-    placeholder: _placeholder(context),
-  );
 }

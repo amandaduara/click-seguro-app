@@ -1,17 +1,19 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/constants/app_identity.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../fakes/fake_share_service.dart';
 import '../../../../fakes/fake_text_to_speech_service.dart';
@@ -98,7 +100,12 @@ void main() {
       await open(tester);
 
       expect(find.text('Golpes Digitais'), findsOneWidget);
-      expect(find.byIcon(LucideIcons.trophy), findsOneWidget);
+      expect(
+        tester
+            .widget<SafeIllustration>(find.byType(SafeIllustration))
+            .illustration,
+        AppIllustration.stateTrophy,
+      );
       expect(find.text('Módulo concluído!'), findsOneWidget);
       expect(
         tester.getSemantics(find.text('Módulo concluído!')),
@@ -180,6 +187,51 @@ void main() {
       expect(find.text('Module completed!'), findsOneWidget);
       expect(find.text('You got 2 of 3 right'), findsOneWidget);
       expect(find.text('Back to activities'), findsOneWidget);
+    });
+  });
+
+  group('movimento reduzido (R12 de specs/024)', () {
+    /// O confete é um `CustomPaint` com o pintor privado da tela.
+    final Finder confetti = find.byWidgetPredicate(
+      (widget) =>
+          widget is CustomPaint &&
+          widget.painter.runtimeType.toString() == '_ConfettiPainter',
+    );
+
+    /// Abre a conclusão direto, sem esperar as animações.
+    Future<void> openFirstFrame(WidgetTester tester, {required bool reduced}) =>
+        pumpLocalized(
+          tester,
+          settle: false,
+          child: AppMotionScope(
+            appReduceMotion: reduced,
+            child: const CompletionPage(completion: twoOfThree),
+          ),
+        );
+
+    testWidgets('movimento normal: confete e placar contando a partir de 0', (
+      tester,
+    ) async {
+      await openFirstFrame(tester, reduced: false);
+      await tester.pump();
+
+      expect(confetti, findsOneWidget);
+      expect(find.text('0'), findsOneWidget);
+      expect(find.text('2'), findsNothing);
+      await tester.pumpAndSettle();
+      expect(confetti, findsNothing);
+      expect(find.text('2'), findsOneWidget);
+    });
+
+    testWidgets('reduzir animações: sem confete e placar final já no 1º '
+        'quadro', (tester) async {
+      await openFirstFrame(tester, reduced: true);
+
+      expect(confetti, findsNothing);
+      expect(find.text('2'), findsOneWidget);
+      expect(find.text('0'), findsNothing);
+      await tester.pump();
+      expect(confetti, findsNothing);
     });
   });
 

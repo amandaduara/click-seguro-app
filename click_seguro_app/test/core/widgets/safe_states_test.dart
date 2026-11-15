@@ -2,7 +2,9 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
-import 'package:click_seguro_app/core/widgets/safe_state_illustration.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,15 +37,9 @@ void main() {
       final semantics = tester.ensureSemantics();
       await pump(tester, const SafeLoadingState());
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(SafeSkeleton), findsWidgets);
       expect(find.bySemanticsLabel('Carregando'), findsOneWidget);
       semantics.dispose();
-    });
-
-    testWidgets('texto opcional com 16 px', (tester) async {
-      await pump(tester, const SafeLoadingState(message: 'Buscando notícias'));
-
-      expect(fontSizeOf(tester, 'Buscando notícias'), greaterThanOrEqualTo(16));
     });
   });
 
@@ -58,7 +54,9 @@ void main() {
       expect(find.text('Falhou'), findsOneWidget);
       expect(
         find.byWidgetPredicate(
-          (widget) => widget is SafeStateIllustration && widget.isError,
+          (widget) =>
+              widget is SafeIllustration &&
+              widget.illustration == AppIllustration.stateError,
         ),
         findsOneWidget,
       );
@@ -91,7 +89,9 @@ void main() {
       expect(find.text('Nada por aqui ainda.'), findsOneWidget);
       expect(
         find.byWidgetPredicate(
-          (widget) => widget is SafeStateIllustration && !widget.isError,
+          (widget) =>
+              widget is SafeIllustration &&
+              widget.illustration == AppIllustration.stateEmpty,
         ),
         findsOneWidget,
       );
@@ -100,6 +100,20 @@ void main() {
         greaterThanOrEqualTo(16),
       );
       expect(find.byType(GestureDetector), findsNothing);
+    });
+
+    // O mesmo tamanho das listas do perfil (validação da usuária,
+    // specs/024): 16 em seminegrito e a dica mais clara embaixo.
+    testWidgets('mensagem em 16 seminegrito e dica opcional', (tester) async {
+      await pump(
+        tester,
+        const SafeEmptyState(message: 'Sem contatos.', hint: 'Cadastre um.'),
+      );
+
+      final Text message = tester.widget<Text>(find.text('Sem contatos.'));
+      expect(message.style?.fontSize, 16);
+      expect(message.style?.fontWeight, FontWeight.w600);
+      expect(find.text('Cadastre um.'), findsOneWidget);
     });
 
     testWidgets('mensagem e ação da tela', (tester) async {
@@ -128,12 +142,12 @@ void main() {
   });
 
   group('SafeOfflineBanner', () {
-    testWidgets('faixa de largura total com o aviso em 16 px', (tester) async {
+    testWidgets('faixa de largura total com o aviso em 15 px', (tester) async {
       await pump(tester, const Column(children: [SafeOfflineBanner()]));
 
       const text = 'Você está sem internet. Mostrando o conteúdo salvo.';
       expect(find.text(text), findsOneWidget);
-      expect(fontSizeOf(tester, text), greaterThanOrEqualTo(16));
+      expect(fontSizeOf(tester, text), greaterThanOrEqualTo(15));
       expect(
         tester.getSize(find.byType(SafeOfflineBanner)).width,
         tester.view.physicalSize.width / tester.view.devicePixelRatio,
@@ -150,10 +164,7 @@ void main() {
       ListView(
         children: [
           const SafeOfflineBanner(),
-          const SizedBox(
-            height: 200,
-            child: SafeLoadingState(message: 'Buscando'),
-          ),
+          const SizedBox(height: 200, child: SafeLoadingState()),
           SizedBox(
             height: 300,
             child: SafeErrorState(message: 'Falhou', onRetry: () {}),

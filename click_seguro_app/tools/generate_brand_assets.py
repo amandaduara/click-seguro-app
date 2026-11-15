@@ -4,7 +4,7 @@
 Requires Python 3, Pillow, libcairo and librsvg (no network access).
 Run from any directory: python3 tools/generate_brand_assets.py
 The original SVG remains the source of truth: its paths are the official ones and
-its color is the design system primary (#FE3152).
+its color is the design system primary (#E31C3D, palette 2.0 of specs/024).
 The native launch screens (Android and iOS) carry no logo, only the background,
 so no launch images are generated (specs/023-splash-animada).
 """
@@ -18,7 +18,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "assets/branding/click_seguro_logo.svg"
-BACKGROUND = "#FFFDFB"
+BACKGROUND = "#FFFFFF"
 
 
 class Rectangle(c.Structure):

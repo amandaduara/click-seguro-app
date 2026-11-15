@@ -2,6 +2,8 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:flutter/material.dart';
 
 /// Um trecho de notícia para a pessoa comparar os tamanhos de letra. Não tem
@@ -15,11 +17,7 @@ class FontPreviewCard extends StatelessWidget {
     final AppPalette colors = context.colors;
     final TextTheme textTheme = Theme.of(context).textTheme;
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: AppSpacing.radius2xl,
-        border: Border.all(color: colors.border),
-      ),
+      decoration: SafeCard.decoration(colors),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s4),
         child: Column(
@@ -28,7 +26,7 @@ class FontPreviewCard extends StatelessWidget {
             Text(
               AppStrings.settingsAccessibilityPreviewTitle.tr(),
               style: textTheme.titleMedium?.copyWith(
-                fontSize: 18,
+                fontSize: AppTypography.body.fontSize,
                 fontWeight: FontWeight.w700,
                 color: colors.secondary,
               ),
@@ -37,7 +35,7 @@ class FontPreviewCard extends StatelessWidget {
             Text(
               AppStrings.settingsAccessibilityPreviewBody.tr(),
               style: textTheme.bodyLarge?.copyWith(
-                fontSize: 16,
+                fontSize: AppTypography.label.fontSize,
                 color: colors.textForeground,
               ),
             ),

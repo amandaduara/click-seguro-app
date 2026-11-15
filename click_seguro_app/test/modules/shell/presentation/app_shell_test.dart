@@ -67,15 +67,16 @@ void main() {
     final semantics = tester.ensureSemantics();
     await openHome(tester);
 
-    for (final label in ['Início', 'Atividades', 'Ajuda', 'Perfil']) {
-      expect(
-        find.descendant(
-          of: find.byType(AppBottomNav),
-          matching: find.text(label),
-        ),
-        findsOneWidget,
-        reason: label,
-      );
+    // Sem botão central e só com ícones: o nome de cada aba fica no leitor
+    // de tela (FR-009 de specs/024-redesign-visual).
+    for (final label in [
+      'Início',
+      'Atividades',
+      'Notícias',
+      'Ajuda',
+      'Perfil',
+    ]) {
+      expect(navItem(label), findsOneWidget, reason: label);
     }
     expect(navItem('Notícias'), findsOneWidget);
     expect(
@@ -85,7 +86,16 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('troca de aba e botão central', (tester) async {
+  testWidgets('as cinco abas têm a mesma largura (FR-009)', (tester) async {
+    await openHome(tester);
+
+    final double width = tester.getSize(navItem('Início')).width;
+    for (final label in ['Atividades', 'Notícias', 'Ajuda', 'Perfil']) {
+      expect(tester.getSize(navItem(label)).width, width, reason: label);
+    }
+  });
+
+  testWidgets('troca de aba; "Notícias" abre os Reels', (tester) async {
     final semantics = tester.ensureSemantics();
     await openHome(tester);
 

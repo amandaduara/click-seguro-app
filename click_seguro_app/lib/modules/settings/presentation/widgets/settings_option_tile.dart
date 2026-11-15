@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_tile.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:flutter/material.dart';
 
 /// Linha de escolha única no visual do [SettingsTile], com o botão de opção à
@@ -41,7 +42,7 @@ class SettingsOptionTile<T> extends StatelessWidget {
                   child: Text(
                     title,
                     style: textTheme.bodyLarge?.copyWith(
-                      fontSize: 16,
+                      fontSize: AppTypography.body.fontSize,
                       fontWeight: FontWeight.w700,
                       color: colors.textForeground,
                     ),
@@ -52,7 +53,7 @@ class SettingsOptionTile<T> extends StatelessWidget {
                   Text(
                     detail,
                     style: textTheme.bodyMedium?.copyWith(
-                      fontSize: 14,
+                      fontSize: AppTypography.caption.fontSize,
                       color: colors.textMutedForeground,
                     ),
                   ),

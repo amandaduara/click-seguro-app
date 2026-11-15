@@ -1,121 +1,86 @@
-import 'dart:ui' as ui;
-
-import 'package:click_seguro_app/core/theme/app_motion.dart';
-import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
+import 'package:click_seguro_app/core/widgets/safe_badge.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_detail_header.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../../fakes/hanging_http_client.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_news_repository.dart';
 
-const String _url = 'https://img.test/n.jpg';
-const String _tag = 'news-image-recent-n1';
-
 void main() {
-  setUp(() => imageCache.clear());
-
-  Future<void> pumpHeader(
-    WidgetTester tester, {
-    String? heroTag = _tag,
-    bool reduceMotion = false,
-  }) async {
-    tester.view
-      ..physicalSize = const Size(1080, 2340)
-      ..devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-    await pumpLocalized(
-      tester,
-      settle: false,
-      child: AppMotionScope(
-        appReduceMotion: reduceMotion,
+  Future<void> pumpHeader(WidgetTester tester, {int? readingMinutes}) =>
+      pumpLocalized(
+        tester,
         child: Scaffold(
           body: ListView(
             children: [
               NewsDetailHeader(
-                news: newsItem('n1', imageUrl: _url),
+                news: newsItem(
+                  'n1',
+                  categories: const [
+                    NewsCategoryEntity(id: 'c1', name: 'Golpe', slug: 'golpe'),
+                    NewsCategoryEntity(
+                      id: 'c2',
+                      name: 'WhatsApp',
+                      slug: 'whatsapp',
+                    ),
+                  ],
+                ),
                 now: DateTime(2026, 9, 21),
-                heroTag: heroTag,
+                readingMinutes: readingMinutes,
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
+      );
 
-  /// A miniatura do cartão compacto já no cache, como depois do feed.
-  Future<void> cacheThumbnail(WidgetTester tester) async {
-    final ui.Image image =
-        await tester.runAsync(() => createTestImage()) as ui.Image;
-    final int width = (NewsCard.compactImageSize * 3).round();
-    final Object key = await ResizeImage(
-      const NetworkImage(_url),
-      width: width,
-    ).obtainKey(ImageConfiguration.empty);
-    imageCache.putIfAbsent(
-      key,
-      () => OneFrameImageStreamCompleter(
-        SynchronousFuture(ImageInfo(image: image)),
-      ),
-    );
-  }
-
-  Finder imageWithDecodeWidth(int width) => find.byWidgetPredicate(
-    (w) =>
-        w is Image &&
-        w.image is ResizeImage &&
-        (w.image as ResizeImage).width == width,
-  );
-
-  // Achado da T058 (specs/022 FR-017): vindo de um cartão compacto, a
-  // imagem grande ainda não está no cache; a do cartão aparece no lugar.
-  testWidgets('aberto por um cartão: a miniatura cobre a espera da imagem', (
+  testWidgets('selos das categorias, a primeira em coral, e o título', (
     tester,
   ) async {
-    debugNetworkImageHttpClientProvider = HangingHttpClient.new;
-    await cacheThumbnail(tester);
-
     await pumpHeader(tester);
-    await tester.pump();
 
-    final int thumbnail = (NewsCard.compactImageSize * 3).round();
-    expect(imageWithDecodeWidth(thumbnail), findsOneWidget);
-    debugNetworkImageHttpClientProvider = null;
+    final List<SafeBadge> badges = tester
+        .widgetList<SafeBadge>(find.byType(SafeBadge))
+        .toList();
+    expect(badges.map((b) => b.tone), [
+      SafeBadgeTone.primary,
+      SafeBadgeTone.secondary,
+    ]);
+    expect(find.text('Golpe'), findsOneWidget);
+    expect(find.text('WhatsApp'), findsOneWidget);
+    expect(find.text('Notícia n1'), findsOneWidget);
+    // Os selos vêm antes do título.
+    expect(
+      tester.getTopLeft(find.text('Golpe')).dy,
+      lessThan(tester.getTopLeft(find.text('Notícia n1')).dy),
+    );
   });
 
-  testWidgets('sem cartão de origem, nada de miniatura', (tester) async {
-    debugNetworkImageHttpClientProvider = HangingHttpClient.new;
+  testWidgets('prévia, sem tempo de leitura: fonte e data', (tester) async {
+    await pumpHeader(tester);
 
-    await pumpHeader(tester, heroTag: null);
-    await tester.pump();
-
-    final int thumbnail = (NewsCard.compactImageSize * 3).round();
-    expect(imageWithDecodeWidth(thumbnail), findsNothing);
-    debugNetworkImageHttpClientProvider = null;
+    expect(find.text('Folha de Teste · Ontem'), findsOneWidget);
+    expect(find.textContaining('min de leitura'), findsNothing);
   });
 
-  testWidgets('a imagem voa com o Hero do cartão', (tester) async {
-    debugNetworkImageHttpClientProvider = HangingHttpClient.new;
-
-    await pumpHeader(tester);
+  testWidgets('com o detalhe: fonte, data e tempo de leitura, também lidos', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    await pumpHeader(tester, readingMinutes: 3);
 
     expect(
-      find.byWidgetPredicate((w) => w is Hero && w.tag == _tag),
+      find.text('Folha de Teste · Ontem · 3 min de leitura'),
       findsOneWidget,
     );
-    debugNetworkImageHttpClientProvider = null;
-  });
-
-  // specs/022 FR-010: com "Reduzir animações", a imagem não voa.
-  testWidgets('movimento reduzido: sem Hero', (tester) async {
-    debugNetworkImageHttpClientProvider = HangingHttpClient.new;
-
-    await pumpHeader(tester, reduceMotion: true);
-
-    expect(find.byType(Hero), findsNothing);
-    debugNetworkImageHttpClientProvider = null;
+    expect(
+      find.bySemanticsLabel(
+        'Notícia n1, Folha de Teste, Ontem, 3 min de leitura',
+      ),
+      findsOneWidget,
+    );
+    // As categorias num nó só, separado do título.
+    expect(find.bySemanticsLabel('Golpe\nWhatsApp'), findsOneWidget);
+    handle.dispose();
   });
 }

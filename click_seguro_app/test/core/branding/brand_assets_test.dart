@@ -1,11 +1,21 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:click_seguro_app/core/theme/app_colors.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Os arquivos de marca do projeto (SVG, manifest web) seguem a cor primary
-/// do design system (`#FE3152`), não o terracota antigo (specs/023).
+/// `#RRGGBB` de uma cor do design system.
+String _hex(Color color) =>
+    '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+
+/// Os arquivos de marca do projeto (SVG, manifest web, abertura nativa)
+/// seguem as cores do design system em vigor (`AppColors`), não valores
+/// fixos: assim acompanham a paleta 2.0 (specs/023, specs/024).
 void main() {
+  final String primary = _hex(AppColors.primary);
+  final String background = _hex(AppColors.background);
+
   group('logo oficial', () {
     late String svg;
 
@@ -21,21 +31,33 @@ void main() {
       ).allMatches(svg).map((match) => match.group(0)!.toUpperCase());
 
       expect(colors, isNotEmpty);
-      expect(colors, everyElement('#FE3152'));
+      expect(colors, everyElement(primary));
     });
 
     test('usa primary no preenchimento e no traço', () {
-      expect(svg, contains('fill="#FE3152"'));
-      expect(svg, contains('stroke="#FE3152"'));
+      expect(svg, contains('fill="$primary"'));
+      expect(svg, contains('stroke="$primary"'));
     });
   });
 
-  test('o manifest web usa primary como theme_color', () {
+  test('o manifest web usa primary e o fundo do app', () {
     final Map<String, dynamic> manifest =
         jsonDecode(File('web/manifest.json').readAsStringSync())
             as Map<String, dynamic>;
 
-    expect(manifest['theme_color'], '#FE3152');
+    expect(manifest['theme_color'], primary);
+    expect(manifest['background_color'], background);
+  });
+
+  test('o fundo da abertura nativa do Android é o fundo do app', () {
+    final String xml = File(
+      'android/app/src/main/res/values/colors.xml',
+    ).readAsStringSync();
+
+    expect(
+      xml,
+      contains('<color name="launcher_background">$background</color>'),
+    );
   });
 
   group('abertura nativa só com o fundo (sem logo estático)', () {
@@ -97,14 +119,25 @@ void main() {
       );
     });
 
-    test('LaunchScreen.storyboard: sem imagem e com o fundo #FFFDFB', () {
+    test('LaunchScreen.storyboard: sem imagem e com o fundo do app', () {
       final String storyboard = File(
         'ios/Runner/Base.lproj/LaunchScreen.storyboard',
       ).readAsStringSync();
 
       expect(storyboard, isNot(contains('LaunchImage')));
       expect(storyboard, isNot(contains('<imageView')));
-      expect(storyboard, contains('red="1" green="0.992" blue="0.984"'));
+      // O fundo da abertura emenda com a primeira tela da splash.
+      String channel(int value) =>
+          (value / 255).toStringAsFixed(3).replaceFirst(RegExp(r'\.?0+$'), '');
+      const Color bg = AppColors.background;
+      expect(
+        storyboard,
+        contains(
+          'red="${channel((bg.r * 255).round())}" '
+          'green="${channel((bg.g * 255).round())}" '
+          'blue="${channel((bg.b * 255).round())}"',
+        ),
+      );
     });
   });
 }

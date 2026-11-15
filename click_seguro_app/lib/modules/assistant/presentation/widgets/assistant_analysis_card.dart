@@ -1,14 +1,20 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/safe_badge.dart';
 import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_entity.dart';
+import 'package:click_seguro_app/modules/assistant/presentation/extensions/ai_analysis_presentation_extension.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/extensions/ai_threat_type_presentation_extension.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+/// Resultado da verificação (quadro "10 Assistente" do redesign 2.0): cartão
+/// branco com o selo de risco ("Alto risco de golpe"…), a explicação e os
+/// cuidados em lista. Com risco alto, a borda fica coral; no alto contraste
+/// (sem sombra), sempre há borda.
 class AssistantAnalysisCard extends StatelessWidget {
   const AssistantAnalysisCard({super.key, required this.analysis});
 
@@ -16,14 +22,9 @@ class AssistantAnalysisCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool successful = analysis.status == AiAnalysisStatus.success;
     final AppPalette colors = context.colors;
-    if (!successful) {
-      final String message = switch (analysis.status) {
-        AiAnalysisStatus.error => AppStrings.assistantStatusError,
-        AiAnalysisStatus.rateLimited => AppStrings.assistantStatusRateLimited,
-        _ => AppStrings.assistantUnknown,
-      };
+    if (analysis.status != AiAnalysisStatus.success) {
+      final String message = analysis.statusMessageKey;
       return SafeCard(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +34,9 @@ class AssistantAnalysisCard extends StatelessWidget {
             Expanded(
               child: Text(
                 message.tr(),
-                style: TextStyle(color: colors.textForeground),
+                style: AppTypography.body.copyWith(
+                  color: colors.textForeground,
+                ),
               ),
             ),
           ],
@@ -41,94 +44,106 @@ class AssistantAnalysisCard extends StatelessWidget {
       );
     }
 
-    final SafeBadgeTone tone = switch (analysis.threatType) {
-      AiThreatType.safe => SafeBadgeTone.success,
-      AiThreatType.unknown ||
-      AiThreatType.uncertain ||
-      null => SafeBadgeTone.warning,
-      _ => SafeBadgeTone.destructive,
+    final AssistantRiskLevel risk = analysis.riskLevel;
+    final (SafeBadgeTone tone, IconData icon) = switch (risk) {
+      AssistantRiskLevel.high => (
+        SafeBadgeTone.destructive,
+        LucideIcons.triangleAlert,
+      ),
+      AssistantRiskLevel.medium => (
+        SafeBadgeTone.warning,
+        LucideIcons.circleAlert,
+      ),
+      AssistantRiskLevel.low => (
+        SafeBadgeTone.success,
+        LucideIcons.shieldCheck,
+      ),
     };
-    return SafeCard(
+    return Container(
+      key: const ValueKey('assistant-analysis-result'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.s5),
+      // A caixa padrão dos cartões; risco alto troca a borda por coral.
+      decoration: risk == AssistantRiskLevel.high
+          ? SafeCard.decoration(
+              colors,
+            ).copyWith(border: Border.all(color: colors.primary, width: 2))
+          : SafeCard.decoration(colors),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.assistantAnalysisResult.tr(),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: colors.secondary,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s3),
           Align(
             alignment: AlignmentDirectional.centerStart,
-            child: SafeBadge(
-              tone: tone,
-              icon: Icon(
-                tone == SafeBadgeTone.success
-                    ? LucideIcons.shieldCheck
-                    : LucideIcons.circleAlert,
-              ),
-              child: Text(
-                analysis.threatType.labelKey.tr(),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            child: Semantics(
+              header: true,
+              child: SafeBadge(
+                key: const ValueKey('assistant-risk-badge'),
+                tone: tone,
+                icon: Icon(icon),
+                child: Text(risk.labelKey.tr()),
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.s3),
-          _Metric(
-            label: AppStrings.assistantRisk.tr(),
-            value: _percentage(analysis.riskScore),
-          ),
-          const SizedBox(height: AppSpacing.s2),
-          _Metric(
-            label: AppStrings.assistantConfidence.tr(),
-            value: _percentage(analysis.confidence),
           ),
           if (analysis.explanation?.isNotEmpty == true) ...[
             const SizedBox(height: AppSpacing.s4),
             Text(
-              AppStrings.assistantExplanation.tr(),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colors.secondary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s1),
-            Text(
               analysis.explanation!,
-              style: TextStyle(color: colors.textForeground),
+              style: AppTypography.bodyLarge.copyWith(
+                color: colors.textForeground,
+              ),
             ),
           ],
           if (analysis.tips.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              AppStrings.assistantTips.tr(),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colors.secondary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s1),
+            const SizedBox(height: AppSpacing.s3),
             for (final tip in analysis.tips)
               Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.s1),
+                padding: const EdgeInsets.only(bottom: AppSpacing.s2),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(LucideIcons.check, size: 18, color: colors.primary),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Icon(
+                        risk == AssistantRiskLevel.low
+                            ? LucideIcons.check
+                            : LucideIcons.x,
+                        size: 20,
+                        color: risk == AssistantRiskLevel.low
+                            ? colors.success
+                            : colors.primary,
+                      ),
+                    ),
                     const SizedBox(width: AppSpacing.s2),
                     Expanded(
                       child: Text(
                         tip,
-                        style: TextStyle(color: colors.textForeground),
+                        style: AppTypography.body.copyWith(
+                          color: colors.textBody,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
           ],
+          // Detalhes numa linha discreta no pé: tipo, risco e confiança
+          // (a spec 016 pede risco e confiança, mesmo quando indisponíveis).
+          const SizedBox(height: AppSpacing.s3),
+          Wrap(
+            spacing: AppSpacing.s4,
+            runSpacing: AppSpacing.s1,
+            children: [
+              _Detail(value: analysis.threatType.labelKey.tr()),
+              _Detail(
+                label: AppStrings.assistantRisk.tr(),
+                value: _percentage(analysis.riskScore),
+              ),
+              _Detail(
+                label: AppStrings.assistantConfidence.tr(),
+                value: _percentage(analysis.confidence),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -139,30 +154,30 @@ class AssistantAnalysisCard extends StatelessWidget {
       : '${value.round()}%';
 }
 
-class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
+/// Um item da linha de detalhes: rótulo apagado e valor em destaque.
+class _Detail extends StatelessWidget {
+  const _Detail({this.label, required this.value});
 
-  final String label;
+  final String? label;
   final String value;
 
   @override
-  Widget build(BuildContext context) => Row(
+  // Wrap, e não Row: com letra grande, o valor desce para a linha de baixo.
+  Widget build(BuildContext context) => Wrap(
+    spacing: AppSpacing.s1,
+    crossAxisAlignment: WrapCrossAlignment.center,
     children: [
-      Expanded(
-        child: Text(
+      if (label case final String label)
+        Text(
           label,
-          style: TextStyle(color: context.colors.textMutedForeground),
-        ),
-      ),
-      Flexible(
-        child: Text(
-          value,
-          textAlign: TextAlign.end,
-          softWrap: true,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: context.colors.secondary,
+          style: AppTypography.body.copyWith(
+            color: context.colors.textMutedForeground,
           ),
+        ),
+      Text(
+        value,
+        style: AppTypography.label.copyWith(
+          color: context.colors.textForeground,
         ),
       ),
     ],

@@ -7,12 +7,12 @@ Identidade visual oficial: **Click Seguro**. A prioridade máxima registrada em
 vazio. Implementação e validação em [specs/021-identidade-visual/tasks.md](specs/021-identidade-visual/tasks.md).
 
 A fonte da logo fica em `click_seguro_app/assets/branding/click_seguro_logo.svg`, na cor
-`primary` do design system (`#FE3152`). Para gerar novamente o PNG exportado e os ícones
+`primary` do design system (`#E31C3D`, paleta 2.0). Para gerar novamente o PNG exportado e os ícones
 (Android, iOS e web), execute `python3 click_seguro_app/tools/generate_brand_assets.py`
 (Python, Pillow, libcairo e librsvg). Os paths do SVG são os oficiais; o app desenha a marca em
 código (`BrandMark`), na cor do tema, sem dependência para renderização de SVG; o PNG de
 `assets/branding/` é só a arte exportada, fora do `pubspec`. A abertura nativa do Android e do
-iOS mostra só o fundo `#FFFDFB`. Detalhes em
+iOS mostra só o fundo do app (`#FFFFFF`). Detalhes em
 [specs/023-splash-animada](specs/023-splash-animada/spec.md).
 
 ---

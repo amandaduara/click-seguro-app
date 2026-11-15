@@ -49,28 +49,31 @@ class NewsDetailEntity {
 
   bool get isSaved => news.interaction.isSaved;
 
-  NewsDetailEntity copyWith({bool? isSaved}) => NewsDetailEntity(
-    news: NewsItemEntity(
-      id: news.id,
-      title: news.title,
-      source: news.source,
-      sourceUrl: news.sourceUrl,
-      imageUrl: news.imageUrl,
-      originalPublishedAt: news.originalPublishedAt,
-      publishedAt: news.publishedAt,
-      isHighlight: news.isHighlight,
-      categories: news.categories,
-      interaction: NewsInteraction(
-        isRead: news.interaction.isRead,
-        isSaved: isSaved ?? news.interaction.isSaved,
-        isLiked: news.interaction.isLiked,
-      ),
-    ),
-    content: content,
-    likesCount: likesCount,
-    readsCount: readsCount,
-    suggestedModule: suggestedModule,
-  );
+  bool get isLiked => news.interaction.isLiked;
+
+  NewsDetailEntity copyWith({bool? isSaved, bool? isLiked, int? likesCount}) =>
+      NewsDetailEntity(
+        news: NewsItemEntity(
+          id: news.id,
+          title: news.title,
+          source: news.source,
+          sourceUrl: news.sourceUrl,
+          imageUrl: news.imageUrl,
+          originalPublishedAt: news.originalPublishedAt,
+          publishedAt: news.publishedAt,
+          isHighlight: news.isHighlight,
+          categories: news.categories,
+          interaction: NewsInteraction(
+            isRead: news.interaction.isRead,
+            isSaved: isSaved ?? news.interaction.isSaved,
+            isLiked: isLiked ?? news.interaction.isLiked,
+          ),
+        ),
+        content: content,
+        likesCount: likesCount ?? this.likesCount,
+        readsCount: readsCount,
+        suggestedModule: suggestedModule,
+      );
 }
 
 /// Detalhe devolvido pelo repository. [isFromCache] `true`: veio da cópia do

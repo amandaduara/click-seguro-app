@@ -9,7 +9,10 @@ import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.d
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/pages/news_home_page.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/category_filter_bar.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/feed_search_field.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -83,7 +86,8 @@ void main() {
   );
 
   group('feed', () {
-    testWidgets('carregando mostra o indicador e o aviso de servidor lento', (
+    // Sem aviso de servidor lento (validação da usuária, specs/024).
+    testWidgets('carregando mostra o esqueleto, sem aviso de servidor', (
       tester,
     ) async {
       repository.feedGate = Completer<void>();
@@ -104,10 +108,10 @@ void main() {
         findsOneWidget,
       );
       expect(find.byType(CircularProgressIndicator), findsNothing);
-      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(seconds: 6));
       expect(
         find.text('Conectando ao servidor. Isso pode levar até um minuto.'),
-        findsOneWidget,
+        findsNothing,
       );
 
       repository.feedGate!.complete();
@@ -134,6 +138,31 @@ void main() {
       expect(novidades, lessThan(destaques));
       expect(destaques, lessThan(recentes));
       expect(textInScroll('Recomendadas para você'), findsNothing);
+    });
+
+    // Validação da usuária (specs/024): a saudação e a busca sobem com as
+    // notícias; os filtros ficam presos no topo.
+    testWidgets('rolando, o cabeçalho sobe e os filtros ficam no topo', (
+      tester,
+    ) async {
+      repository.feedResults[0] = Right(newsFeed(recent: newsItems(20)));
+      await pumpPage(tester);
+      tester.view.physicalSize = const Size(400, 800);
+      await tester.pumpAndSettle();
+      final double filtersTop = tester
+          .getTopLeft(find.byType(CategoryFilterBar))
+          .dy;
+
+      await tester.drag(find.byType(NewsCard).first, const Offset(0, -1500));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícias seguras').hitTestable(), findsNothing);
+      expect(find.byType(FeedSearchField).hitTestable(), findsNothing);
+      final double pinnedTop = tester
+          .getTopLeft(find.byType(CategoryFilterBar))
+          .dy;
+      expect(pinnedTop, lessThan(filtersTop));
+      expect(find.byType(CategoryFilterBar).hitTestable(), findsOneWidget);
     });
 
     testWidgets('recomendadas aparecem quando vêm preenchidas', (tester) async {
@@ -287,6 +316,119 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.feedCalls, 2);
+    });
+  });
+
+  // Grade do feed (FR-025, T051). A tela tem 800 de largura e as seções
+  // 20 de margem: 760 para os cartões.
+  group('grade', () {
+    const double content = 760;
+
+    Finder cardOf(String id) =>
+        find.byWidgetPredicate((w) => w is NewsCard && w.item.id == id);
+
+    Rect rectOf(WidgetTester tester, String id) => tester.getRect(cardOf(id));
+
+    double? coverOf(WidgetTester tester, String id) =>
+        tester.widget<NewsCard>(cardOf(id)).coverHeight;
+
+    List<NewsItemEntity> items(String prefix, int count) => [
+      for (int i = 1; i <= count; i++) newsItem('$prefix$i'),
+    ];
+
+    testWidgets('"Destaques" ocupa a largura toda', (tester) async {
+      repository.feedResults[0] = Right(
+        newsFeed(highlights: [newsItem('h1')], recent: items('n', 2)),
+      );
+
+      await pumpPage(tester);
+
+      expect(rectOf(tester, 'h1').width, closeTo(content, 1));
+      expect(tester.widget<NewsCard>(cardOf('h1')).compact, isFalse);
+    });
+
+    for (final (section, recommended) in [
+      ('"Recomendadas"', true),
+      ('"Tudo recente"', false),
+    ]) {
+      testWidgets('$section em 2 colunas, na ordem da API', (tester) async {
+        repository.feedResults[0] = Right(
+          newsFeed(
+            recommended: recommended ? items('g', 5) : const [],
+            recent: recommended ? items('n', 1) : items('g', 5),
+          ),
+        );
+
+        await pumpPage(tester);
+
+        final List<Rect> rects = [
+          for (int i = 1; i <= 5; i++) rectOf(tester, 'g$i'),
+        ];
+        // Duas colunas: cada cartão com menos da metade da largura.
+        for (final rect in rects) {
+          expect(rect.width, lessThan(content / 2));
+        }
+        // Esquerda → direita, de cima para baixo: 1 | 2, 3 | 4, 5 | .
+        expect(rects[0].left, lessThan(rects[1].left));
+        expect(rects[0].top, rects[1].top);
+        for (final i in [2, 4]) {
+          expect(rects[i].left, rects[0].left);
+          expect(rects[i].top, greaterThan(rects[i - 2].top));
+        }
+        expect(rects[3].left, rects[1].left);
+        expect(rects[3].top, greaterThan(rects[1].top));
+      });
+    }
+
+    testWidgets('com letra acima de 1,3, uma coluna', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      repository.feedResults[0] = Right(newsFeed(recent: items('n', 3)));
+
+      await pumpPage(tester);
+
+      final List<Rect> rects = [
+        for (int i = 1; i <= 3; i++) rectOf(tester, 'n$i'),
+      ];
+      for (final rect in rects) {
+        expect(rect.width, closeTo(content, 1));
+      }
+      expect(rects[0].top, lessThan(rects[1].top));
+      expect(rects[1].top, lessThan(rects[2].top));
+      // Capa mais alta na coluna única.
+      expect(coverOf(tester, 'n1'), NewsGrid.coverHeights[0] + 40);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a mesma lista dá as mesmas alturas de capa', (tester) async {
+      repository.feedResults[0] = Right(
+        newsFeed(recommended: items('r', 5), recent: items('n', 5)),
+      );
+
+      await pumpPage(tester);
+
+      // Pela posição na lista: as duas seções repetem o mesmo desenho.
+      final List<double> expected = [
+        for (int i = 0; i < 5; i++) NewsGrid.coverHeightAt(i),
+      ];
+      expect([for (int i = 1; i <= 5; i++) coverOf(tester, 'r$i')], expected);
+      expect([for (int i = 1; i <= 5; i++) coverOf(tester, 'n$i')], expected);
+      // Alturas variadas, como no Pinterest.
+      expect(expected.toSet().length, greaterThan(1));
+      // E a capa desenhada tem essa altura.
+      for (final (index, id) in ['r1', 'r2'].indexed) {
+        expect(
+          tester
+              .getSize(
+                find.descendant(
+                  of: cardOf(id),
+                  matching: find.byType(NewsCover),
+                ),
+              )
+              .height,
+          expected[index],
+        );
+      }
     });
   });
 

@@ -46,6 +46,12 @@ extension NewsItemPresentation on NewsItemEntity {
     if (categories.length > max) '+${categories.length - max}',
   ];
 
+  /// Texto do qual sai o tema da ilustração da capa sem imagem: as
+  /// categorias e o título. O mesmo no cartão e no detalhe, para a capa não
+  /// mudar de desenho ao abrir a notícia.
+  String get illustrationText =>
+      [...categories.map((category) => category.name), title].join(' ');
+
   /// O que o leitor de tela lê no cabeçalho do detalhe: título, fonte e data.
   String headerLabel(DateTime now) =>
       [title, source, relativeDate(now)].join(', ');
