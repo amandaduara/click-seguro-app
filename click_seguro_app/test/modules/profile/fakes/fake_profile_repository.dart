@@ -58,6 +58,10 @@ class FakeProfileRepository implements ProfileRepository {
   Completer<void>? uploadGate;
   Completer<void>? removeGate;
 
+  /// Como no repository real: o último perfil buscado com sucesso.
+  @override
+  ProfileEntity? lastProfile;
+
   int profileCalls = 0;
   int countsCalls = 0;
   int progressCalls = 0;
@@ -83,9 +87,11 @@ class FakeProfileRepository implements ProfileRepository {
   }
 
   @override
-  Future<Either<Failure, ProfileEntity>> getProfile() {
+  Future<Either<Failure, ProfileEntity>> getProfile() async {
     profileCalls++;
-    return _answer(profileResults, profileGate);
+    final result = await _answer(profileResults, profileGate);
+    lastProfile = result.getRight().toNullable() ?? lastProfile;
+    return result;
   }
 
   @override

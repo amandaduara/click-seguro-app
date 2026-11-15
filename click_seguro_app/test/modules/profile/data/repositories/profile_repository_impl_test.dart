@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
+import 'package:click_seguro_app/modules/profile/data/models/profile_model.dart';
 import 'package:click_seguro_app/modules/profile/data/repositories/profile_repository_impl.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/profile_update.dart';
 import 'package:click_seguro_app/modules/profile/domain/failures/profile_failures.dart';
@@ -14,7 +15,7 @@ void main() {
 
   setUp(() {
     remote = FakeProfileRemoteDataSource();
-    repository = ProfileRepositoryImpl(remote);
+    repository = ProfileRepositoryImpl(remote, clock: () => 42);
   });
 
   ApiException apiError(
@@ -59,10 +60,10 @@ void main() {
       expect(remote.updates, [update]);
     });
 
-    test('uploadAvatar devolve a nova URL', () async {
+    test('uploadAvatar devolve a nova URL, com a versão da troca', () async {
       final result = await repository.uploadAvatar('/tmp/foto.png');
 
-      expect(result.getRight().toNullable(), remote.avatarUrl);
+      expect(result.getRight().toNullable(), '${remote.avatarUrl}?v=42');
       expect(remote.uploadedPaths, ['/tmp/foto.png']);
     });
 
@@ -71,6 +72,106 @@ void main() {
 
       expect(result.isRight(), isTrue);
       expect(remote.removeCalls, 1);
+    });
+  });
+
+  group('versão da foto (imagem antiga no mesmo endereço)', () {
+    const String url = 'https://img.test/c_fill,w_200/avatars/u1.png';
+
+    void serverPhoto(String? avatarUrl) => remote.profile = ProfileModel(
+      name: 'Maria da Silva',
+      email: 'maria@exemplo.com',
+      receiveNotifications: true,
+      avatarUrl: avatarUrl,
+    );
+
+    Future<String?> shownUrl() async =>
+        (await repository.getProfile()).getRight().toNullable()!.avatarUrl;
+
+    test('sem troca nesta abertura, o endereço fica igual', () async {
+      serverPhoto(url);
+
+      expect(await shownUrl(), url);
+    });
+
+    test('depois da troca, o perfil traz o endereço com a versão', () async {
+      serverPhoto(url);
+      remote.avatarUrl = url;
+
+      await repository.uploadAvatar('/tmp/foto.png');
+
+      expect(await shownUrl(), '$url?v=42');
+    });
+
+    test('mantém os parâmetros que o endereço já tinha', () async {
+      serverPhoto('$url?a=1');
+      await repository.uploadAvatar('/tmp/foto.png');
+
+      expect(await shownUrl(), '$url?a=1&v=42');
+    });
+
+    test('foto removida continua sem endereço', () async {
+      await repository.uploadAvatar('/tmp/foto.png');
+      serverPhoto(null);
+
+      expect(await shownUrl(), isNull);
+    });
+
+    test('envio que falha não muda a versão', () async {
+      serverPhoto(url);
+      remote.error = apiError(ApiErrorType.server, statusCode: 500);
+      await repository.uploadAvatar('/tmp/foto.png');
+      remote.error = null;
+
+      expect(await shownUrl(), url);
+    });
+  });
+
+  group('lastProfile (o último perfil, sem pedido)', () {
+    const String url = 'https://img.test/avatars/u1.png';
+
+    setUp(
+      () => remote.profile = const ProfileModel(
+        name: 'Maria da Silva',
+        email: 'maria@exemplo.com',
+        receiveNotifications: true,
+        avatarUrl: url,
+      ),
+    );
+
+    test('null antes da primeira busca', () {
+      expect(repository.lastProfile, isNull);
+    });
+
+    test('guarda o perfil buscado, com a versão da foto', () async {
+      await repository.uploadAvatar('/tmp/foto.png');
+      await repository.getProfile();
+
+      expect(repository.lastProfile!.name, 'Maria da Silva');
+      expect(repository.lastProfile!.avatarUrl, '$url?v=42');
+    });
+
+    test('troca e remoção da foto atualizam o perfil guardado', () async {
+      await repository.getProfile();
+      remote.avatarUrl = 'https://img.test/avatars/nova.png';
+
+      await repository.uploadAvatar('/tmp/foto.png');
+      expect(
+        repository.lastProfile!.avatarUrl,
+        'https://img.test/avatars/nova.png?v=42',
+      );
+
+      await repository.removeAvatar();
+      expect(repository.lastProfile!.avatarUrl, isNull);
+    });
+
+    test('busca que falha mantém o último perfil', () async {
+      await repository.getProfile();
+      remote.error = apiError(ApiErrorType.server, statusCode: 500);
+
+      await repository.getProfile();
+
+      expect(repository.lastProfile!.avatarUrl, url);
     });
   });
 

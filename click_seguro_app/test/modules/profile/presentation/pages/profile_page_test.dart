@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/news_counts_entity.dart';
+import 'package:click_seguro_app/modules/profile/domain/entities/profile_entity.dart';
 import 'package:click_seguro_app/modules/profile/presentation/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -278,6 +280,97 @@ void main() {
       expect(repository.countsCalls, before + 1);
       expect(find.text('13'), findsOneWidget);
       semantics.dispose();
+    });
+
+    group('foto atual na volta', () {
+      const String oldUrl = 'https://img.test/antiga.png';
+      const String newUrl = 'https://img.test/antiga.png?v=1';
+
+      List<String?> shownUrls(WidgetTester tester) => [
+        for (final image in tester.widgetList<SafeNetworkImage>(
+          find.byType(SafeNetworkImage),
+        ))
+          image.url,
+      ];
+
+      testWidgets('da edição: foto trocada aparece', (tester) async {
+        final semantics = tester.ensureSemantics();
+        repository.profileResults
+          ..[0] = const Right(
+            ProfileEntity(
+              name: 'Maria da Silva',
+              email: 'maria@exemplo.com',
+              avatarUrl: oldUrl,
+            ),
+          )
+          ..add(
+            const Right(
+              ProfileEntity(
+                name: 'Maria da Silva',
+                email: 'maria@exemplo.com',
+                avatarUrl: newUrl,
+              ),
+            ),
+          );
+        await open(tester);
+        expect(shownUrls(tester), [oldUrl]);
+
+        await tapAndSettle(tester, find.bySemanticsLabel('Editar perfil'));
+        router.pop();
+        await tester.pumpAndSettle();
+
+        expect(shownUrls(tester), [newUrl]);
+        semantics.dispose();
+      });
+
+      testWidgets('da edição: foto removida volta às iniciais', (tester) async {
+        final semantics = tester.ensureSemantics();
+        repository.profileResults
+          ..[0] = const Right(
+            ProfileEntity(
+              name: 'Maria da Silva',
+              email: 'maria@exemplo.com',
+              avatarUrl: oldUrl,
+            ),
+          )
+          ..add(const Right(testProfile));
+        await open(tester);
+
+        await tapAndSettle(tester, find.bySemanticsLabel('Editar perfil'));
+        router.pop();
+        await tester.pumpAndSettle();
+
+        expect(shownUrls(tester), isEmpty);
+        expect(find.text('MS'), findsOneWidget);
+        semantics.dispose();
+      });
+
+      testWidgets('das configurações ("Dados pessoais" abre a edição de lá)', (
+        tester,
+      ) async {
+        repository.profileResults
+          ..[0] = const Right(
+            ProfileEntity(
+              name: 'Maria da Silva',
+              email: 'maria@exemplo.com',
+              avatarUrl: oldUrl,
+            ),
+          )
+          ..add(const Right(testProfile));
+        await open(tester);
+        final int before = repository.profileCalls;
+
+        await tapAndSettle(tester, find.byTooltip('Configurações'));
+        unawaited(router.push('/profile/edit'));
+        await tester.pumpAndSettle();
+        router.pop();
+        await tester.pumpAndSettle();
+        router.pop();
+        await tester.pumpAndSettle();
+
+        expect(repository.profileCalls, before + 1);
+        expect(shownUrls(tester), isEmpty);
+      });
     });
 
     testWidgets('primeira carga: esqueleto do perfil, lido como "Carregando"', (

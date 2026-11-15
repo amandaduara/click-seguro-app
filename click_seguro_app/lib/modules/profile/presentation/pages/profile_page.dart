@@ -68,22 +68,25 @@ const EdgeInsets _padding = EdgeInsets.fromLTRB(
 
 /// Título fixo no topo e o conteúdo da aba abaixo.
 class _WithHeader extends StatelessWidget {
-  const _WithHeader({required this.child});
+  const _WithHeader({required this.child, this.onSettings});
 
   final Widget child;
+
+  /// Abre as configurações; sem ele, só empilha a tela.
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
             AppSpacing.s5,
             AppSpacing.s6,
             AppSpacing.s5,
             AppSpacing.s3,
           ),
-          child: _Header(),
+          child: _Header(onSettings: onSettings),
         ),
         Expanded(child: child),
       ],
@@ -94,7 +97,9 @@ class _WithHeader extends StatelessWidget {
 /// Título "Perfil" e a engrenagem das configurações, também para o visitante
 /// (specs/014, R6).
 class _Header extends StatelessWidget {
-  const _Header();
+  const _Header({this.onSettings});
+
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +126,7 @@ class _Header extends StatelessWidget {
             shape: CircleBorder(side: BorderSide(color: colors.border)),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              onTap: () => context.push('/settings'),
+              onTap: onSettings ?? () => context.push('/settings'),
               child: SizedBox.square(
                 dimension: 48,
                 child: Icon(
@@ -159,6 +164,8 @@ class _AccountProfileState extends State<_AccountProfile>
   Widget build(BuildContext context) {
     final ProfileController controller = context.watch<ProfileController>();
     return _WithHeader(
+      // A foto e o nome podem mudar em "Dados pessoais", aberto de lá.
+      onSettings: () => unawaited(pushAndRefresh('/settings')),
       // Carregando, erro e perfil trocam com um esmaecimento (R8).
       child: SafeStateSwitcher(
         stateKey: controller.status,

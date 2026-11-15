@@ -9,4 +9,8 @@ class GetProfileUseCase {
   final ProfileRepository _repository;
 
   Future<Either<Failure, ProfileEntity>> call() => _repository.getProfile();
+
+  /// O último perfil já buscado (ou `null`), sem novo pedido: a tela mostra
+  /// na hora o que outra tela acabou de atualizar.
+  ProfileEntity? get latest => _repository.lastProfile;
 }

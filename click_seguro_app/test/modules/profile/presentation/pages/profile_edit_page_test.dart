@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/widgets/editable_avatar.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
@@ -143,6 +144,26 @@ void main() {
     expect(repository.updateCalls, isEmpty);
   });
 
+  testWidgets('erro aparece ao digitar, só no campo alterado, e some', (
+    tester,
+  ) async {
+    await open(tester);
+
+    await tester.enterText(field('Telefone'), '1191234');
+    await tester.pump();
+
+    const String phoneError = 'Digite o telefone com DDD.';
+    expect(find.text(phoneError), findsOneWidget);
+    expect(find.text('O nome precisa ter de 6 a 150 letras.'), findsNothing);
+    expect(saveDisabled(tester), isTrue);
+
+    await tester.enterText(field('Telefone'), '11934567890');
+    await tester.pump();
+
+    expect(find.text(phoneError), findsNothing);
+    expect(saveDisabled(tester), isFalse);
+  });
+
   testWidgets('salvar ok → "Dados salvos"', (tester) async {
     await open(tester);
 
@@ -246,6 +267,34 @@ void main() {
     expect(tester.getSize(saveButton()).height, greaterThanOrEqualTo(48));
   });
 
+  testWidgets('"Salvar" fixo no fim da tela, abaixo dos campos', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1080, 2340)
+      ..devicePixelRatio = 3;
+    tester.view.padding = const FakeViewPadding(bottom: 72);
+    addTearDown(tester.view.reset);
+    await open(tester);
+
+    final double screenBottom = tester.view.physicalSize.height / 3;
+    final double safeBottom = screenBottom - 72 / 3;
+    final Rect button = tester.getRect(find.byType(SafeButton));
+
+    // Acima da área segura, com margem, e longe do último campo.
+    expect(button.bottom, lessThan(safeBottom));
+    expect(button.bottom, greaterThan(safeBottom - 40));
+    expect(
+      button.top,
+      greaterThan(tester.getRect(field('Telefone')).bottom + 48),
+    );
+
+    // O conteúdo rola; o botão não sai do lugar.
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(find.byType(SafeButton)), button);
+  });
+
   testWidgets('fonte 2× num celular: sem estouro', (tester) async {
     tester.view
       ..physicalSize = const Size(1080, 2340)
@@ -322,6 +371,122 @@ void main() {
       expect(find.text('Enviando foto…'), findsNothing);
       expect(repository.uploadCalls, ['/app/images/img_1.png']);
       semantics.dispose();
+    });
+
+    testWidgets('usa o EditableAvatar, ocupado durante o envio', (
+      tester,
+    ) async {
+      storage.nextResult = const PickedImage('/app/images/img_1.png');
+      repository.uploadGate = Completer<void>();
+      await open(tester);
+
+      EditableAvatar avatar() =>
+          tester.widget<EditableAvatar>(find.byType(EditableAvatar));
+      expect(avatar().busy, isFalse);
+      expect(avatar().onTap, isNotNull);
+
+      await tester.tap(find.byType(EditableAvatar));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Galeria'));
+      await tester.pump();
+
+      expect(avatar().busy, isTrue);
+      expect(avatar().photoPath, '/app/images/img_1.png');
+      expect(avatar().onTap, isNull);
+
+      repository.uploadGate!.complete();
+      await tester.pumpAndSettle();
+      expect(avatar().busy, isFalse);
+      expect(avatar().imageUrl, 'https://img.test/nova.png');
+    });
+
+    testWidgets('carregamento e bloqueio seguem até buscar o perfil', (
+      tester,
+    ) async {
+      storage.nextResult = const PickedImage('/app/images/img_1.png');
+      await open(tester);
+      repository.profileGate = Completer<void>();
+
+      EditableAvatar avatar() =>
+          tester.widget<EditableAvatar>(find.byType(EditableAvatar));
+      await tester.tap(find.byType(EditableAvatar));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Galeria'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Enviada, mas o perfil ainda não voltou: segue carregando.
+      expect(repository.uploadCalls, ['/app/images/img_1.png']);
+      expect(repository.profileCalls, 2);
+      expect(avatar().busy, isTrue);
+      expect(find.text('Enviando foto…'), findsOneWidget);
+      expect(find.byType(BackButton), findsNothing);
+
+      repository.profileGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(avatar().busy, isFalse);
+      expect(find.byType(BackButton), findsOneWidget);
+    });
+
+    group('sair durante o envio', () {
+      Future<void> startUpload(WidgetTester tester) async {
+        storage.nextResult = const PickedImage('/app/images/img_1.png');
+        repository.uploadGate = Completer<void>();
+        await open(tester);
+        await tester.tap(find.byType(EditableAvatar));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Galeria'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+      }
+
+      const String warning = 'Aguarde: a foto ainda está sendo enviada.';
+
+      testWidgets('voltar do sistema não sai e mostra o aviso', (tester) async {
+        await startUpload(tester);
+
+        final bool handled = await tester.binding.handlePopRoute();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(handled, isTrue);
+        expect(find.byType(ProfileEditPage), findsOneWidget);
+        expect(find.text(warning), findsOneWidget);
+
+        repository.uploadGate!.complete();
+        await tester.pumpAndSettle();
+      });
+
+      testWidgets('voltar da barra desativado; o toque só avisa', (
+        tester,
+      ) async {
+        await startUpload(tester);
+
+        final Finder back = find.byType(IconButton).first;
+        expect(tester.widget<IconButton>(back).onPressed, isNull);
+        expect(find.byType(BackButton), findsNothing);
+        await tester.tap(back);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
+
+        expect(find.byType(ProfileEditPage), findsOneWidget);
+        expect(find.text(warning), findsOneWidget);
+
+        repository.uploadGate!.complete();
+        await tester.pumpAndSettle();
+      });
+
+      testWidgets('terminado o envio, voltar sai normalmente', (tester) async {
+        await startUpload(tester);
+        repository.uploadGate!.complete();
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        expect(find.text('abrir'), findsOneWidget);
+      });
     });
 
     testWidgets('sem permissão → explicação', (tester) async {

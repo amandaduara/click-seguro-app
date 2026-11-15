@@ -20,6 +20,12 @@ enum PhotoState { idle, uploading, removing }
 /// uso); [failed] = falha do serviço, em [EditProfileController.saveFailure].
 enum EditSaveResult { saved, invalid, failed }
 
+/// Campos de texto da edição.
+enum ProfileField { name, email, phone }
+
+/// Pré-carrega a foto nova no cache da imagem (precisa da tela).
+typedef PrepareAvatarImage = Future<void> Function(String url);
+
 /// Rascunho da edição de dados (data-model de specs/012-perfil, R5): os
 /// textos dos campos, os erros por campo e o envio só do que mudou.
 class EditProfileController extends ChangeNotifier {
@@ -32,9 +38,9 @@ class EditProfileController extends ChangeNotifier {
        _updateProfile = updateProfile,
        _updateAvatar = updateAvatar,
        _removeAvatar = removeAvatar {
-    _watch(name, () => _errors = _without(name: true));
-    _watch(email, () => _errors = _without(email: true));
-    _watch(phone, () => _errors = _without(phone: true));
+    _watch(ProfileField.name, name);
+    _watch(ProfileField.email, email);
+    _watch(ProfileField.phone, phone);
   }
 
   final GetProfileUseCase _getProfile;
@@ -61,8 +67,36 @@ class EditProfileController extends ChangeNotifier {
   /// Perfil como está salvo (foto e iniciais do topo).
   ProfileEntity? get profile => _original;
 
-  ProfileFieldErrors _errors = const ProfileFieldErrors();
-  ProfileFieldErrors get errors => _errors;
+  /// Campos já alterados (ou todos, depois de "Salvar"): só eles mostram
+  /// erro, para a tela não abrir cheia de avisos.
+  final Set<ProfileField> _touched = {};
+
+  /// Erro que só o serviço sabe (e-mail em uso); some quando o e-mail muda.
+  ProfileFieldError? _emailServerError;
+
+  /// Os campos estão sendo preenchidos pelo perfil, não pela pessoa.
+  bool _filling = false;
+
+  /// Erros por campo, recalculados a cada letra digitada (como na troca de
+  /// senha): aparecem depois de o campo ser alterado e somem quando ele fica
+  /// válido.
+  ProfileFieldErrors get errors {
+    final ProfileEntity? original = _original;
+    if (original == null) return const ProfileFieldErrors();
+    final ProfileFieldErrors live = ProfileFormValidator.validate(
+      name: name.text,
+      email: email.text,
+      phone: phone.text,
+      hadPhone: original.phone != null,
+    );
+    ProfileFieldError? shown(ProfileField field, ProfileFieldError? error) =>
+        _touched.contains(field) ? error : null;
+    return ProfileFieldErrors(
+      name: shown(ProfileField.name, live.name),
+      email: _emailServerError ?? shown(ProfileField.email, live.email),
+      phone: shown(ProfileField.phone, live.phone),
+    );
+  }
 
   bool _isSaving = false;
   bool get isSaving => _isSaving;
@@ -98,7 +132,8 @@ class EditProfileController extends ChangeNotifier {
         phoneDraft != original.phone;
   }
 
-  bool get canSave => hasChanges && !_isSaving;
+  /// Com mudança e sem erro à vista: o botão fica desativado até lá.
+  bool get canSave => hasChanges && !_isSaving && errors.isEmpty;
 
   Future<void> load() async {
     _status = EditProfileStatus.loading;
@@ -122,13 +157,8 @@ class EditProfileController extends ChangeNotifier {
     final ProfileEntity? original = _original;
     if (original == null || _isSaving) return EditSaveResult.invalid;
 
-    _errors = ProfileFormValidator.validate(
-      name: name.text,
-      email: email.text,
-      phone: phone.text,
-      hadPhone: original.phone != null,
-    );
-    if (!_errors.isEmpty) {
+    _touched.addAll(ProfileField.values);
+    if (!errors.isEmpty) {
       _notify();
       return EditSaveResult.invalid;
     }
@@ -147,9 +177,7 @@ class EditProfileController extends ChangeNotifier {
     final EditSaveResult outcome = result.fold(
       (failure) {
         if (failure is EmailInUseFailure) {
-          _errors = const ProfileFieldErrors(
-            email: ProfileFieldError.emailInUse,
-          );
+          _emailServerError = ProfileFieldError.emailInUse;
           return EditSaveResult.invalid;
         }
         _saveFailure = failure;
@@ -166,7 +194,15 @@ class EditProfileController extends ChangeNotifier {
 
   /// Troca a foto (R7): a cópia local aparece na hora; em falha, volta a
   /// anterior. A foto vai direto ao serviço, sem esperar "Salvar".
-  Future<AvatarUpdateOutcome> pickPhoto(PhotoSource source) async {
+  ///
+  /// Enviada a foto, ainda com o carregamento, busca o perfil de novo (o
+  /// Perfil o mostra ao voltar, sem outra busca) e pré-carrega a imagem nova
+  /// com [prepareImage]; o carregamento só sai quando tudo termina, e a
+  /// foto do Perfil já está pronta.
+  Future<AvatarUpdateOutcome> pickPhoto(
+    PhotoSource source, {
+    PrepareAvatarImage? prepareImage,
+  }) async {
     if (_photoState != PhotoState.idle) return const AvatarPickCancelled();
     final AvatarUpdateOutcome outcome = await _updateAvatar(
       source,
@@ -178,6 +214,8 @@ class EditProfileController extends ChangeNotifier {
     );
     if (_disposed) return outcome;
     if (outcome case AvatarUpdated(:final avatarUrl)) {
+      await _refreshForProfile(avatarUrl, prepareImage);
+      if (_disposed) return outcome;
       _original = _original?.withAvatarUrl(avatarUrl);
     }
     _localPhotoPath = null;
@@ -186,12 +224,15 @@ class EditProfileController extends ChangeNotifier {
     return outcome;
   }
 
-  /// Remove a foto; as iniciais aparecem na hora. `null` = removida.
+  /// Remove a foto; as iniciais aparecem na hora. `null` = removida. Antes
+  /// de terminar, busca o perfil de novo para o Perfil já voltar sem foto.
   Future<Failure?> removePhoto() async {
     if (_photoState != PhotoState.idle) return null;
     _photoState = PhotoState.removing;
     _notify();
     final result = await _removeAvatar();
+    if (_disposed) return null;
+    if (result.isRight()) await _getProfile();
     if (_disposed) return null;
     _photoState = PhotoState.idle;
     final Failure? failure = result.fold((failure) => failure, (_) {
@@ -202,35 +243,48 @@ class EditProfileController extends ChangeNotifier {
     return failure;
   }
 
-  /// Os campos passam a mostrar [profile], que vira o original.
+  /// Busca o perfil (o Perfil passa a ter a foto nova) e, junto, pré-carrega
+  /// [uploadedUrl]; se a busca trouxer outro endereço, pré-carrega também.
+  /// Falhas não desfazem a troca: o Perfil busca de novo ao voltar.
+  Future<void> _refreshForProfile(
+    String uploadedUrl,
+    PrepareAvatarImage? prepareImage,
+  ) async {
+    final (reloaded, _) = await (
+      _getProfile(),
+      prepareImage?.call(uploadedUrl) ?? Future<void>.value(),
+    ).wait;
+    final String? reloadedUrl = reloaded.getRight().toNullable()?.avatarUrl;
+    if (_disposed || reloadedUrl == null || reloadedUrl == uploadedUrl) return;
+    await prepareImage?.call(reloadedUrl);
+  }
+
+  /// Os campos passam a mostrar [profile], que vira o original; nenhum
+  /// campo conta como alterado.
   void _fill(ProfileEntity profile) {
     _original = profile;
+    _filling = true;
     name.text = profile.name;
     email.text = profile.email;
     phone.text = profile.phone == null ? '' : formatPhone(profile.phone!);
+    _filling = false;
+    _touched.clear();
+    _emailServerError = null;
   }
 
-  /// Ao mudar o texto de [field] (não só o cursor), tira o erro dele e
-  /// recalcula [canSave].
-  void _watch(TextEditingController field, VoidCallback clearError) {
-    String last = field.text;
-    field.addListener(() {
-      if (field.text == last) return;
-      last = field.text;
-      clearError();
+  /// Ao mudar o texto (não só o cursor), marca o campo como alterado, tira o
+  /// erro do serviço dele e atualiza erros e botão.
+  void _watch(ProfileField field, TextEditingController text) {
+    String last = text.text;
+    text.addListener(() {
+      if (text.text == last) return;
+      last = text.text;
+      if (_filling) return;
+      _touched.add(field);
+      if (field == ProfileField.email) _emailServerError = null;
       _notify();
     });
   }
-
-  ProfileFieldErrors _without({
-    bool name = false,
-    bool email = false,
-    bool phone = false,
-  }) => ProfileFieldErrors(
-    name: name ? null : _errors.name,
-    email: email ? null : _errors.email,
-    phone: phone ? null : _errors.phone,
-  );
 
   @override
   void dispose() {

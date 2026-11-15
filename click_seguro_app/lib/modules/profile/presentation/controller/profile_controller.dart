@@ -71,8 +71,16 @@ class ProfileController extends ChangeNotifier {
   }
 
   /// Ao voltar à aba (FR-007, R4): busca tudo sem trocar a tela pelo
-  /// carregando; os números mudam no lugar.
-  Future<void> refresh() => _fetch(profile: true, counts: true, progress: true);
+  /// carregando; os números mudam no lugar. O perfil que outra tela acabou
+  /// de buscar (a foto nova da edição) aparece já, antes da resposta.
+  Future<void> refresh() {
+    final ProfileEntity? latest = _getProfile.latest;
+    if (_profile != null && latest != null && !identical(latest, _profile)) {
+      _profile = latest;
+      _notify();
+    }
+    return _fetch(profile: true, counts: true, progress: true);
+  }
 
   Future<void> retryCounts() {
     _counts = const AreaLoading();

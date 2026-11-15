@@ -20,7 +20,9 @@ class ProfileHeaderCard extends StatelessWidget {
     required this.footer,
   });
 
-  static const double _avatarSize = 96;
+  /// Lado da foto: quem pré-carrega a imagem usa o mesmo, para a chave do
+  /// cache bater.
+  static const double avatarSize = 96;
   static const double _ringWidth = 4;
   static const double _pencilSize = 36;
   static const double _touchSize = 48;
@@ -29,7 +31,7 @@ class ProfileHeaderCard extends StatelessWidget {
   static const double _inset = 8;
 
   /// Quanto da foto (com o aro) fica acima do cartão: a metade.
-  static const double _overlap = _avatarSize / 2 + _ringWidth + _inset;
+  static const double _overlap = avatarSize / 2 + _ringWidth + _inset;
 
   final ProfileEntity profile;
   final VoidCallback onEdit;
@@ -38,7 +40,7 @@ class ProfileHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
-    const double photoBox = _avatarSize + 2 * (_ringWidth + _inset);
+    const double photoBox = avatarSize + 2 * (_ringWidth + _inset);
     // A foto fica dentro do Stack (e não com overflow), para o toque no
     // lápis funcionar também na parte de fora do cartão.
     return Stack(
@@ -90,7 +92,7 @@ class ProfileHeaderCard extends StatelessWidget {
                     child: PersonAvatar(
                       initials: profile.initials,
                       imageUrl: profile.avatarUrl,
-                      size: _avatarSize,
+                      size: avatarSize,
                     ),
                   ),
                 ),

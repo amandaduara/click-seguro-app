@@ -8,6 +8,10 @@ import 'package:fpdart/fpdart.dart';
 abstract class ProfileRepository {
   Future<Either<Failure, ProfileEntity>> getProfile();
 
+  /// Último perfil buscado nesta abertura do app, com as trocas de foto
+  /// feitas depois; `null` antes da primeira busca. Só memória: sem pedido.
+  ProfileEntity? get lastProfile;
+
   Future<Either<Failure, NewsCountsEntity>> getNewsCounts();
 
   Future<Either<Failure, ActivityProgressEntity>> getActivityProgress();
