@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the official SVG into app and launcher assets.
+"""Render the official SVG into the launcher icons (Android, iOS and web).
 
 Requires Python 3, Pillow, libcairo and librsvg (no network access).
 Run from any directory: python3 tools/generate_brand_assets.py
@@ -77,7 +77,6 @@ def main():
         png = Path(temporary) / "logo.png"
         render_source(png)
         source = Image.open(png).convert("RGBA")
-        source.save(ROOT / "assets/branding/click_seguro_logo.png")
 
         res = ROOT / "android/app/src/main/res"
         for density, factor in {"mdpi": 1, "hdpi": 1.5, "xhdpi": 2,
@@ -95,7 +94,7 @@ def main():
             for name in (f"Icon-{size}.png", f"Icon-maskable-{size}.png"):
                 write_icon(source, ROOT / "web/icons" / name, size, scale=0.60)
         write_icon(source, ROOT / "web/favicon.png", 64, scale=0.88)
-    print("Official logo and launcher icons generated.")
+    print("Launcher icons generated from the official logo.")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/modules/splash/presentation/widgets/splash_scene_painter.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -19,10 +20,7 @@ class SplashAnimation extends StatefulWidget {
     required this.breathing,
   });
 
-  /// Espaço da marca no layout; a cena a desenha por cima dele.
-  static const ValueKey<String> logoKey = ValueKey('splash.logo');
-
-  final VoidCallback? onCompleted;
+  final VoidCallback onCompleted;
   final bool breathing;
 
   @override
@@ -31,10 +29,10 @@ class SplashAnimation extends StatefulWidget {
 
 class _SplashAnimationState extends State<SplashAnimation>
     with TickerProviderStateMixin {
+  /// Ciclo da respiração (ida e volta lenta), fora da escala de
+  /// [AppMotion]: exceção registrada no design system para a splash.
   static const Duration _breathCycle = Duration(milliseconds: 2600);
   static const double _riseOffset = 14;
-  static const double _afterLogoGap = 36;
-  static const double _afterTitleGap = 10;
 
   late final AnimationController _scene = AnimationController(
     vsync: this,
@@ -45,18 +43,13 @@ class _SplashAnimationState extends State<SplashAnimation>
     duration: _breathCycle,
   );
 
-  bool _started = false;
-  bool _completionNotified = false;
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (AppMotion.of(context).reduced) {
       // Estado final direto: pula a cena (também se o ajuste mudar no meio).
       _scene.value = 1;
-      _started = true;
-    } else if (!_started) {
-      _started = true;
+    } else if (_scene.isDismissed) {
       _scene.forward();
     }
     _syncBreath();
@@ -79,15 +72,15 @@ class _SplashAnimationState extends State<SplashAnimation>
   }
 
   void _onSceneStatus(AnimationStatus status) {
-    if (status != AnimationStatus.completed || _completionNotified) {
+    // A cena só avança: o "completed" chega uma única vez.
+    if (status != AnimationStatus.completed) {
       return;
     }
-    _completionNotified = true;
     // Adiado para depois do quadro: pode vir de dentro do build (movimento
     // reduzido) e quem escuta atualiza a própria tela.
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        widget.onCompleted?.call();
+        widget.onCompleted();
       }
     });
   }
@@ -140,12 +133,9 @@ class _SplashAnimationState extends State<SplashAnimation>
                   child: Column(
                     children: [
                       SizedBox(height: logo.top),
-                      SizedBox(
-                        key: SplashAnimation.logoKey,
-                        width: logo.width,
-                        height: logo.height,
-                      ),
-                      const SizedBox(height: _afterLogoGap),
+                      // Espaço da marca: a cena a desenha por cima dele.
+                      SizedBox(width: logo.width, height: logo.height),
+                      const SizedBox(height: AppSpacing.s7),
                       _Rise(
                         animation: _scene,
                         interval: SplashTimeline.title,
@@ -155,7 +145,7 @@ class _SplashAnimationState extends State<SplashAnimation>
                           style: titleStyle,
                         ),
                       ),
-                      const SizedBox(height: _afterTitleGap),
+                      const SizedBox(height: AppSpacing.s2),
                       _Rise(
                         animation: _scene,
                         interval: SplashTimeline.tagline,
@@ -166,7 +156,9 @@ class _SplashAnimationState extends State<SplashAnimation>
                         ),
                       ),
                       // Deixa o texto livre da onda do rodapé ao rolar.
-                      const SizedBox(height: 126),
+                      const SizedBox(
+                        height: SplashScenePainter.footerHeight + AppSpacing.s4,
+                      ),
                     ],
                   ),
                 ),

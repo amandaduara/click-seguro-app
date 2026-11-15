@@ -5,6 +5,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/splash/presentation/controller/splash_controller.dart';
+import 'package:click_seguro_app/modules/splash/presentation/widgets/splash_animation.dart';
 import 'package:click_seguro_app/modules/splash/presentation/widgets/splash_scene_painter.dart';
 import 'package:click_seguro_app/modules/splash/splash.dart';
 import 'package:flutter/material.dart';
@@ -83,7 +84,7 @@ void main() {
       tester
               .widget<CustomPaint>(
                 find.descendant(
-                  of: find.byKey(SplashPage.sceneKey),
+                  of: find.byType(SplashAnimation),
                   matching: find.byWidgetPredicate(
                     (widget) =>
                         widget is CustomPaint &&
@@ -115,7 +116,7 @@ void main() {
       await pumpSplash(tester);
 
       expect(find.text('Click Seguro'), findsOneWidget);
-      expect(find.byKey(SplashPage.logoKey), findsOneWidget);
+      expect(find.byType(SplashAnimation), findsOneWidget);
       expect(find.text('Sua segurança em primeiro lugar'), findsOneWidget);
 
       validateSession.completer!.complete(UserSessionStatus.authenticated);
@@ -133,9 +134,9 @@ void main() {
       validateSession.completer = Completer<UserSessionStatus>();
 
       await pumpSplash(tester);
-      await tester.pump(const Duration(milliseconds: 1800));
+      await tester.pump(SplashTimeline.total);
 
-      expect(find.byKey(SplashPage.logoKey), findsOneWidget);
+      expect(find.byType(SplashAnimation), findsOneWidget);
       expect(find.text('Click Seguro'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
@@ -179,9 +180,9 @@ void main() {
     ) async {
       await pumpSplash(tester);
 
-      await tester.pump(const Duration(milliseconds: 1799));
+      await tester.pump(SplashTimeline.total - const Duration(milliseconds: 1));
       expect(find.text('tela home'), findsNothing);
-      expect(find.byKey(SplashPage.logoKey), findsOneWidget);
+      expect(find.byType(SplashAnimation), findsOneWidget);
 
       await tester.pump(const Duration(milliseconds: 1));
       await tester.pumpAndSettle();
@@ -193,7 +194,7 @@ void main() {
       validateSession.completer = Completer<UserSessionStatus>();
       await pumpSplash(tester);
 
-      await tester.pump(const Duration(milliseconds: 1800));
+      await tester.pump(SplashTimeline.total);
       await tester.pump(const Duration(milliseconds: 1));
       await tester.pump(const Duration(milliseconds: 1));
       expect(scene(tester).t, 1);
@@ -202,7 +203,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1300));
       final double after = scene(tester).breath;
       expect(after, isNot(before), reason: 'a marca respira');
-      expect(find.byKey(SplashPage.logoKey), findsOneWidget);
+      expect(find.byType(SplashAnimation), findsOneWidget);
       expect(find.text('tela login'), findsNothing);
 
       validateSession.completer!.complete(UserSessionStatus.unauthenticated);
@@ -260,7 +261,7 @@ void main() {
       final SemanticsHandle semantics = tester.ensureSemantics();
       validateSession.completer = Completer<UserSessionStatus>();
       await pumpSplash(tester);
-      await tester.pump(const Duration(milliseconds: 1800));
+      await tester.pump(SplashTimeline.total);
 
       expect(find.bySemanticsLabel(RegExp('Click Seguro')), findsOneWidget);
       expect(
@@ -268,7 +269,7 @@ void main() {
         findsOneWidget,
       );
       final SemanticsNode node = tester.getSemantics(
-        find.byKey(SplashPage.sceneKey),
+        find.byType(SplashAnimation),
       );
       expect(node.label, contains('Click Seguro'));
       expect(node.label, contains('Sua segurança em primeiro lugar'));
@@ -283,7 +284,7 @@ void main() {
     ) async {
       validateSession.completer = Completer<UserSessionStatus>();
       await pumpSplash(tester, theme: AppTheme.highContrastTheme);
-      await tester.pump(const Duration(milliseconds: 1800));
+      await tester.pump(SplashTimeline.total);
 
       final SplashScenePainter painter = scene(tester);
       expect(painter.colors.primary, AppPalette.highContrast.primary);
@@ -325,7 +326,7 @@ void main() {
       await pumpSplash(tester, reduceMotion: true);
       await tester.pump(const Duration(milliseconds: 16));
 
-      final Size logo = tester.getSize(find.byKey(SplashPage.logoKey));
+      final Rect logo = scene(tester).logoRect;
       expect(scene(tester).t, 1);
       expect(scene(tester).breath, 0);
 
@@ -334,7 +335,7 @@ void main() {
 
       expect(scene(tester).t, 1);
       expect(scene(tester).breath, 0, reason: 'a marca não respira');
-      expect(tester.getSize(find.byKey(SplashPage.logoKey)), logo);
+      expect(scene(tester).logoRect, logo);
       expect(find.text('Click Seguro'), findsOneWidget);
       expect(tester.hasRunningAnimations, isFalse);
 
@@ -395,7 +396,7 @@ void main() {
       validateSession.completer = Completer<UserSessionStatus>();
       final ValueNotifier<bool> motion = ValueNotifier(false);
       await pumpSplash(tester, motion: motion);
-      await tester.pump(const Duration(milliseconds: 1800));
+      await tester.pump(SplashTimeline.total);
       await tester.pump(const Duration(milliseconds: 16));
       await tester.pump(const Duration(milliseconds: 16));
       await tester.pump(const Duration(milliseconds: 700));

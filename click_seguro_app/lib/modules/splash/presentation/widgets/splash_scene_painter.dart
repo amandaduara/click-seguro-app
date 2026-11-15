@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/brand_mark.dart';
 import 'package:flutter/material.dart';
 
@@ -10,21 +11,22 @@ import 'package:flutter/material.dart';
 abstract final class SplashTimeline {
   static const Duration total = Duration(milliseconds: 1800);
 
-  /// A onda de brilho vem 60 ms atrás da onda principal.
-  static const double glowLag = 60 / 1800;
-
-  /// Instante (em `t`) em que a mancha cobre a tela e a onda assume.
-  static const double blobStart = 200 / 1800;
-  static const double blobEnd = 700 / 1800;
-
   // Curva do protótipo aprovado (cubic-bezier 0,4 0 0,2 1): `AppMotion.standard`
   // é mais seca no começo e a onda passaria pelo logo em poucos quadros.
   static const Curve signature = Curves.fastOutSlowIn;
 
+  /// Instante [ms] da abertura como fração de [total] (o `t` da cena).
+  static double _at(int ms) => ms / total.inMilliseconds;
+
   static Interval _between(int beginMs, int endMs, Curve curve) =>
-      Interval(beginMs / 1800, endMs / 1800, curve: curve);
+      Interval(_at(beginMs), _at(endMs), curve: curve);
+
+  /// A onda de brilho vem 60 ms atrás da onda principal.
+  static final double glowLag = _at(60);
 
   static final Interval touch = _between(0, 400, Curves.linear);
+
+  /// A mancha cresce do toque até cobrir a tela; no fim dela, a onda assume.
   static final Interval blob = _between(200, 700, Curves.linear);
   static final Interval tip = _between(500, 700, AppMotion.emphasis);
   static final Interval stroke = _between(560, 1000, signature);
@@ -60,7 +62,9 @@ class SplashScenePainter extends CustomPainter {
   static const double _referenceWidth = 390;
   static const double _maxLogoWidth = 164;
   static const double _minLogoWidth = 96;
-  static const double _footerHeight = 110;
+
+  /// Altura da onda vermelha que fica no rodapé ao fim da abertura.
+  static const double footerHeight = 110;
   static const double _glowFooterHeight = 136;
   static const double _breathScale = 0.035;
 
@@ -89,7 +93,7 @@ class SplashScenePainter extends CustomPainter {
         BrandMarkPaths.viewBox.width;
     return Rect.fromLTWH(
       (width - logoWidth) / 2,
-      math.max(viewportHeight * 0.28, topInset + 24),
+      math.max(viewportHeight * 0.28, topInset + AppSpacing.s6),
       logoWidth,
       logoHeight,
     );
@@ -109,8 +113,8 @@ class SplashScenePainter extends CustomPainter {
 
     Path? red;
     Path? revealed;
-    if (t < SplashTimeline.blobEnd) {
-      if (t >= SplashTimeline.blobStart) {
+    if (t < SplashTimeline.blob.end) {
+      if (t >= SplashTimeline.blob.begin) {
         red = _blobPath(size);
         canvas.drawPath(red, Paint()..color = colors.primary);
       }
@@ -131,7 +135,7 @@ class SplashScenePainter extends CustomPainter {
       red = _wavePath(
         size,
         edge: _frontEdge,
-        top: size.height - _footerHeight,
+        top: size.height - footerHeight,
         progress: wave,
         below: true,
       );
@@ -140,7 +144,7 @@ class SplashScenePainter extends CustomPainter {
         revealed = _wavePath(
           size,
           edge: _frontEdge,
-          top: size.height - _footerHeight,
+          top: size.height - footerHeight,
           progress: wave,
           below: false,
         );

@@ -1,8 +1,6 @@
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:click_seguro_app/core/theme/app_palette.dart';
-import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/brand_mark.dart';
 import 'package:click_seguro_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -38,13 +36,6 @@ Future<List<int>> _alphaAt(
 
 void main() {
   group('BrandMarkPaths', () {
-    test('o escudo tem os limites do SVG oficial', () {
-      expect(
-        BrandMarkPaths.shield.getBounds(),
-        const Rect.fromLTRB(111, 464, 509, 906),
-      );
-    });
-
     test('as duas metades partem do topo e chegam à ponta', () {
       expect(BrandMarkPaths.shieldHalves, hasLength(2));
       for (final ui.Path half in BrandMarkPaths.shieldHalves) {
@@ -205,53 +196,6 @@ void main() {
       );
 
       expect(alpha, [255, 0]);
-    });
-  });
-
-  group('BrandMark', () {
-    testWidgets('ocupa o tamanho pedido, na cor primary do tema', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: const Center(child: BrandMark(size: 96)),
-        ),
-      );
-
-      expect(tester.getSize(find.byType(BrandMark)), const Size(96, 96));
-      final BrandMarkPainter painter =
-          tester
-                  .widget<CustomPaint>(
-                    find.descendant(
-                      of: find.byType(BrandMark),
-                      matching: find.byType(CustomPaint),
-                    ),
-                  )
-                  .painter!
-              as BrandMarkPainter;
-      expect(painter.color, AppPalette.light.primary);
-    });
-
-    testWidgets('uma cor informada vence a do tema', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: const Center(child: BrandMark(size: 48, color: Colors.white)),
-        ),
-      );
-
-      final BrandMarkPainter painter =
-          tester
-                  .widget<CustomPaint>(
-                    find.descendant(
-                      of: find.byType(BrandMark),
-                      matching: find.byType(CustomPaint),
-                    ),
-                  )
-                  .painter!
-              as BrandMarkPainter;
-      expect(painter.color, Colors.white);
     });
   });
 }

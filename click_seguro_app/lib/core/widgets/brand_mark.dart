@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui' show PathMetric;
 
-import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 /// Paths oficiais da marca, transcritos de
@@ -198,23 +197,4 @@ class BrandMarkPainter extends CustomPainter {
       strokeProgress != oldDelegate.strokeProgress ||
       elderProgress != oldDelegate.elderProgress ||
       tipProgress != oldDelegate.tipProgress;
-}
-
-/// A marca na cor do tema ([AppPalette.primary], que segue o alto contraste).
-/// Decorativa: o nome da marca vem escrito ao lado.
-class BrandMark extends StatelessWidget {
-  const BrandMark({super.key, required this.size, this.color});
-
-  final double size;
-
-  /// Sem ela, a cor `primary` do tema em uso.
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) => ExcludeSemantics(
-    child: CustomPaint(
-      size: Size.square(size),
-      painter: BrandMarkPainter(color: color ?? context.colors.primary),
-    ),
-  );
 }

@@ -13,19 +13,12 @@ import 'package:provider/provider.dart';
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
-  /// Cena animada inteira (para teste).
-  static const ValueKey<String> sceneKey = ValueKey('splash.scene');
-
-  /// Espaço da marca dentro da cena (para teste).
-  static const ValueKey<String> logoKey = SplashAnimation.logoKey;
-
   @override
   State<SplashPage> createState() => _SplashPageState();
 }
 
 class _SplashPageState extends State<SplashPage> {
   final Completer<void> _animationDone = Completer<void>();
-  bool _animationFinished = false;
 
   @override
   void initState() {
@@ -47,18 +40,13 @@ class _SplashPageState extends State<SplashPage> {
     }
   }
 
-  void _onAnimationCompleted() {
-    if (!_animationDone.isCompleted) {
-      _animationDone.complete();
-    }
-    setState(() => _animationFinished = true);
-  }
+  void _onAnimationCompleted() => setState(() => _animationDone.complete());
 
   @override
   Widget build(BuildContext context) {
     // A marca respira se a animação acabou e o destino ainda não saiu.
     final bool breathing =
-        _animationFinished &&
+        _animationDone.isCompleted &&
         context.watch<SplashController>().destination == null;
 
     return Scaffold(
@@ -68,7 +56,6 @@ class _SplashPageState extends State<SplashPage> {
         excludeSemantics: true,
         label: '${AppStrings.appTitle.tr()}. ${AppStrings.splashTagline.tr()}',
         child: SplashAnimation(
-          key: SplashPage.sceneKey,
           onCompleted: _onAnimationCompleted,
           breathing: breathing,
         ),

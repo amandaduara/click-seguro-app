@@ -24,7 +24,8 @@ SplashScenePainter _painter(
   logoRect: _logoRect,
 );
 
-double _ms(double milliseconds) => milliseconds / 1800;
+double _ms(double milliseconds) =>
+    milliseconds / SplashTimeline.total.inMilliseconds;
 
 /// Cor (ARGB) de cada ponto da cena pintada em [_screen].
 Future<List<Color>> _colorsAt(
