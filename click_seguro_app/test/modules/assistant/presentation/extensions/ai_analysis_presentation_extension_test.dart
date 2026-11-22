@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_entity.dart';
 import 'package:click_seguro_app/modules/assistant/presentation/extensions/ai_analysis_presentation_extension.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -56,35 +57,45 @@ void main() {
     });
   });
 
-  // Leitura automática do resultado (validação da usuária, specs/024).
-  group('spokenText', () {
+  // Leitura do resultado: o selo é texto do app; a explicação e os
+  // cuidados vêm da IA, em português (specs/025).
+  group('spokenParts', () {
     testWidgets('sucesso: selo, explicação e cuidados, nessa ordem', (
       tester,
     ) async {
       await pumpLocalized(tester, child: const SizedBox());
 
-      expect(
-        _analysis().spokenText,
-        'Alto risco de golpe.\nÉ golpe.\nNão clique.\nApague.',
-      );
+      final List<SpeechPart> parts = _analysis().spokenParts;
+
+      expect(parts.map((p) => p.text), [
+        'Alto risco de golpe.',
+        'É golpe.',
+        'Não clique.',
+        'Apague.',
+      ]);
+      expect(parts.map((p) => p.content), [false, true, true, true]);
     });
 
     testWidgets('sem explicação nem cuidados, só o selo', (tester) async {
       await pumpLocalized(tester, child: const SizedBox());
 
       expect(
-        _analysis(explanation: '  ', tips: []).spokenText,
-        'Alto risco de golpe.',
+        _analysis(explanation: '  ', tips: []).spokenParts.map((p) => p.text),
+        ['Alto risco de golpe.'],
       );
     });
 
-    testWidgets('falha: só a mensagem do status', (tester) async {
+    testWidgets('falha: só a mensagem do status, do app', (tester) async {
       await pumpLocalized(tester, child: const SizedBox());
 
-      expect(
-        _analysis(status: AiAnalysisStatus.rateLimited).spokenText,
+      final List<SpeechPart> parts = _analysis(
+        status: AiAnalysisStatus.rateLimited,
+      ).spokenParts;
+
+      expect(parts.map((p) => p.text), [
         'Muitas solicitações. Aguarde um pouco e tente de novo.',
-      );
+      ]);
+      expect(parts.single.content, isFalse);
     });
   });
 }

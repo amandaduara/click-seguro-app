@@ -178,36 +178,45 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
         analysis != null && !identical(analysis, _readAnalysis);
     _readAnalysis = analysis;
     if (!newReply && !newAnalysis) return;
-    if (!_readAloud.isAvailable ||
+    if (!_canListen ||
         !GetIt.instance<AccessibilityPreferencesNotifier>()
             .value
             .autoReadAloud) {
       return;
     }
     if (newAnalysis) {
-      _read(analysis, analysis.spokenText);
+      _read(analysis, analysis.spokenParts);
     } else {
-      _read(messages.last, messages.last.content);
+      _read(messages.last, [SpeechPart(messages.last.content, content: true)]);
     }
   }
 
-  /// Lê [text] e marca [id] como o que está tocando. As respostas da IA
-  /// seguem o idioma do app (não são conteúdo do banco).
-  void _read(Object id, String text) {
+  /// Há voz para o idioma do app ou para o português das respostas.
+  bool get _canListen =>
+      _readAloud.isAvailable || _readAloud.isContentAvailable;
+
+  /// Lê [parts] e marca [id] como o que está tocando. As respostas da IA
+  /// vêm em português (assistente de segurança digital brasileira) e saem
+  /// na voz em português; os textos do app, no idioma do app (specs/025).
+  void _read(Object id, List<SpeechPart> parts) {
     setState(() => _speakingId = id);
-    unawaited(_readAloud.speak(text));
+    unawaited(_readAloud.speakParts(parts));
   }
 
   /// "Ouvir" embaixo de uma mensagem ou do resultado: lê [text]; se [id] já
   /// está tocando, para. Sem voz no idioma do app, não aparece.
-  Widget? _listenButton(Object id, String key, String Function() text) {
-    if (!_readAloud.isAvailable) return null;
+  Widget? _listenButton(
+    Object id,
+    String key,
+    List<SpeechPart> Function() parts,
+  ) {
+    if (!_canListen) return null;
     final bool speaking = _readAloud.isSpeaking && identical(_speakingId, id);
     return ListenButton(
       key: ValueKey(key),
       isSpeaking: speaking,
       onPressed: () =>
-          speaking ? unawaited(_readAloud.stop()) : _read(id, text()),
+          speaking ? unawaited(_readAloud.stop()) : _read(id, parts()),
     );
   }
 
@@ -272,7 +281,7 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
             footer: _listenButton(
               _greetingId,
               'assistant-listen-greeting',
-              () => _greeting,
+              () => [SpeechPart(_greeting)],
             ),
           ),
           // Conversa vazia: um aviso curto e duas sugestões. Depois da
@@ -311,7 +320,7 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
                       : _listenButton(
                           message,
                           'assistant-listen-$index',
-                          () => message.content,
+                          () => [SpeechPart(message.content, content: true)],
                         ),
                 ),
               ),
@@ -435,7 +444,7 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
       final AiAnalysisEntity analysis => _listenButton(
         analysis,
         'assistant-listen-analysis',
-        () => analysis.spokenText,
+        () => analysis.spokenParts,
       ),
       null => null,
     },

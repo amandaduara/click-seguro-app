@@ -193,6 +193,33 @@ void main() {
       expect(tts.spoken.map((s) => s.text), ['Resposta segura']);
     });
 
+    // Visto no aparelho: com o app em inglês e só a voz em português, nada
+    // era lido. As respostas da IA vêm em português e saem nessa voz
+    // (specs/025).
+    testWidgets('app em inglês, só voz em português: lê a resposta', (
+      tester,
+    ) async {
+      tts.availableLanguages = {SpeechLanguage.ptBr};
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: router,
+        theme: AppTheme.lightTheme,
+        locale: const Locale('en', 'US'),
+      );
+
+      await tester.enterText(
+        find.byKey(const ValueKey('assistant-chat-input')),
+        'Como saber se um link é seguro?',
+      );
+      await tester.tap(find.byKey(const ValueKey('assistant-chat-send')));
+      await tester.pumpAndSettle();
+
+      expect(tts.spoken.map((s) => s.text), ['Resposta segura']);
+      expect(tts.spoken.single.language, SpeechLanguage.ptBr);
+    });
+
     testWidgets('desligada: não lê', (tester) async {
       await signIn();
       await open(tester);
@@ -218,8 +245,9 @@ void main() {
       await _tapAnalyzeButton(tester);
       await tester.pumpAndSettle();
 
+      // Primeiro o selo (app); a explicação vem depois (conteúdo).
       expect(tts.spoken, hasLength(1));
-      expect(tts.spoken.single.text, startsWith('Alto risco de golpe.'));
+      expect(tts.spoken.single.text, 'Alto risco de golpe.');
     });
 
     testWidgets('a mensagem lida automaticamente mostra "Parar"', (
@@ -379,7 +407,7 @@ void main() {
       await tester.tap(find.byKey(listen));
       await tester.pump();
 
-      expect(tts.spoken.single.text, startsWith('Alto risco de golpe.'));
+      expect(tts.spoken.single.text, 'Alto risco de golpe.');
       expect(_listenLabel(tester, 'assistant-listen-analysis'), 'Parar');
     });
 
