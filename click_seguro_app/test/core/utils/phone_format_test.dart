@@ -32,9 +32,15 @@ void main() {
       expect(formatPhone('080072', shortCodes: true), '0800 72');
     });
 
-    test('a partir do 4º dígito, a máscara de sempre', () {
-      expect(formatPhone('1191', shortCodes: true), '(11) 91');
+    test('a partir do 5º dígito, a máscara de sempre', () {
+      expect(formatPhone('11912', shortCodes: true), '(11) 912');
       expect(formatPhone('11912345678', shortCodes: true), '(11) 91234-5678');
+    });
+
+    // Números de serviço de 4 dígitos, como o 1331 da Anatel, não viram
+    // "(13) 31" (contatos oficiais da API, specs/025).
+    test('4 dígitos ficam como estão: 1331', () {
+      expect(formatPhone('1331', shortCodes: true), '1331');
     });
 
     test('letras e símbolos saem; passa de 11 dígitos, corta', () {

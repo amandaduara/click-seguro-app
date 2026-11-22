@@ -98,7 +98,10 @@ class _AppTopBarState extends State<AppTopBar> {
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // A saudação pela base da linha dos botões, colada ao título
+                // logo abaixo (validação da usuária).
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Expanded(
                       child: Text(
@@ -112,7 +115,7 @@ class _AppTopBarState extends State<AppTopBar> {
                     actions,
                   ],
                 ),
-                const SizedBox(height: AppSpacing.s2),
+                const SizedBox(height: AppSpacing.s1),
                 title,
               ],
             ),

@@ -129,6 +129,8 @@ abstract class AppStrings {
   static const String newsSectionRecommended = 'news_section_recommended';
   static const String newsSectionRecent = 'news_section_recent';
   static const String newsSectionResults = 'news_section_results';
+
+  /// Item de uma lista lida em voz alta: "Título. Fonte: Folha."
   static const String newsReelsBadge = 'news_reels_badge';
   static const String newsGreetingNamed = 'news_greeting_named';
   static const String newsGreetingGuest = 'news_greeting_guest';
@@ -242,6 +244,7 @@ abstract class AppStrings {
   static const String activitiesStatusInProgress =
       'activities_status_in_progress';
   static const String activitiesStatusCompleted = 'activities_status_completed';
+  static const String activitiesStatusRetry = 'activities_status_retry';
   static const String activitiesStatusUnavailable =
       'activities_status_unavailable';
   static const String activitiesGuestNotice = 'activities_guest_notice';
@@ -254,8 +257,8 @@ abstract class AppStrings {
       'activities_lesson_progress_semantics';
   static const String activitiesLessonPrevious = 'activities_lesson_previous';
   static const String activitiesLessonNext = 'activities_lesson_next';
-  static const String activitiesLessonOptionSpoken =
-      'activities_lesson_option_spoken';
+  static const String activitiesLessonOptionNumber =
+      'activities_lesson_option_number';
   static const String activitiesAnswerConfirm = 'activities_answer_confirm';
   static const String activitiesAnswerAgain = 'activities_answer_again';
   static const String activitiesAnswerFailed = 'activities_answer_failed';
@@ -264,6 +267,8 @@ abstract class AppStrings {
   static const String activitiesFeedbackWrong = 'activities_feedback_wrong';
   static const String activitiesFeedbackCorrectOption =
       'activities_feedback_correct_option';
+  static const String activitiesFeedbackCorrectOptionLabel =
+      'activities_feedback_correct_option_label';
   static const String activitiesFeedbackExplanation =
       'activities_feedback_explanation';
   static const String activitiesFeedbackScore = 'activities_feedback_score';

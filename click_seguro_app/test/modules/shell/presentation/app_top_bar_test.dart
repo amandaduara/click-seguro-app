@@ -79,6 +79,9 @@ void main() {
       );
       final Rect title = tester.getRect(find.text('Notícias seguras'));
       expect(subtitle.bottom, lessThanOrEqualTo(title.top));
+      // A saudação fica colada ao título (validação da usuária): no máximo
+      // 8 de espaço entre as duas linhas.
+      expect(title.top - subtitle.bottom, lessThanOrEqualTo(8));
       expect(
         tester
             .widget<Text>(find.text('Olá, Maria! 3 notícias novas'))
