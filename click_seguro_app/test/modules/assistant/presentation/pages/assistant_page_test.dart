@@ -12,7 +12,9 @@ import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_e
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_history_page_entity.dart';
 import 'package:click_seguro_app/core/errors/failure.dart';
@@ -56,6 +58,23 @@ Future<void> _scrollToVerificationTarget(
   // No meio da tela: na borda, o botão pode ficar sob a barra inferior.
   await Scrollable.ensureVisible(tester.element(target.first), alignment: 0.5);
   await tester.pumpAndSettle();
+}
+
+/// Texto visível ("Ouvir"/"Parar") do botão de ouvir com a [key].
+String? _listenLabel(WidgetTester tester, String key) {
+  final Finder text = find.descendant(
+    of: find.byKey(ValueKey(key)),
+    matching: find.byType(Text),
+  );
+  return tester.widget<Text>(text.first).data;
+}
+
+/// Rola até o botão de ouvir com a [key] e toca nele.
+Future<void> _tapListen(WidgetTester tester, String key) async {
+  final Finder button = find.byKey(ValueKey(key));
+  await tester.ensureVisible(button);
+  await tester.pump();
+  await tester.tap(button);
 }
 
 Future<void> _tapAnalyzeButton(WidgetTester tester) async {
@@ -166,6 +185,187 @@ void main() {
 
       expect(tts.spoken, hasLength(1));
       expect(tts.spoken.single.text, startsWith('Alto risco de golpe.'));
+    });
+
+    testWidgets('a mensagem lida automaticamente mostra "Parar"', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await signIn();
+      await open(tester);
+
+      await sendHello(tester);
+
+      expect(_listenLabel(tester, 'assistant-listen-1'), 'Parar');
+      expect(_listenLabel(tester, 'assistant-listen-greeting'), 'Ouvir');
+    });
+  });
+
+  // "Ouvir" embaixo de cada balão do assistente (validação da usuária,
+  // specs/025): lê aquela mensagem na voz do idioma do app.
+  group('ouvir cada mensagem', () {
+    Future<void> signIn() => session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+
+    Future<void> send(WidgetTester tester, String text) async {
+      await tester.enterText(
+        find.byKey(const ValueKey('assistant-chat-input')),
+        text,
+      );
+      await tester.tap(find.byKey(const ValueKey('assistant-chat-send')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('só os balões do assistente têm o botão, com 48 dp', (
+      tester,
+    ) async {
+      await signIn();
+      await open(tester);
+      await send(tester, 'Como saber se um link é seguro?');
+
+      // Boas-vindas e resposta; a mensagem da pessoa (índice 0) não tem.
+      expect(find.byType(ListenButton), findsNWidgets(2));
+      expect(
+        find.byType(ListenButton),
+        findsNWidgets(
+          find
+              .byKey(const ValueKey('assistant-bubble-assistant'))
+              .evaluate()
+              .length,
+        ),
+      );
+      expect(find.byKey(const ValueKey('assistant-listen-0')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('assistant-listen-greeting')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const ValueKey('assistant-listen-1')), findsOneWidget);
+      final Size size = tester.getSize(
+        find.byKey(const ValueKey('assistant-listen-1')),
+      );
+      expect(size.height, greaterThanOrEqualTo(48));
+      expect(size.width, greaterThanOrEqualTo(48));
+    });
+
+    testWidgets('tocar lê aquela mensagem; ela mostra "Parar" e as outras '
+        '"Ouvir"; tocar de novo para', (tester) async {
+      await signIn();
+      await open(tester);
+      await send(tester, 'Como saber se um link é seguro?');
+
+      await _tapListen(tester, 'assistant-listen-1');
+      await tester.pump();
+
+      expect(tts.spoken.map((s) => s.text), ['Resposta segura']);
+      expect(tts.spoken.single.language, SpeechLanguage.ptBr);
+      expect(_listenLabel(tester, 'assistant-listen-1'), 'Parar');
+      expect(_listenLabel(tester, 'assistant-listen-greeting'), 'Ouvir');
+
+      await _tapListen(tester, 'assistant-listen-1');
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThanOrEqualTo(1));
+      expect(tts.spoken, hasLength(1));
+      expect(_listenLabel(tester, 'assistant-listen-1'), 'Ouvir');
+    });
+
+    testWidgets('tocar em outra mensagem troca a leitura para ela', (
+      tester,
+    ) async {
+      repository.chatResults
+        ..clear()
+        ..addAll(const [Right('Primeira resposta'), Right('Segunda resposta')]);
+      await signIn();
+      await open(tester);
+      await send(tester, 'Como saber se um link é seguro?');
+      await send(tester, 'E se pedirem um código?');
+
+      await _tapListen(tester, 'assistant-listen-1');
+      await tester.pump();
+      await _tapListen(tester, 'assistant-listen-3');
+      await tester.pump();
+
+      expect(tts.spoken.map((s) => s.text), [
+        'Primeira resposta',
+        'Segunda resposta',
+      ]);
+      expect(_listenLabel(tester, 'assistant-listen-3'), 'Parar');
+      expect(_listenLabel(tester, 'assistant-listen-1'), 'Ouvir');
+
+      // Ao terminar, todas voltam a "Ouvir".
+      tts.finishSpeaking();
+      await tester.pumpAndSettle();
+      expect(_listenLabel(tester, 'assistant-listen-3'), 'Ouvir');
+    });
+
+    testWidgets('o botão vem logo depois do balão, com rótulo "Ouvir"', (
+      tester,
+    ) async {
+      await signIn();
+      await open(tester);
+      await send(tester, 'Como saber se um link é seguro?');
+      final handle = tester.ensureSemantics();
+
+      expect(
+        tester.getSemantics(find.byKey(const ValueKey('assistant-listen-1'))),
+        isSemantics(label: 'Ouvir', isButton: true, hasTapAction: true),
+      );
+      final double bubbleBottom = tester
+          .getBottomLeft(find.text('Resposta segura'))
+          .dy;
+      expect(
+        tester.getTopLeft(find.byKey(const ValueKey('assistant-listen-1'))).dy,
+        greaterThan(bubbleBottom),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('o resultado da verificação também pode ser ouvido', (
+      tester,
+    ) async {
+      await signIn();
+      await open(tester);
+      await tester.tap(find.text('Verificar'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('assistant-analysis-text')),
+        'Recebi esta mensagem suspeita hoje',
+      );
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      await _tapAnalyzeButton(tester);
+      await tester.pumpAndSettle();
+
+      const listen = ValueKey('assistant-listen-analysis');
+      await _scrollToVerificationTarget(tester, find.byKey(listen));
+      await tester.tap(find.byKey(listen));
+      await tester.pump();
+
+      expect(tts.spoken.single.text, startsWith('Alto risco de golpe.'));
+      expect(_listenLabel(tester, 'assistant-listen-analysis'), 'Parar');
+    });
+
+    testWidgets('sem voz no idioma do app, não há botões', (tester) async {
+      tts.availableLanguages = {};
+      await signIn();
+      await open(tester);
+      await send(tester, 'Como saber se um link é seguro?');
+
+      expect(find.byType(ListenButton), findsNothing);
+    });
+
+    testWidgets('com letra 2×, o botão cabe sem estourar', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await signIn();
+      await open(tester);
+      await send(tester, 'Como saber se um link é seguro?');
+
+      expect(find.byKey(const ValueKey('assistant-listen-1')), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 

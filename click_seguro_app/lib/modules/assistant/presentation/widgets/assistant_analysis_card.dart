@@ -15,10 +15,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// branco com o selo de risco ("Alto risco de golpe"…), a explicação e os
 /// cuidados em lista. Com risco alto, a borda fica coral; no alto contraste
 /// (sem sombra), sempre há borda.
+///
+/// [footer] fecha o cartão, depois de todo o resultado (o "Ouvir" do
+/// resultado, specs/025).
 class AssistantAnalysisCard extends StatelessWidget {
-  const AssistantAnalysisCard({super.key, required this.analysis});
+  const AssistantAnalysisCard({super.key, required this.analysis, this.footer});
 
   final AiAnalysisEntity analysis;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -26,19 +30,28 @@ class AssistantAnalysisCard extends StatelessWidget {
     if (analysis.status != AiAnalysisStatus.success) {
       final String message = analysis.statusMessageKey;
       return SafeCard(
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(LucideIcons.triangleAlert, color: colors.warning),
-            const SizedBox(width: AppSpacing.s3),
-            Expanded(
-              child: Text(
-                message.tr(),
-                style: AppTypography.body.copyWith(
-                  color: colors.textForeground,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(LucideIcons.triangleAlert, color: colors.warning),
+                const SizedBox(width: AppSpacing.s3),
+                Expanded(
+                  child: Text(
+                    message.tr(),
+                    style: AppTypography.body.copyWith(
+                      color: colors.textForeground,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
+            if (footer case final Widget below) ...[
+              const SizedBox(height: AppSpacing.s3),
+              below,
+            ],
           ],
         ),
       );
@@ -144,6 +157,10 @@ class AssistantAnalysisCard extends StatelessWidget {
               ),
             ],
           ),
+          if (footer case final Widget below) ...[
+            const SizedBox(height: AppSpacing.s4),
+            below,
+          ],
         ],
       ),
     );

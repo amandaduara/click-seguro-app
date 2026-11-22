@@ -7,6 +7,7 @@ import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_chip.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
@@ -109,6 +110,26 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
   /// O resultado já lido (cada análise nova é lida uma vez).
   AiAnalysisEntity? _readAnalysis;
 
+  /// O que está sendo lido: a mensagem ([AiChatTurn]), o resultado
+  /// ([AiAnalysisEntity]) ou as boas-vindas ([_greetingId]). Só ele mostra
+  /// "Parar"; ao terminar ou parar, volta a nulo (specs/025).
+  Object? _speakingId;
+  static const Object _greetingId = 'assistant-greeting';
+
+  @override
+  void initState() {
+    super.initState();
+    _readAloud.addListener(_onReadAloudChanged);
+  }
+
+  /// Voz verificada, leitura começou ou acabou: os botões se atualizam.
+  void _onReadAloudChanged() {
+    if (!mounted) return;
+    setState(() {
+      if (!_readAloud.isSpeaking) _speakingId = null;
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -134,7 +155,9 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
     _controller
       ?..removeListener(_scrollChatToEnd)
       ..removeListener(_autoRead);
-    _readAloud.dispose();
+    _readAloud
+      ..removeListener(_onReadAloudChanged)
+      ..dispose();
     _chatInput.dispose();
     _analysisInput.dispose();
     _chatScroll.dispose();
@@ -161,10 +184,30 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
             .autoReadAloud) {
       return;
     }
-    unawaited(
-      _readAloud.speak(
-        newAnalysis ? analysis.spokenText : messages.last.content,
-      ),
+    if (newAnalysis) {
+      _read(analysis, analysis.spokenText);
+    } else {
+      _read(messages.last, messages.last.content);
+    }
+  }
+
+  /// Lê [text] e marca [id] como o que está tocando. As respostas da IA
+  /// seguem o idioma do app (não são conteúdo do banco).
+  void _read(Object id, String text) {
+    setState(() => _speakingId = id);
+    unawaited(_readAloud.speak(text));
+  }
+
+  /// "Ouvir" embaixo de uma mensagem ou do resultado: lê [text]; se [id] já
+  /// está tocando, para. Sem voz no idioma do app, não aparece.
+  Widget? _listenButton(Object id, String key, String Function() text) {
+    if (!_readAloud.isAvailable) return null;
+    final bool speaking = _readAloud.isSpeaking && identical(_speakingId, id);
+    return ListenButton(
+      key: ValueKey(key),
+      isSpeaking: speaking,
+      onPressed: () =>
+          speaking ? unawaited(_readAloud.stop()) : _read(id, text()),
     );
   }
 
@@ -224,10 +267,13 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
         children: [
           // Boas-vindas como o primeiro balão do assistente (redesign 2.0).
           AssistantChatBubble(
-            text:
-                '${AppStrings.assistantGreeting.tr()} '
-                '${AppStrings.assistantChatIntro.tr()}',
+            text: _greeting,
             fromUser: false,
+            footer: _listenButton(
+              _greetingId,
+              'assistant-listen-greeting',
+              () => _greeting,
+            ),
           ),
           // Conversa vazia: um aviso curto e duas sugestões. Depois da
           // primeira mensagem, só os balões.
@@ -260,6 +306,13 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
                 child: AssistantChatBubble(
                   text: message.content,
                   fromUser: message.role == AiChatRole.user,
+                  footer: message.role == AiChatRole.user
+                      ? null
+                      : _listenButton(
+                          message,
+                          'assistant-listen-$index',
+                          () => message.content,
+                        ),
                 ),
               ),
             ),
@@ -315,6 +368,10 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
       );
     },
   );
+
+  String get _greeting =>
+      '${AppStrings.assistantGreeting.tr()} '
+      '${AppStrings.assistantChatIntro.tr()}';
 
   void _fillSuggestion(String text) {
     _chatInput.value = TextEditingValue(
@@ -382,6 +439,14 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
     onSourceChanged: controller.setAnalysisSource,
     onAnalyzeText: _runTextAnalysis,
     onRetry: controller.retryAnalysis,
+    listenButton: switch (controller.analysis) {
+      final AiAnalysisEntity analysis => _listenButton(
+        analysis,
+        'assistant-listen-analysis',
+        () => analysis.spokenText,
+      ),
+      null => null,
+    },
   );
 
   Future<void> _runTextAnalysis() =>
@@ -707,6 +772,7 @@ class _VerifyArea extends StatelessWidget {
     required this.onSourceChanged,
     required this.onAnalyzeText,
     required this.onRetry,
+    this.listenButton,
   });
   final bool imageMode;
   final String? source;
@@ -716,6 +782,9 @@ class _VerifyArea extends StatelessWidget {
   final ValueChanged<String?> onSourceChanged;
   final VoidCallback onAnalyzeText;
   final VoidCallback onRetry;
+
+  /// "Ouvir" do resultado; nulo sem voz no idioma do app.
+  final Widget? listenButton;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -807,7 +876,10 @@ class _VerifyArea extends StatelessWidget {
       ],
       if (controller.analysis != null) ...[
         const SizedBox(height: AppSpacing.s5),
-        AssistantAnalysisCard(analysis: controller.analysis!),
+        AssistantAnalysisCard(
+          analysis: controller.analysis!,
+          footer: listenButton,
+        ),
       ],
       const SizedBox(height: AppSpacing.s5),
       const _PrivacyNote(),
