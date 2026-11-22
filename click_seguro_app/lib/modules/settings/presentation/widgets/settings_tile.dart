@@ -72,6 +72,7 @@ class SettingsTile extends StatelessWidget {
                   SettingsIconCircle(icon: icon, color: accent),
                   const SizedBox(width: AppSpacing.s4),
                   Expanded(
+                    flex: 3,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -101,7 +102,11 @@ class SettingsTile extends StatelessWidget {
                   ),
                   if (detail != null) ...[
                     const SizedBox(width: AppSpacing.s2),
-                    Flexible(
+                    // A parte inteira do valor, com o texto à direita: assim a
+                    // seta encosta no fim da linha (antes sobrava espaço
+                    // vazio entre o valor e a seta).
+                    Expanded(
+                      flex: 2,
                       child: Text(
                         detail,
                         textAlign: TextAlign.end,
