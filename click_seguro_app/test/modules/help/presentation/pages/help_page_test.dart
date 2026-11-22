@@ -400,6 +400,71 @@ void main() {
     expect(cardPhoto(), isNull);
   });
 
+  // Contatos oficiais vindos da API (decisão de 2026-11-19): nome,
+  // telefone formatado e a descrição no cartão, na ordem da API, com o
+  // botão de ligar de 48 dp e letra em 200%.
+  testWidgets('oficiais mostram nome, telefone e descrição', (tester) async {
+    // Tela alta: os três cartões cabem juntos com a letra em 200%.
+    tester.view.physicalSize = const Size(400, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    repository.official = const [
+      ContactEntity(
+        id: 'pm',
+        name: 'Polícia Militar',
+        phone: '190',
+        type: ContactType.official,
+        description: 'Emergência: ligue 190 se estiver em perigo',
+      ),
+      ContactEntity(
+        id: 'anatel',
+        name: 'Anatel',
+        phone: '1331',
+        type: ContactType.official,
+        description: 'Reclamações de telefonia: 1331',
+      ),
+      ContactEntity(
+        id: 'procon',
+        name: 'Procon-SP',
+        phone: '+551138247000',
+        type: ContactType.official,
+        description: 'Defesa do consumidor em São Paulo',
+      ),
+    ];
+    await open(tester);
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Polícia Militar'), findsOneWidget);
+    expect(
+      find.text('Emergência: ligue 190 se estiver em perigo'),
+      findsOneWidget,
+    );
+    // Número de serviço curto fica como está; o fixo ganha a máscara.
+    expect(find.text('1331'), findsOneWidget);
+    expect(find.text('(11) 3824-7000'), findsOneWidget);
+    expect(find.text('Reclamações de telefonia: 1331'), findsOneWidget);
+    // Ordem da API.
+    final double police = tester.getTopLeft(find.text('Polícia Militar')).dy;
+    final double anatel = tester.getTopLeft(find.text('Anatel')).dy;
+    final double procon = tester.getTopLeft(find.text('Procon-SP')).dy;
+    expect(police < anatel && anatel < procon, isTrue);
+
+    final Finder call = find.byTooltip('Ligar para Procon-SP');
+    expect(call, findsOneWidget);
+    expect(tester.getSize(call).height, greaterThanOrEqualTo(48));
+    expect(tester.getSize(call).width, greaterThanOrEqualTo(48));
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(call);
+    await tester.pumpAndSettle();
+    expect(launcher.calledNumbers, ['+551138247000']);
+  });
+
   testWidgets('discador indisponível mostra número e copia', (tester) async {
     tester.view.physicalSize = const Size(320, 700);
     tester.view.devicePixelRatio = 1;

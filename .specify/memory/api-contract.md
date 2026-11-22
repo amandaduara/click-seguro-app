@@ -1,6 +1,6 @@
 # SafeNews — Contrato da API
 
-**Versão**: 1.1.2 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-10-27
+**Versão**: 1.1.3 | **Criado em**: 2026-09-26 | **Última alteração**: 2026-11-19
 
 **Fonte da verdade**: [openapi.json](openapi.json) (OpenAPI 3.0 exportado da Click Seguro API,
 recebido em 2026-10-03). Este arquivo é o **resumo do que o app usa**, com as decisões de
@@ -260,11 +260,26 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
   estatísticas com as duas últimas chamadas acima (datasource próprio, sem importar outros
   módulos), e as **faixas de nível (RN-008) e as conquistas são regras fixas no app**.
 
+### Central de ajuda — contatos oficiais (módulo `help`)
+
+| Status | Endpoint | Auth | Uso |
+|---|---|---|---|
+| ✅ | `GET /app/official-contacts` → `[{id, name, description, type, phone, email\|null, website\|null}]` (lista simples, sem `meta`) | não | aba "Oficiais" da central de ajuda: nome, telefone formatado e descrição; ligar |
+
+- **Decisão (2026-11-19, pedido da usuária)**: os contatos oficiais passam a vir da API, com
+  cópia local e asset de reserva (offline-first, RNF-002): API → guarda a cópia
+  (`LocalCacheService`, chave `help_official_contacts_v1`) → mostra. Se a API falhar (sem
+  internet, servidor dormindo) ou vier vazia, mostra a cópia guardada; sem cópia, o asset
+  `assets/data/official_contacts.json`, semeado com os contatos com telefone que a API devolvia
+  em 2026-11-19. Substitui a decisão de 2026-10-03 (contatos só no front).
+- Item sem `phone` (só site ou e-mail, ex.: SaferNet, CERT.br) é ignorado: o cartão serve para
+  ligar. O `type` da API (`POLICIA`, `BANCO`...) não é usado pela tela.
+- Sem filtro `?type`: a tela mostra todos, na ordem da API.
+
 ### Sem API (local por decisão de produto)
 
 | Dado | Onde fica | Motivo |
 |---|---|---|
-| Contatos oficiais da central de ajuda | `assets/data/official_contacts.json` | Decisão (2026-10-03): ficam no front. Funcionam offline numa emergência (RNF-002) |
 | Contatos pessoais e fotos | `shared_preferences` + diretório de documentos do app | LGPD, nunca saem do aparelho (RN-007, RNF-008) |
 | Alertas, flag de lido e última verificação | `shared_preferences` | não há API de notificações |
 | Preferências de acessibilidade | `shared_preferences` | RF-041 |
@@ -275,13 +290,15 @@ progress: {completedCount, progressPercent, score, totalScore, isCompleted} }`.
 
 | Endpoint | Motivo |
 |---|---|
-| `GET /app/official-contacts?type` | contatos oficiais ficam no asset na v1. Pode alimentar o asset ou uma sincronização na v2 |
 | `DELETE /users/me/deactivate` | desativar conta: v2 |
 | `GET /users/me/news/liked`, `GET /users/me/news/read` | sem tela na v1 |
 | Tudo em `/cms/*`, `/auth/cms/*`, `/users/cms/*` | painel administrativo (outro projeto) |
 
 ## Changelog
 
+- **1.1.3 (2026-11-19)**: contatos oficiais passam a usar `GET /app/official-contacts` (✅),
+  com cópia local e o asset como reserva offline, a pedido da usuária. A linha sai de "Sem API"
+  e de "fora da v1".
 - **1.1.2 (2026-10-27)**: resposta das atividades conferida no servidor real
   (specs/018-resposta-feedback-atividades R0): `answer` → `{isCorrect, correctOptionId,
   explanation}`; alternativa de outra lição → 400 `EDUCATIONAL_INVALID_OPTION`; lição que não

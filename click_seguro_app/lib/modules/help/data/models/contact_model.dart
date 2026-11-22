@@ -8,6 +8,7 @@ class ContactModel {
     required this.type,
     this.relationship,
     this.photoPath,
+    this.description,
   });
 
   factory ContactModel.fromJson(Map<String, dynamic> json) {
@@ -23,7 +24,41 @@ class ContactModel {
       type: type.isEmpty ? ContactType.official : type.first,
       relationship: _optionalString(json, 'relationship'),
       photoPath: _optionalString(json, 'photoPath'),
+      description: _optionalString(json, 'description'),
     );
+  }
+
+  /// Contato oficial de `GET /app/official-contacts` (ou da cópia local e do
+  /// asset, no mesmo formato). A categoria da API (`POLICIA`, `BANCO`...)
+  /// não é usada pela tela: todo contato daqui é [ContactType.official].
+  /// Sem `id`, `name` ou `phone` (não dá para ligar) lança
+  /// [FormatException]; descrição ausente ou inválida fica nula.
+  factory ContactModel.fromOfficialJson(Map<String, dynamic> json) {
+    final description = json['description'];
+    return ContactModel(
+      id: _requiredText(json, 'id'),
+      name: _requiredText(json, 'name'),
+      phone: _requiredText(json, 'phone'),
+      type: ContactType.official,
+      description: description is String && description.trim().isNotEmpty
+          ? description.trim()
+          : null,
+    );
+  }
+
+  /// Contatos oficiais válidos de [items], na mesma ordem; item inválido é
+  /// ignorado.
+  static List<ContactModel> officialList(List<Object?> items) => [
+    for (final item in items) ?_tryOfficial(item),
+  ];
+
+  static ContactModel? _tryOfficial(Object? item) {
+    if (item is! Map<String, dynamic>) return null;
+    try {
+      return ContactModel.fromOfficialJson(item);
+    } on FormatException {
+      return null;
+    }
   }
 
   factory ContactModel.fromEntity(ContactEntity entity) => ContactModel(
@@ -33,6 +68,7 @@ class ContactModel {
     type: entity.type,
     relationship: entity.relationship,
     photoPath: entity.photoPath,
+    description: entity.description,
   );
 
   final String id;
@@ -41,6 +77,7 @@ class ContactModel {
   final ContactType type;
   final String? relationship;
   final String? photoPath;
+  final String? description;
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -49,6 +86,7 @@ class ContactModel {
     'type': type.name,
     if (relationship != null) 'relationship': relationship,
     if (photoPath != null) 'photoPath': photoPath,
+    if (description != null) 'description': description,
   };
 
   ContactEntity toEntity() => ContactEntity(
@@ -58,12 +96,19 @@ class ContactModel {
     type: type,
     relationship: relationship,
     photoPath: photoPath,
+    description: description,
   );
 
   static String _requiredString(Map<String, dynamic> json, String key) {
     final value = json[key];
     if (value is String) return value;
     throw FormatException('Contact field $key must be a string');
+  }
+
+  static String _requiredText(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value is String && value.trim().isNotEmpty) return value.trim();
+    throw FormatException('Official contact field $key must be a text');
   }
 
   static String? _optionalString(Map<String, dynamic> json, String key) {

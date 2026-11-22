@@ -1,1 +1,56 @@
-[]
+[
+  {
+    "id": "cmwji7nwg0000c12bs899nhx1",
+    "name": "Polícia Militar",
+    "description": "Emergência: ligue 190 se estiver em perigo",
+    "type": "POLICIA",
+    "phone": "190",
+    "email": null,
+    "website": null
+  },
+  {
+    "id": "cmwapjxpu003md01s77rvr2kq",
+    "name": "Disque 100",
+    "description": "Denúncia de violência contra idosos",
+    "type": "OUTRO",
+    "phone": "100",
+    "email": null,
+    "website": "https://www.gov.br/pt-br/servicos/denunciar-violacao-de-direitos-humanos"
+  },
+  {
+    "id": "cmwapk0kc003nd01s37373yzg",
+    "name": "INSS",
+    "description": "Central 135 e aplicativo Meu INSS",
+    "type": "OUTRO",
+    "phone": "135",
+    "email": null,
+    "website": "https://www.gov.br/inss/pt-br"
+  },
+  {
+    "id": "cmwapk2tc003od01sezu5zvpw",
+    "name": "Banco Central",
+    "description": "Atendimento ao cidadão: 145",
+    "type": "BANCO",
+    "phone": "145",
+    "email": null,
+    "website": "https://www.bcb.gov.br"
+  },
+  {
+    "id": "cmwapk5dg003pd01so5jcvy1a",
+    "name": "Anatel",
+    "description": "Reclamações de telefonia: 1331",
+    "type": "ANATEL",
+    "phone": "1331",
+    "email": null,
+    "website": "https://www.gov.br/anatel/pt-br"
+  },
+  {
+    "id": "cmwapk82i003qd01sesv9njn7",
+    "name": "Procon-SP",
+    "description": "Defesa do consumidor em São Paulo",
+    "type": "PROCON",
+    "phone": "+551138247000",
+    "email": null,
+    "website": "https://www.procon.sp.gov.br"
+  }
+]
