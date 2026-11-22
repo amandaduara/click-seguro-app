@@ -158,6 +158,21 @@ class _CompletionPageState extends State<CompletionPage> {
                     ),
                   ),
                 ),
+                // "Ouvir" logo abaixo do título, antes do placar e da mensagem
+                // que ele lê (regra do app, specs/025).
+                const SizedBox(height: AppSpacing.s3),
+                Center(
+                  child: ListenableBuilder(
+                    listenable: _readAloud,
+                    builder: (context, _) => _readAloud.isAvailable
+                        ? ListenButton(
+                            isSpeaking: _readAloud.isSpeaking,
+                            onPressed: () =>
+                                _toggleListen(completion.spokenText),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
                 if (score != null && scoreText != null) ...[
                   const SizedBox(height: AppSpacing.s4),
                   _CountUp(value: score.score),
@@ -175,19 +190,6 @@ class _CompletionPageState extends State<CompletionPage> {
                   textAlign: TextAlign.center,
                   style: AppTypography.bodyLarge.copyWith(
                     color: colors.textForeground,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.s4),
-                Center(
-                  child: ListenableBuilder(
-                    listenable: _readAloud,
-                    builder: (context, _) => _readAloud.isAvailable
-                        ? ListenButton(
-                            isSpeaking: _readAloud.isSpeaking,
-                            onPressed: () =>
-                                _toggleListen(completion.spokenText),
-                          )
-                        : const SizedBox.shrink(),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.s6),

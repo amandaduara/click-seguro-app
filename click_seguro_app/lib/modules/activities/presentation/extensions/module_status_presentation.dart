@@ -11,6 +11,7 @@ extension ModuleStatusPresentation on ModuleStatus {
     ModuleStatus.notStarted => AppStrings.activitiesStatusNotStarted,
     ModuleStatus.inProgress => AppStrings.activitiesStatusInProgress,
     ModuleStatus.completed => AppStrings.activitiesStatusCompleted,
+    ModuleStatus.retry => AppStrings.activitiesStatusRetry,
     ModuleStatus.unavailable => AppStrings.activitiesStatusUnavailable,
   }.tr();
 
@@ -19,6 +20,8 @@ extension ModuleStatusPresentation on ModuleStatus {
     ModuleStatus.notStarted => colors.textMutedForeground,
     ModuleStatus.inProgress => colors.warning,
     ModuleStatus.completed => colors.success,
+    // Atenção: concluído, mas vale refazer (specs/025).
+    ModuleStatus.retry => colors.warning,
     ModuleStatus.unavailable => colors.textMutedForeground,
   };
 
@@ -26,6 +29,7 @@ extension ModuleStatusPresentation on ModuleStatus {
     ModuleStatus.notStarted => LucideIcons.circle,
     ModuleStatus.inProgress => LucideIcons.circleDashed,
     ModuleStatus.completed => LucideIcons.circleCheck,
+    ModuleStatus.retry => LucideIcons.rotateCcw,
     ModuleStatus.unavailable => LucideIcons.lock,
   };
 }

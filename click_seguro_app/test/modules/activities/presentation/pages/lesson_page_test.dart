@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_progress.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
 import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
@@ -129,6 +130,17 @@ void main() {
     WidgetTester tester, {
     Locale locale = const Locale('pt', 'BR'),
   }) => pumpLocalized(tester, router: router, locale: locale);
+
+  /// Termina cada trecho lido, um por vez, até a leitura acabar.
+  Future<void> readToEnd(WidgetTester tester) async {
+    while (true) {
+      final int before = tts.spoken.length;
+      tts.finishSpeaking();
+      await tester.pump();
+      if (tts.spoken.length == before) break;
+    }
+    await tester.pumpAndSettle();
+  }
 
   Future<void> reveal(WidgetTester tester, Finder finder) async {
     await tester.scrollUntilVisible(
@@ -341,12 +353,19 @@ void main() {
   });
 
   group('ouvir (US3)', () {
-    const String spokenL1 =
-        'Promessa de dinheiro em dobro pelo PIX. O que fazer?\n\n'
-        'Alternativa 1: Ignorar e denunciar.\n'
-        'Alternativa 2: Enviar.\n'
-        'Alternativa 3: Pedir prova.\n'
-        'Alternativa 4: Repassar.';
+    const String questionL1 =
+        'Promessa de dinheiro em dobro pelo PIX. O que fazer?';
+    const List<String> spokenL1 = [
+      questionL1,
+      'Alternativa 1.',
+      'Ignorar e denunciar.',
+      'Alternativa 2.',
+      'Enviar.',
+      'Alternativa 3.',
+      'Pedir prova.',
+      'Alternativa 4.',
+      'Repassar.',
+    ];
 
     Future<void> tapListen(WidgetTester tester) async {
       await reveal(tester, find.text('Ouvir'));
@@ -364,14 +383,36 @@ void main() {
 
       await tapListen(tester);
 
-      expect(tts.spoken.single.text, spokenL1);
+      expect(tts.spoken.single.text, questionL1);
       expect(tts.spoken.single.speed, ReadingSpeed.slow);
       expect(find.text('Parar'), findsOneWidget);
+      // Cada trecho começa quando o anterior termina.
+      tts.finishSpeaking();
+      await tester.pump();
+      expect(tts.spoken.last.text, 'Alternativa 1.');
 
       await tester.tap(find.text('Parar'));
       await tester.pumpAndSettle();
       expect(tts.stopCalls, greaterThanOrEqualTo(1));
       expect(find.text('Ouvir'), findsOneWidget);
+    });
+
+    testWidgets('"Ouvir" logo abaixo do enunciado, antes das alternativas '
+        '(specs/025)', (tester) async {
+      await open(tester);
+
+      final double question = tester
+          .getBottomLeft(
+            find.text('Promessa de dinheiro em dobro pelo PIX. O que fazer?'),
+          )
+          .dy;
+      final double listen = tester.getTopLeft(find.text('Ouvir')).dy;
+      final double firstOption = tester
+          .getTopLeft(find.byType(LessonOptionCard).first)
+          .dy;
+
+      expect(listen, greaterThan(question));
+      expect(listen, lessThan(firstOption));
     });
 
     testWidgets('sem voz no idioma: sem "Ouvir" e nada lido sozinho', (
@@ -391,13 +432,15 @@ void main() {
       preferences.value = preferences.value.copyWith(autoReadAloud: true);
       await open(tester);
 
-      expect(tts.spoken.single.text, spokenL1);
+      expect(tts.spoken.single.text, questionL1);
+      await readToEnd(tester);
+      expect([for (final s in tts.spoken) s.text], spokenL1);
 
       preferences.value = preferences.value.copyWith(
         readingSpeed: ReadingSpeed.fast,
       );
       await tester.pumpAndSettle();
-      expect(tts.spoken, hasLength(1));
+      expect(tts.spoken, hasLength(spokenL1.length));
     });
 
     testWidgets('trocar de pergunta para a leitura e lê a nova', (
@@ -453,14 +496,50 @@ void main() {
       preferences.value = preferences.value.copyWith(autoReadAloud: true);
       await open(tester);
 
-      tts.finishSpeaking();
-      await tester.pumpAndSettle();
+      await readToEnd(tester);
+      expect(tts.spoken, hasLength(spokenL1.length));
       preferences.value = preferences.value.copyWith(
         readingSpeed: ReadingSpeed.fast,
       );
       await tester.pumpAndSettle();
 
-      expect(tts.spoken, hasLength(1));
+      expect(tts.spoken, hasLength(spokenL1.length));
+    });
+
+    testWidgets('app em inglês: enunciado e alternativas na voz em português, '
+        'o número da alternativa em inglês (specs/025)', (tester) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester, locale: const Locale('en', 'US'));
+
+      await readToEnd(tester);
+
+      expect(
+        [for (final s in tts.spoken.take(3)) (s.text, s.language)],
+        [
+          (questionL1, SpeechLanguage.ptBr),
+          ('Option 1.', SpeechLanguage.enUs),
+          ('Ignorar e denunciar.', SpeechLanguage.ptBr),
+        ],
+      );
+      expect(tts.spoken, hasLength(spokenL1.length));
+    });
+
+    testWidgets('app em inglês só com voz em português: "Listen" aparece e lê '
+        'o conteúdo (specs/025)', (tester) async {
+      tts.availableLanguages = {SpeechLanguage.ptBr};
+      await open(tester, locale: const Locale('en', 'US'));
+
+      await reveal(tester, find.text('Listen'));
+      await tester.tap(find.text('Listen'));
+      await tester.pumpAndSettle();
+      await readToEnd(tester);
+
+      expect(tts.spoken.first.text, questionL1);
+      expect(
+        tts.spoken.map((s) => s.language),
+        everyElement(SpeechLanguage.ptBr),
+      );
+      expect(tts.spoken, hasLength(5));
     });
 
     testWidgets('sair da tela para a leitura', (tester) async {
@@ -964,6 +1043,9 @@ void main() {
   });
 
   group('refazer (specs/020 US4)', () {
+    SafeSegmentedProgress segments(WidgetTester tester) => tester
+        .widget<SafeSegmentedProgress>(find.byType(SafeSegmentedProgress));
+
     Future<void> answer(WidgetTester tester, String text) async {
       await reveal(tester, find.text(text));
       await tester.tap(find.text(text));
@@ -1007,13 +1089,20 @@ void main() {
             .every((c) => c.state == LessonOptionState.idle),
         isTrue,
       );
+      // A barra mostra só esta tentativa: nada concluído na pergunta 1,
+      // mesmo com o serviço mandando as três respondidas (specs/025).
+      expect(segments(tester).completed, [false, false, false]);
+      expect(segments(tester).current, 0);
 
       // Responder as três de novo leva à conclusão outra vez.
-      for (final String option in ['Ignorar e denunciar', 'Ignorar']) {
-        await answer(tester, option);
-        await tester.tap(find.text('Próxima pergunta'));
-        await tester.pumpAndSettle();
-      }
+      await answer(tester, 'Ignorar e denunciar');
+      await tester.tap(find.text('Próxima pergunta'));
+      await tester.pumpAndSettle();
+      expect(segments(tester).completed, [true, false, false]);
+      expect(segments(tester).current, 1);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Próxima pergunta'));
+      await tester.pumpAndSettle();
       await answer(tester, 'Ignorar');
       await tester.tap(find.text('Ver resultado'));
       await tester.pumpAndSettle();
@@ -1150,10 +1239,12 @@ void main() {
   });
 
   group('voz no feedback (specs/018 US5)', () {
-    const String spokenFeedbackL1 =
-        'Você acertou!\n'
-        'Resposta correta: Ignorar e denunciar.\n'
-        'Promessas de dinheiro em dobro são golpe.';
+    const List<String> spokenFeedbackL1 = [
+      'Você acertou!',
+      'Resposta correta.',
+      'Ignorar e denunciar.',
+      'Promessas de dinheiro em dobro são golpe.',
+    ];
 
     Finder inSheet(Finder finder) =>
         find.descendant(of: find.byType(FeedbackSheet), matching: finder);
@@ -1187,8 +1278,34 @@ void main() {
       await tester.tap(inSheet(find.text('Ouvir')));
       await tester.pumpAndSettle();
 
-      expect(tts.spoken.last.text, spokenFeedbackL1);
+      expect(tts.spoken.last.text, spokenFeedbackL1.first);
       expect(inSheet(find.text('Parar')), findsOneWidget);
+      await readToEnd(tester);
+      expect([for (final s in tts.spoken) s.text], spokenFeedbackL1);
+    });
+
+    testWidgets('app em inglês: resultado e rótulo em inglês, correta e '
+        'explicação na voz em português (specs/025)', (tester) async {
+      await open(tester, locale: const Locale('en', 'US'));
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      await tester.tap(find.text('Ignorar e denunciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm answer'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(inSheet(find.text('Listen')));
+      await tester.pumpAndSettle();
+      await readToEnd(tester);
+
+      expect(
+        [for (final s in tts.spoken) (s.text, s.language)],
+        [
+          ('You got it right!', SpeechLanguage.enUs),
+          ('Correct answer.', SpeechLanguage.enUs),
+          ('Ignorar e denunciar.', SpeechLanguage.ptBr),
+          ('Promessas de dinheiro em dobro são golpe.', SpeechLanguage.ptBr),
+        ],
+      );
     });
 
     testWidgets('leitura automática: o feedback uma vez, a pergunta não de '
@@ -1200,7 +1317,7 @@ void main() {
       await answerFirst(tester);
 
       expect(tts.spoken, hasLength(2));
-      expect(tts.spoken.last.text, spokenFeedbackL1);
+      expect(tts.spoken.last.text, spokenFeedbackL1.first);
 
       final int stopsBefore = tts.stopCalls;
       await tester.tap(find.text('Próxima pergunta'));

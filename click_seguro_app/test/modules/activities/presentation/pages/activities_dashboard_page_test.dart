@@ -13,7 +13,9 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/core/widgets/safe_progress.dart';
 import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
 import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:fpdart/fpdart.dart';
@@ -166,6 +168,62 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Entenda como criminosos clonam contas.'), findsOneWidget);
+  });
+
+  testWidgets('concluído errando a maioria: selo "Refazer" de atenção '
+      '(specs/025)', (tester) async {
+    repository = FakeActivitiesRepository([
+      Right(
+        dashboard(
+          modules: [
+            moduleJson(completedCount: 3)
+              ..['score'] = 1
+              ..['totalScore'] = 3,
+          ],
+          totalLessonsCompleted: 3,
+        ),
+      ),
+    ]);
+    await open(tester);
+
+    final Finder badgeIcon = find.descendant(
+      of: card('Golpes Digitais'),
+      matching: find.byIcon(LucideIcons.rotateCcw),
+    );
+    expect(
+      find.descendant(
+        of: card('Golpes Digitais'),
+        matching: find.text('Refazer'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Concluído'), findsNothing);
+    expect(badgeIcon, findsOneWidget);
+    expect(
+      tester.widget<Icon>(badgeIcon).color,
+      tester.element(badgeIcon).colors.warning,
+    );
+    expect(
+      tester.getSemantics(card('Golpes Digitais')).label,
+      contains('Refazer'),
+    );
+  });
+
+  testWidgets('"Refazer" em inglês: "Redo"', (tester) async {
+    repository = FakeActivitiesRepository([
+      Right(
+        dashboard(
+          modules: [
+            moduleJson(completedCount: 3)
+              ..['score'] = 0
+              ..['totalScore'] = 3,
+          ],
+        ),
+      ),
+    ]);
+    await open(tester, locale: const Locale('en', 'US'));
+
+    expect(find.text('Redo'), findsOneWidget);
   });
 
   testWidgets('módulo sem lições: "Indisponível" e sem progresso geral', (

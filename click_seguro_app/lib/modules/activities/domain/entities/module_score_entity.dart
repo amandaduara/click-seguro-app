@@ -5,4 +5,8 @@ class ModuleScoreEntity {
 
   final int score;
   final int total;
+
+  /// Acertou menos da metade: errou a maioria (specs/025). Metade ou mais
+  /// não conta, como na mensagem da conclusão.
+  bool get isMostlyWrong => total > 0 && score * 2 < total;
 }

@@ -44,6 +44,7 @@ void main() {
     bool isLast = false,
     bool completed = false,
     ModuleScoreEntity? score,
+    Widget? listen,
   }) async {
     await pumpLocalized(
       tester,
@@ -59,6 +60,7 @@ void main() {
                   isLast: isLast,
                   completed: completed,
                   score: score,
+                  listen: listen,
                 ),
               ),
               child: const Text('abrir'),
@@ -211,5 +213,26 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     expect(find.text('Próxima pergunta'), findsOneWidget);
+  });
+
+  testWidgets('"Ouvir" logo abaixo do título, antes da correta e da '
+      'explicação (specs/025)', (tester) async {
+    await openSheet(
+      tester,
+      listen: const SizedBox(key: Key('listen'), height: 48, width: 48),
+    );
+
+    final double title = tester.getBottomLeft(find.text('Você acertou!')).dy;
+    final double listen = tester.getTopLeft(find.byKey(const Key('listen'))).dy;
+    final double correct = tester
+        .getTopLeft(find.textContaining('Ignorar e denunciar'))
+        .dy;
+    final double explanation = tester
+        .getTopLeft(find.text('Promessas de dinheiro em dobro são golpe.'))
+        .dy;
+
+    expect(listen, greaterThan(title));
+    expect(listen, lessThan(correct));
+    expect(listen, lessThan(explanation));
   });
 }

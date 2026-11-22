@@ -17,4 +17,18 @@ class ModuleDetailEntity {
   final ModuleScoreEntity? score;
 
   bool get isEmpty => lessons.isEmpty;
+
+  /// Uma nova tentativa (refazer): as respostas antigas do serviço não contam
+  /// no progresso; só as lições em [answeredInAttempt] (respondidas nesta
+  /// tentativa) ficam concluídas. A pontuação continua a do serviço até a
+  /// primeira resposta nova (specs/025).
+  ModuleDetailEntity forRetake({Set<String> answeredInAttempt = const {}}) =>
+      ModuleDetailEntity(
+        title: title,
+        lessons: [
+          for (final LessonEntity lesson in lessons)
+            lesson.withCompleted(answeredInAttempt.contains(lesson.id)),
+        ],
+        score: score,
+      );
 }

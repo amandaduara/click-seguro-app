@@ -270,6 +270,22 @@ void main() {
       expect(tts.stopCalls, greaterThan(stopsBefore));
     });
 
+    testWidgets('"Ouvir" logo abaixo do título, antes do placar e da '
+        'mensagem (specs/025)', (tester) async {
+      await open(tester);
+
+      final double title = tester
+          .getBottomLeft(find.text('Módulo concluído!'))
+          .dy;
+      final double listen = tester.getTopLeft(find.text('Ouvir')).dy;
+      final double score = tester
+          .getTopLeft(find.text('Você acertou 2 de 3'))
+          .dy;
+
+      expect(listen, greaterThan(title));
+      expect(listen, lessThan(score));
+    });
+
     testWidgets('sem voz no idioma: sem "Ouvir" e nada lido', (tester) async {
       tts.availableLanguages = {};
       preferences.value = preferences.value.copyWith(autoReadAloud: true);

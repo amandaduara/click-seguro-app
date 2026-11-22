@@ -6,6 +6,7 @@ import 'package:click_seguro_app/modules/activities/data/repositories/activities
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_status.dart';
 import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
 import 'package:click_seguro_app/modules/common/api_client/api_client.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -69,6 +70,69 @@ void main() {
       final result = await repository.getDashboard();
 
       expect(result.getLeft().toNullable(), isA<ServerFailure>());
+    });
+  });
+
+  group('refazer: pontuação do painel (specs/025)', () {
+    test('conta: módulo concluído pega os acertos do detalhe', () async {
+      await signIn();
+      remote
+        ..modules = dashboardJson(modules: threeModulesJson(m1: 3, m2: 1))
+        ..moduleDetail = moduleDetailJson(score: 1, totalScore: 3);
+
+      final dashboard = await dashboardOrFail();
+
+      expect(dashboard.modules.first.score?.score, 1);
+      expect(dashboard.modules.first.status, ModuleStatus.retry);
+      expect(dashboard.modules[1].status, ModuleStatus.inProgress);
+      // Só o concluído busca o detalhe.
+      expect(remote.moduleDetailCalls, 1);
+    });
+
+    test('conta: maioria certa → concluído', () async {
+      await signIn();
+      remote
+        ..modules = dashboardJson(modules: threeModulesJson(m1: 3))
+        ..moduleDetail = moduleDetailJson(score: 2, totalScore: 3);
+
+      final dashboard = await dashboardOrFail();
+
+      expect(dashboard.modules.first.status, ModuleStatus.completed);
+    });
+
+    test('conta: detalhe que falha deixa o módulo concluído', () async {
+      await signIn();
+      remote
+        ..modules = dashboardJson(modules: threeModulesJson(m1: 3))
+        ..moduleDetailError = apiError(ApiErrorType.connection);
+
+      final dashboard = await dashboardOrFail();
+
+      expect(dashboard.modules.first.score, isNull);
+      expect(dashboard.modules.first.status, ModuleStatus.completed);
+    });
+
+    test('visitante: acertos do registro da sessão', () async {
+      await session.startGuestSession();
+      for (final (lesson, correct) in [
+        ('l1', true),
+        ('l2', false),
+        ('l3', false),
+      ]) {
+        store.recordAnswer(
+          moduleId: 'm1',
+          lessonId: lesson,
+          selectedOptionId: 'o1',
+          isCorrect: correct,
+        );
+      }
+
+      final dashboard = await dashboardOrFail();
+
+      expect(dashboard.modules.first.score?.score, 1);
+      expect(dashboard.modules.first.status, ModuleStatus.retry);
+      expect(dashboard.modules[1].score, isNull);
+      expect(remote.moduleDetailCalls, 0);
     });
   });
 

@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/modules/activities/data/models/activities_dashboard_model.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_status.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../fakes/activities_fixtures.dart';
@@ -71,5 +72,36 @@ void main() {
     );
 
     expect([for (final m in dashboard.modules) m.id], ['m3']);
+  });
+
+  group('pontuação na lista (specs/025)', () {
+    test('score/totalScore viram a pontuação do módulo', () {
+      final Map<String, dynamic> json = moduleJson(completedCount: 3)
+        ..['score'] = 1
+        ..['totalScore'] = 3;
+
+      final module = parse(dashboardJson(modules: [json])).modules.single;
+
+      expect(module.score?.score, 1);
+      expect(module.score?.total, 3);
+      expect(module.status, ModuleStatus.retry);
+    });
+
+    test('ausentes ou totalScore 0 → sem pontuação (concluído)', () {
+      final Map<String, dynamic> zero = moduleJson(completedCount: 3)
+        ..['score'] = 0
+        ..['totalScore'] = 0;
+      final dashboard = parse(
+        dashboardJson(
+          modules: [
+            moduleJson(completedCount: 3),
+            {...zero, 'id': 'm2', 'order': 2},
+          ],
+        ),
+      );
+
+      expect([for (final m in dashboard.modules) m.score], [null, null]);
+      expect(dashboard.modules.first.status, ModuleStatus.completed);
+    });
   });
 }

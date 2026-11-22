@@ -150,7 +150,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       return;
     }
     _autoReadDone = true;
-    unawaited(_readAloud.speak(lesson.spokenText));
+    unawaited(_readAloud.speakParts(lesson.spokenParts));
   }
 
   /// A leitura da pergunta para antes do envio (FR-017).
@@ -183,7 +183,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     final LessonEntity? lesson = _controller.current;
     final AnswerResultEntity? result = _controller.currentResult;
     if (lesson == null || result == null) return;
-    final String spoken = lesson.spokenFeedback(
+    final List<SpeechPart> spoken = lesson.feedbackParts(
       result,
       score: _controller.score,
     );
@@ -197,7 +197,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       listen: _listenButton(spoken),
     );
     // Com a leitura automática, o feedback é lido uma vez ao aparecer.
-    if (_autoReadEnabled) unawaited(_readAloud.speak(spoken));
+    if (_autoReadEnabled) unawaited(_readAloud.speakParts(spoken));
     final FeedbackAction? action = await closed;
     if (!mounted) return;
     switch (action) {
@@ -250,28 +250,35 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     );
     if (!mounted) return;
     switch (action) {
+      // Refazer: o progresso começa do zero, sem as respostas antigas
+      // (specs/025).
       case CompletionAction.redo:
-        unawaited(_controller.load(widget.moduleId));
+        unawaited(_controller.load(widget.moduleId, retake: true));
       case CompletionAction.finish || null:
         context.pop();
     }
   }
 
+  /// Há voz para algo do que a lição lê: o enunciado e as alternativas
+  /// (conteúdo, em português) ou os rótulos do app (specs/025).
+  bool get _canListen =>
+      _readAloud.isAvailable || _readAloud.isContentAvailable;
+
   bool get _autoReadEnabled =>
-      _readAloud.isAvailable &&
+      _canListen &&
       GetIt.instance<AccessibilityPreferencesNotifier>().value.autoReadAloud;
 
-  void _toggleListen(String text) => unawaited(
-    _readAloud.isSpeaking ? _readAloud.stop() : _readAloud.speak(text),
+  void _toggleListen(List<SpeechPart> parts) => unawaited(
+    _readAloud.isSpeaking ? _readAloud.stop() : _readAloud.speakParts(parts),
   );
 
-  /// "Ouvir"/"Parar" de [text]; some sem voz no idioma do app.
-  Widget _listenButton(String text) => ListenableBuilder(
+  /// "Ouvir"/"Parar" de [parts]; some sem voz para o que seria lido.
+  Widget _listenButton(List<SpeechPart> parts) => ListenableBuilder(
     listenable: _readAloud,
-    builder: (context, _) => _readAloud.isAvailable
+    builder: (context, _) => _canListen
         ? ListenButton(
             isSpeaking: _readAloud.isSpeaking,
-            onPressed: () => _toggleListen(text),
+            onPressed: () => _toggleListen(parts),
           )
         : const SizedBox.shrink(),
   );
@@ -320,7 +327,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
                     selectedOptionId: controller.selectedOptionId,
                     result: controller.currentResult,
                     onSelect: controller.canSelect ? controller.select : null,
-                    listen: _listenButton(lesson.spokenText),
+                    listen: _listenButton(lesson.spokenParts),
                   ),
                 ),
               ),
@@ -405,6 +412,10 @@ class _LessonBody extends StatelessWidget {
             ),
           ),
         ),
+        // "Ouvir" logo abaixo do enunciado, antes das alternativas: perto do
+        // que ele lê, sem rolar (regra do app, specs/025).
+        const SizedBox(height: AppSpacing.s3),
+        listen,
         const SizedBox(height: AppSpacing.s5),
         for (final (index, option) in lesson.options.indexed)
           Padding(
@@ -420,8 +431,6 @@ class _LessonBody extends StatelessWidget {
               onTap: onSelect == null ? null : () => onSelect!(option.id),
             ),
           ),
-        const SizedBox(height: AppSpacing.s2),
-        listen,
       ],
     );
   }
