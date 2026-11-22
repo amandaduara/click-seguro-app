@@ -11,6 +11,7 @@ import 'package:click_seguro_app/modules/help/presentation/routes/help_routes.da
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_top_bar.dart';
 import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/core/widgets/editable_avatar.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/person_avatar.dart';
@@ -264,6 +265,15 @@ void main() {
     await tester.tap(find.text('Adicionar contato').last);
     await tester.pumpAndSettle();
     expect(find.byType(ContactFormPage), findsOneWidget);
+    // Cabeçalho do app: título ao lado do voltar redondo.
+    expect(
+      find.descendant(
+        of: find.byType(SafePageHeader),
+        matching: find.text('Adicionar contato'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(SafePageHeader.defaultBackKey), findsOneWidget);
 
     final fields = find.byType(TextField);
     await tester.enterText(fields.at(0), 'Ana');
@@ -285,7 +295,7 @@ void main() {
     );
     // O formulário não tem mais "Remover contato": a lixeira fica no cartão.
     expect(find.text('Remover contato'), findsNothing);
-    router.pop();
+    await tester.tap(find.byKey(SafePageHeader.defaultBackKey));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('Remover contato'));

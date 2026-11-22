@@ -283,12 +283,7 @@ abstract class AppStrings {
       'activities_completion_perfect';
   static const String activitiesCompletionGood = 'activities_completion_good';
   static const String activitiesCompletionRetry = 'activities_completion_retry';
-  static const String activitiesCompletionShare = 'activities_completion_share';
   static const String activitiesCompletionRedo = 'activities_completion_redo';
-  static const String activitiesCompletionShareText =
-      'activities_completion_share_text';
-  static const String activitiesCompletionShareTextNoScore =
-      'activities_completion_share_text_no_score';
   static const String activitiesGuestAlertTitle =
       'activities_guest_alert_title';
   static const String activitiesGuestAlertBody = 'activities_guest_alert_body';

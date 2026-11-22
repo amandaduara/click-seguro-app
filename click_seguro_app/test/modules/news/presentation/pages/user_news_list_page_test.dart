@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
@@ -121,13 +122,20 @@ void main() {
   group('com conta', () {
     setUp(signIn);
 
-    testWidgets('barra com "Notícias salvas" e voltar', (tester) async {
+    testWidgets('cabeçalho com "Notícias salvas" ao lado do voltar', (
+      tester,
+    ) async {
       repository.savedResults.add(pageOf(1));
 
       await pumpPage(tester);
 
-      expect(find.byType(AppBar), findsOneWidget);
-      expect(find.text('Notícias salvas'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SafePageHeader),
+          matching: find.text('Notícias salvas'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('cartões do feed na ordem do serviço', (tester) async {

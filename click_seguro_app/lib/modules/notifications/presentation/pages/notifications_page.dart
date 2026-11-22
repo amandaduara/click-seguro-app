@@ -6,6 +6,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -31,6 +32,10 @@ import 'package:provider/provider.dart';
 /// a notícia por caminho (`/news/:id`), sem importar o módulo `news`.
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
+
+  /// Para onde o voltar leva quando os alertas foram abertos por link
+  /// direto, sem nada atrás: o início, por caminho.
+  static const String homeRoute = '/home';
 
   @override
   State<NotificationsPage> createState() => _NotificationsPageState();
@@ -72,16 +77,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.notificationsTitle.tr())),
-      body: SafeArea(
-        child: ValueListenableBuilder<UserSessionStatus>(
-          valueListenable: GetIt.instance<UserSessionService>().sessionStatus,
-          builder: (context, status, _) =>
-              status == UserSessionStatus.authenticated
-              ? _alertsState(context.watch<NotificationsController>())
-              : const _GuestInvite(),
-        ),
+    return SafePageScaffold(
+      header: SafePageHeader(
+        title: AppStrings.notificationsTitle.tr(),
+        fallbackLocation: NotificationsPage.homeRoute,
+      ),
+      body: ValueListenableBuilder<UserSessionStatus>(
+        valueListenable: GetIt.instance<UserSessionService>().sessionStatus,
+        builder: (context, status, _) =>
+            status == UserSessionStatus.authenticated
+            ? _alertsState(context.watch<NotificationsController>())
+            : const _GuestInvite(),
       ),
     );
   }

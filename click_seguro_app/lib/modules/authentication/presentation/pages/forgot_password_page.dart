@@ -6,6 +6,7 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
 import 'package:click_seguro_app/modules/authentication/domain/enums/reset_step.dart';
@@ -105,71 +106,67 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _goBack();
       },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            onPressed: _goBack,
-            tooltip: AppStrings.authBack.tr(),
-            icon: const Icon(LucideIcons.arrowLeft),
-          ),
-          title: Text(AppStrings.authResetTitle.tr()),
+      child: SafePageScaffold(
+        // O voltar do cabeçalho volta ao passo anterior (ou sai no primeiro).
+        header: SafePageHeader(
+          title: AppStrings.authResetTitle.tr(),
+          backLabel: AppStrings.authBack.tr(),
+          onBack: _goBack,
         ),
-        body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s6,
-                    AppSpacing.s4,
-                    AppSpacing.s6,
-                    AppSpacing.s6,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _StepBadge(
-                        icon: switch (controller.step) {
-                          ResetStep.email => LucideIcons.mail,
-                          ResetStep.code => LucideIcons.keyRound,
-                          ResetStep.newPassword => LucideIcons.lockKeyhole,
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.s5),
-                      ...switch (controller.step) {
-                        ResetStep.email => _emailStep(controller),
-                        ResetStep.code => _codeStep(controller),
-                        ResetStep.newPassword => _newPasswordStep(controller),
-                      },
-                      if (controller.failure != null) ...[
-                        const SizedBox(height: AppSpacing.s4),
-                        Semantics(
-                          liveRegion: true,
-                          child: Text(
-                            controller.failure!.message.tr(),
-                            style: AppTypography.body.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: context.colors.destructive,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              Padding(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.s6,
-                  AppSpacing.s3,
-                  AppSpacing.s6,
                   AppSpacing.s4,
+                  AppSpacing.s6,
+                  AppSpacing.s6,
                 ),
-                child: _primaryButton(controller),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _StepBadge(
+                      icon: switch (controller.step) {
+                        ResetStep.email => LucideIcons.mail,
+                        ResetStep.code => LucideIcons.keyRound,
+                        ResetStep.newPassword => LucideIcons.lockKeyhole,
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.s5),
+                    ...switch (controller.step) {
+                      ResetStep.email => _emailStep(controller),
+                      ResetStep.code => _codeStep(controller),
+                      ResetStep.newPassword => _newPasswordStep(controller),
+                    },
+                    if (controller.failure != null) ...[
+                      const SizedBox(height: AppSpacing.s4),
+                      Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          controller.failure!.message.tr(),
+                          style: AppTypography.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: context.colors.destructive,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s6,
+                AppSpacing.s3,
+                AppSpacing.s6,
+                AppSpacing.s4,
+              ),
+              child: _primaryButton(controller),
+            ),
+          ],
         ),
       ),
     );

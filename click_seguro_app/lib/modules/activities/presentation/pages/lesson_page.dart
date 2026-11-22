@@ -10,6 +10,7 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
@@ -287,56 +288,53 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   Widget build(BuildContext context) {
     final LessonController controller = context.watch<LessonController>();
     final LessonEntity? lesson = controller.current;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          controller.module?.title ?? AppStrings.activitiesModuleTitle.tr(),
-        ),
+    return SafePageScaffold(
+      header: SafePageHeader(
+        title:
+            controller.module?.title ?? AppStrings.activitiesModuleTitle.tr(),
       ),
-      body: SafeArea(
-        child: switch (controller.status) {
-          LessonStatus.loading => const SafeLoadingState(
-            layout: SafeLoadingLayout.detail,
-          ),
-          LessonStatus.error => SafeErrorState(
-            message: AppStrings.activitiesErrorTitle.tr(),
-            onRetry: () => controller.load(widget.moduleId),
-          ),
-          LessonStatus.empty => SafeEmptyState(
-            message: AppStrings.activitiesModuleUnavailable.tr(),
-          ),
-          LessonStatus.loaded when lesson != null => Column(
-            children: [
-              Expanded(
-                child: PageTransitionSwitcher(
-                  duration: AppMotion.of(context).long,
-                  reverse: _backwards,
-                  transitionBuilder: (child, primary, secondary) =>
-                      SharedAxisTransition(
-                        animation: primary,
-                        secondaryAnimation: secondary,
-                        transitionType: SharedAxisTransitionType.horizontal,
-                        fillColor: Colors.transparent,
-                        child: child,
-                      ),
-                  child: _LessonBody(
-                    key: ValueKey(lesson.id),
-                    lesson: lesson,
-                    lessons: controller.module!.lessons,
-                    currentIndex: controller.currentIndex,
-                    selectedOptionId: controller.selectedOptionId,
-                    result: controller.currentResult,
-                    onSelect: controller.canSelect ? controller.select : null,
-                    listen: _listenButton(lesson.spokenParts),
-                  ),
+      body: switch (controller.status) {
+        LessonStatus.loading => const SafeLoadingState(
+          layout: SafeLoadingLayout.detail,
+        ),
+        LessonStatus.error => SafeErrorState(
+          message: AppStrings.activitiesErrorTitle.tr(),
+          onRetry: () => controller.load(widget.moduleId),
+        ),
+        LessonStatus.empty => SafeEmptyState(
+          message: AppStrings.activitiesModuleUnavailable.tr(),
+        ),
+        LessonStatus.loaded when lesson != null => Column(
+          children: [
+            Expanded(
+              child: PageTransitionSwitcher(
+                duration: AppMotion.of(context).long,
+                reverse: _backwards,
+                transitionBuilder: (child, primary, secondary) =>
+                    SharedAxisTransition(
+                      animation: primary,
+                      secondaryAnimation: secondary,
+                      transitionType: SharedAxisTransitionType.horizontal,
+                      fillColor: Colors.transparent,
+                      child: child,
+                    ),
+                child: _LessonBody(
+                  key: ValueKey(lesson.id),
+                  lesson: lesson,
+                  lessons: controller.module!.lessons,
+                  currentIndex: controller.currentIndex,
+                  selectedOptionId: controller.selectedOptionId,
+                  result: controller.currentResult,
+                  onSelect: controller.canSelect ? controller.select : null,
+                  listen: _listenButton(lesson.spokenParts),
                 ),
               ),
-              ConfirmAnswerFooter(controller: controller, onConfirm: _confirm),
-            ],
-          ),
-          _ => const SizedBox.shrink(),
-        },
-      ),
+            ),
+            ConfirmAnswerFooter(controller: controller, onConfirm: _confirm),
+          ],
+        ),
+        _ => const SizedBox.shrink(),
+      },
     );
   }
 }

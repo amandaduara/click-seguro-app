@@ -1,12 +1,10 @@
-import 'dart:async';
-
-import 'package:click_seguro_app/core/constants/app_identity.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
-import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
 import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
@@ -14,8 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../../fakes/fake_share_service.dart';
 import '../../../../fakes/fake_text_to_speech_service.dart';
 import '../../../../helpers/localized_app.dart';
 
@@ -23,7 +21,6 @@ void main() {
   late FakeTextToSpeechService tts;
   late AccessibilityPreferencesNotifier preferences;
   late List<CompletionAction?> actions;
-  late FakeShareService share;
 
   const ModuleCompletion twoOfThree = ModuleCompletion(
     title: 'Golpes Digitais',
@@ -34,9 +31,7 @@ void main() {
     tts = FakeTextToSpeechService();
     preferences = AccessibilityPreferencesNotifier();
     actions = [];
-    share = FakeShareService();
     GetIt.instance
-      ..registerSingleton<ShareService>(share)
       ..registerSingleton(preferences)
       ..registerFactory(
         () => ReadAloudController(tts, preferences: preferences),
@@ -99,7 +94,13 @@ void main() {
     ) async {
       await open(tester);
 
-      expect(find.text('Golpes Digitais'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SafePageHeader),
+          matching: find.text('Golpes Digitais'),
+        ),
+        findsOneWidget,
+      );
       expect(
         tester
             .widget<SafeIllustration>(find.byType(SafeIllustration))
@@ -141,6 +142,15 @@ void main() {
       await open(tester);
 
       await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(actions, [null]);
+    });
+
+    testWidgets('voltar do cabeçalho devolve null (= finish)', (tester) async {
+      await open(tester);
+
+      await tester.tap(find.byKey(SafePageHeader.defaultBackKey));
       await tester.pumpAndSettle();
 
       expect(actions, [null]);
@@ -296,66 +306,70 @@ void main() {
     });
   });
 
-  group('compartilhar (US3)', () {
-    testWidgets('abre o menu com o texto pronto e o título como assunto', (
+  group('botões (specs/025)', () {
+    const String finish = 'Voltar às atividades';
+    const String redo = 'Refazer o módulo';
+
+    SafeButton buttonOf(WidgetTester tester, String label) =>
+        tester.widget<SafeButton>(
+          find.ancestor(
+            of: find.text(label),
+            matching: find.byType(SafeButton),
+          ),
+        );
+
+    double topOf(WidgetTester tester, String label) =>
+        tester.getTopLeft(find.text(label)).dy;
+
+    /// Tela alta: os dois botões cabem sem rolar.
+    void useTallScreen(WidgetTester tester) {
+      tester.view
+        ..physicalSize = const Size(800, 2400)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+    }
+
+    testWidgets('errou a maioria: "Refazer" primeiro e em destaque', (
       tester,
     ) async {
-      await open(tester);
-
-      await tapButton(tester, 'Compartilhar');
-
-      expect(
-        share.shared.single.text,
-        'Concluí o módulo Golpes Digitais no ${AppIdentity.name} e acertei 2 '
-        'de 3 perguntas! Aprenda a se proteger de golpes também.',
-      );
-      expect(share.shared.single.subject, 'Golpes Digitais');
-    });
-
-    testWidgets('sem pontuação: texto sem números', (tester) async {
+      useTallScreen(tester);
       await open(
         tester,
-        completion: const ModuleCompletion(title: 'Golpes Digitais'),
+        completion: const ModuleCompletion(
+          title: 'Golpes Digitais',
+          score: ModuleScoreEntity(score: 1, total: 3),
+        ),
       );
 
-      await tapButton(tester, 'Compartilhar');
-
-      expect(share.shared.single.text, isNot(contains('acertei')));
+      expect(topOf(tester, redo), lessThan(topOf(tester, finish)));
+      expect(buttonOf(tester, redo).tone, SafeButtonTone.primary);
+      expect(buttonOf(tester, finish).tone, SafeButtonTone.secondary);
     });
 
-    testWidgets('cancelar ou falhar: nenhuma mensagem, segue na conclusão', (
-      tester,
-    ) async {
-      for (final outcome in [ShareOutcome.cancelled, ShareOutcome.failed]) {
-        share.outcome = outcome;
-        await open(tester);
+    for (final (String name, ModuleCompletion completion) in [
+      ('acertou metade ou mais', twoOfThree),
+      ('sem pontuação', const ModuleCompletion(title: 'Golpes Digitais')),
+    ]) {
+      testWidgets('$name: "Voltar" principal primeiro e "Refazer" depois', (
+        tester,
+      ) async {
+        useTallScreen(tester);
+        await open(tester, completion: completion);
 
-        await tapButton(tester, 'Compartilhar');
+        expect(topOf(tester, finish), lessThan(topOf(tester, redo)));
+        expect(buttonOf(tester, finish).tone, SafeButtonTone.primary);
+        expect(buttonOf(tester, redo).tone, SafeButtonTone.secondary);
+      });
+    }
 
-        expect(find.byType(SnackBar), findsNothing);
-        expect(find.text('Módulo concluído!'), findsOneWidget);
-        await tester.binding.handlePopRoute();
-        await tester.pumpAndSettle();
-      }
-    });
-
-    testWidgets('dois toques rápidos: um compartilhamento', (tester) async {
+    testWidgets('sem "Compartilhar"', (tester) async {
+      useTallScreen(tester);
       await open(tester);
-      await tester.scrollUntilVisible(
-        find.text('Compartilhar'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.ensureVisible(find.text('Compartilhar'));
-      await tester.pumpAndSettle();
 
-      share.gate = Completer<void>();
-      await tester.tap(find.text('Compartilhar'));
-      await tester.tap(find.text('Compartilhar'));
-      share.gate!.complete();
-      await tester.pumpAndSettle();
+      expect(find.text('Refazer o módulo'), findsOneWidget);
 
-      expect(share.shared, hasLength(1));
+      expect(find.text('Compartilhar'), findsNothing);
+      expect(find.byIcon(LucideIcons.share2), findsNothing);
     });
   });
 }

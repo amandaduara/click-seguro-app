@@ -4,6 +4,7 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/core/widgets/safe_progress.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
@@ -157,7 +158,13 @@ void main() {
     ) async {
       await open(tester);
 
-      expect(find.text('Golpes Digitais'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SafePageHeader),
+          matching: find.text('Golpes Digitais'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Pergunta 1 de 3'), findsOneWidget);
       expect(
         find.text('Promessa de dinheiro em dobro pelo PIX. O que fazer?'),
