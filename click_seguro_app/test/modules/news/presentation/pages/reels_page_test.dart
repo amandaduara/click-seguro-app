@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/reel_entity.dart';
@@ -26,6 +28,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
 import '../../../../fakes/fake_share_service.dart';
+import '../../../../fakes/fake_text_to_speech_service.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_news_repository.dart';
 import '../../fakes/reels_controller_factory.dart';
@@ -35,13 +38,21 @@ void main() {
   late FakeNewsRepository repository;
   late FakeShareService share;
   late ReelsController controller;
+  late FakeTextToSpeechService tts;
+  late AccessibilityPreferencesNotifier preferences;
 
   setUp(() async {
     session = UserSessionService(FakeSecureStorageService());
     share = FakeShareService();
+    tts = FakeTextToSpeechService();
+    preferences = AccessibilityPreferencesNotifier();
     GetIt.instance
       ..registerSingleton<UserSessionService>(session)
-      ..registerSingleton<ShareService>(share);
+      ..registerSingleton<ShareService>(share)
+      ..registerSingleton<AccessibilityPreferencesNotifier>(preferences)
+      ..registerFactory(
+        () => ReadAloudController(tts, preferences: preferences),
+      );
     await session.startGuestSession();
     repository = FakeNewsRepository();
     controller = buildReelsController(repository, session.sessionStatus);
@@ -198,6 +209,34 @@ void main() {
 
       expect(title('r2'), findsOneWidget);
       expect(controller.currentIndex, 1);
+    });
+
+    // Erro visto no aparelho (setState durante o build): com os Reels já
+    // abertos, tocar noutro Reel do carrossel muda o `start` e a página
+    // abria o pedido no meio da construção.
+    testWidgets('outro start com a página aberta abre sem erro', (
+      tester,
+    ) async {
+      firstPage(3);
+      final GoRouter routes = router(location: '/reels?start=r1');
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await pumpLocalized(
+        tester,
+        router: routes,
+        providers: [
+          ChangeNotifierProvider<ReelsController>.value(value: controller),
+        ],
+      );
+      expect(title('r1'), findsOneWidget);
+
+      routes.go('/reels?start=r3');
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(title('r3'), findsOneWidget);
+      expect(controller.currentIndex, 2);
     });
 
     // specs/022 FR-019: a imagem do Reel tocado no carrossel já aparece
@@ -370,6 +409,113 @@ void main() {
       expect(find.bySemanticsLabel('Próxima notícia'), findsNothing);
       expect(find.bySemanticsLabel('Notícia anterior'), findsNothing);
       expect(find.bySemanticsLabel('Abrir fonte'), findsNothing);
+    });
+  });
+
+  group('ouvir', () {
+    Finder listen(String id) => find.byKey(ReelsPage.listenKeyFor(id));
+    const String spokenR1 = 'Notícia r1.\n\nTexto do reel';
+
+    Future<void> next(WidgetTester tester) async {
+      await tester.fling(find.byType(PageView), const Offset(0, -600), 2000);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Ouvir" acima do título, longe dos botões laterais, 48 dp', (
+      tester,
+    ) async {
+      firstPage(2);
+      await pumpPage(tester);
+
+      expect(listen('r1'), findsOneWidget);
+      final Rect button = tester.getRect(listen('r1'));
+      final Rect heading = tester.getRect(title('r1'));
+      expect(button.bottom, lessThanOrEqualTo(heading.top));
+      expect(button.left, closeTo(heading.left, 1));
+      expect(button.height, greaterThanOrEqualTo(48));
+      expect(
+        button.right,
+        lessThan(tester.getRect(find.byKey(ReelActions.likeKey)).left),
+      );
+    });
+
+    testWidgets('lê título e resumo do Reel; de novo, para', (tester) async {
+      firstPage(2);
+      await pumpPage(tester);
+
+      await tester.tap(listen('r1'));
+      await tester.pump();
+      expect(tts.spoken.single.text, spokenR1);
+      expect(find.text('Parar'), findsOneWidget);
+
+      await tester.tap(listen('r1'));
+      await tester.pump();
+      expect(tts.stopCalls, 1);
+      expect(find.text('Parar'), findsNothing);
+      // O toque no "Ouvir" não abre o detalhe.
+      expect(find.text('detalhe r1'), findsNothing);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('trocar de Reel para a leitura; o novo não lê sozinho', (
+      tester,
+    ) async {
+      firstPage(3);
+      await pumpPage(tester);
+      await tester.tap(listen('r1'));
+      await tester.pump();
+
+      await next(tester);
+
+      expect(title('r2'), findsOneWidget);
+      expect(tts.stopCalls, 1);
+      expect(tts.spoken, hasLength(1));
+      expect(find.text('Parar'), findsNothing);
+    });
+
+    testWidgets('leitura automática: lê o Reel na tela e o novo ao trocar', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      firstPage(3);
+      await pumpPage(tester);
+
+      expect(tts.spoken.single.text, spokenR1);
+
+      await next(tester);
+
+      expect(tts.spoken.map((s) => s.text), [
+        spokenR1,
+        'Notícia r2.\n\nTexto do reel',
+      ]);
+      expect(find.text('Parar'), findsOneWidget);
+    });
+
+    testWidgets('abrir o detalhe para a leitura', (tester) async {
+      firstPage(1);
+      await pumpPage(tester);
+      await tester.tap(listen('r1'));
+      await tester.pump();
+
+      await tester.tap(find.byKey(ReelView.readFullKey));
+      await tester.pumpAndSettle();
+
+      expect(find.text('detalhe r1'), findsOneWidget);
+      expect(tts.stopCalls, greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('sem voz no idioma: sem "Ouvir" e sem leitura automática', (
+      tester,
+    ) async {
+      tts.availableLanguages = {};
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      firstPage(2);
+      await pumpPage(tester);
+
+      expect(title('r1'), findsOneWidget);
+      expect(listen('r1'), findsNothing);
+      expect(tts.spoken, isEmpty);
+      expect(tester.takeException(), isNull);
     });
   });
 

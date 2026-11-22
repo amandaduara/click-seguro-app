@@ -647,13 +647,17 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('app em inglês: voz em inglês', (tester) async {
+    // A notícia vem do banco em português: com o app em inglês, continua
+    // lida com voz em português, sem sotaque (specs/025).
+    testWidgets('app em inglês: a notícia sai com voz em português', (
+      tester,
+    ) async {
       await pumpPage(tester, locale: const Locale('en', 'US'));
 
       await tester.tap(listen());
       await tester.pump();
 
-      expect(tts.spoken.single.language, SpeechLanguage.enUs);
+      expect(tts.spoken.single.language, SpeechLanguage.ptBr);
       expect(tts.spoken.single.text, spokenN1);
     });
 

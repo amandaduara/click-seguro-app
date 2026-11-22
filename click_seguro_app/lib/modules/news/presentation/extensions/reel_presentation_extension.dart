@@ -13,6 +13,13 @@ extension ReelPresentation on ReelEntity {
   /// categorias, como no cartão do feed.
   String semanticLabel(DateTime now) => news.semanticLabel(now);
 
+  /// O que o "Ouvir" do Reel lê: título e resumo; sem resumo, só o título
+  /// (como o detalhe).
+  String get spokenText {
+    final String summary = content.trim();
+    return summary.isEmpty ? news.title : '${news.title}.\n\n$summary';
+  }
+
   /// "Curtir, 3 curtidas" / "Curtido, 4 curtidas" (FR-021).
   String get likeSemanticLabel =>
       (isLiked ? AppStrings.newsReelsLiked : AppStrings.newsReelsLike).tr(

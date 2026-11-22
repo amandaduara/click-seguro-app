@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
@@ -13,6 +16,7 @@ import 'package:click_seguro_app/modules/news/presentation/widgets/feed_search_f
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/news_grid.dart';
+import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -21,6 +25,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../fakes/fake_secure_storage_service.dart';
+import '../../../../fakes/fake_text_to_speech_service.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../../../helpers/notifications_provider.dart';
 import '../../fakes/fake_news_repository.dart';
@@ -30,10 +35,18 @@ void main() {
   late UserSessionService session;
   late FakeNewsRepository repository;
   late GoRouter router;
+  late FakeTextToSpeechService tts;
 
   setUp(() async {
     session = UserSessionService(FakeSecureStorageService());
-    GetIt.instance.registerSingleton<UserSessionService>(session);
+    tts = FakeTextToSpeechService();
+    final preferences = AccessibilityPreferencesNotifier();
+    GetIt.instance
+      ..registerSingleton<UserSessionService>(session)
+      ..registerSingleton<AccessibilityPreferencesNotifier>(preferences)
+      ..registerFactory(
+        () => ReadAloudController(tts, preferences: preferences),
+      );
     await session.startGuestSession();
     repository = FakeNewsRepository();
     router = GoRouter(
@@ -321,6 +334,116 @@ void main() {
 
   // Grade do feed (FR-025, T051). A tela tem 800 de largura e as seções
   // 20 de margem: 760 para os cartões.
+  group('ouvir destaques', () {
+    Finder listen() => find.byKey(NewsHomePage.highlightsListenKey);
+
+    void withHighlights() => repository.feedResults[0] = Right(
+      newsFeed(
+        highlights: [newsItem('h1'), newsItem('h2')],
+        reels: [newsItem('reel1')],
+      ),
+    );
+
+    testWidgets('"Ouvir" ao lado do título "Destaques", antes dos cartões', (
+      tester,
+    ) async {
+      withHighlights();
+      await pumpPage(tester);
+
+      expect(listen(), findsOneWidget);
+      expect(find.text('Ouvir'), findsOneWidget);
+      final Rect title = tester.getRect(textInScroll('Destaques'));
+      final Rect button = tester.getRect(listen());
+      expect(button.left, greaterThan(title.right));
+      expect(button.center.dy, closeTo(title.center.dy, 24));
+      expect(
+        button.bottom,
+        lessThan(tester.getTopLeft(find.text('Notícia h1')).dy),
+      );
+      final Size size = tester.getSize(
+        find.descendant(of: listen(), matching: find.byType(InkWell)),
+      );
+      expect(size.height, greaterThanOrEqualTo(48));
+    });
+
+    testWidgets('lê o título da seção e título e fonte de cada destaque; '
+        'de novo, para', (tester) async {
+      withHighlights();
+      await pumpPage(tester);
+
+      await tester.tap(listen());
+      await tester.pump();
+
+      // O título da seção (app) e, depois, cada destaque (conteúdo).
+      expect(tts.spoken.single.text, 'Destaques.');
+      tts.finishSpeaking();
+      await tester.pump();
+      expect(tts.spoken.last.text, 'Notícia h1. Folha de Teste.');
+      expect(tts.spoken.last.language, SpeechLanguage.ptBr);
+      expect(find.text('Parar'), findsOneWidget);
+
+      await tester.tap(listen());
+      await tester.pump();
+      expect(tts.stopCalls, 1);
+      expect(find.text('Ouvir'), findsOneWidget);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('sem destaques, sem botão', (tester) async {
+      repository.feedResults[0] = Right(newsFeed(reels: [newsItem('reel1')]));
+      await pumpPage(tester);
+
+      expect(listen(), findsNothing);
+      expect(find.byType(ListenButton), findsNothing);
+    });
+
+    testWidgets('sem voz no idioma, sem botão', (tester) async {
+      tts.availableLanguages = {};
+      withHighlights();
+      await pumpPage(tester);
+
+      expect(textInScroll('Destaques'), findsOneWidget);
+      expect(listen(), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('abrir uma notícia para a leitura', (tester) async {
+      withHighlights();
+      await pumpPage(tester);
+      await tester.tap(listen());
+      await tester.pump();
+
+      await tester.tap(find.byType(NewsCard).first);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('detalhe'), findsOneWidget);
+      expect(tts.stopCalls, greaterThanOrEqualTo(1));
+    });
+
+    testWidgets('trocar para uma categoria (botão some) para a leitura', (
+      tester,
+    ) async {
+      withHighlights();
+      repository.newsResults[0] = Right(
+        NewsPageEntity(items: [newsItem('p1')], hasMore: false, page: 1),
+      );
+      await pumpPage(tester);
+      await tester.tap(listen());
+      await tester.pump();
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(CategoryFilterBar),
+          matching: find.text('Phishing'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(listen(), findsNothing);
+      expect(tts.stopCalls, greaterThanOrEqualTo(1));
+    });
+  });
+
   group('grade', () {
     const double content = 760;
 

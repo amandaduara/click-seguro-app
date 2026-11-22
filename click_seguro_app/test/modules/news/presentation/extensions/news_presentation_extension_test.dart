@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:flutter/material.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../helpers/localized_app.dart';
@@ -117,6 +118,24 @@ void main() {
       ];
 
       expect(items.newCount(feedNow), 2);
+    });
+  });
+
+  // O título da seção é texto do app; cada notícia é conteúdo do banco,
+  // lido na voz em português (specs/025).
+  group('spokenParts', () {
+    test('título da seção e, na ordem, título e fonte de cada uma', () {
+      final List<SpeechPart> parts = [
+        newsItem('h1'),
+        newsItem('h2'),
+      ].spokenParts('Destaques');
+
+      expect(parts.map((p) => p.text), [
+        'Destaques.',
+        'Notícia h1. Folha de Teste.',
+        'Notícia h2. Folha de Teste.',
+      ]);
+      expect(parts.map((p) => p.content), [false, true, true]);
     });
   });
 }

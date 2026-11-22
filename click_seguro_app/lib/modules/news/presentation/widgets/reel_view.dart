@@ -22,6 +22,7 @@ class ReelView extends StatelessWidget {
     required this.onReadFull,
     this.footer,
     this.onDoubleTap,
+    this.listen,
   });
 
   static const double _actionsWidth = 64;
@@ -52,6 +53,11 @@ class ReelView extends StatelessWidget {
   /// ficam com os próprios toques.
   final VoidCallback? onDoubleTap;
 
+  /// "Ouvir" no começo do texto, acima das categorias e do título. Fica
+  /// fora do botão de abrir a notícia: o leitor de tela e o toque o acham
+  /// separado. Traz o próprio espaço abaixo (ou nada, sem voz).
+  final Widget? listen;
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -59,6 +65,7 @@ class ReelView extends StatelessWidget {
     final List<String> categories = reel.news.categoryLabels();
     final Color onDark = context.colors.textPrimaryForeground;
     final Widget? footer = this.footer;
+    final Widget? listen = this.listen;
 
     return ColoredBox(
       color: Colors.black,
@@ -113,6 +120,7 @@ class ReelView extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        ?listen,
                         // O texto é o botão de abrir a notícia: título,
                         // fonte e data, com a dica "Ler notícia completa".
                         Semantics(
