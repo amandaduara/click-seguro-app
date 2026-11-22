@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Um slide do onboarding (RF-002): ilustração do redesign 2.0 e as chaves
 /// dos textos, que não mudam.
@@ -15,6 +16,9 @@ class OnboardingPageContent {
   final String titleKey;
   final String descriptionKey;
   final String buttonLabelKey;
+
+  /// O que o "Ouvir" do slide lê: o título e a descrição traduzidos.
+  String get spokenText => '${titleKey.tr()}\n${descriptionKey.tr()}';
 
   static const List<OnboardingPageContent> pages = [
     OnboardingPageContent(

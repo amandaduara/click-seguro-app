@@ -1,19 +1,36 @@
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/onboarding/domain/usecases/complete_onboarding_usecase.dart';
 import 'package:click_seguro_app/modules/onboarding/onboarding.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/controller/onboarding_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../fakes/fake_text_to_speech_service.dart';
 import '../../../../helpers/localized_app.dart';
 import '../../fakes/fake_onboarding_repository.dart';
 
 void main() {
   late FakeOnboardingRepository repository;
+  late FakeTextToSpeechService tts;
+  late AccessibilityPreferencesNotifier preferences;
 
-  setUp(() => repository = FakeOnboardingRepository());
+  setUp(() {
+    repository = FakeOnboardingRepository();
+    tts = FakeTextToSpeechService();
+    preferences = AccessibilityPreferencesNotifier();
+    GetIt.instance
+      ..registerSingleton(preferences)
+      ..registerFactory(
+        () => ReadAloudController(tts, preferences: preferences),
+      );
+  });
+
+  tearDown(() => GetIt.instance.reset());
 
   GoRouter buildRouter() => GoRouter(
     initialLocation: '/onboarding',
@@ -147,5 +164,75 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('login'), findsOneWidget);
+  });
+
+  group('"Ouvir" do slide', () {
+    const String slide1 =
+        'Proteja-se de golpes\n'
+        'Receba alertas sobre os golpes mais comuns e aprenda a se defender.';
+    const String slide2 =
+        'Notícias verificadas\n'
+        'Acompanhe fake news desmentidas por fontes oficiais.';
+
+    testWidgets('fica abaixo do título, antes da descrição, e lê os dois', (
+      tester,
+    ) async {
+      await pumpLocalized(tester, router: buildRouter());
+
+      final Rect title = tester.getRect(find.text('Proteja-se de golpes'));
+      final Rect listen = tester.getRect(find.text('Ouvir'));
+      final Rect description = tester.getRect(
+        find.textContaining('Receba alertas'),
+      );
+      expect(listen.top, greaterThan(title.bottom));
+      expect(listen.bottom, lessThan(description.top));
+
+      await tester.tap(find.text('Ouvir'));
+      await tester.pump();
+
+      expect(tts.spoken.single.text, slide1);
+      expect(find.text('Parar'), findsOneWidget);
+    });
+
+    testWidgets('trocar de slide para a leitura', (tester) async {
+      await pumpLocalized(tester, router: buildRouter());
+      await tester.tap(find.text('Ouvir'));
+      await tester.pump();
+      final int stopsBefore = tts.stopCalls;
+
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+      expect(find.text('Parar'), findsNothing);
+      expect(find.text('Ouvir'), findsOneWidget);
+
+      await tester.tap(find.text('Ouvir'));
+      await tester.pump();
+      expect(tts.spoken.last.text, slide2);
+    });
+
+    testWidgets('leitura automática: lê cada slide ao aparecer', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await pumpLocalized(tester, router: buildRouter());
+
+      expect(tts.spoken.single.text, slide1);
+
+      await tester.tap(find.text('Continuar'));
+      await tester.pumpAndSettle();
+
+      expect(tts.spoken.map((s) => s.text), [slide1, slide2]);
+    });
+
+    testWidgets('sem voz no idioma: sem "Ouvir" e nada lido', (tester) async {
+      tts.availableLanguages = {};
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await pumpLocalized(tester, router: buildRouter());
+
+      expect(find.text('Ouvir'), findsNothing);
+      expect(tts.spoken, isEmpty);
+    });
   });
 }

@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/safe_card.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_listen_button.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_tile.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -37,12 +38,23 @@ class PrivacyPage extends StatelessWidget {
     return SettingsScaffold(
       title: AppStrings.settingsPrivacy.tr(),
       children: [
+        SettingsListenButton(text: privacySpokenText()),
         for (final (icon, title, body) in _sections)
           _Paragraph(icon: icon, title: title.tr(), body: body.tr()),
       ],
     );
   }
 }
+
+/// O que o "Ouvir" da Privacidade lê: o título da tela e cada assunto
+/// (título e texto), com os mesmos textos traduzidos da tela.
+String privacySpokenText() => [
+  AppStrings.settingsPrivacy.tr(),
+  for (final (_, title, body) in PrivacyPage._sections) ...[
+    title.tr(),
+    body.tr(),
+  ],
+].join('\n');
 
 /// Um cartão padrão por assunto: ícone no círculo suave, título e o texto.
 class _Paragraph extends StatelessWidget {

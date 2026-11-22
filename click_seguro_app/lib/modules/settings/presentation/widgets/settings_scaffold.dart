@@ -6,10 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Quadro das telas das Configurações no redesign 2.0: topo limpo só com o
-/// botão redondo de voltar, título grande na página (como no Perfil) e o
-/// conteúdo rolando abaixo dele. [bottom] (ex.: o botão principal) fica
-/// fixo no fim da tela, acima da área segura e do teclado.
+/// Quadro das telas das Configurações no redesign 2.0: no topo, o botão
+/// redondo de voltar e, na mesma linha, logo ao lado, o título grande (como
+/// nas outras telas principais); o conteúdo rola abaixo. Com letra grande o
+/// título quebra linha em vez de estourar. [bottom] (ex.: o botão principal)
+/// fica fixo no fim da tela, acima da área segura e do teclado.
 class SettingsScaffold extends StatelessWidget {
   const SettingsScaffold({
     super.key,
@@ -43,20 +44,23 @@ class SettingsScaffold extends StatelessWidget {
                 AppSpacing.s5,
                 0,
               ),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: SettingsBackButton(fallbackLocation: fallbackLocation),
+              child: Row(
+                children: [
+                  SettingsBackButton(fallbackLocation: fallbackLocation),
+                  const SizedBox(width: AppSpacing.s4),
+                  Expanded(child: _PageTitle(title)),
+                ],
               ),
             ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.s5,
-                  AppSpacing.s4,
+                  AppSpacing.s2,
                   AppSpacing.s5,
                   AppSpacing.s8,
                 ),
-                children: [_PageTitle(title), ...children],
+                children: children,
               ),
             ),
             if (bottom case final Widget bottom)
@@ -76,7 +80,7 @@ class SettingsScaffold extends StatelessWidget {
   }
 }
 
-/// Título grande da tela, no estilo do "Perfil".
+/// Título grande da tela, no estilo do "Perfil", ao lado do voltar.
 class _PageTitle extends StatelessWidget {
   const _PageTitle(this.title);
 

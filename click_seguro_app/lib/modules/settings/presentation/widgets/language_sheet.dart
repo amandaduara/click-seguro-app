@@ -40,24 +40,9 @@ Future<LanguageChoice?> showLanguageSheet(
             SettingsCard(
               children: [
                 for (final choice in LanguageChoice.values)
-                  ListTile(
-                    minTileHeight: 56,
+                  _LanguageOption(
+                    label: choice.label,
                     selected: choice == current,
-                    selectedColor: colors.textForeground,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s4,
-                    ),
-                    title: Text(
-                      choice.label,
-                      style: AppTypography.body.copyWith(
-                        fontWeight: choice == current
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                      ),
-                    ),
-                    trailing: choice == current
-                        ? Icon(LucideIcons.check, color: colors.success)
-                        : null,
                     onTap: () => Navigator.of(sheetContext).pop(choice),
                   ),
               ],
@@ -68,3 +53,60 @@ Future<LanguageChoice?> showLanguageSheet(
     );
   },
 );
+
+/// Uma linha da folha: o nome do idioma ocupa o espaço livre e o sinal de
+/// escolhido fica no fim da linha, à direita, num espaço sempre reservado
+/// (o nome não muda de lugar ao escolher).
+class _LanguageOption extends StatelessWidget {
+  const _LanguageOption({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    return Semantics(
+      button: true,
+      selected: selected,
+      inMutuallyExclusiveGroup: true,
+      child: InkWell(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s4,
+              vertical: AppSpacing.s2,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: AppTypography.body.copyWith(
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: colors.textForeground,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s3),
+                SizedBox.square(
+                  dimension: 24,
+                  child: selected
+                      ? Icon(LucideIcons.check, color: colors.success)
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -628,10 +628,12 @@ void main() {
       await openSheet(tester, 'Idioma');
 
       for (final option in ['Idioma do celular', 'Português', 'English']) {
-        final Finder tile = find.ancestor(
-          of: find.text(option).last,
-          matching: find.byType(ListTile),
-        );
+        final Finder tile = find
+            .ancestor(
+              of: find.text(option).last,
+              matching: find.byType(InkWell),
+            )
+            .first;
         expect(tester.getSize(tile).height, greaterThanOrEqualTo(56));
       }
       expect(find.byIcon(LucideIcons.check), findsOneWidget);

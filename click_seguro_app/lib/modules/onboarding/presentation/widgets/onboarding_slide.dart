@@ -9,11 +9,13 @@ import 'package:flutter/material.dart';
 
 /// Slide do onboarding no redesign 2.0 (Figma, quadro 02): ilustração
 /// grande, que flutua devagar, e o título e o texto alinhados à esquerda.
-/// Rola quando a letra grande não cabe.
+/// Rola quando a letra grande não cabe. [listen] (o "Ouvir") fica logo
+/// abaixo do título, antes do texto.
 class OnboardingSlide extends StatelessWidget {
-  const OnboardingSlide({super.key, required this.content});
+  const OnboardingSlide({super.key, required this.content, this.listen});
 
   final OnboardingPageContent content;
+  final Widget? listen;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,10 @@ class OnboardingSlide extends StatelessWidget {
                   color: context.colors.textForeground,
                 ),
               ),
+              if (listen case final Widget listen) ...[
+                const SizedBox(height: AppSpacing.s3),
+                listen,
+              ],
               const SizedBox(height: AppSpacing.s3),
               Text(
                 content.descriptionKey.tr(),
