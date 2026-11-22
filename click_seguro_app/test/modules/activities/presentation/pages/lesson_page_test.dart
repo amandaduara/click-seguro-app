@@ -185,6 +185,66 @@ void main() {
       );
     });
 
+    testWidgets('módulo já concluído, aberto pela lista: tentativa nova, '
+        'barra vazia na pergunta 1 (specs/025)', (tester) async {
+      useModule(answered: {'l1', 'l2', 'l3'});
+      await open(tester);
+
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      final SafeSegmentedProgress progress = tester
+          .widget<SafeSegmentedProgress>(find.byType(SafeSegmentedProgress));
+      expect(progress.completed, [false, false, false]);
+      expect(progress.current, 0);
+      expect(answeredSegments(tester), 0);
+      expect(
+        tester
+            .widget<SafeButton>(find.widgetWithText(SafeButton, 'Próxima'))
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('módulo feito pela metade: as feitas continuam feitas', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
+      expect(
+        tester
+            .widget<SafeSegmentedProgress>(find.byType(SafeSegmentedProgress))
+            .completed,
+        [true, true, false],
+      );
+    });
+
+    testWidgets('o cabeçalho sobe com a rolagem; o rodapé fica fixo '
+        '(specs/025)', (tester) async {
+      tester.view
+        ..physicalSize = const Size(1080, 1600)
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final Finder title = find.descendant(
+        of: find.byType(SafePageHeader),
+        matching: find.text('Golpes Digitais'),
+      );
+      await open(tester);
+      final double titleTop = tester.getTopLeft(title).dy;
+
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+      await tester.pumpAndSettle();
+
+      final Rect screen = Offset.zero & tester.view.physicalSize / 3;
+      // O título subiu com o conteúdo e saiu da tela.
+      expect(tester.getRect(title).bottom, lessThan(titleTop));
+      expect(tester.getRect(title).bottom, lessThanOrEqualTo(0));
+      expect(title.hitTestable(), findsNothing);
+      final Rect confirm = tester.getRect(find.text('Confirmar resposta'));
+      expect(screen.contains(confirm.center), isTrue);
+      expect(find.text('Confirmar resposta').hitTestable(), findsOneWidget);
+    });
+
     testWidgets('abre na primeira pergunta não respondida', (tester) async {
       useModule(answered: {'l1'});
       await open(tester);
@@ -288,40 +348,41 @@ void main() {
         tester.widget<SafeButton>(find.widgetWithText(SafeButton, label));
 
     testWidgets('anterior e próxima mudam a posição', (tester) async {
-      useModule(answered: {'l1', 'l2', 'l3'});
+      useModule(answered: {'l1', 'l2'});
       await open(tester);
-
-      await tester.tap(find.text('Próxima'));
-      await tester.pumpAndSettle();
-      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
 
       await tester.tap(find.text('Anterior'));
       await tester.pumpAndSettle();
-      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
+
+      await tester.tap(find.text('Próxima'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
     });
 
     testWidgets('a pergunta desliza: avançar e voltar em sentidos opostos '
         '(specs/022 FR-027)', (tester) async {
-      useModule(answered: {'l1', 'l2', 'l3'});
+      useModule(answered: {'l1', 'l2'});
       await open(tester);
       bool reverse() => tester
           .widget<PageTransitionSwitcher>(find.byType(PageTransitionSwitcher))
           .reverse;
 
-      await tester.tap(find.text('Próxima'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-      expect(find.text('Pergunta 1 de 3'), findsOneWidget, reason: 'saindo');
-      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
-      expect(reverse(), isFalse);
-      await tester.pumpAndSettle();
-      expect(find.text('Pergunta 1 de 3'), findsNothing);
-
       await tester.tap(find.text('Anterior'));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget, reason: 'saindo');
+      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
       expect(reverse(), isTrue);
       await tester.pumpAndSettle();
-      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      expect(find.text('Pergunta 3 de 3'), findsNothing);
+
+      await tester.tap(find.text('Próxima'));
+      await tester.pump();
+      expect(reverse(), isFalse);
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
     });
 
     testWidgets('"Próxima" desativado sem resposta; "Anterior" na primeira', (
@@ -453,12 +514,12 @@ void main() {
     testWidgets('trocar de pergunta para a leitura e lê a nova', (
       tester,
     ) async {
-      useModule(answered: {'l1', 'l2', 'l3'});
+      useModule(answered: {'l1', 'l2'});
       preferences.value = preferences.value.copyWith(autoReadAloud: true);
       await open(tester);
       final int stopsBefore = tts.stopCalls;
 
-      await tester.tap(find.text('Próxima'));
+      await tester.tap(find.text('Anterior'));
       await tester.pumpAndSettle();
 
       expect(tts.stopCalls, greaterThan(stopsBefore));
@@ -823,8 +884,11 @@ void main() {
     testWidgets(
       'respondida pelo serviço: alternativas tocáveis e "Confirmar"',
       (tester) async {
-        useModule(answered: {'l1', 'l2', 'l3'});
+        // Abre na 2 (1 e 3 respondidas) e volta à 1, respondida antes.
+        useModule(answered: {'l1', 'l3'});
         await open(tester);
+        await tester.tap(find.text('Anterior'));
+        await tester.pumpAndSettle();
 
         expect(find.text('Confirmar resposta'), findsOneWidget);
         expect(find.text('Responder de novo'), findsNothing);

@@ -69,7 +69,8 @@ class LessonController extends ChangeNotifier {
 
   String? _moduleId;
 
-  /// Refazendo o módulo: o progresso mostra só esta tentativa (specs/025).
+  /// Tentativa nova (refazer ou módulo já todo concluído): o progresso
+  /// mostra só esta tentativa (specs/025).
   bool _retaking = false;
 
   /// Lições respondidas nesta tentativa de refazer.
@@ -98,10 +99,7 @@ class LessonController extends ChangeNotifier {
 
   /// Todas as perguntas válidas respondidas: o fim do módulo (R1 de
   /// specs/020; RN-005).
-  bool get isModuleCompleted {
-    final List<LessonEntity> lessons = _module?.lessons ?? const [];
-    return lessons.isNotEmpty && lessons.every((lesson) => lesson.isCompleted);
-  }
+  bool get isModuleCompleted => _module?.isFullyCompleted ?? false;
 
   bool get isLastLesson {
     final int total = _module?.lessons.length ?? 0;
@@ -187,19 +185,24 @@ class LessonController extends ChangeNotifier {
   bool _disposed = false;
 
   /// Carrega e começa na primeira pergunta ainda não respondida (FR-004).
-  /// Com [retake] (refazer o módulo), as respostas antigas do serviço não
-  /// contam: começa na primeira, com o progresso zerado (specs/025).
+  /// Com [retake] (refazer o módulo) ou com o módulo já todo concluído, é
+  /// uma tentativa nova: as respostas antigas do serviço não contam e começa
+  /// na primeira, com o progresso zerado (specs/025).
   Future<void> load(String moduleId, {bool retake = false}) =>
       _load(moduleId, retake: retake, keepAttempt: false);
 
+  /// Com [keepAttempt] (recarga depois de uma resposta recusada), segue a
+  /// mesma tentativa, com as respostas dadas nela.
   Future<void> _load(
     String moduleId, {
     required bool retake,
     required bool keepAttempt,
   }) async {
     _moduleId = moduleId;
-    _retaking = retake;
-    if (!retake || !keepAttempt) _attemptAnswered.clear();
+    if (!keepAttempt) {
+      _retaking = retake;
+      _attemptAnswered.clear();
+    }
     _answers.clear();
     _status = LessonStatus.loading;
     _notify();
@@ -212,7 +215,8 @@ class LessonController extends ChangeNotifier {
             : LessonStatus.error;
       },
       (loaded) {
-        final ModuleDetailEntity module = retake
+        if (!keepAttempt) _retaking = loaded.startsNewAttempt(retake: retake);
+        final ModuleDetailEntity module = _retaking
             ? loaded.forRetake(answeredInAttempt: _attemptAnswered)
             : loaded;
         _module = module;

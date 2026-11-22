@@ -79,6 +79,10 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   /// Módulo cujas imagens já foram para o cache.
   Object? _precachedModule;
 
+  /// A rolagem da pergunta, com o cabeçalho dentro: cada pergunta que
+  /// aparece começa no topo, com o título e o enunciado (specs/025).
+  final ScrollController _scroll = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -105,6 +109,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     _controller.removeListener(_onLessonChanged);
     _readAloud.removeListener(_maybeAutoRead);
     _readAloud.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -118,6 +123,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       _shownIndex = index;
       _autoReadDone = false;
       unawaited(_readAloud.stop());
+      if (_scroll.hasClients) _scroll.jumpTo(0);
     }
     _shownIndex = index;
     _maybeAutoRead();
@@ -288,53 +294,76 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   Widget build(BuildContext context) {
     final LessonController controller = context.watch<LessonController>();
     final LessonEntity? lesson = controller.current;
-    return SafePageScaffold(
-      header: SafePageHeader(
-        title:
-            controller.module?.title ?? AppStrings.activitiesModuleTitle.tr(),
+    final SafePageHeader header = SafePageHeader(
+      title: controller.module?.title ?? AppStrings.activitiesModuleTitle.tr(),
+    );
+    final Widget? state = switch (controller.status) {
+      LessonStatus.loading => const SafeLoadingState(
+        layout: SafeLoadingLayout.detail,
       ),
-      body: switch (controller.status) {
-        LessonStatus.loading => const SafeLoadingState(
-          layout: SafeLoadingLayout.detail,
-        ),
-        LessonStatus.error => SafeErrorState(
-          message: AppStrings.activitiesErrorTitle.tr(),
-          onRetry: () => controller.load(widget.moduleId),
-        ),
-        LessonStatus.empty => SafeEmptyState(
-          message: AppStrings.activitiesModuleUnavailable.tr(),
-        ),
-        LessonStatus.loaded when lesson != null => Column(
+      LessonStatus.error => SafeErrorState(
+        message: AppStrings.activitiesErrorTitle.tr(),
+        onRetry: () => controller.load(widget.moduleId),
+      ),
+      LessonStatus.empty => SafeEmptyState(
+        message: AppStrings.activitiesModuleUnavailable.tr(),
+      ),
+      LessonStatus.loaded when lesson != null => null,
+      _ => const SizedBox.shrink(),
+    };
+    if (state != null) return SafePageScaffold(header: header, body: state);
+    // Na pergunta, o cabeçalho sobe junto com a rolagem; só o rodapé com
+    // "Confirmar resposta", "Anterior" e "Próxima" fica fixo (specs/025).
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: PageTransitionSwitcher(
-                duration: AppMotion.of(context).long,
-                reverse: _backwards,
-                transitionBuilder: (child, primary, secondary) =>
-                    SharedAxisTransition(
-                      animation: primary,
-                      secondaryAnimation: secondary,
-                      transitionType: SharedAxisTransitionType.horizontal,
-                      fillColor: Colors.transparent,
-                      child: child,
+              child: SingleChildScrollView(
+                controller: _scroll,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    header,
+                    PageTransitionSwitcher(
+                      duration: AppMotion.of(context).long,
+                      reverse: _backwards,
+                      // A pergunta que entra começa no topo, logo abaixo do
+                      // cabeçalho, mesmo menor que a que sai.
+                      layoutBuilder: (entries) => Stack(
+                        alignment: Alignment.topCenter,
+                        children: entries,
+                      ),
+                      transitionBuilder: (child, primary, secondary) =>
+                          SharedAxisTransition(
+                            animation: primary,
+                            secondaryAnimation: secondary,
+                            transitionType: SharedAxisTransitionType.horizontal,
+                            fillColor: Colors.transparent,
+                            child: child,
+                          ),
+                      child: _LessonBody(
+                        key: ValueKey(lesson!.id),
+                        lesson: lesson,
+                        lessons: controller.module!.lessons,
+                        currentIndex: controller.currentIndex,
+                        selectedOptionId: controller.selectedOptionId,
+                        result: controller.currentResult,
+                        onSelect: controller.canSelect
+                            ? controller.select
+                            : null,
+                        listen: _listenButton(lesson.spokenParts),
+                      ),
                     ),
-                child: _LessonBody(
-                  key: ValueKey(lesson.id),
-                  lesson: lesson,
-                  lessons: controller.module!.lessons,
-                  currentIndex: controller.currentIndex,
-                  selectedOptionId: controller.selectedOptionId,
-                  result: controller.currentResult,
-                  onSelect: controller.canSelect ? controller.select : null,
-                  listen: _listenButton(lesson.spokenParts),
+                  ],
                 ),
               ),
             ),
             ConfirmAnswerFooter(controller: controller, onConfirm: _confirm),
           ],
         ),
-        _ => const SizedBox.shrink(),
-      },
+      ),
     );
   }
 }
@@ -372,64 +401,65 @@ class _LessonBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
     final String? image = lesson.imageUrl;
-    return ListView(
-      // Cada pergunta que aparece começa no topo, com o enunciado.
-      key: ValueKey(lesson.id),
+    return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s5,
         AppSpacing.s4,
         AppSpacing.s5,
         AppSpacing.s6,
       ),
-      children: [
-        LessonProgressIndicator(lessons: lessons, currentIndex: currentIndex),
-        const SizedBox(height: AppSpacing.s4),
-        if (image != null)
-          ExcludeSemantics(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: maxImageHeight),
-              child: ClipRRect(
-                borderRadius: AppSpacing.radiusLg,
-                // O espaço depois da imagem só existe com ela (FR-013).
-                child: SafeNetworkImage(
-                  url: image,
-                  fit: BoxFit.contain,
-                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-                  placeholder: const SizedBox.shrink(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LessonProgressIndicator(lessons: lessons, currentIndex: currentIndex),
+          const SizedBox(height: AppSpacing.s4),
+          if (image != null)
+            ExcludeSemantics(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: maxImageHeight),
+                child: ClipRRect(
+                  borderRadius: AppSpacing.radiusLg,
+                  // O espaço depois da imagem só existe com ela (FR-013).
+                  child: SafeNetworkImage(
+                    url: image,
+                    fit: BoxFit.contain,
+                    padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                    placeholder: const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ),
-          ),
-        Semantics(
-          header: true,
-          child: Text(
-            lesson.question,
-            style: AppTypography.title2.copyWith(
-              height: 1.3,
-              color: colors.textForeground,
-            ),
-          ),
-        ),
-        // "Ouvir" logo abaixo do enunciado, antes das alternativas: perto do
-        // que ele lê, sem rolar (regra do app, specs/025).
-        const SizedBox(height: AppSpacing.s3),
-        listen,
-        const SizedBox(height: AppSpacing.s5),
-        for (final (index, option) in lesson.options.indexed)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s3),
-            child: LessonOptionCard(
-              number: index + 1,
-              text: option.text,
-              state: lesson.optionState(
-                option,
-                selectedOptionId: selectedOptionId,
-                result: result,
+          Semantics(
+            header: true,
+            child: Text(
+              lesson.question,
+              style: AppTypography.title2.copyWith(
+                height: 1.3,
+                color: colors.textForeground,
               ),
-              onTap: onSelect == null ? null : () => onSelect!(option.id),
             ),
           ),
-      ],
+          // "Ouvir" logo abaixo do enunciado, antes das alternativas: perto do
+          // que ele lê, sem rolar (regra do app, specs/025).
+          const SizedBox(height: AppSpacing.s3),
+          listen,
+          const SizedBox(height: AppSpacing.s5),
+          for (final (index, option) in lesson.options.indexed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+              child: LessonOptionCard(
+                number: index + 1,
+                text: option.text,
+                state: lesson.optionState(
+                  option,
+                  selectedOptionId: selectedOptionId,
+                  result: result,
+                ),
+                onTap: onSelect == null ? null : () => onSelect!(option.id),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

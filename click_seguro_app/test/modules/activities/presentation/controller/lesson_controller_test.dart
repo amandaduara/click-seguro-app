@@ -60,7 +60,8 @@ void main() {
     expect(controller.currentIndex, 1);
   });
 
-  test('todas respondidas: começa na primeira', () async {
+  test('todas respondidas: tentativa nova, na primeira e sem progresso '
+      '(specs/025)', () async {
     controller = build([
       Right(module(answered: {'l1', 'l2', 'l3'})),
     ]);
@@ -68,6 +69,63 @@ void main() {
     await controller.load('m1');
 
     expect(controller.currentIndex, 0);
+    expect(
+      [for (final l in controller.module!.lessons) l.isCompleted],
+      [false, false, false],
+    );
+    expect(controller.isModuleCompleted, isFalse);
+    expect(controller.canGoNext, isFalse);
+  });
+
+  test('módulo concluído: só as respostas desta tentativa contam', () async {
+    controller = build([
+      Right(module(answered: {'l1', 'l2', 'l3'})),
+    ]);
+    await controller.load('m1');
+
+    controller.select('l1-o1');
+    await controller.confirm();
+
+    expect(
+      [for (final l in controller.module!.lessons) l.isCompleted],
+      [true, false, false],
+    );
+    expect(controller.canGoNext, isTrue);
+  });
+
+  test('módulo concluído: recusada recarrega na mesma tentativa', () async {
+    controller = build([
+      Right(module(answered: {'l1', 'l2', 'l3'})),
+      Right(module(answered: {'l1', 'l2', 'l3'})),
+    ]);
+    await controller.load('m1');
+    controller.select('l1-o1');
+    await controller.confirm();
+    controller.goNext();
+    repository.answerResults = [const Left(AnswerRejectedFailure())];
+
+    controller.select('l2-o1');
+    expect(await controller.confirm(), AnswerAttempt.rejected);
+
+    expect(
+      [for (final l in controller.module!.lessons) l.isCompleted],
+      [true, false, false],
+    );
+    expect(controller.currentIndex, 1);
+  });
+
+  test('feito pela metade: as feitas continuam feitas (specs/025)', () async {
+    controller = build([
+      Right(module(answered: {'l1', 'l2'})),
+    ]);
+
+    await controller.load('m1');
+
+    expect(controller.currentIndex, 2);
+    expect(
+      [for (final l in controller.module!.lessons) l.isCompleted],
+      [true, true, false],
+    );
   });
 
   test('sem lições → empty', () async {
@@ -111,20 +169,23 @@ void main() {
   group('navegação (US2)', () {
     test('com tudo respondido: vai e volta pelos limites', () async {
       controller = build([
-        Right(module(answered: {'l1', 'l2', 'l3'})),
+        Right(module(answered: {'l1', 'l2'})),
       ]);
       await controller.load('m1');
+      controller.select('l3-o1');
+      await controller.confirm();
 
-      expect(controller.canGoPrevious, isFalse);
-      controller.goNext();
-      controller.goNext();
       expect(controller.currentIndex, 2);
       expect(controller.canGoNext, isFalse);
       controller.goPrevious();
       controller.goPrevious();
       expect(controller.currentIndex, 0);
+      expect(controller.canGoPrevious, isFalse);
       controller.goPrevious();
       expect(controller.currentIndex, 0);
+      controller.goNext();
+      controller.goNext();
+      expect(controller.currentIndex, 2);
     });
 
     test('só avança com a atual respondida', () async {
@@ -145,9 +206,14 @@ void main() {
 
     test('três "Próxima" seguidos param na última', () async {
       controller = build([
-        Right(module(answered: {'l1', 'l2', 'l3'})),
+        Right(module(answered: {'l1', 'l2'})),
       ]);
       await controller.load('m1');
+      controller.select('l3-o1');
+      await controller.confirm();
+      controller
+        ..goPrevious()
+        ..goPrevious();
 
       controller
         ..goNext()
@@ -358,9 +424,10 @@ void main() {
       'respondida antes da visita: escolhe de novo, "Próxima" ativo',
       () async {
         controller = build([
-          Right(module(answered: {'l1', 'l2', 'l3'})),
+          Right(module(answered: {'l1', 'l3'})),
         ]);
         await controller.load('m1');
+        controller.goPrevious();
 
         expect(controller.current!.isCompleted, isTrue);
         expect(controller.currentResult, isNull);
@@ -494,13 +561,14 @@ void main() {
       expect(controller.isModuleCompleted, isTrue);
     });
 
-    test('todas respondidas pelo serviço', () async {
+    test('todas respondidas pelo serviço: tentativa nova, ainda não '
+        'concluída (specs/025)', () async {
       controller = build([
         Right(module(answered: {'l1', 'l2', 'l3'})),
       ]);
       await controller.load('m1');
 
-      expect(controller.isModuleCompleted, isTrue);
+      expect(controller.isModuleCompleted, isFalse);
     });
   });
 }
