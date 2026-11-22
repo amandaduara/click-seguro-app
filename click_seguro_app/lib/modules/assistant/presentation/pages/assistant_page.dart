@@ -345,25 +345,17 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
         onSubmit: _submitChat,
         onCamera: _openCamera,
       );
-      final compact =
-          constraints.maxHeight < 480 ||
-          MediaQuery.textScalerOf(context).scale(1) > 1.5;
-      if (compact) {
-        final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-        return Column(
-          children: [
-            Expanded(flex: keyboardOpen ? 1 : 2, child: messages),
-            Expanded(
-              flex: keyboardOpen ? 2 : 1,
-              child: SingleChildScrollView(child: composer),
-            ),
-          ],
-        );
-      }
+      // A mesma estrutura em qualquer altura: trocar de layout quando o
+      // teclado abria recriava o campo, que perdia o foco e fechava o
+      // teclado. Com pouca altura ou letra grande, o rodapé fica limitado à
+      // metade da área e rola.
       return Column(
         children: [
           Expanded(child: messages),
-          composer,
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: constraints.maxHeight / 2),
+            child: SingleChildScrollView(child: composer),
+          ),
         ],
       );
     },

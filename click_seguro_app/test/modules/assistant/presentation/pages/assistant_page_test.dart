@@ -128,6 +128,41 @@ void main() {
   Future<void> open(WidgetTester tester) =>
       pumpLocalized(tester, router: router, theme: AppTheme.lightTheme);
 
+  // Erro visto no aparelho: ao abrir o teclado, a área ficava baixa, a tela
+  // trocava de layout e recriava o campo, que perdia o foco e fechava o
+  // teclado.
+  testWidgets('abrir o teclado não recria o campo nem tira o foco', (
+    tester,
+  ) async {
+    await session.saveSession(
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      email: 'ana@example.com',
+    );
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await open(tester);
+    final Finder input = find.byKey(const ValueKey('assistant-chat-input'));
+    final Finder editable = find.descendant(
+      of: input,
+      matching: find.byType(EditableText),
+    );
+
+    await tester.tap(input);
+    await tester.pump();
+    final Element before = tester.element(editable);
+    expect(tester.widget<EditableText>(editable).focusNode.hasFocus, isTrue);
+
+    // O teclado ocupa metade da tela.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 400);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+
+    expect(tester.element(editable), same(before));
+    expect(tester.widget<EditableText>(editable).focusNode.hasFocus, isTrue);
+  });
+
   // Leitura automática (validação da usuária, specs/024): como nas outras
   // telas, com a opção ligada a resposta e o resultado são lidos.
   group('leitura automática', () {

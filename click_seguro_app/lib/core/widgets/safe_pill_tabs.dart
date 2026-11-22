@@ -29,7 +29,12 @@ class SafePillTabs extends StatelessWidget {
     final AppMotion motion = AppMotion.of(context);
     final bool highContrast = colors.shadow.isEmpty;
     final int count = tabs.length;
-    final double x = count < 2 ? 0 : -1 + 2 * selectedIndex / (count - 1);
+    // Nenhuma aba selecionada (ex.: o Histórico do Assistente): sem
+    // indicador, em vez de desenhá-lo fora do trilho.
+    final bool hasSelection = selectedIndex >= 0 && selectedIndex < count;
+    final double x = count < 2 || !hasSelection
+        ? 0
+        : -1 + 2 * selectedIndex / (count - 1);
     return Container(
       constraints: const BoxConstraints(minHeight: 56),
       // 4 + aba de 48 + 4: os 56 do trilho, com cada aba tocável em 48
@@ -42,27 +47,28 @@ class SafePillTabs extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Positioned.fill(
-            child: AnimatedAlign(
-              alignment: Alignment(x, 0),
-              duration: motion.medium,
-              curve: AppMotion.standard,
-              child: FractionallySizedBox(
-                widthFactor: 1 / count,
-                heightFactor: 1,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: colors.card,
-                    borderRadius: AppSpacing.radiusFull,
-                    boxShadow: colors.shadow,
-                    border: highContrast
-                        ? Border.all(color: colors.border, width: 2)
-                        : null,
+          if (hasSelection)
+            Positioned.fill(
+              child: AnimatedAlign(
+                alignment: Alignment(x, 0),
+                duration: motion.medium,
+                curve: AppMotion.standard,
+                child: FractionallySizedBox(
+                  widthFactor: 1 / count,
+                  heightFactor: 1,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      borderRadius: AppSpacing.radiusFull,
+                      boxShadow: colors.shadow,
+                      border: highContrast
+                          ? Border.all(color: colors.border, width: 2)
+                          : null,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           Row(
             children: [
               for (int i = 0; i < count; i++)
