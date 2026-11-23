@@ -563,6 +563,32 @@ void main() {
       expect(tester.getBottomLeft(find.byType(BrandWave)).dy, screen);
     });
 
+    // Revisão da branch (item 1): a onda fica atrás do teclado, mas o campo
+    // com foco tem que aparecer acima dele.
+    testWidgets('com o teclado aberto, o campo com foco fica acima dele', (
+      tester,
+    ) async {
+      const double keyboard = 300;
+      tester.view
+        ..physicalSize = const Size(1080, 1920)
+        ..devicePixelRatio = 3
+        ..viewInsets = const FakeViewPadding(bottom: keyboard * 3);
+      addTearDown(tester.view.reset);
+
+      await pumpLogin(tester);
+      await tester.tap(registerTab);
+      await tester.pumpAndSettle();
+      await tester.showKeyboard(field('Digite sua senha'));
+      await tester.pumpAndSettle();
+
+      final double screen = tester.getSize(find.byType(Scaffold)).height;
+      expect(
+        tester.getBottomLeft(field('Digite sua senha')).dy,
+        lessThanOrEqualTo(screen - keyboard),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets(
       'fonte 2× numa tela baixa: o fim rola até ficar acima da onda',
       (tester) async {

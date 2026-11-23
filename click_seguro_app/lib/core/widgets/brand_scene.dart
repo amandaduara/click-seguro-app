@@ -1,8 +1,11 @@
 import 'dart:math' as math;
 
+import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/brand_mark.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 /// Geometria do fim da splash que outras telas repetem (specs/026 R2): onde a
@@ -146,4 +149,28 @@ class BrandWavePainter extends CustomPainter {
   @override
   bool shouldRepaint(BrandWavePainter oldDelegate) =>
       front != oldDelegate.front || glow != oldDelegate.glow;
+}
+
+/// O nome do app no fim da splash (título de tela, centralizado).
+class BrandName extends StatelessWidget {
+  const BrandName({super.key});
+
+  @override
+  Widget build(BuildContext context) => Text(
+    AppStrings.appTitle.tr(),
+    textAlign: TextAlign.center,
+    style: AppTypography.display.copyWith(color: context.colors.textForeground),
+  );
+}
+
+/// O slogan no fim da splash, [BrandScene.taglineGap] abaixo do nome.
+class BrandTagline extends StatelessWidget {
+  const BrandTagline({super.key});
+
+  @override
+  Widget build(BuildContext context) => Text(
+    AppStrings.splashTagline.tr(),
+    textAlign: TextAlign.center,
+    style: AppTypography.bodyLarge.copyWith(color: context.colors.textBody),
+  );
 }

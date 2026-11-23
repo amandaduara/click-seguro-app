@@ -15,6 +15,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 class TermsPage extends StatelessWidget {
   const TermsPage({super.key});
 
+  /// Ícone, título e texto de cada assunto; o último leva à Privacidade.
   static const List<(IconData, String, String)> _topics = [
     (
       LucideIcons.info,
@@ -59,15 +60,12 @@ class TermsPage extends StatelessWidget {
             ),
           ),
         ),
-        for (final (icon, title, body) in _topics)
+        for (final (index, (icon, title, body)) in _topics.indexed)
           SettingsTopicCard(
             icon: icon,
             title: title.tr(),
             body: body.tr(),
-            // "Seus dados" leva à Privacidade.
-            child: title == AppStrings.settingsTermsDataTitle
-                ? const _SeePrivacyLink()
-                : null,
+            child: index == _topics.length - 1 ? const _SeePrivacyLink() : null,
           ),
       ],
     );

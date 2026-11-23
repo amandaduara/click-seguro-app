@@ -1,13 +1,12 @@
-import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
-import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/brand_mark.dart';
 import 'package:click_seguro_app/core/widgets/brand_scene.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 /// Linha do tempo da passagem da splash para o login (specs/026 R1).
+/// Tempos fixos da passagem aprovada (fora da escala de `AppMotion`, como a
+/// `SplashTimeline`); o movimento reduzido pula a abertura inteira.
 abstract final class _LoginIntroTimeline {
   static const Duration total = Duration(milliseconds: 1250);
 
@@ -164,26 +163,15 @@ class _SplashTitle extends StatelessWidget {
   const _SplashTitle();
 
   @override
-  Widget build(BuildContext context) {
-    final AppPalette colors = context.colors;
-    return ExcludeSemantics(
-      child: Column(
-        children: [
-          Text(
-            AppStrings.appTitle.tr(),
-            textAlign: TextAlign.center,
-            style: AppTypography.display.copyWith(color: colors.textForeground),
-          ),
-          const SizedBox(height: BrandScene.taglineGap),
-          Text(
-            AppStrings.splashTagline.tr(),
-            textAlign: TextAlign.center,
-            style: AppTypography.bodyLarge.copyWith(color: colors.textBody),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const ExcludeSemantics(
+    child: Column(
+      children: [
+        BrandName(),
+        SizedBox(height: BrandScene.taglineGap),
+        BrandTagline(),
+      ],
+    ),
+  );
 }
 
 class _LoginIntroScope extends InheritedWidget {
