@@ -153,7 +153,9 @@ void main() {
     });
 
     test('cadastro só habilita com a senha cumprindo as 5 regras', () {
-      controller.setMode(AuthMode.register);
+      controller
+        ..setMode(AuthMode.register)
+        ..setTermsAccepted(true);
 
       controller.updateForm(
         name: 'Maria Silva',
@@ -180,7 +182,9 @@ void main() {
     });
 
     test('cadastro com sucesso marca authenticated', () async {
-      controller.setMode(AuthMode.register);
+      controller
+        ..setMode(AuthMode.register)
+        ..setTermsAccepted(true);
 
       await submitRegister();
 
@@ -191,7 +195,9 @@ void main() {
 
     test('e-mail duplicado fica em failure e no modo cadastro', () async {
       repository.registerResult = const Left(EmailAlreadyExistsFailure());
-      controller.setMode(AuthMode.register);
+      controller
+        ..setMode(AuthMode.register)
+        ..setTermsAccepted(true);
 
       await submitRegister();
 
@@ -201,13 +207,107 @@ void main() {
 
     test('conta criada sem login volta ao modo entrar com o aviso', () async {
       repository.registerResult = const Left(AccountCreatedFailure());
-      controller.setMode(AuthMode.register);
+      controller
+        ..setMode(AuthMode.register)
+        ..setTermsAccepted(true);
 
       await submitRegister();
 
       expect(controller.mode, AuthMode.login);
       expect(controller.failure, isA<AccountCreatedFailure>());
       expect(controller.authenticated, isFalse);
+    });
+  });
+
+  // specs/026 data-model §1: o aceite libera só o cadastro, sobrevive à
+  // troca de abas e some quando a tela abre de novo (reset).
+  group('aceite dos termos', () {
+    void fillValidRegistration() {
+      controller
+        ..setMode(AuthMode.register)
+        ..updateForm(
+          name: 'Maria Silva',
+          email: 'maria@exemplo.com',
+          password: 'Senha@123',
+        );
+    }
+
+    Future<void> submitRegister() => controller.submit(
+      name: 'Maria Silva',
+      email: 'maria@exemplo.com',
+      password: 'Senha@123',
+    );
+
+    test('começa desmarcado', () {
+      expect(controller.termsAccepted, isFalse);
+    });
+
+    test('cadastro válido só habilita com o aceite', () {
+      fillValidRegistration();
+      expect(controller.canSubmit, isFalse);
+
+      controller.setTermsAccepted(true);
+      expect(controller.canSubmit, isTrue);
+
+      controller.setTermsAccepted(false);
+      expect(controller.canSubmit, isFalse);
+    });
+
+    test('no login o aceite não importa', () {
+      controller.updateForm(email: 'maria@exemplo.com', password: 'x');
+
+      expect(controller.termsAccepted, isFalse);
+      expect(controller.canSubmit, isTrue);
+    });
+
+    test('avisa quem escuta só quando muda', () {
+      var notified = 0;
+      controller.addListener(() => notified++);
+
+      controller
+        ..setTermsAccepted(true)
+        ..setTermsAccepted(true);
+
+      expect(notified, 1);
+    });
+
+    test('trocar de aba mantém o aceite', () {
+      fillValidRegistration();
+      controller
+        ..setTermsAccepted(true)
+        ..setMode(AuthMode.login)
+        ..setMode(AuthMode.register);
+
+      expect(controller.termsAccepted, isTrue);
+      expect(controller.canSubmit, isTrue);
+    });
+
+    test('reset (a tela abre de novo) desmarca', () {
+      controller
+        ..setTermsAccepted(true)
+        ..reset();
+
+      expect(controller.termsAccepted, isFalse);
+    });
+
+    test('enviar o cadastro sem aceite não chama o serviço', () async {
+      fillValidRegistration();
+
+      await submitRegister();
+
+      expect(repository.registerCalls, 0);
+      expect(controller.authenticated, isFalse);
+    });
+
+    test('falha no cadastro mantém o aceite para tentar de novo', () async {
+      repository.registerResult = const Left(EmailAlreadyExistsFailure());
+      fillValidRegistration();
+      controller.setTermsAccepted(true);
+
+      await submitRegister();
+
+      expect(repository.registerCalls, 1);
+      expect(controller.termsAccepted, isTrue);
     });
   });
 

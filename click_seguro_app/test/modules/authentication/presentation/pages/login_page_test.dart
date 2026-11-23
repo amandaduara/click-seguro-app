@@ -6,6 +6,7 @@ import 'package:click_seguro_app/modules/authentication/domain/failures/auth_fai
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/widgets/terms_acceptance.dart';
 import 'package:click_seguro_app/core/widgets/animated_reveal.dart';
 import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:flutter/material.dart';
@@ -28,12 +29,14 @@ void main() {
     controller = buildAuthenticationController(repository);
   });
 
+  late GoRouter router;
+
   Future<void> pumpLogin(
     WidgetTester tester, {
     LoginPage page = const LoginPage(),
   }) => pumpLocalized(
     tester,
-    router: GoRouter(
+    router: router = GoRouter(
       initialLocation: '/login',
       routes: [
         GoRoute(
@@ -45,6 +48,17 @@ void main() {
         GoRoute(
           path: '/activities',
           builder: (_, _) => const Text('ACTIVITIES'),
+        ),
+        GoRoute(
+          path: '/settings/terms',
+          builder: (context, _) => TextButton(
+            onPressed: () => context.push('/settings/privacy'),
+            child: const Text('TERMOS'),
+          ),
+        ),
+        GoRoute(
+          path: '/settings/privacy',
+          builder: (_, _) => const Text('PRIVACIDADE'),
         ),
       ],
     ),
@@ -61,6 +75,15 @@ void main() {
     await tester.enterText(field('seu@email.com'), email);
     await tester.enterText(field('Digite sua senha'), 'Senha@123');
     await tester.pump(); // habilita o botão com o formulário válido
+  }
+
+  /// Marca (ou desmarca) a caixa de aceite do cadastro.
+  Future<void> toggleTerms(WidgetTester tester) async {
+    final Finder box = find.byType(TermsCheckbox);
+    await tester.ensureVisible(box);
+    await tester.pumpAndSettle();
+    await tester.tap(box);
+    await tester.pumpAndSettle();
   }
 
   Future<void> tapPrimary(WidgetTester tester, String label) async {
@@ -180,6 +203,7 @@ void main() {
       await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
       await tester.enterText(field('Digite sua senha'), 'Senha@123');
       await tester.pump();
+      await toggleTerms(tester);
     }
 
     testWidgets('modo cadastro mostra nome e regras e mantém o e-mail', (
@@ -233,6 +257,7 @@ void main() {
           .disabled;
       await pumpLogin(tester);
       await openRegister(tester);
+      await toggleTerms(tester);
       await tester.enterText(field('Seu nome'), 'Maria Silva');
       await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
 
@@ -296,6 +321,136 @@ void main() {
         find.text('Conta criada. Entre com seu e-mail e senha.'),
         findsOneWidget,
       );
+    });
+  });
+
+  // specs/026 US2: aceite dos Termos de uso e da Política de privacidade.
+  group('aceite dos termos', () {
+    bool registerDisabled(WidgetTester tester) => tester
+        .widget<SafeButton>(find.widgetWithText(SafeButton, 'Criar conta').last)
+        .disabled;
+
+    Future<void> openRegisterFilled(WidgetTester tester) async {
+      await pumpLogin(tester);
+      await tester.tap(registerTab);
+      await tester.pumpAndSettle();
+      await tester.enterText(field('Seu nome'), 'Maria Silva');
+      await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
+      await tester.enterText(field('Digite sua senha'), 'Senha@123');
+      await tester.pump();
+    }
+
+    bool accepted(WidgetTester tester) =>
+        tester.widget<TermsAcceptance>(find.byType(TermsAcceptance)).accepted;
+
+    void expectFormKept(WidgetTester tester) {
+      expect(find.text('Maria Silva'), findsOneWidget);
+      expect(find.text('maria@exemplo.com'), findsOneWidget);
+      expect(find.text('Senha@123'), findsOneWidget);
+    }
+
+    Future<void> tapLink(WidgetTester tester, String text) async {
+      await tester.ensureVisible(find.byType(TermsAcceptance));
+      await tester.pumpAndSettle();
+      await tester.tapOnText(find.textRange.ofSubstring(text));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('só no cadastro, abaixo das regras da senha', (tester) async {
+      await pumpLogin(tester);
+      expect(find.byType(TermsAcceptance), findsNothing);
+
+      await tester.tap(registerTab);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TermsAcceptance), findsOneWidget);
+      expect(accepted(tester), isFalse);
+      expect(
+        tester.getTopLeft(find.byType(TermsAcceptance)).dy,
+        greaterThan(tester.getBottomLeft(find.byType(PasswordRulesList)).dy),
+      );
+    });
+
+    testWidgets('"Criar conta" só ativa com a caixa marcada', (tester) async {
+      await openRegisterFilled(tester);
+      expect(registerDisabled(tester), isTrue);
+
+      await toggleTerms(tester);
+      expect(registerDisabled(tester), isFalse);
+
+      await toggleTerms(tester);
+      expect(registerDisabled(tester), isTrue);
+    });
+
+    testWidgets('o aceite continua marcado ao trocar de aba', (tester) async {
+      await openRegisterFilled(tester);
+      await toggleTerms(tester);
+
+      await tester.tap(find.text('Entrar').first);
+      await tester.pumpAndSettle();
+      await tester.tap(registerTab);
+      await tester.pumpAndSettle();
+
+      expect(accepted(tester), isTrue);
+      expect(registerDisabled(tester), isFalse);
+    });
+
+    testWidgets('"Termos de uso" abre os Termos; ao voltar, nada se perde', (
+      tester,
+    ) async {
+      await openRegisterFilled(tester);
+      await toggleTerms(tester);
+
+      await tapLink(tester, 'Termos de uso');
+      expect(find.text('TERMOS'), findsOneWidget);
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expectFormKept(tester);
+      expect(accepted(tester), isTrue);
+    });
+
+    testWidgets('"Política de privacidade" abre a Privacidade; ao voltar, '
+        'nada se perde', (tester) async {
+      await openRegisterFilled(tester);
+
+      await tapLink(tester, 'Política de privacidade');
+      expect(find.text('PRIVACIDADE'), findsOneWidget);
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expectFormKept(tester);
+      expect(accepted(tester), isFalse);
+    });
+
+    testWidgets('Termos → Privacidade → voltar duas vezes: cadastro intacto', (
+      tester,
+    ) async {
+      await openRegisterFilled(tester);
+      await toggleTerms(tester);
+
+      await tapLink(tester, 'Termos de uso');
+      await tester.tap(find.text('TERMOS'));
+      await tester.pumpAndSettle();
+      expect(find.text('PRIVACIDADE'), findsOneWidget);
+      router.pop();
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expectFormKept(tester);
+      expect(accepted(tester), isTrue);
+    });
+
+    testWidgets('reabrir a tela desmarca a caixa', (tester) async {
+      controller.setTermsAccepted(true);
+
+      await pumpLogin(
+        tester,
+        page: const LoginPage(initialMode: AuthMode.register),
+      );
+
+      expect(accepted(tester), isFalse);
     });
   });
 
@@ -370,6 +525,7 @@ void main() {
       await tester.enterText(field('seu@email.com'), 'maria@exemplo.com');
       await tester.enterText(field('Digite sua senha'), 'Senha@123');
       await tester.pump();
+      await toggleTerms(tester);
 
       await tapPrimary(tester, 'Criar conta');
 

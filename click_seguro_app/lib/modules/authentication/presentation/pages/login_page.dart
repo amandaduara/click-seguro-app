@@ -15,6 +15,7 @@ import 'package:click_seguro_app/modules/authentication/presentation/controller/
 import 'package:click_seguro_app/modules/authentication/presentation/extensions/auth_presentation_extension.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/or_divider.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/widgets/terms_acceptance.dart';
 import 'package:click_seguro_app/modules/common/presentation/extensions/password_rule_presentation.dart';
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -303,6 +304,13 @@ class _LoginPageState extends State<LoginPage> {
                         met: controller.passwordRules.contains(rule),
                       ),
                   ],
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                TermsAcceptance(
+                  accepted: controller.termsAccepted,
+                  onChanged: controller.setTermsAccepted,
+                  onOpenTerms: () => context.push('/settings/terms'),
+                  onOpenPrivacy: () => context.push('/settings/privacy'),
                 ),
               ],
             )

@@ -91,14 +91,14 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T014 [P] [US2] Estender `test/modules/authentication/presentation/controller/authentication_controller_test.dart` com a tabela do [data-model.md](data-model.md) §1:
+- [X] T014 [P] [US2] Estender `test/modules/authentication/presentation/controller/authentication_controller_test.dart` com a tabela do [data-model.md](data-model.md) §1:
   - `termsAccepted` começa `false`;
   - no cadastro válido, `canSubmit` é `false` sem aceite e `true` com aceite;
   - no login, o aceite não importa;
   - `setMode` mantém o aceite e `reset()` o zera;
   - `submit` no cadastro sem aceite não chama o `RegisterUseCase`;
   - uma falha no cadastro mantém o aceite.
-- [ ] T015 [P] [US2] Escrever `test/modules/authentication/presentation/widgets/terms_acceptance_test.dart`:
+- [X] T015 [P] [US2] Escrever `test/modules/authentication/presentation/widgets/terms_acceptance_test.dart`:
   - desmarcada: só o contorno, cartão claro;
   - tocar no quadrado ou em "Li e aceito os" chama `onChanged(true)`;
   - marcada: visto e cartão `primarySoft` com borda `primary`;
@@ -107,7 +107,7 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
   - semântica com `checked` e o texto completo, e "Termos de uso" e "Política de privacidade" anunciados como links (analyze C1);
   - com fonte 2,0 numa tela de 360 de largura, o texto quebra em várias linhas sem estouro nem corte e a área de toque continua com pelo menos 48 × 48 (analyze C3);
   - textos em en-US.
-- [ ] T016 [P] [US2] Estender `test/modules/authentication/presentation/pages/login_page_test.dart`:
+- [X] T016 [P] [US2] Estender `test/modules/authentication/presentation/pages/login_page_test.dart`:
   - a caixa aparece só em "Criar conta", abaixo das regras;
   - "Criar conta" desativado até marcar;
   - o aceite sobrevive a Entrar → Criar conta;
@@ -117,22 +117,22 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Em `lib/modules/authentication/presentation/controller/authentication_controller.dart`:
+- [X] T017 [US2] Em `lib/modules/authentication/presentation/controller/authentication_controller.dart`:
   - `bool get termsAccepted` e `void setTermsAccepted(bool value)`;
   - `canSubmit = _formErrors.isEmpty && !_isSubmitting && (_mode == AuthMode.login || _termsAccepted)`;
   - `submit` retorna sem chamar o usecase se a condição falhar;
   - `reset()` zera o aceite e `setMode` não mexe nele.
-- [ ] T018 [US2] Criar `lib/modules/authentication/presentation/widgets/terms_acceptance.dart` (research R7):
+- [X] T018 [US2] Criar `lib/modules/authentication/presentation/widgets/terms_acceptance.dart` (research R7):
   - `StatefulWidget` com `accepted`, `onChanged`, `onOpenTerms` e `onOpenPrivacy`;
   - quadrado de 28 e canto 8 numa área de 48 × 48;
   - `Text.rich` com dois `TapGestureRecognizer` descartados no `dispose`;
   - cartão com canto 16, padding 14/16, cores de `context.colors` (FR-008);
   - `Semantics(checked:, onTap:, label:)`.
-- [ ] T019 [US2] Em `lib/modules/authentication/presentation/pages/login_page.dart`:
+- [X] T019 [US2] Em `lib/modules/authentication/presentation/pages/login_page.dart`:
   - no modo cadastro, `TermsAcceptance` depois das regras da senha, dentro do mesmo `AnimatedReveal`;
   - `onOpenTerms` → `context.push('/settings/terms')`, `onOpenPrivacy` → `context.push('/settings/privacy')`;
   - `disabled` do botão principal usa o `canSubmit` novo.
-- [ ] T020 [US2] Rodar `test/modules/authentication`: tudo verde.
+- [X] T020 [US2] Rodar `test/modules/authentication`: tudo verde.
 
 **Checkpoint**: cadastro com aceite funcionando sobre o visual atual. **Commit**: `feat(026): aceite dos Termos de uso e da Política de privacidade no cadastro`.
 
