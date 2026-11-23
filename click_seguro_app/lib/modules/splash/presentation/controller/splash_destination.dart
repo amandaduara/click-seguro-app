@@ -3,7 +3,9 @@
 enum SplashDestination {
   onboarding('/onboarding'),
   home('/home'),
-  login('/login');
+
+  /// O login faz a passagem animada a partir da splash (specs/026 R1).
+  login('/login?from=splash');
 
   const SplashDestination(this.path);
 

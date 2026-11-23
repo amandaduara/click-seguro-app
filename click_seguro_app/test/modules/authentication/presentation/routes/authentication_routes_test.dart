@@ -27,6 +27,25 @@ void main() {
     );
   });
 
+  // specs/026 FR-016 a FR-018: só a splash abre o login com a abertura.
+  test('from=splash liga a abertura', () {
+    expect(loginPageFor(Uri.parse('/login?from=splash')).fromSplash, isTrue);
+  });
+
+  test('sem from=splash, nem com outros parâmetros, não há abertura', () {
+    for (final String location in [
+      '/login',
+      '/login?mode=register&next=/activities',
+      '/login?from=onboarding',
+    ]) {
+      expect(
+        loginPageFor(Uri.parse(location)).fromSplash,
+        isFalse,
+        reason: location,
+      );
+    }
+  });
+
   test('next externo é ignorado', () {
     for (final next in ['https://x.com', '//x.com', 'activities', '']) {
       expect(

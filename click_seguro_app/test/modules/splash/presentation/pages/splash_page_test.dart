@@ -160,9 +160,15 @@ void main() {
     testWidgets('visto + sem sessão abre o login', (tester) async {
       validateSession.status = UserSessionStatus.unauthenticated;
 
-      await pumpLocalized(tester, router: buildRouter());
+      final GoRouter router = buildRouter();
+      await pumpLocalized(tester, router: router);
 
       expect(find.text('tela login'), findsOneWidget);
+      // O login faz a passagem animada só quando vem da splash (specs/026).
+      expect(
+        router.routerDelegate.currentConfiguration.uri.toString(),
+        '/login?from=splash',
+      );
     });
 
     testWidgets('onboarding não visto abre o onboarding', (tester) async {

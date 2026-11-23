@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/app_logo.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/widgets/login_intro.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -24,20 +25,30 @@ class AuthHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Center(child: AppLogo(size: logoSize)),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              AppStrings.authWelcomeTitle.tr(),
-              textAlign: TextAlign.center,
-              style: AppTypography.display.copyWith(
-                color: colors.textForeground,
-              ),
+            const Center(
+              child: LoginIntroLogoSlot(child: AppLogo(size: logoSize)),
             ),
-            const SizedBox(height: AppSpacing.s1),
-            Text(
-              AppStrings.splashTagline.tr(),
-              textAlign: TextAlign.center,
-              style: AppTypography.body.copyWith(color: colors.textBody),
+            const SizedBox(height: AppSpacing.s4),
+            LoginIntroReveal(
+              step: 0,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    AppStrings.authWelcomeTitle.tr(),
+                    textAlign: TextAlign.center,
+                    style: AppTypography.display.copyWith(
+                      color: colors.textForeground,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s1),
+                  Text(
+                    AppStrings.splashTagline.tr(),
+                    textAlign: TextAlign.center,
+                    style: AppTypography.body.copyWith(color: colors.textBody),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

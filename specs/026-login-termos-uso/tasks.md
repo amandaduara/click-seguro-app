@@ -180,32 +180,32 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T028 [P] [US4] Escrever `test/modules/authentication/presentation/widgets/login_intro_test.dart` com o relógio falso:
+- [X] T028 [P] [US4] Escrever `test/modules/authentication/presentation/widgets/login_intro_test.dart` com o relógio falso:
   - no quadro 0, a marca está em `BrandScene.logoRectFor(...)` e o nome/slogan da splash estão visíveis;
   - em 750 ms, a marca está no slot do `AuthHeader`;
   - em 1 250 ms, todos os itens estão visíveis e opacos, e os toques passam;
   - antes disso, os toques são ignorados;
   - com movimento reduzido, tudo pronto no quadro 0;
   - o nome/slogan da splash ficam fora da semântica.
-- [ ] T029 [P] [US4] Estender `test/modules/authentication/presentation/pages/login_page_test.dart` e o teste das rotas de autenticação: `loginPageFor(Uri.parse('/login?from=splash'))` liga a abertura e a página não tem transição; `/login` e `/login?mode=register` continuam sem abertura e com esmaecimento.
-- [ ] T030 [P] [US4] Ajustar `test/modules/splash/presentation/pages/splash_page_test.dart` e `test/modules/splash/presentation/controller/splash_controller_test.dart`: o destino login navega para `/login?from=splash`; Início e Onboarding continuam iguais.
+- [X] T029 [P] [US4] Estender `test/modules/authentication/presentation/pages/login_page_test.dart` e o teste das rotas de autenticação: `loginPageFor(Uri.parse('/login?from=splash'))` liga a abertura e a página não tem transição; `/login` e `/login?mode=register` continuam sem abertura e com esmaecimento.
+- [X] T030 [P] [US4] Ajustar `test/modules/splash/presentation/pages/splash_page_test.dart` e `test/modules/splash/presentation/controller/splash_controller_test.dart`: o destino login navega para `/login?from=splash`; Início e Onboarding continuam iguais.
 
 ### Implementation for User Story 4
 
-- [ ] T031 [US4] Trocar o caminho de `SplashDestination.login` para `'/login?from=splash'` em `lib/modules/splash/presentation/controller/splash_destination.dart`.
-- [ ] T032 [US4] Em `lib/modules/authentication/presentation/routes/authentication_routes.dart`:
+- [X] T031 [US4] Trocar o caminho de `SplashDestination.login` para `'/login?from=splash'` em `lib/modules/splash/presentation/controller/splash_destination.dart`.
+- [X] T032 [US4] Em `lib/modules/authentication/presentation/routes/authentication_routes.dart`:
   - `loginPageFor` lê `from=splash` e passa `fromSplash: true` à `LoginPage`;
   - a rota usa uma página sem transição (`NoTransitionPage` com `key: state.pageKey`) nesse caso e `appFadePage` nos outros.
-- [ ] T033 [US4] Criar `lib/modules/authentication/presentation/widgets/login_intro.dart` (research R1):
+- [X] T033 [US4] Criar `lib/modules/authentication/presentation/widgets/login_intro.dart` (research R1):
   - um `AnimationController` de 1 250 ms, iniciado no `didChangeDependencies`, que nasce em 1 com `AppMotion.of(context).reduced`;
   - expõe para a página a animação de cada item (`Interval`s da tabela R1) e um `IgnorePointer` enquanto anima;
   - desenha por cima a marca voando: `Rect.lerp` entre `BrandScene.logoRectFor` e o retângulo do slot `logoKey` (medido em coordenadas globais depois do primeiro layout), com `AppLogo`/`BrandMarkPainter` na cor `primary`;
   - desenha o nome e o slogan da splash saindo (`ExcludeSemantics`) nas posições de `BrandScene.titleTopFor`/`taglineGap`, as mesmas da splash (analyze I1).
-- [ ] T034 [US4] Em `lib/modules/authentication/presentation/pages/login_page.dart`:
+- [X] T034 [US4] Em `lib/modules/authentication/presentation/pages/login_page.dart`:
   - novo parâmetro `fromSplash` (padrão `false`);
   - com ele, envolver o conteúdo no `LoginIntro`: o slot da marca do cabeçalho fica vazio até o voo terminar, e cada bloco (cabeçalho, abas, campos, regras/aceite, "Esqueci"/botão, "Continuar sem login") recebe o seu intervalo de subida de 14 px com esmaecimento;
   - sem o parâmetro, nada muda.
-- [ ] T035 [US4] Rodar `test/modules/authentication`, `test/modules/splash` e `test/core`: tudo verde.
+- [X] T035 [US4] Rodar `test/modules/authentication`, `test/modules/splash` e `test/core`: tudo verde.
 
 **Checkpoint**: passagem contínua da splash para o login. **Commit**: `feat(026): passagem animada da splash para o login`.
 

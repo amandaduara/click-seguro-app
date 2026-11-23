@@ -143,4 +143,11 @@ void main() {
       expect(controller.destination, SplashDestination.login);
     });
   });
+
+  // Só o login leva o pedido da passagem animada (specs/026 FR-018).
+  test('caminhos de cada destino', () {
+    expect(SplashDestination.onboarding.path, '/onboarding');
+    expect(SplashDestination.home.path, '/home');
+    expect(SplashDestination.login.path, '/login?from=splash');
+  });
 }

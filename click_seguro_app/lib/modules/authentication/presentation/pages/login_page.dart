@@ -15,6 +15,7 @@ import 'package:click_seguro_app/modules/authentication/domain/failures/auth_fai
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/extensions/auth_presentation_extension.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/widgets/login_intro.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/terms_acceptance.dart';
 import 'package:click_seguro_app/modules/common/presentation/extensions/password_rule_presentation.dart';
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
@@ -28,13 +29,21 @@ import 'package:provider/provider.dart';
 /// Login, cadastro e visitante na versão A (specs/026): o cabeçalho e a onda
 /// do fim da splash, o formulário no meio e "Continuar sem login" como link.
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, this.initialMode = AuthMode.login, this.next});
+  const LoginPage({
+    super.key,
+    this.initialMode = AuthMode.login,
+    this.next,
+    this.fromSplash = false,
+  });
 
   /// Modo ao abrir; o aviso das atividades abre em cadastro (specs/020).
   final AuthMode initialMode;
 
   /// Para onde ir ao entrar; sem ele, o Início.
   final String? next;
+
+  /// Aberto pela splash: faz a passagem animada ([LoginIntro]).
+  final bool fromSplash;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -148,22 +157,22 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
 
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          const Positioned(left: 0, right: 0, bottom: 0, child: BrandWave()),
-          SafeArea(
-            bottom: false,
-            child: AutofillGroup(
-              child: SingleChildScrollView(
-                padding: padding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const AuthHeader(),
-                    const SizedBox(height: AppSpacing.s6),
-                    SafePillTabs(
+    final Widget body = Stack(
+      children: [
+        const Positioned(left: 0, right: 0, bottom: 0, child: BrandWave()),
+        SafeArea(
+          bottom: false,
+          child: AutofillGroup(
+            child: SingleChildScrollView(
+              padding: padding,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const AuthHeader(),
+                  const SizedBox(height: AppSpacing.s6),
+                  LoginIntroReveal(
+                    step: 1,
+                    child: SafePillTabs(
                       tabs: [
                         AppStrings.authModeLogin.tr(),
                         AppStrings.authModeRegister.tr(),
@@ -179,10 +188,19 @@ class _LoginPageState extends State<LoginPage> {
                         );
                       },
                     ),
-                    const SizedBox(height: AppSpacing.s6),
-                    ..._form(controller, isRegister),
-                    const SizedBox(height: AppSpacing.s5),
-                    SafeButton(
+                  ),
+                  const SizedBox(height: AppSpacing.s6),
+                  LoginIntroReveal(
+                    step: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: _form(controller, isRegister),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s5),
+                  LoginIntroReveal(
+                    step: 3,
+                    child: SafeButton(
                       label: primaryLabel,
                       iconRight: const Icon(LucideIcons.arrowRight),
                       loading: controller.isSubmitting,
@@ -192,8 +210,11 @@ class _LoginPageState extends State<LoginPage> {
                           !controller.canSubmit && !controller.isSubmitting,
                       onPressed: _submit,
                     ),
-                    const SizedBox(height: AppSpacing.s3),
-                    Center(
+                  ),
+                  const SizedBox(height: AppSpacing.s3),
+                  LoginIntroReveal(
+                    step: 4,
+                    child: Center(
                       child: TextButton(
                         onPressed: controller.continueAsGuest,
                         style: TextButton.styleFrom(
@@ -206,13 +227,18 @@ class _LoginPageState extends State<LoginPage> {
                         child: Text(AppStrings.authContinueAsGuest.tr()),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: widget.fromSplash ? LoginIntro(child: body) : body,
     );
   }
 
