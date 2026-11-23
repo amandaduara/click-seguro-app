@@ -3,12 +3,13 @@ import 'dart:ui' as ui;
 
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/widgets/brand_mark.dart';
+import 'package:click_seguro_app/core/widgets/brand_scene.dart';
 import 'package:click_seguro_app/modules/splash/presentation/widgets/splash_scene_painter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const Size _screen = Size(390, 844);
-final Rect _logoRect = SplashScenePainter.logoRectFor(
+final Rect _logoRect = BrandScene.logoRectFor(
   width: _screen.width,
   viewportHeight: _screen.height,
 );
@@ -66,45 +67,6 @@ Offset _inLogo(double x, double y) {
 void main() {
   final Color primary = AppPalette.light.primary;
   final Color background = AppPalette.light.background;
-
-  group('logoRectFor', () {
-    test('marca centrada na largura, na proporção do viewBox', () {
-      final Rect rect = SplashScenePainter.logoRectFor(
-        width: 390,
-        viewportHeight: 844,
-      );
-
-      expect(rect.center.dx, 195);
-      expect(
-        rect.width / rect.height,
-        closeTo(
-          BrandMarkPaths.viewBox.width / BrandMarkPaths.viewBox.height,
-          1e-6,
-        ),
-      );
-      expect(rect.width, 164);
-    });
-
-    test('encolhe em tela curta', () {
-      final Rect rect = SplashScenePainter.logoRectFor(
-        width: 320,
-        viewportHeight: 480,
-      );
-
-      expect(rect.width, lessThan(164));
-      expect(rect.width, greaterThanOrEqualTo(96));
-    });
-
-    test('respeita o recuo do topo (barra de status)', () {
-      final Rect rect = SplashScenePainter.logoRectFor(
-        width: 390,
-        viewportHeight: 200,
-        topInset: 60,
-      );
-
-      expect(rect.top, greaterThanOrEqualTo(60));
-    });
-  });
 
   group('pintura', () {
     for (final double t in [0, 0.3, 0.5, 0.75, 1]) {

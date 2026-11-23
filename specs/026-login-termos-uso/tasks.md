@@ -24,7 +24,7 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 **Purpose**: textos novos nos dois idiomas, usados por todas as histórias.
 
-- [ ] T001 Adicionar as chaves novas de [contracts/ui-contract.md](contracts/ui-contract.md) ("Novas") em `lib/core/i18n/app_strings.dart` (`authWelcomeTitle`, `authTermsPrefix`, `authTermsLink`, `authTermsAnd`, `authPrivacyLink`, `settingsTerms`, `settingsTermsSub`, `settingsTermsUpdated`, `settingsTerms{About,Limits,Account,Use,Data}{Title,Body}`, `settingsTermsSeePrivacy`) e os textos exatos do contrato em `assets/translations/pt-BR.json` e `assets/translations/en-US.json`
+- [X] T001 Adicionar as chaves novas de [contracts/ui-contract.md](contracts/ui-contract.md) ("Novas") em `lib/core/i18n/app_strings.dart` (`authWelcomeTitle`, `authTermsPrefix`, `authTermsLink`, `authTermsAnd`, `authPrivacyLink`, `settingsTerms`, `settingsTermsSub`, `settingsTermsUpdated`, `settingsTerms{About,Limits,Account,Use,Data}{Title,Body}`, `settingsTermsSeePrivacy`) e os textos exatos do contrato em `assets/translations/pt-BR.json` e `assets/translations/en-US.json`
 
 ---
 
@@ -34,17 +34,17 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 **⚠️ CRITICAL**: termine esta fase antes das histórias.
 
-- [ ] T002 [P] Escrever `test/core/widgets/brand_scene_test.dart`:
+- [X] T002 [P] Escrever `test/core/widgets/brand_scene_test.dart`:
   - `BrandScene.logoRectFor` devolve os mesmos retângulos que o `SplashScenePainter.logoRectFor` de hoje (largura 390/360, telas alta e baixa, `topInset`);
-  - `BrandScene.titleTopFor(logoRect)` e `BrandScene.taglineTopFor(logoRect)` dão as mesmas posições do nome e do slogan que a `SplashAnimation` usa hoje (`logo.bottom + s7` e o slogan logo abaixo do nome, com `s2`);
+  - `BrandScene.titleTopFor(logoRect)` dá a posição do nome que a `SplashAnimation` usa hoje (`logo.bottom + s7`), e `BrandScene.taglineGap` (8) o espaço até o slogan (o slogan depende da altura do nome, que muda com a fonte);
   - `BrandScene.wavePath(progress: 1)` fica dentro da caixa do rodapé;
   - `BrandWave` pinta com `primary`/`primaryGlow` e no alto contraste.
-- [ ] T003 Criar `lib/core/widgets/brand_scene.dart` (research R2):
+- [X] T003 Criar `lib/core/widgets/brand_scene.dart` (research R2):
   - mover do `splash_scene_painter.dart` as larguras de referência, `footerHeight` (110), a altura da onda de brilho (136), `_frontEdge`/`_glowEdge`, `logoRectFor` e a montagem do caminho da onda (`wavePath(size, edge, top, progress, below)`);
-  - criar `titleTopFor(logoRect)` e `taglineTopFor(logoRect)`, a posição do nome e do slogan no fim da splash, fonte única para a splash e para a abertura do login (analyze I1);
+  - criar `titleTopFor(logoRect)` e `taglineGap`, a posição do nome e o espaço até o slogan no fim da splash, fonte única para a splash e para a abertura do login (analyze I1);
   - criar o widget `BrandWave`: as duas ondas paradas, altura 136, cores de `context.colors`, decorativo (`ExcludeSemantics`).
-- [ ] T004 Fazer `lib/modules/splash/presentation/widgets/splash_scene_painter.dart` usar o `BrandScene` sem mudar o desenho, e `splash_animation.dart` posicionar o nome e o slogan com `BrandScene.titleTopFor`/`taglineTopFor`. Manter `SplashScenePainter.logoRectFor`/`footerHeight` só se ainda tiverem uso; senão, trocar as chamadas em `splash_animation.dart` e no teste. Rodar `test/modules/splash` e `test/core/widgets/brand_scene_test.dart`: tudo verde.
-- [ ] T005 [P] Extrair o `_Paragraph` de `lib/modules/settings/presentation/pages/privacy_page.dart` para `lib/modules/settings/presentation/widgets/settings_topic_card.dart` (`SettingsTopicCard`: ícone, título, texto e um `child` opcional abaixo do texto). Usar na Privacidade e rodar `test/modules/settings/presentation/privacy_and_about_pages_test.dart` sem mudar o teste.
+- [X] T004 Fazer `lib/modules/splash/presentation/widgets/splash_scene_painter.dart` usar o `BrandScene` sem mudar o desenho, e `splash_animation.dart` posicionar o nome e o slogan com `BrandScene.titleTopFor`/`taglineGap`. Manter `SplashScenePainter.logoRectFor`/`footerHeight` só se ainda tiverem uso; senão, trocar as chamadas em `splash_animation.dart` e no teste. Rodar `test/modules/splash` e `test/core/widgets/brand_scene_test.dart`: tudo verde.
+- [X] T005 [P] Extrair o `_Paragraph` de `lib/modules/settings/presentation/pages/privacy_page.dart` para `lib/modules/settings/presentation/widgets/settings_topic_card.dart` (`SettingsTopicCard`: ícone, título, texto e um `child` opcional abaixo do texto). Usar na Privacidade e rodar `test/modules/settings/presentation/privacy_and_about_pages_test.dart` sem mudar o teste.
 
 **Checkpoint**: splash e Privacidade iguais; `BrandScene`, `BrandWave` e `SettingsTopicCard` prontos. **Commit**: `refactor(026): onda e posição da marca no core, cartão de assunto das Configurações`.
 
@@ -200,7 +200,7 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
   - um `AnimationController` de 1 250 ms, iniciado no `didChangeDependencies`, que nasce em 1 com `AppMotion.of(context).reduced`;
   - expõe para a página a animação de cada item (`Interval`s da tabela R1) e um `IgnorePointer` enquanto anima;
   - desenha por cima a marca voando: `Rect.lerp` entre `BrandScene.logoRectFor` e o retângulo do slot `logoKey` (medido em coordenadas globais depois do primeiro layout), com `AppLogo`/`BrandMarkPainter` na cor `primary`;
-  - desenha o nome e o slogan da splash saindo (`ExcludeSemantics`) nas posições de `BrandScene.titleTopFor`/`taglineTopFor`, as mesmas da splash (analyze I1).
+  - desenha o nome e o slogan da splash saindo (`ExcludeSemantics`) nas posições de `BrandScene.titleTopFor`/`taglineGap`, as mesmas da splash (analyze I1).
 - [ ] T034 [US4] Em `lib/modules/authentication/presentation/pages/login_page.dart`:
   - novo parâmetro `fromSplash` (padrão `false`);
   - com ele, envolver o conteúdo no `LoginIntro`: o slot da marca do cabeçalho fica vazio até o voo terminar, e cada bloco (cabeçalho, abas, campos, regras/aceite, "Esqueci"/botão, "Continuar sem login") recebe o seu intervalo de subida de 14 px com esmaecimento;

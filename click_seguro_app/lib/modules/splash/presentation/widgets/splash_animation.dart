@@ -3,6 +3,7 @@ import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/brand_scene.dart';
 import 'package:click_seguro_app/modules/splash/presentation/widgets/splash_scene_painter.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -105,7 +106,7 @@ class _SplashAnimationState extends State<SplashAnimation>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final Rect logo = SplashScenePainter.logoRectFor(
+        final Rect logo = BrandScene.logoRectFor(
           width: constraints.maxWidth,
           viewportHeight: constraints.maxHeight,
           topInset: MediaQuery.paddingOf(context).top,
@@ -132,10 +133,9 @@ class _SplashAnimationState extends State<SplashAnimation>
                   width: double.infinity,
                   child: Column(
                     children: [
-                      SizedBox(height: logo.top),
-                      // Espaço da marca: a cena a desenha por cima dele.
-                      SizedBox(width: logo.width, height: logo.height),
-                      const SizedBox(height: AppSpacing.s7),
+                      // Espaço da marca (a cena a desenha por cima) e o
+                      // respiro até o nome, como no login (specs/026 R2).
+                      SizedBox(height: BrandScene.titleTopFor(logo)),
                       _Rise(
                         animation: _scene,
                         interval: SplashTimeline.title,
@@ -145,7 +145,7 @@ class _SplashAnimationState extends State<SplashAnimation>
                           style: titleStyle,
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.s2),
+                      const SizedBox(height: BrandScene.taglineGap),
                       _Rise(
                         animation: _scene,
                         interval: SplashTimeline.tagline,
@@ -157,7 +157,7 @@ class _SplashAnimationState extends State<SplashAnimation>
                       ),
                       // Deixa o texto livre da onda do rodapé ao rolar.
                       const SizedBox(
-                        height: SplashScenePainter.footerHeight + AppSpacing.s4,
+                        height: BrandScene.footerHeight + AppSpacing.s4,
                       ),
                     ],
                   ),

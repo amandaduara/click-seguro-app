@@ -37,6 +37,11 @@ abstract class AppStrings {
   static const String authForgotPassword = 'auth_forgot_password';
   static const String authOr = 'auth_or';
   static const String authContinueAsGuest = 'auth_continue_as_guest';
+  static const String authWelcomeTitle = 'auth_welcome_title';
+  static const String authTermsPrefix = 'auth_terms_prefix';
+  static const String authTermsLink = 'auth_terms_link';
+  static const String authTermsAnd = 'auth_terms_and';
+  static const String authPrivacyLink = 'auth_privacy_link';
   static const String authBack = 'auth_back';
   static const String authRuleLength = 'auth_rule_length';
   static const String authRuleUppercase = 'auth_rule_uppercase';
@@ -511,6 +516,21 @@ abstract class AppStrings {
       'settings_privacy_device_body';
   static const String settingsPrivacyUseTitle = 'settings_privacy_use_title';
   static const String settingsPrivacyUseBody = 'settings_privacy_use_body';
+  static const String settingsTerms = 'settings_terms';
+  static const String settingsTermsSub = 'settings_terms_sub';
+  static const String settingsTermsUpdated = 'settings_terms_updated';
+  static const String settingsTermsAboutTitle = 'settings_terms_about_title';
+  static const String settingsTermsAboutBody = 'settings_terms_about_body';
+  static const String settingsTermsLimitsTitle = 'settings_terms_limits_title';
+  static const String settingsTermsLimitsBody = 'settings_terms_limits_body';
+  static const String settingsTermsAccountTitle =
+      'settings_terms_account_title';
+  static const String settingsTermsAccountBody = 'settings_terms_account_body';
+  static const String settingsTermsUseTitle = 'settings_terms_use_title';
+  static const String settingsTermsUseBody = 'settings_terms_use_body';
+  static const String settingsTermsDataTitle = 'settings_terms_data_title';
+  static const String settingsTermsDataBody = 'settings_terms_data_body';
+  static const String settingsTermsSeePrivacy = 'settings_terms_see_privacy';
   static const String settingsAboutGoal = 'settings_about_goal';
   static const String settingsAboutCredits = 'settings_about_credits';
 
