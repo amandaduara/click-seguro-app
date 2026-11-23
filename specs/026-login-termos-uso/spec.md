@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Implemented (validado pela usuária no aparelho em 2026-11-23)
 
 **Input**: Versão A aprovada pela usuária no canvas de design
 (https://claude.ai/artifact/Sninpo6jiADGa2r4YAgPRu: telas "A · Continuação da splash",
