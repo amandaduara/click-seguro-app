@@ -327,6 +327,25 @@ void main() {
         findsNothing,
       );
       expect(find.text('Golpe do Pix a'), findsOneWidget);
+      expect(
+        find.text('Você está sem internet. Mostrando o conteúdo salvo.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('sem internet e sem alertas guardados: faixa curta', (
+      tester,
+    ) async {
+      repository.stored = snapshot(alerts: []);
+      repository.receiveAlertsError = const ConnectionFailure();
+
+      await pumpPage(tester);
+
+      expect(find.text('Você está sem internet.'), findsOneWidget);
+      expect(
+        find.text('Você está sem internet. Mostrando o conteúdo salvo.'),
+        findsNothing,
+      );
     });
 
     testWidgets('outras falhas e sucesso: sem faixa', (tester) async {

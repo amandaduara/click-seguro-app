@@ -122,13 +122,13 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T040 [P] [US3] Em `test/modules/notifications/presentation/widgets/alerts_notices_test.dart`: `showOffline` com `showsSavedContent: true` → texto longo; `false` → texto curto
-- [ ] T041 [P] [US3] Em `test/modules/notifications/presentation/pages/notifications_page_test.dart`: sem conexão e lista vazia → "Você está sem internet."; com alertas → o texto longo
+- [X] T040 [P] [US3] Em `test/modules/notifications/presentation/widgets/alerts_notices_test.dart`: `showOffline` com `showsSavedContent: true` → texto longo; `false` → texto curto
+- [X] T041 [P] [US3] Em `test/modules/notifications/presentation/pages/notifications_page_test.dart`: sem conexão e lista vazia → "Você está sem internet."; com alertas → o texto longo
 
 ### Implementation for User Story 3
 
-- [ ] T042 [US3] Em `lib/modules/notifications/presentation/widgets/alerts_notices.dart`, receber `required bool showsSavedContent` e repassar ao `SafeOfflineBanner`; em `lib/modules/notifications/presentation/pages/notifications_page.dart` passar `controller.alerts.isNotEmpty`
-- [ ] T043 [US3] Rodar `flutter test test/modules/notifications`: verde
+- [X] T042 [US3] Em `lib/modules/notifications/presentation/widgets/alerts_notices.dart`, receber `required bool showsSavedContent` e repassar ao `SafeOfflineBanner`; em `lib/modules/notifications/presentation/pages/notifications_page.dart` passar `controller.alerts.isNotEmpty`
+- [X] T043 [US3] Rodar `flutter test test/modules/notifications`: verde
 
 **Checkpoint**: P3 entregue. **Commit**: `feat(027): faixa curta nos Alertas sem conteúdo salvo`.
 

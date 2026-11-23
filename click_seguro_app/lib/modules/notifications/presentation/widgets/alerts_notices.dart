@@ -15,6 +15,7 @@ class AlertsNotices extends StatelessWidget {
   const AlertsNotices({
     super.key,
     required this.showOffline,
+    required this.showsSavedContent,
     required this.showDisabled,
     required this.onOpenSettings,
   });
@@ -25,6 +26,10 @@ class AlertsNotices extends StatelessWidget {
 
   /// A última conferência falhou por falta de conexão.
   final bool showOffline;
+
+  /// Há alertas guardados na lista; sem eles, a faixa diz só que está sem
+  /// internet (specs/027 FR-011).
+  final bool showsSavedContent;
 
   /// "Receber alertas" está desligado na conta.
   final bool showDisabled;
@@ -38,7 +43,8 @@ class AlertsNotices extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showOffline) const SafeOfflineBanner(),
+        if (showOffline)
+          SafeOfflineBanner(showsSavedContent: showsSavedContent),
         if (showDisabled) _DisabledNotice(onOpenSettings: onOpenSettings),
       ],
     );
