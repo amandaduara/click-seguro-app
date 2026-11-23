@@ -44,3 +44,6 @@ roda uma vez no polimento.
 | 12 | Abrir o app com sessão; e sair da conta | Splash → Início como hoje; sair → login com esmaecimento, sem a marca voar | FR-018 |
 | 13 | App em inglês: passos 1, 3 e 8 | Todos os textos novos em inglês ("Last updated: 11/23/2026") | FR-019 |
 | 14 | Criar uma conta de teste (só com a permissão da usuária) | Cadastro funciona como antes | FR-015 |
+| 15 | Limpar os dados do app e abrir | Splash → onboarding: marca e nome sobem e somem, a onda desce e sai, o slide entra em sequência (~1 s) | US5, FR-020 |
+| 16 | No onboarding, tocar em "Pular" (ou "Começar" no último slide) | O onboarding desliza para a esquerda; o login entra com a onda subindo do pé da tela, a marca crescendo e os blocos em sequência | US5, FR-021 |
+| 17 | Repetir 15 e 16 com "Reduzir animações" | Trocas diretas, sem movimento | FR-022 |
