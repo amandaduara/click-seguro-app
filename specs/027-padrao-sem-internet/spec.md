@@ -168,9 +168,9 @@ conferir o texto da faixa.
   para as outras falhas.
 - **FR-004**: Sobre fundo escuro (Reels), a ilustração, a frase e o botão do estado de erro MUST
   ter contraste legível (mesmo critério de contraste do resto do app).
-- **FR-005**: As telas que já mostram o estado de sem internet corretamente (Perfil, Editar
-  perfil, Conquistas, Central de ajuda, Formulário de contato, Histórico do Assistente, Salvas e
-  Detalhe da notícia) MUST continuar iguais.
+- **FR-005**: As telas que já mostram o estado de sem internet corretamente (Início sem cópia,
+  Perfil, Editar perfil, Conquistas, Central de ajuda, Formulário de contato, Histórico do
+  Assistente, Salvas e Detalhe da notícia) MUST continuar iguais.
 
 **Ação que falha com a tela aberta (US2)**
 
@@ -180,8 +180,8 @@ conferir o texto da faixa.
   alertas, carregar a conta nas Configurações, carregar mais notícias (feed e Reels), números e
   conquistas no Perfil, salvar, curtir ou denunciar notícia, apagar contato, enviar contato e as
   ações do Assistente.
-- **FR-007**: Nos formulários de entrada (login, criar conta, esqueci a senha) a frase MUST
-  aparecer na própria tela, embaixo dos campos; nas demais ações, MUST aparecer num aviso rápido
+- **FR-007**: Nos formulários de entrada (login, criar conta, esqueci a senha) e no envio do
+  Assistente a frase MUST aparecer na própria tela, como já acontece hoje; nas demais ações, MUST aparecer num aviso rápido
   no rodapé; nos blocos parciais de uma tela já carregada (números e conquistas no Perfil, fim da
   lista, linha dos alertas nas Configurações) MUST aparecer no próprio bloco, com a opção de tentar de novo que o bloco já tem.
 - **FR-008**: Quando a ação falha por outro motivo (servidor, recusa), a tela MUST manter a
@@ -218,7 +218,7 @@ conferir o texto da faixa.
 ### Measurable Outcomes
 
 - **SC-001**: Em modo avião, 100% das telas que precisam da rede e não têm cópia mostram o mesmo
-  desenho, a mesma frase e o mesmo botão (conferido nas 10 telas de FR-003 e FR-005 e nos Reels).
+  desenho, a mesma frase e o mesmo botão (conferido nas 11 telas de FR-003 e FR-005 e nos Reels).
 - **SC-002**: Em modo avião, 100% das ações listadas em FR-006 mostram a frase de sem conexão;
   nenhuma mostra "Não foi possível…".
 - **SC-003**: A frase do estado de erro nos Reels atinge pelo menos o contraste mínimo de texto

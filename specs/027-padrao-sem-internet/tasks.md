@@ -47,7 +47,8 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 - [ ] T007 Migrar `lib/modules/activities/presentation/pages/activities_dashboard_page.dart` e `lesson_page.dart` para `SafeErrorState(failure: null, message: AppStrings.activitiesErrorTitle.tr(), …)` por enquanto (a falha entra na US1), e os exemplos de `lib/style_guide/style_guide.dart` (um com `ConnectionFailure()`, um com `message`)
 - [ ] T008 [P] Escrever em `test/core/widgets/safe_states_test.dart` (grupo da faixa): `SafeOfflineBanner()` mostra `common_offline_banner`; `SafeOfflineBanner(showsSavedContent: false)` mostra `common_offline_banner_short`; os dois com `liveRegion`
 - [ ] T009 Adicionar `final bool showsSavedContent` (padrão `true`) em `lib/core/widgets/safe_offline_banner.dart`, escolhendo entre `commonOfflineBanner` e `commonOfflineBannerShort`
-- [ ] T010 Rodar `flutter analyze` e `flutter test test/core test/modules/news test/modules/profile test/modules/help test/modules/assistant`: tudo verde sem mudar os testes das telas
+- [ ] T010 Acessibilidade do estado de erro (FR-012): em `test/core/widgets/safe_states_test.dart`, conferir que a frase do `SafeErrorState` (conexão e servidor) fica num nó com `liveRegion`; depois envolver o texto da mensagem em `Semantics(liveRegion: true)` em `lib/core/widgets/safe_state_layout.dart` (vale também para o vazio, que aparece no lugar da lista do mesmo jeito)
+- [ ] T011 Rodar `flutter analyze` e `flutter test test/core test/modules/news test/modules/profile test/modules/help test/modules/assistant`: tudo verde sem mudar os testes das telas
 
 **Checkpoint**: regra única no `core`, telas já corretas iguais. **Commit**: `refactor(027): estado de erro decide pela falha, não pelo texto`.
 
@@ -61,18 +62,18 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T011 [P] [US1] Em `test/modules/activities/presentation/pages/activities_dashboard_page_test.dart`: com o repositório falso devolvendo `ConnectionFailure` → `stateOffline` e "Sem conexão…"; com `ServerFailure` → `stateError` e "Não foi possível carregar as atividades"
-- [ ] T012 [P] [US1] Em `test/modules/activities/presentation/controller/lesson_controller_test.dart`: `failure` guarda a falha de `load` (`ConnectionFailure`) e volta a `null` na carga seguinte; com `ModuleNotFoundFailure` o estado é `empty` (como hoje)
-- [ ] T013 [P] [US1] Em `test/modules/activities/presentation/pages/lesson_page_test.dart`: carregar com `ConnectionFailure` → `stateOffline` e "Sem conexão…"; com `ServerFailure` → `stateError` e "Não foi possível carregar as atividades"
-- [ ] T014 [P] [US1] Em `test/modules/news/presentation/pages/reels_page_test.dart`: com `ConnectionFailure`, o `Text` da frase usa `textPrimaryForeground` (branco) e não `textForeground`; o mesmo no estado vazio dos Reels
+- [ ] T012 [P] [US1] Em `test/modules/activities/presentation/pages/activities_dashboard_page_test.dart`: com o repositório falso devolvendo `ConnectionFailure` → `stateOffline` e "Sem conexão…"; com `ServerFailure` → `stateError` e "Não foi possível carregar as atividades"
+- [ ] T013 [P] [US1] Em `test/modules/activities/presentation/controller/lesson_controller_test.dart`: `failure` guarda a falha de `load` (`ConnectionFailure`) e volta a `null` na carga seguinte; com `ModuleNotFoundFailure` o estado é `empty` (como hoje)
+- [ ] T014 [P] [US1] Em `test/modules/activities/presentation/pages/lesson_page_test.dart`: carregar com `ConnectionFailure` → `stateOffline` e "Sem conexão…"; com `ServerFailure` → `stateError` e "Não foi possível carregar as atividades"
+- [ ] T015 [P] [US1] Em `test/modules/news/presentation/pages/reels_page_test.dart`: com `ConnectionFailure`, o `Text` da frase usa `textPrimaryForeground` (branco) e não `textForeground`; o mesmo no estado vazio dos Reels
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Em `lib/modules/activities/presentation/pages/activities_dashboard_page.dart`, passar `failure: controller.failure`, mantendo `message: AppStrings.activitiesErrorTitle.tr()`
-- [ ] T016 [US1] Em `lib/modules/activities/presentation/controller/lesson_controller.dart`, guardar `Failure? _failure` (getter `failure`) quando `_load` falha com algo que não seja `ModuleNotFoundFailure`, e limpar ao começar uma carga (data-model)
-- [ ] T017 [US1] Em `lib/modules/activities/presentation/pages/lesson_page.dart`, passar `failure: controller.failure` no estado de erro, mantendo `message: AppStrings.activitiesErrorTitle.tr()`
-- [ ] T018 [US1] Em `lib/modules/news/presentation/pages/reels_page.dart`, fazer o `_Dark` sobrepor também a `AppPalette` (research R5): `context.colors.copyWith(textForeground: textPrimaryForeground, textMutedForeground: textPrimaryForeground com alpha ~0.72)` em `extensions`, além do `textTheme` atual; conferir que o alto contraste continua legível
-- [ ] T019 [US1] Rodar `flutter test test/modules/activities test/modules/news/presentation/pages/reels_page_test.dart`: verde
+- [ ] T016 [US1] Em `lib/modules/activities/presentation/pages/activities_dashboard_page.dart`, passar `failure: controller.failure`, mantendo `message: AppStrings.activitiesErrorTitle.tr()`
+- [ ] T017 [US1] Em `lib/modules/activities/presentation/controller/lesson_controller.dart`, guardar `Failure? _failure` (getter `failure`) quando `_load` falha com algo que não seja `ModuleNotFoundFailure`, e limpar ao começar uma carga (data-model)
+- [ ] T018 [US1] Em `lib/modules/activities/presentation/pages/lesson_page.dart`, passar `failure: controller.failure` no estado de erro, mantendo `message: AppStrings.activitiesErrorTitle.tr()`
+- [ ] T019 [US1] Em `lib/modules/news/presentation/pages/reels_page.dart`, fazer o `_Dark` sobrepor também a `AppPalette` (research R5): `context.colors.copyWith(textForeground: textPrimaryForeground, textMutedForeground: textPrimaryForeground com alpha ~0.72)` em `extensions`, além do `textTheme` atual; conferir que o alto contraste continua legível
+- [ ] T020 [US1] Rodar `flutter test test/modules/activities test/modules/news/presentation/pages/reels_page_test.dart`: verde
 
 **Checkpoint**: P1 entregue e testável sozinha. **Commit**: `feat(027): Atividades, Lição e Reels com o estado de sem internet`.
 
@@ -86,28 +87,28 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T020 [P] [US2] Em `test/modules/activities/presentation/controller/lesson_controller_test.dart`: `confirm()` com `ConnectionFailure` devolve `AnswerAttempt.failed`, guarda `answerFailure` e mantém a escolha; a confirmação seguinte limpa `answerFailure`
-- [ ] T021 [P] [US2] Em `test/modules/activities/presentation/pages/lesson_page_test.dart`: confirmar com `ConnectionFailure` → SnackBar "Sem conexão…"; com `ServerFailure` → "Não foi possível enviar sua resposta. Tente de novo."
-- [ ] T022 [P] [US2] Em `test/modules/settings/presentation/change_password_page_test.dart`: salvar com `ConnectionFailure` → SnackBar "Sem conexão…" e campos mantidos; `ServerFailure` → `settings_password_failed` (como hoje)
-- [ ] T023 [P] [US2] Em `test/modules/profile/presentation/pages/profile_edit_page_test.dart`: salvar, trocar a foto e remover a foto com `ConnectionFailure` → SnackBar "Sem conexão…"; com `ServerFailure` → os textos de hoje; `AvatarTypeFailure` continua com a mensagem dela
-- [ ] T024 [P] [US2] Em `test/modules/profile/presentation/pages/profile_page_test.dart`: números e conquistas com `ConnectionFailure` → "Sem conexão…" no bloco, com o tentar de novo; `ServerFailure` → `profile_stats_failed` / `profile_achievements_failed`
-- [ ] T025 [P] [US2] Em `test/modules/settings/presentation/settings_controller_test.dart`: `alertsFailure` guarda a falha do salvar e a de `AccountFailed`, e volta a `null` quando o salvar ou a carga seguinte dá certo
-- [ ] T026 [P] [US2] Em `test/modules/settings/presentation/settings_page_test.dart`: mexer na chave com `ConnectionFailure` → a chave volta e a linha diz "Sem conexão…" com o tentar de novo; `ServerFailure` → `settings_alerts_failed`; conta não carregada por conexão → "Sem conexão…", por servidor → `settings_account_load_failed`
-- [ ] T027 [P] [US2] Em `test/modules/news/presentation/pages/news_home_page_test.dart` (rodapé) e `reels_page_test.dart`: carregar mais com `ConnectionFailure` → "Sem conexão…" com o botão de tentar de novo; `ServerFailure` → `news_load_more_failed`
-- [ ] T028 [P] [US2] Conferir em teste o que já está certo (FR-006): em `test/modules/authentication/presentation/pages/login_page_test.dart` e `forgot_password_page_test.dart`, `ConnectionFailure` mostra "Sem conexão…" embaixo dos campos; criar o caso só se ainda não existir
+- [ ] T021 [P] [US2] Em `test/modules/activities/presentation/controller/lesson_controller_test.dart`: `confirm()` com `ConnectionFailure` devolve `AnswerAttempt.failed`, guarda `answerFailure` e mantém a escolha; a confirmação seguinte limpa `answerFailure`
+- [ ] T022 [P] [US2] Em `test/modules/activities/presentation/pages/lesson_page_test.dart`: confirmar com `ConnectionFailure` → SnackBar "Sem conexão…"; com `ServerFailure` → "Não foi possível enviar sua resposta. Tente de novo."
+- [ ] T023 [P] [US2] Em `test/modules/settings/presentation/change_password_page_test.dart`: salvar com `ConnectionFailure` → SnackBar "Sem conexão…" e campos mantidos; `ServerFailure` → `settings_password_failed` (como hoje)
+- [ ] T024 [P] [US2] Em `test/modules/profile/presentation/pages/profile_edit_page_test.dart`: salvar, trocar a foto e remover a foto com `ConnectionFailure` → SnackBar "Sem conexão…"; com `ServerFailure` → os textos de hoje; `AvatarTypeFailure` continua com a mensagem dela
+- [ ] T025 [P] [US2] Em `test/modules/profile/presentation/pages/profile_page_test.dart`: números e conquistas com `ConnectionFailure` → "Sem conexão…" no bloco, com o tentar de novo; `ServerFailure` → `profile_stats_failed` / `profile_achievements_failed`
+- [ ] T026 [P] [US2] Em `test/modules/settings/presentation/settings_controller_test.dart`: `alertsFailure` guarda a falha do salvar e a de `AccountFailed`, e volta a `null` quando o salvar ou a carga seguinte dá certo
+- [ ] T027 [P] [US2] Em `test/modules/settings/presentation/settings_page_test.dart`: mexer na chave com `ConnectionFailure` → a chave volta e a linha diz "Sem conexão…" com o tentar de novo; `ServerFailure` → `settings_alerts_failed`; conta não carregada por conexão → "Sem conexão…", por servidor → `settings_account_load_failed`
+- [ ] T028 [P] [US2] Em `test/modules/news/presentation/pages/news_home_page_test.dart` (rodapé) e `reels_page_test.dart`: carregar mais com `ConnectionFailure` → "Sem conexão…" com o botão de tentar de novo; `ServerFailure` → `news_load_more_failed`
+- [ ] T029 [P] [US2] Conferir em teste o que já está certo (FR-006), criando o caso só se ainda não existir: em `test/modules/authentication/presentation/pages/login_page_test.dart` e `forgot_password_page_test.dart`, `ConnectionFailure` mostra "Sem conexão…" embaixo dos campos; em `test/modules/help/presentation/pages/help_page_test.dart`, apagar contato com `ConnectionFailure` → SnackBar "Sem conexão…"; no teste da tela do Assistente (`test/modules/assistant/presentation/`), enviar com `ConnectionFailure` → "Sem conexão…" na própria tela. Salvar e curtir no detalhe já têm caso em `news_detail_page_test.dart`
 
 ### Implementation for User Story 2
 
-- [ ] T029 [US2] Em `lib/modules/activities/presentation/controller/lesson_controller.dart`, guardar `Failure? _answerFailure` (getter `answerFailure`) no `case Left()` de `confirm()` e limpar ao começar a confirmação
-- [ ] T030 [US2] Em `lib/modules/activities/presentation/pages/lesson_page.dart`, `AnswerAttempt.failed => _controller.answerFailure.messageKeyOr(AppStrings.activitiesAnswerFailed).tr()`
-- [ ] T031 [P] [US2] Em `lib/modules/settings/presentation/pages/change_password_page.dart`, o ramo `_` usa `failure.messageKeyOr(AppStrings.settingsPasswordFailed).tr()`
-- [ ] T032 [P] [US2] Em `lib/modules/profile/presentation/pages/profile_edit_page.dart`: salvar com `failure.messageKeyOr(AppStrings.profileEditSaveFailed)`; trocar a foto (fora o `AvatarTypeFailure`) e remover a foto com `failure.messageKeyOr(AppStrings.profilePhotoFailed)`
-- [ ] T033 [P] [US2] Em `lib/modules/profile/presentation/pages/profile_page.dart` e `lib/modules/profile/presentation/widgets/achievements_section.dart`, `AreaFailed(:final failure)` com `failure.messageKeyOr(AppStrings.profileStatsFailed / profileAchievementsFailed).tr()`
-- [ ] T034 [US2] Em `lib/modules/settings/presentation/controller/settings_controller.dart`, `Failure? get alertsFailure`: a falha do último salvar que falhou, senão `(_account as AccountFailed?).failure`; limpar a do salvar quando ele dá certo (data-model)
-- [ ] T035 [US2] Em `lib/modules/settings/presentation/widgets/alerts_switch_tile.dart` receber `Failure? failure` e montar o subtítulo com `failure.messageKeyOr(loadFailed ? settingsAccountLoadFailed : settingsAlertsFailed)`; passar `controller.alertsFailure` em `lib/modules/settings/presentation/pages/settings_page.dart`
-- [ ] T036 [US2] Em `lib/modules/news/presentation/widgets/feed_list_footer.dart`, trocar `bool failed` por `Failure? failure` e usar `failure.messageKeyOr(AppStrings.newsLoadMoreFailed)`; atualizar as chamadas em `news_home_page.dart` e `user_news_list_page.dart`
-- [ ] T037 [US2] Em `lib/modules/news/presentation/pages/reels_page.dart`, o rodapé usa `controller.loadMoreFailure.messageKeyOr(AppStrings.newsLoadMoreFailed).tr()`
-- [ ] T038 [US2] Rodar `flutter test test/modules/activities test/modules/settings test/modules/profile test/modules/news test/modules/authentication`: verde
+- [ ] T030 [US2] Em `lib/modules/activities/presentation/controller/lesson_controller.dart`, guardar `Failure? _answerFailure` (getter `answerFailure`) no `case Left()` de `confirm()` e limpar ao começar a confirmação
+- [ ] T031 [US2] Em `lib/modules/activities/presentation/pages/lesson_page.dart`, `AnswerAttempt.failed => _controller.answerFailure.messageKeyOr(AppStrings.activitiesAnswerFailed).tr()`
+- [ ] T032 [P] [US2] Em `lib/modules/settings/presentation/pages/change_password_page.dart`, o ramo `_` usa `failure.messageKeyOr(AppStrings.settingsPasswordFailed).tr()`
+- [ ] T033 [P] [US2] Em `lib/modules/profile/presentation/pages/profile_edit_page.dart`: salvar com `failure.messageKeyOr(AppStrings.profileEditSaveFailed)`; trocar a foto (fora o `AvatarTypeFailure`) e remover a foto com `failure.messageKeyOr(AppStrings.profilePhotoFailed)`
+- [ ] T034 [P] [US2] Em `lib/modules/profile/presentation/pages/profile_page.dart` e `lib/modules/profile/presentation/widgets/achievements_section.dart`, `AreaFailed(:final failure)` com `failure.messageKeyOr(AppStrings.profileStatsFailed / profileAchievementsFailed).tr()`
+- [ ] T035 [US2] Em `lib/modules/settings/presentation/controller/settings_controller.dart`, `Failure? get alertsFailure`: a falha do último salvar que falhou, senão `(_account as AccountFailed?).failure`; limpar a do salvar quando ele dá certo (data-model)
+- [ ] T036 [US2] Em `lib/modules/settings/presentation/widgets/alerts_switch_tile.dart` receber `Failure? failure` e montar o subtítulo com `failure.messageKeyOr(loadFailed ? settingsAccountLoadFailed : settingsAlertsFailed)`; passar `controller.alertsFailure` em `lib/modules/settings/presentation/pages/settings_page.dart`
+- [ ] T037 [US2] Em `lib/modules/news/presentation/widgets/feed_list_footer.dart`, trocar `bool failed` por `Failure? failure` e usar `failure.messageKeyOr(AppStrings.newsLoadMoreFailed)`; atualizar as chamadas em `news_home_page.dart` e `user_news_list_page.dart`
+- [ ] T038 [US2] Em `lib/modules/news/presentation/pages/reels_page.dart`, o rodapé usa `controller.loadMoreFailure.messageKeyOr(AppStrings.newsLoadMoreFailed).tr()`
+- [ ] T039 [US2] Rodar `flutter test test/modules/activities test/modules/settings test/modules/profile test/modules/news test/modules/authentication`: verde
 
 **Checkpoint**: P2 entregue. **Commit**: `feat(027): ações e blocos dizem quando falta internet`.
 
@@ -121,13 +122,13 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T039 [P] [US3] Em `test/modules/notifications/presentation/widgets/alerts_notices_test.dart`: `showOffline` com `showsSavedContent: true` → texto longo; `false` → texto curto
-- [ ] T040 [P] [US3] Em `test/modules/notifications/presentation/pages/notifications_page_test.dart`: sem conexão e lista vazia → "Você está sem internet."; com alertas → o texto longo
+- [ ] T040 [P] [US3] Em `test/modules/notifications/presentation/widgets/alerts_notices_test.dart`: `showOffline` com `showsSavedContent: true` → texto longo; `false` → texto curto
+- [ ] T041 [P] [US3] Em `test/modules/notifications/presentation/pages/notifications_page_test.dart`: sem conexão e lista vazia → "Você está sem internet."; com alertas → o texto longo
 
 ### Implementation for User Story 3
 
-- [ ] T041 [US3] Em `lib/modules/notifications/presentation/widgets/alerts_notices.dart`, receber `required bool showsSavedContent` e repassar ao `SafeOfflineBanner`; em `lib/modules/notifications/presentation/pages/notifications_page.dart` passar `controller.alerts.isNotEmpty`
-- [ ] T042 [US3] Rodar `flutter test test/modules/notifications`: verde
+- [ ] T042 [US3] Em `lib/modules/notifications/presentation/widgets/alerts_notices.dart`, receber `required bool showsSavedContent` e repassar ao `SafeOfflineBanner`; em `lib/modules/notifications/presentation/pages/notifications_page.dart` passar `controller.alerts.isNotEmpty`
+- [ ] T043 [US3] Rodar `flutter test test/modules/notifications`: verde
 
 **Checkpoint**: P3 entregue. **Commit**: `feat(027): faixa curta nos Alertas sem conteúdo salvo`.
 
@@ -135,37 +136,37 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T043 Procurar sobras: `grep -rn "errorConnection.tr()" lib` (só pode sobrar no `SafeErrorState`, se sobrar) e qualquer `Failed.tr()` de ação de rede que ainda não passe por `messageKeyOr`; revisar código só usado por teste (prática do projeto)
-- [ ] T044 `flutter analyze` (esperado: 1 info de base) e `flutter test` completo: verde; formatar só os arquivos tocados com `dart format`
-- [ ] T045 [P] Atualizar `.specify/memory/design-system.md` (repo root): linhas "Vazio e erro" e "Sem internet" com o padrão dos três casos (tela sem conteúdo, ação/bloco, conteúdo guardado), a decisão pela falha e a variação curta da faixa (FR-014)
-- [ ] T046 [P] Atualizar `.specify/memory/specification.md` (repo root): CB-001/CB-002 citando o padrão e a spec 027; subir a versão do documento
-- [ ] T047 [P] Adicionar **R4 Padrão de sem internet** na Fase R de `.specify/memory/tasks.md` (repo root), em aberto até a validação
-- [ ] T048 Validação no aparelho pela usuária com [quickstart.md](quickstart.md) (passos 1 a 15); ajustes viram esclarecimentos na spec
-- [ ] T049 Marcar R4 como concluída, `/revisar-pr` na branch, push e PR para `develop`
+- [ ] T044 Procurar sobras: `grep -rn "errorConnection.tr()" lib` (só pode sobrar no `SafeErrorState`, se sobrar) e qualquer `Failed.tr()` de ação de rede que ainda não passe por `messageKeyOr`; revisar código só usado por teste (prática do projeto)
+- [ ] T045 `flutter analyze` (esperado: 1 info de base) e `flutter test` completo: verde; formatar só os arquivos tocados com `dart format`
+- [ ] T046 [P] Atualizar `.specify/memory/design-system.md` (repo root): linhas "Vazio e erro" e "Sem internet" com o padrão dos três casos (tela sem conteúdo, ação/bloco, conteúdo guardado), a decisão pela falha e a variação curta da faixa (FR-014)
+- [ ] T047 [P] Atualizar `.specify/memory/specification.md` (repo root): CB-001/CB-002 citando o padrão e a spec 027; subir a versão do documento
+- [ ] T048 [P] Adicionar **R4 Padrão de sem internet** na Fase R de `.specify/memory/tasks.md` (repo root), em aberto até a validação
+- [ ] T049 Validação no aparelho pela usuária com [quickstart.md](quickstart.md) (passos 1 a 15); ajustes viram esclarecimentos na spec
+- [ ] T050 Marcar R4 como concluída, `/revisar-pr` na branch, push e PR para `develop`
 
 ---
 
 ## Dependencies & Execution Order
 
-- **Setup (T001)** → **Base (T002–T010)** → histórias.
+- **Setup (T001)** → **Base (T002–T011)** → histórias.
 - **US1** depende só da Base. **US2** depende da Base; toca a `lesson_controller.dart`, a `lesson_page.dart` e a `reels_page.dart` também usadas na US1, então vem depois dela. **US3** depende só da Base (T009) e pode ir em paralelo à US2.
 - Dentro de cada história: testes primeiro (precisam falhar), depois o código.
 
 ### Parallel Opportunities
 
 - Base: T002/T003 em paralelo com T008/T009.
-- US1: T011, T012, T013 e T014 em paralelo (arquivos diferentes).
-- US2: os testes T020–T028 em paralelo; T031, T032 e T033 em paralelo.
-- US3: T039 e T040 em paralelo; a história inteira em paralelo com a US2.
-- Polimento: T045, T046 e T047 em paralelo.
+- US1: T012, T013, T014 e T015 em paralelo (arquivos diferentes).
+- US2: os testes T021–T029 em paralelo; T032, T033 e T034 em paralelo.
+- US3: T040 e T041 em paralelo; a história inteira em paralelo com a US2.
+- Polimento: T046, T047 e T048 em paralelo.
 
 ### Parallel Example: User Story 1
 
 ```text
-T011 activities_dashboard_page_test.dart
-T012 lesson_controller_test.dart
-T013 lesson_page_test.dart
-T014 reels_page_test.dart
+T012 activities_dashboard_page_test.dart
+T013 lesson_controller_test.dart
+T014 lesson_page_test.dart
+T015 reels_page_test.dart
 ```
 
 ## Implementation Strategy
@@ -173,4 +174,4 @@ T014 reels_page_test.dart
 1. **MVP**: Setup + Base + US1. Já resolve as duas capturas que motivaram a feature (Atividades e Reels) e fecha a regra no `core`.
 2. **Incremento 2**: US2, que tira os "Não foi possível…" das ações sem internet.
 3. **Incremento 3**: US3, só os Alertas.
-4. Cada fase termina com a suíte do módulo verde e um commit; a validação no aparelho é uma só, no fim (T048).
+4. Cada fase termina com a suíte do módulo verde e um commit; a validação no aparelho é uma só, no fim (T049).
