@@ -174,7 +174,7 @@ class _UserNewsListState extends State<_UserNewsList> {
                 return FeedListFooter(
                   hasMore: controller.hasMore,
                   isLoading: controller.isLoadingMore,
-                  failed: controller.loadMoreFailure != null,
+                  failure: controller.loadMoreFailure,
                   isEnd: controller.isEnd,
                   offlineEnd: controller.isFromCache,
                   onLoadMore: controller.loadMore,

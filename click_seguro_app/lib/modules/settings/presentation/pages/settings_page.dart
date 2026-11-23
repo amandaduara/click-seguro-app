@@ -128,6 +128,7 @@ class _AccountSettings extends StatelessWidget {
               // novo), sem SnackBar.
               loadFailed: controller.alertsLoadFailed,
               saveFailed: controller.alertsSaveFailed,
+              failure: controller.alertsFailure,
               retrying: controller.isRetryingAlerts,
               onChanged: controller.setReceiveAlerts,
               onRetry: controller.retryAlerts,

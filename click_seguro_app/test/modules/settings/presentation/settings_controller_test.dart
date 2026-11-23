@@ -133,6 +133,8 @@ void main() {
         expect(alertsOn(), isTrue);
         expect(controller.alertsSaveFailed, isTrue);
         expect(controller.alertsLoadFailed, isFalse);
+        // A linha escolhe a frase pela falha (specs/027).
+        expect(controller.alertsFailure, isA<ConnectionFailure>());
       },
     );
 
@@ -153,6 +155,7 @@ void main() {
       expect(repository.alertsCalls, [false, false]);
       expect(alertsOn(), isFalse);
       expect(controller.alertsSaveFailed, isFalse);
+      expect(controller.alertsFailure, isNull);
     });
 
     test('retryAlerts que falha de novo mantém o pedido pendente', () async {
@@ -173,6 +176,7 @@ void main() {
         ..add(const Right(testAccount));
       await controller.load();
       expect(controller.alertsLoadFailed, isTrue);
+      expect(controller.alertsFailure, isA<ConnectionFailure>());
       repository.accountGate = Completer<void>();
 
       final retrying = controller.retryAlerts();
@@ -182,6 +186,7 @@ void main() {
       await retrying;
       expect(controller.account, isA<AccountLoaded>());
       expect(controller.alertsLoadFailed, isFalse);
+      expect(controller.alertsFailure, isNull);
       expect(controller.isRetryingAlerts, isFalse);
       expect(repository.alertsCalls, isEmpty);
     });

@@ -1447,9 +1447,14 @@ void main() {
       await tester.tap(find.text('Confirmar resposta'));
       await tester.pumpAndSettle();
 
+      // A frase padrão de sem internet (specs/027 FR-006).
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
       expect(
         find.text('Não foi possível enviar sua resposta. Tente de novo.'),
-        findsOneWidget,
+        findsNothing,
       );
       expect(
         tester
@@ -1463,6 +1468,22 @@ void main() {
         LessonOptionState.selected,
       );
       expect(find.text('Não foi dessa vez'), findsNothing);
+    });
+
+    testWidgets('erro do servidor: a mensagem própria do envio', (
+      tester,
+    ) async {
+      repository.answerResults = [const Left(ServerFailure())];
+      await open(tester);
+      await chooseSecond(tester);
+
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Não foi possível enviar sua resposta. Tente de novo.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('recusada: mensagem e o módulo recarregado', (tester) async {

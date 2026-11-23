@@ -471,10 +471,26 @@ void main() {
 
       expect(await controller.confirm(), AnswerAttempt.failed);
 
+      // A tela diz que falta internet (specs/027).
+      expect(controller.answerFailure, isA<ConnectionFailure>());
       expect(controller.selectedOptionId, 'l1-o2');
       expect(controller.current!.isCompleted, isFalse);
       expect(controller.currentResult, isNull);
       expect(controller.canConfirm, isTrue);
+    });
+
+    test('a confirmação seguinte esquece a falha anterior', () async {
+      repository.answerResults = [
+        const Left(ConnectionFailure()),
+        Right(AnswerResultModel.fromJson(answerJson()).toEntity()),
+      ];
+      controller.select('l1-o2');
+      await controller.confirm();
+
+      final Future<AnswerAttempt> retry = controller.confirm();
+      expect(controller.answerFailure, isNull);
+      expect(await retry, AnswerAttempt.answered);
+      expect(controller.answerFailure, isNull);
     });
 
     test('recusada: recarrega o módulo e esquece os resultados', () async {

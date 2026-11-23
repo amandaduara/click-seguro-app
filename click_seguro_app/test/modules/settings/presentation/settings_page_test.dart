@@ -512,12 +512,29 @@ void main() {
       final Size size = tester.getSize(retryIcon());
       expect(size.width, greaterThanOrEqualTo(48));
       expect(size.height, greaterThanOrEqualTo(48));
+      // Sem internet: a frase padrão na própria linha (specs/027).
       expect(
-        find.text('Não foi possível mudar os alertas. Tente de novo.'),
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
         findsOneWidget,
       );
       expect(find.bySemanticsLabel(RegExp('Tentar de novo')), findsOneWidget);
       semantics.dispose();
+    });
+
+    testWidgets('erro do servidor ao salvar → a mensagem dos alertas', (
+      tester,
+    ) async {
+      repository.alertsResults[0] = const Left(ServerFailure());
+      await open(tester);
+
+      await tester.tap(alertsSwitch());
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Não foi possível mudar os alertas. Tente de novo.'),
+        findsOneWidget,
+      );
+      expect(retryIcon(), findsOneWidget);
     });
 
     testWidgets('leitor de tela: a linha é um só botão "Tentar de novo"', (
@@ -539,7 +556,7 @@ void main() {
         isSemantics(
           label:
               'Alertas de notícias novas\n'
-              'Não foi possível mudar os alertas. Tente de novo.\n'
+              'Sem conexão com a internet. Verifique sua rede.\n'
               'Tentar de novo',
           isButton: true,
           hasTapAction: true,
@@ -596,13 +613,26 @@ void main() {
 
       expect(alertsSwitch(), findsNothing);
       expect(find.text('Tentar novamente'), findsNothing);
-      expect(find.text('Não foi possível carregar'), findsOneWidget);
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
 
       await tapAndSettle(tester, retryIcon());
 
       expect(repository.accountCalls, 2);
       expect(retryIcon(), findsNothing);
       expect(tester.widget<Switch>(alertsSwitch()).onChanged, isNotNull);
+    });
+
+    testWidgets('conta com erro do servidor → "Não foi possível carregar"', (
+      tester,
+    ) async {
+      repository.accountResults[0] = const Left(ServerFailure());
+      await open(tester);
+
+      expect(find.text('Não foi possível carregar'), findsOneWidget);
+      expect(retryIcon(), findsOneWidget);
     });
   });
 

@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_switch_tile.dart';
@@ -20,6 +21,7 @@ class AlertsSwitchTile extends StatelessWidget {
     required this.onRetry,
     this.loadFailed = false,
     this.saveFailed = false,
+    this.failure,
     this.retrying = false,
   });
 
@@ -34,6 +36,10 @@ class AlertsSwitchTile extends StatelessWidget {
   final bool saving;
   final bool loadFailed;
   final bool saveFailed;
+
+  /// A falha de [loadFailed] ou [saveFailed]: sem internet, a linha diz a
+  /// frase padrão (specs/027).
+  final Failure? failure;
   final bool retrying;
   final ValueChanged<bool> onChanged;
   final VoidCallback onRetry;
@@ -45,10 +51,14 @@ class AlertsSwitchTile extends StatelessWidget {
       return SettingsTile(
         icon: LucideIcons.bell,
         title: AppStrings.settingsAlerts.tr(),
-        subtitle: loadFailed
-            ? AppStrings.settingsAccountLoadFailed.tr()
-            : saveFailed
-            ? AppStrings.settingsAlertsFailed.tr()
+        subtitle: loadFailed || saveFailed
+            ? failure
+                  .messageKeyOr(
+                    loadFailed
+                        ? AppStrings.settingsAccountLoadFailed
+                        : AppStrings.settingsAlertsFailed,
+                  )
+                  .tr()
             : AppStrings.settingsAlertsSub.tr(),
         onTap: retrying ? null : onRetry,
         trailing: retrying

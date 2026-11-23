@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
@@ -12,7 +13,7 @@ class FeedListFooter extends StatefulWidget {
     super.key,
     required this.hasMore,
     required this.isLoading,
-    required this.failed,
+    required this.failure,
     required this.isEnd,
     required this.offlineEnd,
     required this.onLoadMore,
@@ -20,7 +21,9 @@ class FeedListFooter extends StatefulWidget {
 
   final bool hasMore;
   final bool isLoading;
-  final bool failed;
+
+  /// Falha do carregar mais; sem internet, a frase padrão (specs/027).
+  final Failure? failure;
   final bool isEnd;
 
   /// Fim da cópia guardada: é preciso internet para ver mais (FR-021).
@@ -47,7 +50,7 @@ class _FeedListFooterState extends State<FeedListFooter> {
   }
 
   void _requestIfVisible() {
-    if (!widget.hasMore || widget.isLoading || widget.failed) return;
+    if (!widget.hasMore || widget.isLoading || widget.failure != null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) widget.onLoadMore();
     });
@@ -57,11 +60,11 @@ class _FeedListFooterState extends State<FeedListFooter> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final Widget child;
-    if (widget.failed) {
+    if (widget.failure != null) {
       child = Column(
         children: [
           Text(
-            AppStrings.newsLoadMoreFailed.tr(),
+            widget.failure.messageKeyOr(AppStrings.newsLoadMoreFailed).tr(),
             textAlign: TextAlign.center,
             style: textTheme.bodyLarge?.copyWith(fontSize: 16),
           ),

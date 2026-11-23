@@ -149,7 +149,7 @@ class _Form extends StatelessWidget {
     final String message = switch (result) {
       EditSaveResult.saved => AppStrings.profileEditSaved.tr(),
       _ when failure is UnauthorizedFailure => failure.message.tr(),
-      _ => AppStrings.profileEditSaveFailed.tr(),
+      _ => failure.messageKeyOr(AppStrings.profileEditSaveFailed).tr(),
     };
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -267,7 +267,7 @@ class _PhotoButton extends StatelessWidget {
           context,
           failure is AvatarTypeFailure
               ? failure.message.tr()
-              : AppStrings.profilePhotoFailed.tr(),
+              : failure.messageKeyOr(AppStrings.profilePhotoFailed).tr(),
         );
       case AvatarUpdated() || AvatarPickCancelled():
         break;
@@ -294,7 +294,10 @@ class _PhotoButton extends StatelessWidget {
     if (confirmed != true || !context.mounted) return;
     final Failure? failure = await controller.removePhoto();
     if (failure != null && context.mounted) {
-      _showMessage(context, AppStrings.profilePhotoFailed.tr());
+      _showMessage(
+        context,
+        failure.messageKeyOr(AppStrings.profilePhotoFailed).tr(),
+      );
     }
   }
 

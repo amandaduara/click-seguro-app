@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/utils/app_haptics.dart';
@@ -429,7 +430,12 @@ class _ReelsPageState extends State<ReelsPage> {
         crossAxisAlignment: WrapCrossAlignment.center,
         spacing: AppSpacing.s2,
         children: [
-          Text(AppStrings.newsLoadMoreFailed.tr(), style: style),
+          Text(
+            controller.loadMoreFailure
+                .messageKeyOr(AppStrings.newsLoadMoreFailed)
+                .tr(),
+            style: style,
+          ),
           TextButton(
             onPressed: controller.loadMore,
             style: TextButton.styleFrom(

@@ -318,8 +318,27 @@ void main() {
     );
   });
 
-  testWidgets('falha genérica → aviso e campos mantidos', (tester) async {
+  testWidgets('sem internet → frase padrão e campos mantidos (specs/027)', (
+    tester,
+  ) async {
     repository.changeResults[0] = const Left(ConnectionFailure());
+    await open(tester);
+    await fill(tester);
+
+    await tapSave(tester);
+
+    expect(
+      find.text('Sem conexão com a internet. Verifique sua rede.'),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<TextField>(field('Senha atual')).controller!.text,
+      'Senha@123',
+    );
+  });
+
+  testWidgets('falha genérica → aviso e campos mantidos', (tester) async {
+    repository.changeResults[0] = const Left(ServerFailure());
     await open(tester);
     await fill(tester);
 

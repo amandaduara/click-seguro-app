@@ -106,7 +106,7 @@ Future<void> _save(
     ChangePasswordResult.failed => switch (failure) {
       PasswordChangedReloginFailure() ||
       UnauthorizedFailure() => failure!.message.tr(),
-      _ => AppStrings.settingsPasswordFailed.tr(),
+      _ => failure.messageKeyOr(AppStrings.settingsPasswordFailed).tr(),
     },
   };
   if (message == null) return;

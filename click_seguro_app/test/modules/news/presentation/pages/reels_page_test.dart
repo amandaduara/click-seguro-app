@@ -378,6 +378,23 @@ void main() {
       expect(find.text('Você viu todas as notícias'), findsOneWidget);
     });
 
+    testWidgets('sem internet na parte seguinte: frase padrão (specs/027)', (
+      tester,
+    ) async {
+      firstPage(2, next: 'c2');
+      repository.reelsResults['c2'] = const Left(ConnectionFailure());
+      await pumpPage(tester);
+
+      await tester.fling(find.byType(PageView), const Offset(0, -600), 2000);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(find.text('Tentar novamente'), findsOneWidget);
+    });
+
     testWidgets('falha da parte seguinte: aviso com "Tentar novamente"', (
       tester,
     ) async {

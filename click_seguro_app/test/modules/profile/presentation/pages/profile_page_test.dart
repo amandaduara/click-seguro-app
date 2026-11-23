@@ -264,6 +264,32 @@ void main() {
       expect(find.text('Lidas'), findsOneWidget);
     });
 
+    // Padrão de sem internet (specs/027 FR-006): a mesma frase nos blocos,
+    // com o tentar de novo de cada um.
+    testWidgets('números e conquistas sem internet → frase padrão nos blocos', (
+      tester,
+    ) async {
+      repository
+        ..countsResults[0] = const Left(ConnectionFailure())
+        ..progressResults[0] = const Left(ConnectionFailure());
+      await open(tester);
+
+      expect(find.text('Maria da Silva'), findsOneWidget);
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsNWidgets(2),
+      );
+      expect(
+        find.text('Não foi possível carregar seus números.'),
+        findsNothing,
+      );
+      expect(
+        find.text('Não foi possível carregar suas conquistas.'),
+        findsNothing,
+      );
+      expect(find.text('Tentar novamente'), findsNWidgets(2));
+    });
+
     // Redesign 2.0 (T067): sem círculo girando, o lugar da área carrega em
     // esqueleto e é lido como "Carregando".
     testWidgets('tentando os números de novo: esqueleto "Carregando"', (
