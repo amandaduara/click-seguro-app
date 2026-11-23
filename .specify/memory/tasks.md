@@ -386,6 +386,19 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - Estados: carregamento só com esqueleto cinza, vazio/erro com `SafeStateLayout`, sem aviso de
     servidor lento. Validado pela usuária no aparelho; [specification.md](specification.md)
     2.5.0.
+- [x] **R2 Ajustes da validação no aparelho** (RF-041, RNF-002, RNF-003, RNF-004)
+  (specs/025-ajustes-validacao)
+  - Leitura em voz alta:
+    - o conteúdo do banco sai na voz em português, mesmo com o app em inglês (`SpeechPart`,
+      `speakParts`);
+    - "Ouvir" junto do texto nas atividades, nos destaques, nos Reels, em Privacidade, em Sobre,
+      no Onboarding e em cada resposta do Assistente;
+    - leitura automática no Assistente.
+  - Atividades: refazer começa do zero, com o selo "Refazer"; a conclusão não tem
+    "Compartilhar".
+  - Cabeçalho único `SafePageHeader` nas telas internas.
+  - Contatos oficiais vindos da API, com cópia offline (api-contract 1.1.3).
+  - Validado pela usuária no aparelho.
 
 ---
 
