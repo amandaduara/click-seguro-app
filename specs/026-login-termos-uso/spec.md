@@ -39,6 +39,11 @@ caixa desmarcada "Li e aceito…" com links para os documentos, sem a qual a con
   e-mail e a senha); volta desmarcada só quando a tela é aberta de novo.
 - Q: Que frase curta aparece embaixo de "Termos de uso" na lista das Configurações? → A: "O que
   vale ao usar o app".
+- Validação no aparelho (2026-11-23): a onda presa ao pé da tela ficava por cima do texto. → A:
+  a onda fica no fim do conteúdo, no pé da tela quando tudo cabe (como logo depois da splash) e,
+  quando o conteúdo é maior que a tela, depois do último item, rolando junto; nunca cobre texto.
+  Para o login caber num celular comum com a onda no pé, os espaços ficaram menores e o título
+  passou a `title1` (24), numa linha só.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -119,8 +124,9 @@ dupla da splash no rodapé. O cadastro usa o mesmo cabeçalho e a mesma onda.
 1. **Given** o login aberto, **When** a tela aparece, **Then** a ordem de cima para baixo é:
    marca, título, slogan, abas Entrar/Criar conta, E-mail, Senha, "Esqueci minha senha" (à
    direita), "Entrar" (com seta) e "Continuar sem login"; a onda coral dupla fica no rodapé.
-2. **Given** a onda no rodapé, **When** a fonte está grande e o conteúdo passa da altura da tela,
-   **Then** o conteúdo rola e nunca fica escondido atrás da onda.
+2. **Given** o login num celular comum, **When** a tela abre, **Then** a onda fica no pé da tela,
+   abaixo do último item; **When** a fonte está grande e o conteúdo passa da altura da tela,
+   **Then** a onda vem depois do último item e rola junto, sem cobrir texto.
 3. **Given** o tema de alto contraste ligado, **When** o login abre, **Then** a onda e a marca
    usam as cores do alto contraste e os textos mantêm o contraste exigido.
 4. **Given** o login, **When** a pessoa usa "Entrar", "Esqueci minha senha", "Continuar sem
@@ -226,9 +232,10 @@ do login entram subindo, um depois do outro.
 - **FR-012**: "Esqueci minha senha" MUST ficar alinhado à direita; "Entrar" e "Criar conta"
   MUST ter a seta à direita do texto; "Continuar sem login" MUST ser um link coral centralizado,
   no lugar do botão secundário e do divisor "ou".
-- **FR-013**: A onda coral dupla da splash MUST ficar no rodapé do login e do cadastro, com a
-  mesma forma, altura e cores do fim da splash. O conteúdo MUST rolar por cima do espaço livre e
-  terminar acima da onda, sem ficar escondido.
+- **FR-013**: A onda coral dupla da splash MUST ficar no fim do login e do cadastro, com a
+  mesma forma, altura e cores do fim da splash: no pé da tela quando o conteúdo cabe e, quando não
+  cabe, depois do último item, rolando junto. A onda MUST NOT ficar por cima de nenhum texto
+  (validação de 2026-11-23).
 - **FR-014**: O aviso "Sem conta, seu progresso vale só até fechar o app." MUST sair do login e
   do cadastro; fica só o link "Continuar sem login" (decisão da usuária, 2026-11-23). Os outros
   avisos do visitante (RF-030, fim do módulo) continuam.
@@ -282,7 +289,7 @@ do login entram subindo, um depois do outro.
   nas Configurações continua "Privacidade".
 - O texto dos Termos é o aprovado pela usuária no canvas; mudanças futuras no texto atualizam a
   data. Em inglês, a data segue o formato dos EUA ("Last updated: 11/23/2026").
-- O desenho do login com teclado aberto segue o de hoje (a tela rola); a onda pode ficar coberta
+- O desenho do login com teclado aberto segue o de hoje (a tela encolhe e rola); a onda pode ficar coberta
   pelo teclado.
 - A animação para o login reaproveita as cores e a forma da onda da splash (feature 023) e o
   "Reduzir animações" da feature 022.

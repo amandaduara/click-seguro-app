@@ -449,12 +449,13 @@ indicador de página (ponto ativo alongado em `primary`), "Pular" e o botão `la
 
 Versão A (feature 026), que continua a splash:
 
-- **Cabeçalho centralizado**: marca em `primary` (68), "Bem-vindo ao Click Seguro" em `display`
+- **Cabeçalho centralizado**: marca em `primary` (68), "Bem-vindo ao Click Seguro" em `title1`
   e o slogan da splash em `body` (`textBody`).
 - **Formulário**: seletor em pílula "Entrar / Criar conta" (§7.7); campos `SafeTextField` com
   rótulo acima; "Esqueci minha senha" como `link`, alinhado à direita; botão `large` com a seta à
   direita; "Continuar sem login" como link coral (`primaryPressed`, 16/600, 48 de altura).
-- **Rodapé**: a `BrandWave` fica presa ao pé da tela, e a rolagem termina acima dela.
+- **Rodapé**: a `BrandWave` é o último item da rolagem: no pé da tela quando tudo cabe e, senão,
+  depois do último item, rolando junto. Nunca fica por cima do texto.
 - **Aceite do cadastro**: abaixo das regras da senha, um cartão com canto 16 e a caixa de 28 com
   canto 8, numa área de 48. Desmarcado, o cartão é `card` com borda `border`; marcado, é
   `primarySoft` com borda `primary`, e a caixa fica `primary` com o visto branco. "Termos de uso"

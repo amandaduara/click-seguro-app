@@ -555,12 +555,26 @@ void main() {
       );
     });
 
-    testWidgets('a onda da splash fica no pé da tela', (tester) async {
+    // Validação da usuária (2026-11-23): a onda fica no fim do conteúdo,
+    // nunca por cima dele.
+    testWidgets('num celular onde tudo cabe, a onda fica no pé da tela, '
+        'abaixo do último item', (tester) async {
+      tester.view
+        ..physicalSize = const Size(1170, 2532)
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
       await pumpLogin(tester);
 
-      expect(find.byType(BrandWave), findsOneWidget);
       final double screen = tester.getSize(find.byType(Scaffold)).height;
-      expect(tester.getBottomLeft(find.byType(BrandWave)).dy, screen);
+      final Rect wave = tester.getRect(find.byType(BrandWave));
+      expect(wave.bottom, screen);
+      expect(
+        wave.top,
+        greaterThanOrEqualTo(
+          tester.getBottomLeft(find.text('Continuar sem login')).dy,
+        ),
+      );
     });
 
     // Revisão da branch (item 1): a onda fica atrás do teclado, mas o campo
@@ -589,33 +603,33 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-      'fonte 2× numa tela baixa: o fim rola até ficar acima da onda',
-      (tester) async {
-        tester.view
-          ..physicalSize = const Size(1080, 1920)
-          ..devicePixelRatio = 3;
-        tester.platformDispatcher.textScaleFactorTestValue = 2;
-        addTearDown(tester.view.reset);
-        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    testWidgets('conteúdo maior que a tela: a onda vem depois do último item '
+        'e rola junto', (tester) async {
+      tester.view
+        ..physicalSize = const Size(1080, 1920)
+        ..devicePixelRatio = 3;
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-        await pumpLogin(tester);
-        await tester.tap(registerTab);
-        await tester.pumpAndSettle();
-        await tester.drag(
-          find.byType(Scrollable).first,
-          const Offset(0, -5000),
-        );
-        await tester.pumpAndSettle();
+      await pumpLogin(tester);
+      await tester.tap(registerTab);
+      await tester.pumpAndSettle();
 
-        expect(tester.takeException(), isNull);
-        final double screen = tester.getSize(find.byType(Scaffold)).height;
-        expect(
-          tester.getBottomLeft(find.text('Continuar sem login')).dy,
-          lessThan(screen - BrandScene.footerHeight),
-        );
-      },
-    );
+      double waveTop() => tester.getTopLeft(find.byType(BrandWave)).dy;
+      double lastItemBottom() =>
+          tester.getBottomLeft(find.text('Continuar sem login')).dy;
+      final double screen = tester.getSize(find.byType(Scaffold)).height;
+      expect(waveTop(), greaterThan(screen), reason: 'fora da tela, embaixo');
+      expect(waveTop(), greaterThanOrEqualTo(lastItemBottom()));
+
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -5000));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(tester.getBottomLeft(find.byType(BrandWave)).dy, screen);
+      expect(waveTop(), greaterThanOrEqualTo(lastItemBottom()));
+    });
   });
 
   // Sem aviso de servidor lento (validação da usuária, specs/024).

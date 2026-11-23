@@ -141,107 +141,105 @@ class _LoginPageState extends State<LoginPage> {
     final primaryLabel = isRegister
         ? AppStrings.authModeRegister.tr()
         : AppStrings.authModeLogin.tr();
-    // A onda fica presa ao pé da tela (atrás do teclado); só a rolagem
-    // encolhe com o teclado, para o campo com foco aparecer acima dele.
-    // Sem teclado, o fim da rolagem deixa a onda livre (specs/026 R3).
-    final double keyboard = MediaQuery.viewInsetsOf(context).bottom;
-    final EdgeInsets padding = EdgeInsets.fromLTRB(
-      AppSpacing.s6,
-      AppSpacing.s6,
-      AppSpacing.s6,
-      keyboard > 0
-          ? AppSpacing.s6
-          : BrandScene.footerHeight +
-                AppSpacing.s4 +
-                MediaQuery.paddingOf(context).bottom,
-    );
-
-    final Widget body = Stack(
-      children: [
-        const Positioned(left: 0, right: 0, bottom: 0, child: BrandWave()),
-        Padding(
-          padding: EdgeInsets.only(bottom: keyboard),
-          child: SafeArea(
-            bottom: false,
-            child: AutofillGroup(
-              child: SingleChildScrollView(
-                padding: padding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const AuthHeader(),
-                    const SizedBox(height: AppSpacing.s6),
-                    LoginIntroReveal(
-                      step: 1,
-                      child: SafePillTabs(
-                        tabs: [
-                          AppStrings.authModeLogin.tr(),
-                          AppStrings.authModeRegister.tr(),
-                        ],
-                        selectedIndex: isRegister ? 1 : 0,
-                        onChanged: (index) {
-                          final bool register = index == 1;
-                          // Tocar na aba atual não muda nada.
-                          if (register == isRegister) return;
-                          setState(() => _passwordWasReset = false);
-                          controller.setMode(
-                            register ? AuthMode.register : AuthMode.login,
-                          );
-                        },
-                      ),
+    // A onda é o último item da rolagem, numa coluna com pelo menos a altura
+    // da tela: quando tudo cabe, fica no pé da tela, como no fim da splash;
+    // senão, vem depois do último item e rola junto, sem cobrir o texto
+    // (validação da usuária, specs/026 R3).
+    final Widget body = LayoutBuilder(
+      builder: (context, viewport) => AutofillGroup(
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: viewport.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s6,
+                      AppSpacing.s4,
+                      AppSpacing.s6,
+                      AppSpacing.s2,
                     ),
-                    const SizedBox(height: AppSpacing.s6),
-                    LoginIntroReveal(
-                      step: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: _form(controller, isRegister),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.s5),
-                    LoginIntroReveal(
-                      step: 3,
-                      child: SafeButton(
-                        label: primaryLabel,
-                        iconRight: const Icon(LucideIcons.arrowRight),
-                        loading: controller.isSubmitting,
-                        // Só com todos os campos corretos (no cadastro, a
-                        // senha cumprindo as 5 regras e o aceite).
-                        disabled:
-                            !controller.canSubmit && !controller.isSubmitting,
-                        onPressed: _submit,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.s3),
-                    LoginIntroReveal(
-                      step: 4,
-                      child: Center(
-                        child: TextButton(
-                          onPressed: controller.continueAsGuest,
-                          style: TextButton.styleFrom(
-                            foregroundColor: context.colors.primaryPressed,
-                            minimumSize: const Size(48, 48),
-                            textStyle: AppTypography.body.copyWith(
-                              fontWeight: FontWeight.w600,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const AuthHeader(),
+                        const SizedBox(height: AppSpacing.s5),
+                        LoginIntroReveal(
+                          step: 1,
+                          child: SafePillTabs(
+                            tabs: [
+                              AppStrings.authModeLogin.tr(),
+                              AppStrings.authModeRegister.tr(),
+                            ],
+                            selectedIndex: isRegister ? 1 : 0,
+                            onChanged: (index) {
+                              final bool register = index == 1;
+                              // Tocar na aba atual não muda nada.
+                              if (register == isRegister) return;
+                              setState(() => _passwordWasReset = false);
+                              controller.setMode(
+                                register ? AuthMode.register : AuthMode.login,
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.s5),
+                        LoginIntroReveal(
+                          step: 2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: _form(controller, isRegister),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.s4),
+                        LoginIntroReveal(
+                          step: 3,
+                          child: SafeButton(
+                            label: primaryLabel,
+                            iconRight: const Icon(LucideIcons.arrowRight),
+                            loading: controller.isSubmitting,
+                            // Só com todos os campos corretos (no cadastro, a
+                            // senha cumprindo as 5 regras e o aceite).
+                            disabled:
+                                !controller.canSubmit &&
+                                !controller.isSubmitting,
+                            onPressed: _submit,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.s1),
+                        LoginIntroReveal(
+                          step: 4,
+                          child: Center(
+                            child: TextButton(
+                              onPressed: controller.continueAsGuest,
+                              style: TextButton.styleFrom(
+                                foregroundColor: context.colors.primaryPressed,
+                                minimumSize: const Size(48, 48),
+                                textStyle: AppTypography.body.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              child: Text(AppStrings.authContinueAsGuest.tr()),
                             ),
                           ),
-                          child: Text(AppStrings.authContinueAsGuest.tr()),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                const BrandWave(),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
 
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: widget.fromSplash ? LoginIntro(child: body) : body,
-    );
+    return Scaffold(body: widget.fromSplash ? LoginIntro(child: body) : body);
   }
 
   /// Campos com o rótulo acima (redesign 2.0), regras da senha, "Esqueci

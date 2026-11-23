@@ -28,7 +28,7 @@ class AuthHeader extends StatelessWidget {
             const Center(
               child: LoginIntroLogoSlot(child: AppLogo(size: _logoSize)),
             ),
-            const SizedBox(height: AppSpacing.s4),
+            const SizedBox(height: AppSpacing.s3),
             LoginIntroReveal(
               step: 0,
               child: Column(
@@ -37,7 +37,9 @@ class AuthHeader extends StatelessWidget {
                   Text(
                     AppStrings.authWelcomeTitle.tr(),
                     textAlign: TextAlign.center,
-                    style: AppTypography.display.copyWith(
+                    // Título 1 (24): cabe numa linha e deixa o login inteiro
+                    // caber na tela, com a onda no pé (validação 2026-11-23).
+                    style: AppTypography.title1.copyWith(
                       color: colors.textForeground,
                     ),
                   ),

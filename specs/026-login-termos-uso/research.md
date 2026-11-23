@@ -63,15 +63,20 @@ uma fonte única garante que a onda fique exatamente no mesmo lugar (FR-013).
 **Descartado**: copiar as bordas para o login (duplicação, Princípio II); um serviço no GetIt
 para a geometria (exagero para constantes de desenho).
 
-## R3. Onda no rodapé com teclado e fonte grande
+## R3. Onda no fim do conteúdo (revista na validação de 2026-11-23)
 
-**Decisão**: o `Scaffold` do login usa `resizeToAvoidBottomInset: false`. O corpo é um `Stack`
-com a `BrandWave` presa ao pé da tela e, por cima, a rolagem. O espaço livre no fim da rolagem é
-o maior entre a altura da onda mais 16 (126) e o teclado mais 24. O conteúdo nunca fica atrás
-da onda (FR-013), e com o teclado aberto a onda fica atrás dele, como diz a suposição da spec.
+**Decisão**: a `BrandWave` é o último item da rolagem, numa coluna com pelo menos a altura da
+tela (`ConstrainedBox(minHeight)` + `MainAxisAlignment.spaceBetween`). Quando tudo cabe, ela fica
+no pé da tela, como no fim da splash; senão, vem depois do último item e rola junto. O `Scaffold`
+volta a encolher com o teclado, e o campo com foco aparece acima dele. Para o login caber num
+celular comum (390 × 844) com a onda no pé, os espaços ficaram menores e o título do cabeçalho
+passou a `title1` (24), numa linha só.
 
-**Descartado**: deixar o `Scaffold` encolher com o teclado (a onda subiria e cobriria os campos);
-esconder a onda com o teclado (pisca a cada foco).
+**Primeira versão (descartada na validação)**: onda presa ao pé da tela num `Stack`, com a
+rolagem por cima e um espaço livre no fim. No aparelho, a onda parada ficava por cima do texto
+enquanto a pessoa rolava.
+
+**Descartado também**: esconder a onda com o teclado (pisca a cada foco).
 
 ## R4. Aceite dos termos no `AuthenticationController`
 
