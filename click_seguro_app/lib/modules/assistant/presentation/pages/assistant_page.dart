@@ -116,6 +116,9 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
   Object? _speakingId;
   static const Object _greetingId = 'assistant-greeting';
 
+  /// As boas-vindas já foram lidas (ou não cabia ler): uma vez por abertura.
+  bool _greetingHandled = false;
+
   @override
   void initState() {
     super.initState();
@@ -128,6 +131,26 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
     setState(() {
       if (!_readAloud.isSpeaking) _speakingId = null;
     });
+    _autoReadGreeting();
+  }
+
+  /// Com a leitura automática ligada, as boas-vindas são lidas ao abrir a
+  /// conversa vazia, como o conteúdo das outras telas (validação da
+  /// usuária, specs/025). Só depois da voz verificada, e uma vez.
+  void _autoReadGreeting() {
+    if (_greetingHandled || !_readAloud.isAvailable) return;
+    _greetingHandled = true;
+    final AssistantController? controller = _controller;
+    if (controller == null ||
+        controller.activeTab != AssistantTab.chat ||
+        controller.chatMessages.isNotEmpty ||
+        _readAloud.isSpeaking ||
+        !GetIt.instance<AccessibilityPreferencesNotifier>()
+            .value
+            .autoReadAloud) {
+      return;
+    }
+    _read(_greetingId, [SpeechPart(_greeting)]);
   }
 
   @override

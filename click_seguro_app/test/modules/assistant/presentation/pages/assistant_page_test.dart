@@ -181,6 +181,18 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    // Visto no aparelho: as boas-vindas não eram lidas ao abrir (specs/025).
+    testWidgets('ligada: lê as boas-vindas ao abrir a conversa vazia', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await signIn();
+      await open(tester);
+
+      expect(tts.spoken.map((s) => s.text), [_greeting]);
+      expect(_listenLabel(tester, 'assistant-listen-greeting'), 'Parar');
+    });
+
     testWidgets('ligada: lê a resposta do assistente, não a da pessoa', (
       tester,
     ) async {
@@ -190,7 +202,8 @@ void main() {
 
       await sendHello(tester);
 
-      expect(tts.spoken.map((s) => s.text), ['Resposta segura']);
+      // As boas-vindas ao abrir; depois, só a resposta.
+      expect(tts.spoken.map((s) => s.text), [_greeting, 'Resposta segura']);
     });
 
     // Visto no aparelho: com o app em inglês e só a voz em português, nada
@@ -220,7 +233,7 @@ void main() {
       expect(tts.spoken.single.language, SpeechLanguage.ptBr);
     });
 
-    testWidgets('desligada: não lê', (tester) async {
+    testWidgets('desligada: não lê nem as boas-vindas', (tester) async {
       await signIn();
       await open(tester);
 
@@ -245,9 +258,12 @@ void main() {
       await _tapAnalyzeButton(tester);
       await tester.pumpAndSettle();
 
-      // Primeiro o selo (app); a explicação vem depois (conteúdo).
-      expect(tts.spoken, hasLength(1));
-      expect(tts.spoken.single.text, 'Alto risco de golpe.');
+      // As boas-vindas ao abrir; depois o selo (app), e a explicação vem
+      // em seguida (conteúdo).
+      expect(tts.spoken.map((s) => s.text), [
+        _greeting,
+        'Alto risco de golpe.',
+      ]);
     });
 
     testWidgets('a mensagem lida automaticamente mostra "Parar"', (
@@ -936,3 +952,6 @@ void main() {
     },
   );
 }
+
+const String _greeting =
+    'Olá! Sou a assistente Click Seguro. Posso ajudar você a reconhecer golpes e se proteger online.';
