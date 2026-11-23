@@ -246,8 +246,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
         return _FeedSkeleton(now: DateTime.now());
       case FeedStatus.error:
         return SafeErrorState(
-          message: (controller.failure?.message ?? AppStrings.errorGeneric)
-              .tr(),
+          failure: controller.failure,
           onRetry: controller.load,
         );
       case FeedStatus.loaded:

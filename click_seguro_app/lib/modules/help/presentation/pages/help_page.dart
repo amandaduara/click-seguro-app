@@ -146,12 +146,7 @@ class _HelpPageContentState extends State<_HelpPageContent> {
     if (controller.isLoading) return [fill(const SafeLoadingState())];
     if (failure != null) {
       return [
-        fill(
-          SafeErrorState(
-            message: failure.message.tr(),
-            onRetry: controller.refresh,
-          ),
-        ),
+        fill(SafeErrorState(failure: failure, onRetry: controller.refresh)),
       ];
     }
     final contacts = official

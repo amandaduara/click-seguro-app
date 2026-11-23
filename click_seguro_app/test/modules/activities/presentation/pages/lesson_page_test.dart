@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
@@ -1592,13 +1594,36 @@ void main() {
       expect(find.text('Pergunta 1 de 3'), findsOneWidget);
     });
 
-    testWidgets('erro com "Tentar novamente", que recarrega', (tester) async {
+    Finder illustration(AppIllustration which) => find.byWidgetPredicate(
+      (w) => w is SafeIllustration && w.illustration == which,
+    );
+
+    // Padrão de sem internet (specs/027 FR-003).
+    testWidgets('sem internet: nuvem e a frase padrão', (tester) async {
+      repository.moduleDetailResults = [const Left(ConnectionFailure())];
+      await open(tester);
+
+      expect(illustration(AppIllustration.stateOffline), findsOneWidget);
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Não foi possível carregar as atividades'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('erro do servidor com "Tentar novamente", que recarrega', (
+      tester,
+    ) async {
       repository.moduleDetailResults = [
-        const Left(ConnectionFailure()),
+        const Left(ServerFailure()),
         Right(ModuleDetailModel.fromJson(moduleDetailJson()).toEntity()),
       ];
       await open(tester);
 
+      expect(illustration(AppIllustration.stateError), findsOneWidget);
       expect(
         find.text('Não foi possível carregar as atividades'),
         findsOneWidget,

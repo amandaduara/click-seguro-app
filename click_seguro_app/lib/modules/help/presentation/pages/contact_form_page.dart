@@ -97,10 +97,7 @@ class _ContactFormContentState extends State<_ContactFormContent> {
         builder: (context, controller, _) {
           final failure = controller.loadFailure;
           if (failure != null) {
-            return SafeErrorState(
-              message: failure.message.tr(),
-              onRetry: _loadContact,
-            );
+            return SafeErrorState(failure: failure, onRetry: _loadContact);
           }
           if (controller.notFound) {
             return SafeEmptyState(message: AppStrings.helpContactMissing.tr());

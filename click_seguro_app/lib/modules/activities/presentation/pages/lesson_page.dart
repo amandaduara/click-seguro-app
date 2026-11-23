@@ -305,6 +305,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
         layout: SafeLoadingLayout.detail,
       ),
       LessonStatus.error => SafeErrorState(
+        failure: controller.failure,
         message: AppStrings.activitiesErrorTitle.tr(),
         onRetry: () => controller.load(widget.moduleId),
       ),

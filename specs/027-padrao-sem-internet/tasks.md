@@ -25,7 +25,7 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 **Purpose**: texto novo nos dois idiomas.
 
-- [ ] T001 Adicionar `commonOfflineBannerShort = 'common_offline_banner_short'` em `lib/core/i18n/app_strings.dart`, com "Você está sem internet." em `assets/translations/pt-BR.json` e "You are offline." em `assets/translations/en-US.json` (logo abaixo de `common_offline_banner`)
+- [X] T001 Adicionar `commonOfflineBannerShort = 'common_offline_banner_short'` em `lib/core/i18n/app_strings.dart`, com "Você está sem internet." em `assets/translations/pt-BR.json` e "You are offline." em `assets/translations/en-US.json` (logo abaixo de `common_offline_banner`)
 
 ---
 
@@ -35,20 +35,20 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 **⚠️ CRITICAL**: termine esta fase antes das histórias.
 
-- [ ] T002 [P] Escrever `test/core/errors/failure_message_test.dart`: `messageKeyOr('x')` devolve `error_connection` para `ConnectionFailure()`, `'x'` para `ServerFailure()`, `UnauthorizedFailure()` e `null`
-- [ ] T003 [P] Criar `lib/core/errors/failure_message.dart` com `extension FailureMessageKey on Failure?` e `String messageKeyOr(String fallbackKey)` (research R3: `this is ConnectionFailure ? this!.message : fallbackKey`), com comentário de uma linha, e exportar em `lib/core/errors/errors.dart`
-- [ ] T004 Atualizar `test/core/widgets/safe_states_test.dart` para a nova assinatura do `SafeErrorState` (contrato de UI): com `failure: ConnectionFailure()` → ilustração `stateOffline` e "Sem conexão com a internet. Verifique sua rede." mesmo com `message` próprio; com `failure: ServerFailure()` e `message: 'Texto da tela'` → `stateError` e "Texto da tela"; com `ServerFailure()` sem `message` → `stateError` e o texto da falha; com `failure: null` sem `message` → `stateError` e `error_generic`; "Tentar novamente" chama `onRetry` em todos
-- [ ] T005 Mudar `lib/core/widgets/safe_error_state.dart`: parâmetros `required Failure? failure`, `String? message`, `required VoidCallback onRetry`; `offline = failure is ConnectionFailure`; texto = offline ? `failure.message.tr()` : `message ?? (failure?.message ?? AppStrings.errorGeneric).tr()`. Remover a comparação de texto e reescrever o comentário da classe
-- [ ] T006 Migrar as chamadas que já passam a falha (comportamento igual), trocando `message: (x?.message ?? AppStrings.errorGeneric).tr()` ou `message: failure.message.tr()` por `failure: x`:
+- [X] T002 [P] Escrever `test/core/errors/failure_message_test.dart`: `messageKeyOr('x')` devolve `error_connection` para `ConnectionFailure()`, `'x'` para `ServerFailure()`, `UnauthorizedFailure()` e `null`
+- [X] T003 [P] Criar `lib/core/errors/failure_message.dart` com `extension FailureMessageKey on Failure?` e `String messageKeyOr(String fallbackKey)` (research R3: `this is ConnectionFailure ? this!.message : fallbackKey`), com comentário de uma linha, e exportar em `lib/core/errors/errors.dart`
+- [X] T004 Atualizar `test/core/widgets/safe_states_test.dart` para a nova assinatura do `SafeErrorState` (contrato de UI): com `failure: ConnectionFailure()` → ilustração `stateOffline` e "Sem conexão com a internet. Verifique sua rede." mesmo com `message` próprio; com `failure: ServerFailure()` e `message: 'Texto da tela'` → `stateError` e "Texto da tela"; com `ServerFailure()` sem `message` → `stateError` e o texto da falha; com `failure: null` sem `message` → `stateError` e `error_generic`; "Tentar novamente" chama `onRetry` em todos
+- [X] T005 Mudar `lib/core/widgets/safe_error_state.dart`: parâmetros `required Failure? failure`, `String? message`, `required VoidCallback onRetry`; `offline = failure is ConnectionFailure`; texto = offline ? `failure.message.tr()` : `message ?? (failure?.message ?? AppStrings.errorGeneric).tr()`. Remover a comparação de texto e reescrever o comentário da classe
+- [X] T006 Migrar as chamadas que já passam a falha (comportamento igual), trocando `message: (x?.message ?? AppStrings.errorGeneric).tr()` ou `message: failure.message.tr()` por `failure: x`:
   - `lib/modules/assistant/presentation/widgets/assistant_history_tab.dart`
   - `lib/modules/help/presentation/pages/contact_form_page.dart` e `help_page.dart`
   - `lib/modules/news/presentation/pages/news_detail_page.dart`, `news_home_page.dart`, `user_news_list_page.dart`, `reels_page.dart`
   - `lib/modules/profile/presentation/pages/achievements_page.dart` (as duas), `profile_edit_page.dart`, `profile_page.dart`
-- [ ] T007 Migrar `lib/modules/activities/presentation/pages/activities_dashboard_page.dart` e `lesson_page.dart` para `SafeErrorState(failure: null, message: AppStrings.activitiesErrorTitle.tr(), …)` por enquanto (a falha entra na US1), e os exemplos de `lib/style_guide/style_guide.dart` (um com `ConnectionFailure()`, um com `message`)
-- [ ] T008 [P] Escrever em `test/core/widgets/safe_states_test.dart` (grupo da faixa): `SafeOfflineBanner()` mostra `common_offline_banner`; `SafeOfflineBanner(showsSavedContent: false)` mostra `common_offline_banner_short`; os dois com `liveRegion`
-- [ ] T009 Adicionar `final bool showsSavedContent` (padrão `true`) em `lib/core/widgets/safe_offline_banner.dart`, escolhendo entre `commonOfflineBanner` e `commonOfflineBannerShort`
-- [ ] T010 Acessibilidade do estado de erro (FR-012): em `test/core/widgets/safe_states_test.dart`, conferir que a frase do `SafeErrorState` (conexão e servidor) fica num nó com `liveRegion`; depois envolver o texto da mensagem em `Semantics(liveRegion: true)` em `lib/core/widgets/safe_state_layout.dart` (vale também para o vazio, que aparece no lugar da lista do mesmo jeito)
-- [ ] T011 Rodar `flutter analyze` e `flutter test test/core test/modules/news test/modules/profile test/modules/help test/modules/assistant`: tudo verde sem mudar os testes das telas
+- [X] T007 Migrar `lib/modules/activities/presentation/pages/activities_dashboard_page.dart` e `lesson_page.dart` para `SafeErrorState(failure: null, message: AppStrings.activitiesErrorTitle.tr(), …)` por enquanto (a falha entra na US1), e os exemplos de `lib/style_guide/style_guide.dart` (um com `ConnectionFailure()`, um com `message`)
+- [X] T008 [P] Escrever em `test/core/widgets/safe_states_test.dart` (grupo da faixa): `SafeOfflineBanner()` mostra `common_offline_banner`; `SafeOfflineBanner(showsSavedContent: false)` mostra `common_offline_banner_short`; os dois com `liveRegion`
+- [X] T009 Adicionar `final bool showsSavedContent` (padrão `true`) em `lib/core/widgets/safe_offline_banner.dart`, escolhendo entre `commonOfflineBanner` e `commonOfflineBannerShort`
+- [X] T010 Acessibilidade do estado de erro (FR-012): em `test/core/widgets/safe_states_test.dart`, conferir que a frase do `SafeErrorState` (conexão e servidor) fica num nó com `liveRegion`; depois envolver o texto da mensagem em `Semantics(liveRegion: true)` em `lib/core/widgets/safe_state_layout.dart` (vale também para o vazio, que aparece no lugar da lista do mesmo jeito)
+- [X] T011 Rodar `flutter analyze` e `flutter test test/core test/modules/news test/modules/profile test/modules/help test/modules/assistant`: tudo verde sem mudar os testes das telas
 
 **Checkpoint**: regra única no `core`, telas já corretas iguais. **Commit**: `refactor(027): estado de erro decide pela falha, não pelo texto`.
 
@@ -62,17 +62,17 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T012 [P] [US1] Em `test/modules/activities/presentation/pages/activities_dashboard_page_test.dart`: com o repositório falso devolvendo `ConnectionFailure` → `stateOffline` e "Sem conexão…"; com `ServerFailure` → `stateError` e "Não foi possível carregar as atividades"
-- [ ] T013 [P] [US1] Em `test/modules/activities/presentation/controller/lesson_controller_test.dart`: `failure` guarda a falha de `load` (`ConnectionFailure`) e volta a `null` na carga seguinte; com `ModuleNotFoundFailure` o estado é `empty` (como hoje)
-- [ ] T014 [P] [US1] Em `test/modules/activities/presentation/pages/lesson_page_test.dart`: carregar com `ConnectionFailure` → `stateOffline` e "Sem conexão…"; com `ServerFailure` → `stateError` e "Não foi possível carregar as atividades"
-- [ ] T015 [P] [US1] Em `test/modules/news/presentation/pages/reels_page_test.dart`: com `ConnectionFailure`, o `Text` da frase usa `textPrimaryForeground` (branco) e não `textForeground`; o mesmo no estado vazio dos Reels
+- [X] T012 [P] [US1] Em `test/modules/activities/presentation/pages/activities_dashboard_page_test.dart`: com o repositório falso devolvendo `ConnectionFailure` → `stateOffline` e "Sem conexão…"; com `ServerFailure` → `stateError` e "Não foi possível carregar as atividades"
+- [X] T013 [P] [US1] Em `test/modules/activities/presentation/controller/lesson_controller_test.dart`: `failure` guarda a falha de `load` (`ConnectionFailure`) e volta a `null` na carga seguinte; com `ModuleNotFoundFailure` o estado é `empty` (como hoje)
+- [X] T014 [P] [US1] Em `test/modules/activities/presentation/pages/lesson_page_test.dart`: carregar com `ConnectionFailure` → `stateOffline` e "Sem conexão…"; com `ServerFailure` → `stateError` e "Não foi possível carregar as atividades"
+- [X] T015 [P] [US1] Em `test/modules/news/presentation/pages/reels_page_test.dart`: com `ConnectionFailure`, o `Text` da frase usa `textPrimaryForeground` (branco) e não `textForeground`; o mesmo no estado vazio dos Reels
 
 ### Implementation for User Story 1
 
-- [ ] T016 [US1] Em `lib/modules/activities/presentation/pages/activities_dashboard_page.dart`, passar `failure: controller.failure`, mantendo `message: AppStrings.activitiesErrorTitle.tr()`
-- [ ] T017 [US1] Em `lib/modules/activities/presentation/controller/lesson_controller.dart`, guardar `Failure? _failure` (getter `failure`) quando `_load` falha com algo que não seja `ModuleNotFoundFailure`, e limpar ao começar uma carga (data-model)
-- [ ] T018 [US1] Em `lib/modules/activities/presentation/pages/lesson_page.dart`, passar `failure: controller.failure` no estado de erro, mantendo `message: AppStrings.activitiesErrorTitle.tr()`
-- [ ] T019 [US1] Em `lib/modules/news/presentation/pages/reels_page.dart`, fazer o `_Dark` sobrepor também a `AppPalette` (research R5): `context.colors.copyWith(textForeground: textPrimaryForeground, textMutedForeground: textPrimaryForeground com alpha ~0.72)` em `extensions`, além do `textTheme` atual; conferir que o alto contraste continua legível
+- [X] T016 [US1] Em `lib/modules/activities/presentation/pages/activities_dashboard_page.dart`, passar `failure: controller.failure`, mantendo `message: AppStrings.activitiesErrorTitle.tr()`
+- [X] T017 [US1] Em `lib/modules/activities/presentation/controller/lesson_controller.dart`, guardar `Failure? _failure` (getter `failure`) quando `_load` falha com algo que não seja `ModuleNotFoundFailure`, e limpar ao começar uma carga (data-model)
+- [X] T018 [US1] Em `lib/modules/activities/presentation/pages/lesson_page.dart`, passar `failure: controller.failure` no estado de erro, mantendo `message: AppStrings.activitiesErrorTitle.tr()`
+- [X] T019 [US1] Em `lib/modules/news/presentation/pages/reels_page.dart`, fazer o `_Dark` sobrepor também a `AppPalette` (research R5): `context.colors.copyWith(textForeground: textPrimaryForeground, textMutedForeground: textPrimaryForeground com alpha ~0.72)` em `extensions`, além do `textTheme` atual; conferir que o alto contraste continua legível
 - [ ] T020 [US1] Rodar `flutter test test/modules/activities test/modules/news/presentation/pages/reels_page_test.dart`: verde
 
 **Checkpoint**: P1 entregue e testável sozinha. **Commit**: `feat(027): Atividades, Lição e Reels com o estado de sem internet`.

@@ -149,8 +149,7 @@ class _UserNewsListState extends State<_UserNewsList> {
         return const SafeLoadingState(layout: SafeLoadingLayout.list);
       case FeedStatus.error:
         return SafeErrorState(
-          message: (controller.failure?.message ?? AppStrings.errorGeneric)
-              .tr(),
+          failure: controller.failure,
           onRetry: controller.load,
         );
       case FeedStatus.loaded:

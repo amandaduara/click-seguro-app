@@ -166,6 +166,7 @@ class _DashboardBodyState extends State<_DashboardBody>
         ),
       ),
       ActivitiesDashboardStatus.error => SafeErrorState(
+        failure: controller.failure,
         message: AppStrings.activitiesErrorTitle.tr(),
         onRetry: controller.load,
       ),

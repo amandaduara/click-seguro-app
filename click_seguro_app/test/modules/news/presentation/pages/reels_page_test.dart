@@ -18,6 +18,7 @@ import 'package:click_seguro_app/modules/news/presentation/widgets/reel_view.dar
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -148,11 +149,26 @@ void main() {
       expect(title('r1'), findsOneWidget);
     });
 
+    /// Contraste da cor do texto sobre o preto da tela (WCAG).
+    double contrastOnBlack(WidgetTester tester, String text) {
+      final RenderParagraph paragraph = tester.renderObject(find.text(text));
+      final double luminance = paragraph.text.style!.color!.computeLuminance();
+      return (luminance + 0.05) / 0.05;
+    }
+
     testWidgets('erro com "Tentar novamente" recarrega', (tester) async {
       repository.reelsResults[null] = const Left(ConnectionFailure());
       await pumpPage(tester);
 
       expect(find.text('Tentar novamente'), findsOneWidget);
+      // A frase de sem internet legível sobre o preto (specs/027 SC-003).
+      expect(
+        contrastOnBlack(
+          tester,
+          'Sem conexão com a internet. Verifique sua rede.',
+        ),
+        greaterThanOrEqualTo(4.5),
+      );
 
       firstPage(2);
       await tester.tap(find.text('Tentar novamente'));
@@ -165,6 +181,10 @@ void main() {
       await pumpPage(tester);
 
       expect(find.text('Nenhuma notícia por aqui ainda.'), findsOneWidget);
+      expect(
+        contrastOnBlack(tester, 'Nenhuma notícia por aqui ainda.'),
+        greaterThanOrEqualTo(4.5),
+      );
 
       firstPage(1);
       await tester.tap(find.text('Atualizar'));

@@ -178,7 +178,7 @@ class _AccountProfileState extends State<_AccountProfile>
     return switch (controller.status) {
       ProfileStatus.loading => const _ProfileSkeleton(),
       ProfileStatus.error => SafeErrorState(
-        message: (controller.failure?.message ?? AppStrings.errorGeneric).tr(),
+        failure: controller.failure,
         onRetry: controller.load,
       ),
       ProfileStatus.loaded => _LoadedProfile(

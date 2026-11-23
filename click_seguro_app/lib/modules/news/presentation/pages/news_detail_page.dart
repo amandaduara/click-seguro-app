@@ -255,10 +255,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
 
   Widget _error(NewsDetailController controller) {
     final Failure? failure = controller.failure;
-    return SafeErrorState(
-      message: (failure?.message ?? AppStrings.errorGeneric).tr(),
-      onRetry: controller.retry,
-    );
+    return SafeErrorState(failure: failure, onRetry: controller.retry);
   }
 
   /// Capa e, abaixo, o cabeçalho e o corpo; o esqueleto de tudo enquanto

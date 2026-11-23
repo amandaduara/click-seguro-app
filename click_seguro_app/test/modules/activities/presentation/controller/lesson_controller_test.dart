@@ -149,11 +149,23 @@ void main() {
 
     await controller.load('m1');
     expect(controller.status, LessonStatus.error);
+    // A tela escolhe o aviso de sem internet pela falha (specs/027).
+    expect(controller.failure, isA<ConnectionFailure>());
 
     final Future<void> retry = controller.load('m1');
     expect(controller.status, LessonStatus.loading);
+    expect(controller.failure, isNull);
     await retry;
     expect(controller.status, LessonStatus.loaded);
+    expect(controller.failure, isNull);
+  });
+
+  test('módulo que não existe não guarda falha (é o estado vazio)', () async {
+    controller = build([const Left(ModuleNotFoundFailure())]);
+
+    await controller.load('m9');
+
+    expect(controller.failure, isNull);
   });
 
   test('dispose durante a carga não lança', () async {

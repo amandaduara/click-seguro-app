@@ -12,6 +12,7 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_icon_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
 import 'package:click_seguro_app/core/widgets/safe_progress.dart';
@@ -267,9 +268,18 @@ class _StyleGuideScreenState extends State<_StyleGuideScreen> {
             ],
           ),
           _section('Estados'),
+          // Sem internet: a nuvem e a frase padrão (specs/027).
           SizedBox(
             height: 420,
             child: SafeErrorState(
+              failure: const ConnectionFailure(),
+              onRetry: () {},
+            ),
+          ),
+          SizedBox(
+            height: 420,
+            child: SafeErrorState(
+              failure: const ServerFailure(),
               message: 'Não foi possível carregar.',
               onRetry: () {},
             ),

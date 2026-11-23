@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/utils/app_haptics.dart';
@@ -335,10 +334,9 @@ class _ReelsPageState extends State<ReelsPage> {
       case ReelsStatus.loading:
         return _ReelSkeleton(preview: widget.preview);
       case ReelsStatus.error:
-        final Failure? failure = controller.failure;
         return _Dark(
           child: SafeErrorState(
-            message: (failure?.message ?? AppStrings.errorGeneric).tr(),
+            failure: controller.failure,
             onRetry: controller.retry,
           ),
         );
@@ -459,14 +457,24 @@ class _Dark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final AppPalette colors = context.colors;
+    final Color light = colors.textPrimaryForeground;
     return SafeArea(
       child: Center(
         child: Theme(
+          // Os estados de erro e vazio pintam o texto com a paleta: sobre o
+          // preto, o texto vira o claro (specs/027 FR-004).
           data: theme.copyWith(
             textTheme: theme.textTheme.apply(
-              bodyColor: context.colors.textPrimaryForeground,
-              displayColor: context.colors.textPrimaryForeground,
+              bodyColor: light,
+              displayColor: light,
             ),
+            extensions: [
+              colors.copyWith(
+                textForeground: light,
+                textMutedForeground: light.withValues(alpha: 0.78),
+              ),
+            ],
           ),
           child: child,
         ),

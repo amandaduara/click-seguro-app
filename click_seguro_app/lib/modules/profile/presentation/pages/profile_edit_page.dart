@@ -112,8 +112,7 @@ class _EditView extends StatelessWidget {
         body: switch (controller.status) {
           EditProfileStatus.loading => const SafeLoadingState(),
           EditProfileStatus.error => SafeErrorState(
-            message: (controller.failure?.message ?? AppStrings.errorGeneric)
-                .tr(),
+            failure: controller.failure,
             onRetry: controller.load,
           ),
           EditProfileStatus.ready => _Form(

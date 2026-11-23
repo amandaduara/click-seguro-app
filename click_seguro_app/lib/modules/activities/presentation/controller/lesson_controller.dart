@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/errors/failure.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
@@ -27,6 +28,12 @@ class LessonController extends ChangeNotifier {
 
   LessonStatus _status = LessonStatus.loading;
   LessonStatus get status => _status;
+
+  Failure? _failure;
+
+  /// A falha da última carga, para a tela escolher o aviso (specs/027);
+  /// `null` fora do estado de erro.
+  Failure? get failure => _failure;
 
   ModuleDetailEntity? _module;
   ModuleDetailEntity? get module => _module;
@@ -205,14 +212,15 @@ class LessonController extends ChangeNotifier {
     }
     _answers.clear();
     _status = LessonStatus.loading;
+    _failure = null;
     _notify();
     final result = await _getModuleDetail(moduleId);
     if (_disposed) return;
     result.fold(
       (failure) {
-        _status = failure is ModuleNotFoundFailure
-            ? LessonStatus.empty
-            : LessonStatus.error;
+        final bool missing = failure is ModuleNotFoundFailure;
+        _status = missing ? LessonStatus.empty : LessonStatus.error;
+        _failure = missing ? null : failure;
       },
       (loaded) {
         if (!keepAttempt) _retaking = loaded.startsNewAttempt(retake: retake);
