@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/routing/app_router.dart';
 import 'package:click_seguro_app/core/routing/not_found_page.dart';
 import 'package:click_seguro_app/modules/activities/activities.dart';
@@ -187,6 +189,40 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ForgotPasswordPage), findsOneWidget);
+    });
+
+    testWidgets('Termos e Privacidade abrem do login depois da saída, e o '
+        'voltar retorna ao login (specs/026 FR-006)', (tester) async {
+      await open(tester, '/help');
+      await session.logout();
+      await tester.pumpAndSettle();
+      expect(find.byType(LoginPage), findsOneWidget);
+
+      for (final (path, page) in [
+        ('/settings/terms', TermsPage),
+        ('/settings/privacy', PrivacyPage),
+      ]) {
+        unawaited(router.push(path));
+        await tester.pumpAndSettle();
+        expect(find.byType(page), findsOneWidget, reason: path);
+
+        router.pop();
+        await tester.pumpAndSettle();
+        expect(find.byType(LoginPage), findsOneWidget, reason: path);
+      }
+    });
+
+    testWidgets('outras telas das Configurações continuam pedindo login', (
+      tester,
+    ) async {
+      await open(tester, '/help');
+      await session.logout();
+      await tester.pumpAndSettle();
+
+      router.go('/settings/about');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
     });
 
     testWidgets('expiração não redireciona', (tester) async {

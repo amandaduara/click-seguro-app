@@ -58,26 +58,26 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T006 [P] [US1] Escrever `test/modules/settings/presentation/terms_page_test.dart`:
+- [X] T006 [P] [US1] Escrever `test/modules/settings/presentation/terms_page_test.dart`:
   - título "Termos de uso" e a data;
   - cinco cartões na ordem O que é o Click Seguro / O que o app não faz / Sua conta / Bom uso do app / Seus dados;
   - "Ver Privacidade" empilha `/settings/privacy`;
   - `termsSpokenText()` = título, data e cada título e texto, nessa ordem;
   - textos em en-US.
-- [ ] T007 [P] [US1] Estender `test/modules/settings/presentation/settings_page_test.dart`: a linha "Termos de uso" com "O que vale ao usar o app" vem logo depois de "Privacidade", com conta e como visitante, e o toque empilha `/settings/terms`.
-- [ ] T008 [P] [US1] Estender `test/core/routing/app_router_test.dart`: depois de "Sair da conta" (`SessionEndReason.userLogout`), `/settings/terms` e `/settings/privacy` abrem sem voltar ao login; outra rota protegida continua indo para `/login`.
+- [X] T007 [P] [US1] Estender `test/modules/settings/presentation/settings_page_test.dart`: a linha "Termos de uso" com "O que vale ao usar o app" vem logo depois de "Privacidade", com conta e como visitante, e o toque empilha `/settings/terms`.
+- [X] T008 [P] [US1] Estender `test/core/routing/app_router_test.dart`: depois de "Sair da conta" (`SessionEndReason.userLogout`), `/settings/terms` e `/settings/privacy` abrem sem voltar ao login; outra rota protegida continua indo para `/login`.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Criar `lib/modules/settings/presentation/pages/terms_page.dart` (research R6):
+- [X] T009 [US1] Criar `lib/modules/settings/presentation/pages/terms_page.dart` (research R6):
   - `TermsPage` com `SettingsScaffold(title: settingsTerms)`, `SettingsListenButton(text: termsSpokenText())`, a data em legenda e cinco `SettingsTopicCard`;
   - ícones Lucide `info`, `triangleAlert`, `keyRound`, `circleCheck`, `shieldCheck`;
   - no último cartão, o link "Ver Privacidade" (coral, sublinhado, 48 de altura) com `context.push('/settings/privacy')`;
   - função pública `termsSpokenText()`.
-- [ ] T010 [US1] Registrar a rota `terms` sob `/settings` (`parentNavigatorKey: rootNavigatorKey`) em `lib/modules/settings/presentation/routes/settings_routes.dart`.
-- [ ] T011 [US1] Adicionar o `SettingsTile` "Termos de uso" (ícone `fileText`, subtítulo `settingsTermsSub`) logo depois de "Privacidade" em `_AboutSection` de `lib/modules/settings/presentation/pages/settings_page.dart`.
-- [ ] T012 [US1] Incluir `/settings/terms` e `/settings/privacy` em `_publicPaths` de `lib/core/routing/app_router.dart` (research R5).
-- [ ] T013 [US1] Rodar `test/modules/settings` e `test/core/routing`: tudo verde.
+- [X] T010 [US1] Registrar a rota `terms` sob `/settings` (`parentNavigatorKey: rootNavigatorKey`) em `lib/modules/settings/presentation/routes/settings_routes.dart`.
+- [X] T011 [US1] Adicionar o `SettingsTile` "Termos de uso" (ícone `fileText`, subtítulo `settingsTermsSub`) logo depois de "Privacidade" em `_AboutSection` de `lib/modules/settings/presentation/pages/settings_page.dart`.
+- [X] T012 [US1] Incluir `/settings/terms` e `/settings/privacy` em `_publicPaths` de `lib/core/routing/app_router.dart` (research R5).
+- [X] T013 [US1] Rodar `test/modules/settings` e `test/core/routing`: tudo verde.
 
 **Checkpoint**: Termos acessíveis nas Configurações e sem sessão. **Commit**: `feat(026): tela Termos de uso nas Configurações`.
 

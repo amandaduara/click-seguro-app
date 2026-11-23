@@ -18,11 +18,14 @@ import 'package:click_seguro_app/modules/splash/splash.dart';
 import 'package:go_router/go_router.dart';
 
 /// Caminhos que não exigem sessão: a saída não redireciona a partir deles.
+/// Termos e Privacidade abrem pelo aceite do cadastro (specs/026 FR-006).
 const Set<String> _publicPaths = {
   '/',
   '/onboarding',
   '/login',
   '/forgot-password',
+  '/settings/terms',
+  '/settings/privacy',
 };
 
 /// Compõe as rotas dos módulos (plano do produto §2). Cada trilha edita só

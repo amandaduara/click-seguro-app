@@ -33,6 +33,7 @@ void main() {
     '/settings/security',
     '/settings/accessibility',
     '/settings/privacy',
+    '/settings/terms',
     '/settings/about',
     '/login',
   ];
@@ -228,12 +229,33 @@ void main() {
       ('Alterar senha', '/settings/security'),
       ('Acessibilidade', '/settings/accessibility'),
       ('Privacidade', '/settings/privacy'),
+      ('Termos de uso', '/settings/terms'),
       ('Sobre o Click Seguro', '/settings/about'),
     ]) {
       await tapAndSettle(tester, find.text(label));
       expectPage(path);
       await back(tester);
     }
+  });
+
+  testWidgets('"Termos de uso" vem logo depois de "Privacidade", com a frase', (
+    tester,
+  ) async {
+    await open(tester);
+    await tester.scrollUntilVisible(
+      find.text('Sobre o Click Seguro'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    final double privacy = tester.getTopLeft(find.text('Privacidade')).dy;
+    final double terms = tester.getTopLeft(find.text('Termos de uso')).dy;
+    final double about = tester
+        .getTopLeft(find.text('Sobre o Click Seguro'))
+        .dy;
+    expect(privacy, lessThan(terms));
+    expect(terms, lessThan(about));
+    expect(find.text('O que vale ao usar o app'), findsOneWidget);
   });
 
   testWidgets('"Sobre o Click Seguro" mostra a versão', (tester) async {
@@ -320,6 +342,8 @@ void main() {
         'Idioma',
         'Sobre',
         'Privacidade',
+        'Termos de uso',
+        'O que vale ao usar o app',
         'Sobre o Click Seguro',
         'Versão 1.0.0',
       ]) {
@@ -347,6 +371,7 @@ void main() {
       for (final (row, path) in [
         ('Acessibilidade', '/settings/accessibility'),
         ('Privacidade', '/settings/privacy'),
+        ('Termos de uso', '/settings/terms'),
         ('Sobre o Click Seguro', '/settings/about'),
       ]) {
         await tapAndSettle(tester, find.text(row));

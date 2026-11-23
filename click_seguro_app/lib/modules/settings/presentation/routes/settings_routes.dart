@@ -4,6 +4,7 @@ import 'package:click_seguro_app/modules/settings/presentation/pages/accessibili
 import 'package:click_seguro_app/modules/settings/presentation/pages/change_password_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/privacy_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_page.dart';
+import 'package:click_seguro_app/modules/settings/presentation/pages/terms_page.dart';
 import 'package:go_router/go_router.dart';
 
 /// Telas do módulo sobre as abas. "Dados pessoais" abre `/profile/edit`
@@ -28,6 +29,11 @@ final List<RouteBase> settingsRoutes = [
         path: 'privacy',
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const PrivacyPage(),
+      ),
+      GoRoute(
+        path: 'terms',
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => const TermsPage(),
       ),
       GoRoute(
         path: 'about',
