@@ -45,6 +45,9 @@ navegar (a splash teria que desenhar o formulário).
 **Decisão**: criar `lib/core/widgets/brand_scene.dart` com o que a splash e o login dividem:
 
 - `BrandScene.logoRectFor(...)`: onde a marca fica no fim da splash (sai do `SplashScenePainter`);
+- `BrandScene.titleTopFor(logoRect)` e `taglineTopFor(logoRect)`: onde ficam o nome e o slogan
+  no fim da splash (hoje calculados dentro da `SplashAnimation`). A abertura do login os desenha
+  saindo dali, sem copiar a conta (achado I1 do `/speckit-analyze`);
 - as bordas das duas ondas, as alturas (110 e 136) e a função que monta o caminho da onda, com
   um progresso de 0 a 1 (a splash usa o progresso, e o login usa 1);
 - o widget `BrandWave`: as duas ondas paradas no rodapé, nas cores `primaryGlow` e `primary`
