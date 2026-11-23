@@ -144,9 +144,9 @@ void main() {
     });
   });
 
-  // Só o login leva o pedido da passagem animada (specs/026 FR-018).
+  // Login e onboarding levam o pedido da passagem animada (specs/026).
   test('caminhos de cada destino', () {
-    expect(SplashDestination.onboarding.path, '/onboarding');
+    expect(SplashDestination.onboarding.path, '/onboarding?from=splash');
     expect(SplashDestination.home.path, '/home');
     expect(SplashDestination.login.path, '/login?from=splash');
   });

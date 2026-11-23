@@ -174,3 +174,21 @@ class BrandTagline extends StatelessWidget {
     style: AppTypography.bodyLarge.copyWith(color: context.colors.textBody),
   );
 }
+
+/// O nome e o slogan como no fim da splash, juntos; só imagem (o leitor de
+/// tela já leu a splash). As telas que começam onde a splash parou os
+/// desenham saindo.
+class BrandTitle extends StatelessWidget {
+  const BrandTitle({super.key});
+
+  @override
+  Widget build(BuildContext context) => const ExcludeSemantics(
+    child: Column(
+      children: [
+        BrandName(),
+        SizedBox(height: BrandScene.taglineGap),
+        BrandTagline(),
+      ],
+    ),
+  );
+}

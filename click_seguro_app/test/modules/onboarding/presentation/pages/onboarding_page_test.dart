@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
@@ -122,6 +123,79 @@ void main() {
 
     expect(find.text('login'), findsOneWidget);
     expect(repository.seen, isTrue);
+  });
+
+  // specs/026 US5 (FR-021, FR-022): o onboarding desliza para a esquerda e
+  // some antes de abrir o login, que faz a própria entrada.
+  group('saída para o login', () {
+    testWidgets('"Pular" desliza o onboarding e só depois abre o login', (
+      tester,
+    ) async {
+      final GoRouter router = buildRouter();
+      await pumpLocalized(tester, router: router);
+      final double start = tester
+          .getTopLeft(find.text('Proteja-se de golpes'))
+          .dx;
+
+      await tester.tap(find.text('Pular'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
+
+      expect(find.text('login'), findsNothing);
+      expect(
+        tester.getTopLeft(find.text('Proteja-se de golpes')).dx,
+        lessThan(start),
+      );
+      final double opacity = tester
+          .widgetList<Opacity>(
+            find.ancestor(
+              of: find.text('Proteja-se de golpes'),
+              matching: find.byType(Opacity),
+            ),
+          )
+          .fold(1, (value, widget) => value * widget.opacity);
+      expect(opacity, lessThan(1));
+
+      await tester.pumpAndSettle();
+      expect(find.text('login'), findsOneWidget);
+      expect(
+        router.routerDelegate.currentConfiguration.uri.toString(),
+        '/login?from=onboarding',
+      );
+    });
+
+    testWidgets('movimento reduzido: abre o login na hora', (tester) async {
+      await pumpLocalized(
+        tester,
+        router: GoRouter(
+          initialLocation: '/onboarding',
+          routes: [
+            GoRoute(
+              path: '/onboarding',
+              builder: (context, state) => AppMotionScope(
+                appReduceMotion: true,
+                child: ChangeNotifierProvider(
+                  create: (_) => OnboardingController(
+                    CompleteOnboardingUseCase(repository),
+                  ),
+                  child: const OnboardingPage(),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: '/login',
+              builder: (_, _) => const Scaffold(body: Text('login')),
+            ),
+          ],
+        ),
+      );
+
+      await tester.tap(find.text('Pular'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('login'), findsOneWidget);
+    });
   });
 
   testWidgets('"Pular" é lido como botão, não como filtro', (tester) async {

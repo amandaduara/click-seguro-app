@@ -44,6 +44,9 @@ caixa desmarcada "Li e aceito…" com links para os documentos, sem a qual a con
   quando o conteúdo é maior que a tela, depois do último item, rolando junto; nunca cobre texto.
   Para o login caber num celular comum com a onda no pé, os espaços ficaram menores e o título
   passou a `title1` (24), numa linha só.
+- Validação no aparelho (2026-11-23): a saída da splash para o onboarding e a passagem do
+  onboarding para o login estavam secas (só um esmaecimento). → A: splash → onboarding com "onda
+  desce, slide sobe"; onboarding → login com "onda sobe, login entra" (US5, FR-020 a FR-022).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -160,6 +163,33 @@ do login entram subindo, um depois do outro.
 
 ---
 
+### User Story 5 - Passagens splash → onboarding e onboarding → login (Priority: P3)
+
+Na primeira abertura, a splash não corta seco para o onboarding: a marca, o nome e o slogan sobem
+e somem, a onda coral desce e sai pelo pé da tela, e o primeiro slide entra (a ilustração cresce
+de leve; título, texto, pontinhos e botão sobem em sequência). Ao tocar em "Começar" ou "Pular",
+o onboarding desliza para a esquerda e some; no login, a onda coral sobe do pé da tela até o
+lugar dela, a marca do cabeçalho cresce e os blocos entram subindo em sequência.
+
+**Why this priority**: acabamento pedido na validação; nada muda no fluxo.
+
+**Independent Test**: limpar os dados do app e abrir: splash → onboarding → login, conferindo as
+duas passagens; repetir com "Reduzir animações".
+
+**Acceptance Scenarios**:
+
+1. **Given** a primeira abertura, **When** a splash termina, **Then** o primeiro quadro do
+   onboarding é o último da splash (marca, nome, slogan e onda no mesmo lugar), a onda desce e
+   sai, e o slide entra em sequência em cerca de 1 s.
+2. **Given** o onboarding, **When** a pessoa toca em "Começar" ou "Pular", **Then** o onboarding
+   desliza para a esquerda e some, e o login abre com a onda subindo e os blocos entrando.
+3. **Given** "Reduzir animações" ligado, **When** a splash termina ou a pessoa sai do onboarding,
+   **Then** as telas trocam direto, sem movimento.
+4. **Given** qualquer passagem animada em curso, **When** a pessoa toca na tela, **Then** nada
+   acontece até a tela terminar de entrar.
+
+---
+
 ### Edge Cases
 
 - A pessoa marca o aceite, abre os Termos e volta: a caixa continua marcada.
@@ -250,8 +280,21 @@ do login entram subindo, um depois do outro.
   do outro. Tudo leva cerca de 1,5 s.
 - **FR-017**: Com "Reduzir animações" ligado, o login MUST aparecer direto, sem a marca voar e
   sem os itens subirem.
-- **FR-018**: A passagem animada MUST existir só da splash para o login. A ida da splash para o
-  Início ou para o Onboarding, e qualquer outra abertura do login, usam a transição de hoje.
+- **FR-018**: A passagem animada com a marca voando MUST existir só da splash para o login. A ida
+  da splash para o Início e as outras aberturas do login (sair da conta, avisos, Configurações)
+  usam a transição de hoje. A splash → onboarding e o onboarding → login seguem a US5.
+
+#### Passagens da primeira abertura (validação de 2026-11-23)
+
+- **FR-020**: Da splash para o onboarding, o primeiro quadro do onboarding MUST ser o último da
+  splash; a marca, o nome e o slogan sobem e somem, a onda desce e sai pelo pé da tela, e o
+  primeiro slide entra (ilustração crescendo de leve; título, "Ouvir", texto, pontinhos, botão e
+  "Pular" subindo em sequência), em cerca de 1 s.
+- **FR-021**: Ao sair do onboarding ("Começar" ou "Pular"), o onboarding MUST deslizar para a
+  esquerda e sumir; o login abre com a onda subindo do pé da tela até o lugar dela, a marca do
+  cabeçalho crescendo e os blocos entrando em sequência.
+- **FR-022**: Com "Reduzir animações", as duas passagens MUST trocar de tela direto. Durante as
+  passagens, os toques são ignorados.
 
 #### Textos
 

@@ -211,6 +211,32 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ---
 
+## Phase 8: User Story 5 - Passagens splash → onboarding e onboarding → login (Priority: P3)
+
+**Goal**: pedido da validação no aparelho (2026-11-23): "onda desce, slide sobe" e "onda sobe,
+login entra" (spec US5, FR-020 a FR-022).
+
+**Independent Test**: limpar os dados do app e abrir: splash → onboarding → login; repetir com
+"Reduzir animações".
+
+### Tests for User Story 5 ⚠️
+
+- [X] T041 [P] [US5] Escrever `test/core/widgets/intro_reveal_test.dart`: sem `IntroScope`, mostra o filho como está; com a animação em 0, opacidade 0 e deslocado; em 1, opaco e no lugar; `scaleFrom` cresce até 1.
+- [X] T042 [P] [US5] Escrever `test/modules/onboarding/presentation/widgets/onboarding_intro_test.dart` com `OnboardingPage(fromSplash: true)`: quadro 0 com a marca, o nome e a onda onde a splash parou; a onda desce e some até 450 ms; em 1 000 ms tudo opaco e os toques passam ("Pular" bloqueado antes); com movimento reduzido, pronto no quadro 0; sem `fromSplash`, sem abertura.
+- [X] T043 [P] [US5] Estender `test/modules/onboarding/presentation/pages/onboarding_page_test.dart`: "Começar" e "Pular" deslizam o onboarding para a esquerda (opacidade < 1 no meio) e só então abrem `/login?from=onboarding`; com movimento reduzido, abrem na hora.
+- [X] T044 [P] [US5] Estender `login_intro_test.dart` e `authentication_routes_test.dart`: `from=onboarding` liga a entrada sem voo (onda deslocada para baixo no quadro 0 e no lugar em 500 ms; marca do cabeçalho crescendo; blocos em sequência; pronto em 1 250 ms); `from=splash` segue igual; outras origens, sem abertura. Ajustar `splash_controller_test.dart`: onboarding vai para `/onboarding?from=splash`.
+
+### Implementation for User Story 5
+
+- [X] T045 [US5] Criar `lib/core/widgets/intro_reveal.dart` (`IntroScope` com a animação da entrada de uma tela e `IntroReveal(interval, rise, scaleFrom)`), e fazer o `LoginIntroReveal` usá-lo.
+- [X] T046 [US5] Login: `LoginIntroOrigin { splash, onboarding }` no lugar de `fromSplash`; `loginPageFor` lê `from=onboarding`; a rota usa a página sem transição nas duas origens; com `onboarding`, sem voo nem nome da splash, a onda sobe (`LoginIntroWave`) e a marca do cabeçalho cresce.
+- [X] T047 [US5] Onboarding: `SplashDestination.onboarding` → `/onboarding?from=splash`; rota em `app_router.dart` sem transição nesse caso; `OnboardingIntro` (marca, nome e slogan saindo, onda descendo, `IntroScope` para o slide) e reveals no `OnboardingSlide`, nos pontinhos, no botão e em "Pular"; saída deslizando para a esquerda antes de `go('/login?from=onboarding')`.
+- [X] T048 [US5] Rodar `test/core`, `test/modules/onboarding`, `test/modules/authentication` e `test/modules/splash`: tudo verde.
+
+**Checkpoint**: primeira abertura com as três passagens contínuas. **Commit**: `feat(026): passagens da splash para o onboarding e do onboarding para o login`.
+
+---
+
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [X] T036 Revisar o código de produção da feature atrás de código morto ou que só existe para testes (chave pública só para teste, parâmetro sem uso) e remover, ajustando os testes.

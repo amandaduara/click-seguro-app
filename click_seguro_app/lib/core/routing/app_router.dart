@@ -50,8 +50,15 @@ GoRouter buildAppRouter(UserSessionService session) {
       GoRoute(path: '/', builder: (context, state) => const SplashPage()),
       GoRoute(
         path: '/onboarding',
+        // Vindo da splash, troca seca: o onboarding começa no último quadro
+        // da splash e faz a própria entrada (specs/026 US5).
         pageBuilder: (context, state) =>
-            appFadePage(state, const OnboardingPage()),
+            state.uri.queryParameters['from'] == 'splash'
+            ? NoTransitionPage<void>(
+                key: state.pageKey,
+                child: const OnboardingPage(fromSplash: true),
+              )
+            : appFadePage(state, const OnboardingPage()),
       ),
       ...authenticationRoutes,
       // Abas montadas juntas, com esmaecimento na que entra (specs/022 R5).

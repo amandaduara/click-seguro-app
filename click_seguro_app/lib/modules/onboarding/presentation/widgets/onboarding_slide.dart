@@ -2,7 +2,9 @@ import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/intro_reveal.dart';
 import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_intro.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/models/onboarding_page_content.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +19,9 @@ class OnboardingSlide extends StatelessWidget {
   final OnboardingPageContent content;
   final Widget? listen;
 
+  /// Na entrada vinda da splash, a ilustração cresce desta escala até 1.
+  static const double _illustrationScaleFrom = 0.92;
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -28,28 +33,41 @@ class OnboardingSlide extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Floating(
-                child: SafeIllustration(
-                  content.illustration,
-                  height: (constraints.maxHeight * .5).clamp(160, 300),
+              IntroReveal(
+                interval: OnboardingIntroTimeline.illustration,
+                rise: 0,
+                scaleFrom: _illustrationScaleFrom,
+                child: _Floating(
+                  child: SafeIllustration(
+                    content.illustration,
+                    height: (constraints.maxHeight * .5).clamp(160, 300),
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.s7),
-              Text(
-                content.titleKey.tr(),
-                style: AppTypography.display.copyWith(
-                  color: context.colors.textForeground,
-                ),
-              ),
-              if (listen case final Widget listen) ...[
-                const SizedBox(height: AppSpacing.s3),
-                listen,
-              ],
-              const SizedBox(height: AppSpacing.s3),
-              Text(
-                content.descriptionKey.tr(),
-                style: AppTypography.bodyLarge.copyWith(
-                  color: context.colors.textBody,
+              IntroReveal(
+                interval: OnboardingIntroTimeline.text,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      content.titleKey.tr(),
+                      style: AppTypography.display.copyWith(
+                        color: context.colors.textForeground,
+                      ),
+                    ),
+                    if (listen case final Widget listen) ...[
+                      const SizedBox(height: AppSpacing.s3),
+                      listen,
+                    ],
+                    const SizedBox(height: AppSpacing.s3),
+                    Text(
+                      content.descriptionKey.tr(),
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: context.colors.textBody,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/widgets/app_logo.dart';
+import 'package:click_seguro_app/core/widgets/brand_mark.dart';
 import 'package:click_seguro_app/core/widgets/brand_scene.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
@@ -29,7 +30,7 @@ void main() {
   /// abertura (sem esperar as animações).
   Future<void> pumpFromSplash(
     WidgetTester tester, {
-    bool fromSplash = true,
+    LoginIntroOrigin? origin = LoginIntroOrigin.splash,
     bool reduceMotion = false,
   }) async {
     tester.view
@@ -48,7 +49,7 @@ void main() {
               appReduceMotion: reduceMotion,
               child: ChangeNotifierProvider.value(
                 value: controller,
-                child: LoginPage(fromSplash: fromSplash),
+                child: LoginPage(introFrom: origin),
               ),
             ),
           ),
@@ -65,7 +66,7 @@ void main() {
       )
       .fold(1, (value, widget) => value * widget.opacity);
 
-  final Finder flying = find.byType(LoginIntroLogo);
+  final Finder flying = find.byType(BrandMark);
   final Finder headerLogo = find.descendant(
     of: find.byType(AuthHeader),
     matching: find.byType(AppLogo),
@@ -178,10 +179,91 @@ void main() {
   });
 
   testWidgets('sem vir da splash: sem abertura', (tester) async {
-    await pumpFromSplash(tester, fromSplash: false);
+    await pumpFromSplash(tester, origin: null);
 
     expect(flying, findsNothing);
     expect(find.text('Click Seguro'), findsNothing);
     expect(opacityOf(tester, 'Continuar sem login'), 1);
+  });
+
+  // specs/026 US5 (FR-021): vindo do onboarding, sem voo nem nome da splash;
+  // a onda sobe do pé da tela e a marca do cabeçalho cresce.
+  group('vindo do onboarding', () {
+    double waveTop(WidgetTester tester) =>
+        tester.getTopLeft(find.byType(BrandWave)).dy;
+
+    testWidgets('quadro 0: sem voo, onda abaixo da tela e marca invisível', (
+      tester,
+    ) async {
+      await pumpFromSplash(tester, origin: LoginIntroOrigin.onboarding);
+
+      expect(flying, findsNothing);
+      expect(find.text('Click Seguro'), findsNothing);
+      expect(waveTop(tester), closeTo(_phone.height, 1));
+      expect(
+        tester
+            .widgetList<Opacity>(
+              find.ancestor(of: headerLogo, matching: find.byType(Opacity)),
+            )
+            .fold<double>(1, (value, widget) => value * widget.opacity),
+        0,
+      );
+    });
+
+    testWidgets('a onda chega ao pé da tela em 500 ms e a marca aparece', (
+      tester,
+    ) async {
+      await pumpFromSplash(tester, origin: LoginIntroOrigin.onboarding);
+
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(waveTop(tester), lessThan(_phone.height - 1));
+      expect(
+        waveTop(tester),
+        greaterThan(_phone.height - BrandScene.glowFooterHeight),
+      );
+
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(
+        tester.getBottomLeft(find.byType(BrandWave)).dy,
+        closeTo(_phone.height, 0.5),
+      );
+      expect(
+        tester
+            .widgetList<Opacity>(
+              find.ancestor(of: headerLogo, matching: find.byType(Opacity)),
+            )
+            .fold<double>(1, (value, widget) => value * widget.opacity),
+        1,
+      );
+    });
+
+    testWidgets('blocos em sequência; pronto e tocável em 1 250 ms', (
+      tester,
+    ) async {
+      await pumpFromSplash(tester, origin: LoginIntroOrigin.onboarding);
+
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(opacityOf(tester, 'Continuar sem login'), 0);
+
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(opacityOf(tester, 'Continuar sem login'), 1);
+      await tester.tap(find.text('Continuar sem login'));
+      await tester.pumpAndSettle();
+      expect(repository.guestCalls, 1);
+    });
+
+    testWidgets('movimento reduzido: pronto no quadro 0', (tester) async {
+      await pumpFromSplash(
+        tester,
+        origin: LoginIntroOrigin.onboarding,
+        reduceMotion: true,
+      );
+
+      expect(
+        tester.getBottomLeft(find.byType(BrandWave)).dy,
+        closeTo(_phone.height, 0.5),
+      );
+      expect(opacityOf(tester, 'Continuar sem login'), 1);
+    });
   });
 }

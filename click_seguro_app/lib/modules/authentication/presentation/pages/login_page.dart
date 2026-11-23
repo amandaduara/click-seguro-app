@@ -31,7 +31,7 @@ class LoginPage extends StatefulWidget {
     super.key,
     this.initialMode = AuthMode.login,
     this.next,
-    this.fromSplash = false,
+    this.introFrom,
   });
 
   /// Modo ao abrir; o aviso das atividades abre em cadastro (specs/020).
@@ -40,8 +40,9 @@ class LoginPage extends StatefulWidget {
   /// Para onde ir ao entrar; sem ele, o Início.
   final String? next;
 
-  /// Aberto pela splash: faz a passagem animada ([LoginIntro]).
-  final bool fromSplash;
+  /// Aberto pela splash ou pelo onboarding: faz a entrada animada
+  /// ([LoginIntro]); `null` nas outras aberturas.
+  final LoginIntroOrigin? introFrom;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -231,7 +232,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                const BrandWave(),
+                const LoginIntroWave(child: BrandWave()),
               ],
             ),
           ),
@@ -239,7 +240,12 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
 
-    return Scaffold(body: widget.fromSplash ? LoginIntro(child: body) : body);
+    final LoginIntroOrigin? introFrom = widget.introFrom;
+    return Scaffold(
+      body: introFrom == null
+          ? body
+          : LoginIntro(origin: introFrom, child: body),
+    );
   }
 
   /// Campos com o rótulo acima (redesign 2.0), regras da senha, "Esqueci
