@@ -99,7 +99,8 @@ frase é sempre a de sem conexão e que nada do que foi preenchido se perdeu.
 3. **Given** Editar perfil com mudanças e sem internet, **When** a pessoa salva ou troca a foto,
    **Then** o aviso rápido diz a frase de sem conexão.
 4. **Given** as Configurações abertas e sem internet, **When** a pessoa mexe na chave dos alertas,
-   **Then** o aviso diz a frase de sem conexão e a chave volta à posição anterior.
+   **Then** a chave volta à posição anterior e a própria linha dos alertas diz a frase de sem
+   conexão, com o botão de tentar de novo (a linha já mostra a falha assim hoje).
 5. **Given** o feed ou os Reels na tela e a internet caindo, **When** a pessoa rola até o fim e o
    app tenta carregar mais, **Then** o fim da lista diz a frase de sem conexão, com a opção de
    tentar de novo.
@@ -182,7 +183,7 @@ conferir o texto da faixa.
 - **FR-007**: Nos formulários de entrada (login, criar conta, esqueci a senha) a frase MUST
   aparecer na própria tela, embaixo dos campos; nas demais ações, MUST aparecer num aviso rápido
   no rodapé; nos blocos parciais de uma tela já carregada (números e conquistas no Perfil, fim da
-  lista) MUST aparecer no próprio bloco, com a opção de tentar de novo que o bloco já tem.
+  lista, linha dos alertas nas Configurações) MUST aparecer no próprio bloco, com a opção de tentar de novo que o bloco já tem.
 - **FR-008**: Quando a ação falha por outro motivo (servidor, recusa), a tela MUST manter a
   mensagem própria da ação que existe hoje.
 - **FR-009**: Uma ação que falha por falta de internet MUST NOT apagar o que a pessoa digitou ou
