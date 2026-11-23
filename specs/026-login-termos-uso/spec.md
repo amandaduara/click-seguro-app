@@ -30,6 +30,16 @@ O app também não tem Termos de uso. As Configurações só têm "Privacidade" 
 cadastro não pede aceite de nada. O padrão do mercado (e da LGPD para o consentimento) é uma
 caixa desmarcada "Li e aceito…" com links para os documentos, sem a qual a conta não é criada.
 
+## Clarifications
+
+### Session 2026-11-23
+
+- Q: Se a pessoa marca o aceite, troca para a aba "Entrar" e volta para "Criar conta", a caixa
+  continua marcada? → A: Sim. Continua marcada enquanto a tela de login estiver aberta (como o
+  e-mail e a senha); volta desmarcada só quando a tela é aberta de novo.
+- Q: Que frase curta aparece embaixo de "Termos de uso" na lista das Configurações? → A: "O que
+  vale ao usar o app".
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Ler os Termos de uso (Priority: P1)
@@ -86,7 +96,9 @@ cinco regras e conferir que "Criar conta" só ativa depois de marcar a caixa.
 6. **Given** a aba "Criar conta", **When** a pessoa toca em "Política de privacidade", **Then**
    abre a tela Privacidade; ao voltar, nada do formulário se perde.
 7. **Given** a caixa marcada, **When** a pessoa troca para a aba "Entrar" e volta para "Criar
-   conta", **Then** a caixa volta desmarcada.
+   conta", **Then** a caixa continua marcada.
+8. **Given** a caixa marcada, **When** a pessoa sai da tela de login e ela é aberta de novo,
+   **Then** a caixa volta desmarcada.
 
 ---
 
@@ -183,17 +195,20 @@ do login entram subindo, um depois do outro.
 - **FR-003**: O "Ouvir" dos Termos MUST ler o título, a data e cada assunto (título e texto), na
   ordem da tela e no idioma do app, seguindo as regras do "Ouvir" das outras telas das
   Configurações (inclusive a leitura automática).
-- **FR-004**: As Configurações MUST ter a linha "Termos de uso" logo depois de "Privacidade",
-  para quem tem conta e para o visitante.
+- **FR-004**: As Configurações MUST ter a linha "Termos de uso", com a frase "O que vale ao usar
+  o app" embaixo, logo depois de "Privacidade", para quem tem conta e para o visitante.
 
 #### Aceite no cadastro
 
 - **FR-005**: A aba "Criar conta" MUST mostrar, abaixo das regras da senha e acima de "Criar
   conta", um cartão com uma caixa de seleção e o texto "Li e aceito os Termos de uso e a Política
-  de privacidade.". A caixa MUST vir desmarcada sempre que a aba "Criar conta" aparece.
+  de privacidade.". A caixa MUST vir desmarcada sempre que a tela de login é aberta e MUST manter
+  o estado na troca entre as abas "Entrar" e "Criar conta" enquanto a tela continua aberta.
 - **FR-006**: "Termos de uso" e "Política de privacidade" MUST ser links que abrem,
   respectivamente, a tela Termos de uso e a tela Privacidade, sem perder o que foi digitado nem o
-  estado da caixa.
+  estado da caixa. As duas telas MUST abrir também sem sessão, inclusive logo depois de "Sair da
+  conta" (hoje, sem sessão, o app só deixa abrir a splash, o onboarding, o login e a recuperação
+  de senha).
 - **FR-007**: Tocar no quadrado ou no texto fora dos links MUST marcar ou desmarcar a caixa. A
   área de toque da caixa MUST ter no mínimo 48 × 48.
 - **FR-008**: Marcada, a caixa MUST aparecer preenchida em coral com o sinal de visto, e o cartão
@@ -237,8 +252,9 @@ do login entram subindo, um depois do outro.
 
 ### Key Entities
 
-- **Aceite dos termos**: estado da caixa no cadastro (marcada ou não). Vive só enquanto a aba
-  "Criar conta" está aberta; não é guardado no aparelho nem enviado ao serviço.
+- **Aceite dos termos**: estado da caixa no cadastro (marcada ou não). Vive só enquanto a tela
+  de login está aberta (sobrevive à troca de abas); não é guardado no aparelho nem enviado ao
+  serviço.
 - **Termos de uso**: documento fixo do app, com a data da última atualização e cinco assuntos
   (ícone, título, texto), traduzido nos dois idiomas.
 
@@ -265,7 +281,7 @@ do login entram subindo, um depois do outro.
 - A "Política de privacidade" do cadastro é a tela "Privacidade" que já existe; o nome da linha
   nas Configurações continua "Privacidade".
 - O texto dos Termos é o aprovado pela usuária no canvas; mudanças futuras no texto atualizam a
-  data.
+  data. Em inglês, a data segue o formato dos EUA ("Last updated: 11/23/2026").
 - O desenho do login com teclado aberto segue o de hoje (a tela rola); a onda pode ficar coberta
   pelo teclado.
 - A animação para o login reaproveita as cores e a forma da onda da splash (feature 023) e o
