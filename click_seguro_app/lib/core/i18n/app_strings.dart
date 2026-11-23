@@ -21,8 +21,6 @@ abstract class AppStrings {
   static const String onboardingSkip = 'onboarding_skip';
 
   // --- authentication ---
-  static const String authWelcome = 'auth_welcome';
-  static const String authBrand = 'auth_brand';
   static const String authModeLogin = 'auth_mode_login';
   static const String authModeRegister = 'auth_mode_register';
   static const String authNamePlaceholder = 'auth_name_placeholder';
@@ -31,11 +29,9 @@ abstract class AppStrings {
   static const String authNameLabel = 'auth_name_label';
   static const String authEmailLabel = 'auth_email_label';
   static const String authPasswordLabel = 'auth_password_label';
-  static const String authGuestNote = 'auth_guest_note';
   static const String authPasswordShow = 'auth_password_show';
   static const String authPasswordHide = 'auth_password_hide';
   static const String authForgotPassword = 'auth_forgot_password';
-  static const String authOr = 'auth_or';
   static const String authContinueAsGuest = 'auth_continue_as_guest';
   static const String authWelcomeTitle = 'auth_welcome_title';
   static const String authTermsPrefix = 'auth_terms_prefix';

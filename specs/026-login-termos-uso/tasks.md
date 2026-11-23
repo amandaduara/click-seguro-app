@@ -146,27 +146,27 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T021 [P] [US3] Reescrever `test/modules/authentication/presentation/widgets/auth_header_test.dart`: marca, "Bem-vindo ao Click Seguro" e "Sua segurança em primeiro lugar" centralizados; um único cabeçalho para o leitor de tela; en-US.
-- [ ] T022 [P] [US3] Estender `test/modules/authentication/presentation/pages/login_page_test.dart`:
+- [X] T021 [P] [US3] Reescrever `test/modules/authentication/presentation/widgets/auth_header_test.dart`: marca, "Bem-vindo ao Click Seguro" e "Sua segurança em primeiro lugar" centralizados; um único cabeçalho para o leitor de tela; en-US.
+- [X] T022 [P] [US3] Estender `test/modules/authentication/presentation/pages/login_page_test.dart`:
   - ordem marca → título → slogan → abas → E-mail → Senha → "Esqueci minha senha" (alinhado à direita) → "Entrar" (com `arrowRight`) → "Continuar sem login";
   - nenhum "ou" e nenhum aviso do visitante, no login e no cadastro;
   - `BrandWave` presente;
   - com fonte 2,0 e tela baixa, o último item rola até ficar acima da onda;
   - "Continuar sem login" chama `continueAsGuest`.
-- [ ] T023 [P] [US3] Ajustar `test/modules/authentication/presentation/pages/accessibility_test.dart` ao layout novo (alvos de 48, rótulos) sem perder casos.
+- [X] T023 [P] [US3] Ajustar `test/modules/authentication/presentation/pages/accessibility_test.dart` ao layout novo (alvos de 48, rótulos) sem perder casos.
 
 ### Implementation for User Story 3
 
-- [ ] T024 [US3] Reescrever `lib/modules/authentication/presentation/widgets/auth_header.dart` (research R8): coluna centralizada com `AppLogo(size: 68)` dentro de um slot com `logoKey` opcional (destino do voo na US4), `authWelcomeTitle` em `AppTypography.display` e `splashTagline` em `AppTypography.body`; `Semantics(header: true)`.
-- [ ] T025 [US3] Reorganizar `lib/modules/authentication/presentation/pages/login_page.dart` (research R3/R8):
+- [X] T024 [US3] Reescrever `lib/modules/authentication/presentation/widgets/auth_header.dart` (research R8): coluna centralizada com `AppLogo(size: 68)` dentro de um slot com `logoKey` opcional (destino do voo na US4), `authWelcomeTitle` em `AppTypography.display` e `splashTagline` em `AppTypography.body`; `Semantics(header: true)`.
+- [X] T025 [US3] Reorganizar `lib/modules/authentication/presentation/pages/login_page.dart` (research R3/R8):
   - `Scaffold(resizeToAvoidBottomInset: false)` com `Stack` (`BrandWave` no pé, e a rolagem por cima);
   - espaço final da rolagem = `max(BrandScene.footerHeight + AppSpacing.s4, teclado + AppSpacing.s6)`;
   - "Esqueci minha senha" à direita;
   - `SafeButton(iconRight: Icon(LucideIcons.arrowRight))`;
   - "Continuar sem login" como `TextButton` coral (`primaryPressed`, 16/600, mínimo 48);
   - remover o `OrDivider`, o botão secundário e o aviso do visitante.
-- [ ] T026 [US3] Apagar `lib/modules/authentication/presentation/widgets/or_divider.dart` e o teste dele, se existir. Remover `authOr`, `authGuestNote`, `authWelcome` e `authBrand` de `lib/core/i18n/app_strings.dart` e de `assets/translations/pt-BR.json`/`en-US.json`. Conferir com busca que nada mais as usa.
-- [ ] T027 [US3] Rodar `test/modules/authentication` e `test/core`: tudo verde.
+- [X] T026 [US3] Apagar `lib/modules/authentication/presentation/widgets/or_divider.dart` e o teste dele, se existir. Remover `authOr`, `authGuestNote`, `authWelcome` e `authBrand` de `lib/core/i18n/app_strings.dart` e de `assets/translations/pt-BR.json`/`en-US.json`. Conferir com busca que nada mais as usa.
+- [X] T027 [US3] Rodar `test/modules/authentication` e `test/core`: tudo verde.
 
 **Checkpoint**: login e cadastro com o visual aprovado. **Commit**: `feat(026): login e cadastro no visual da splash`.
 

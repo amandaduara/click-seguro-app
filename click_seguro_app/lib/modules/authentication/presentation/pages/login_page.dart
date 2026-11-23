@@ -5,6 +5,7 @@ import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/animated_reveal.dart';
+import 'package:click_seguro_app/core/widgets/brand_scene.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
@@ -14,7 +15,6 @@ import 'package:click_seguro_app/modules/authentication/domain/failures/auth_fai
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/extensions/auth_presentation_extension.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/auth_header.dart';
-import 'package:click_seguro_app/modules/authentication/presentation/widgets/or_divider.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/widgets/terms_acceptance.dart';
 import 'package:click_seguro_app/modules/common/presentation/extensions/password_rule_presentation.dart';
 import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
@@ -25,7 +25,8 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
-/// Login, cadastro e visitante (redesign 2.0, quadro "03 Entrar").
+/// Login, cadastro e visitante na versão A (specs/026): o cabeçalho e a onda
+/// do fim da splash, o formulário no meio e "Continuar sem login" como link.
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, this.initialMode = AuthMode.login, this.next});
 
@@ -48,13 +49,6 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordFocus = FocusNode();
 
   late final AuthenticationController _controller;
-
-  static const EdgeInsets _padding = EdgeInsets.fromLTRB(
-    AppSpacing.s6,
-    AppSpacing.s7,
-    AppSpacing.s6,
-    AppSpacing.s6,
-  );
 
   /// Aviso de "senha alterada" ao voltar da recuperação (FR-016).
   bool _passwordWasReset = false;
@@ -140,77 +134,76 @@ class _LoginPageState extends State<LoginPage> {
     final primaryLabel = isRegister
         ? AppStrings.authModeRegister.tr()
         : AppStrings.authModeLogin.tr();
+    // A onda fica no pé da tela, atrás do teclado: o fim da rolagem deixa
+    // livre o maior entre a onda e o teclado (specs/026 R3).
+    final EdgeInsets padding = EdgeInsets.fromLTRB(
+      AppSpacing.s6,
+      AppSpacing.s6,
+      AppSpacing.s6,
+      math.max(
+        BrandScene.footerHeight +
+            AppSpacing.s4 +
+            MediaQuery.paddingOf(context).bottom,
+        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.s6,
+      ),
+    );
 
     return Scaffold(
-      body: SafeArea(
-        child: AutofillGroup(
-          // Rola com fonte grande; com espaço sobrando, o aviso do visitante
-          // fica no pé da tela (quadro "03 Entrar").
-          child: LayoutBuilder(
-            builder: (context, viewport) => SingleChildScrollView(
-              padding: _padding,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: math.max(
-                    0,
-                    viewport.maxHeight - _padding.vertical,
-                  ),
-                ),
+      resizeToAvoidBottomInset: false,
+      body: Stack(
+        children: [
+          const Positioned(left: 0, right: 0, bottom: 0, child: BrandWave()),
+          SafeArea(
+            bottom: false,
+            child: AutofillGroup(
+              child: SingleChildScrollView(
+                padding: padding,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const AuthHeader(),
-                        const SizedBox(height: AppSpacing.s6),
-                        SafePillTabs(
-                          tabs: [
-                            AppStrings.authModeLogin.tr(),
-                            AppStrings.authModeRegister.tr(),
-                          ],
-                          selectedIndex: isRegister ? 1 : 0,
-                          onChanged: (index) {
-                            final bool register = index == 1;
-                            // Tocar na aba atual não muda nada.
-                            if (register == isRegister) return;
-                            setState(() => _passwordWasReset = false);
-                            controller.setMode(
-                              register ? AuthMode.register : AuthMode.login,
-                            );
-                          },
-                        ),
-                        const SizedBox(height: AppSpacing.s6),
-                        ..._form(controller, isRegister),
-                        const SizedBox(height: AppSpacing.s5),
-                        SafeButton(
-                          label: primaryLabel,
-                          loading: controller.isSubmitting,
-                          // Só com todos os campos corretos (no cadastro, a
-                          // senha cumprindo as 5 regras).
-                          disabled:
-                              !controller.canSubmit && !controller.isSubmitting,
-                          onPressed: _submit,
-                        ),
-                        const SizedBox(height: AppSpacing.s5),
-                        const OrDivider(),
-                        const SizedBox(height: AppSpacing.s5),
-                        SafeButton(
-                          label: AppStrings.authContinueAsGuest.tr(),
-                          tone: SafeButtonTone.secondary,
-                          onPressed: controller.continueAsGuest,
-                        ),
+                    const AuthHeader(),
+                    const SizedBox(height: AppSpacing.s6),
+                    SafePillTabs(
+                      tabs: [
+                        AppStrings.authModeLogin.tr(),
+                        AppStrings.authModeRegister.tr(),
                       ],
+                      selectedIndex: isRegister ? 1 : 0,
+                      onChanged: (index) {
+                        final bool register = index == 1;
+                        // Tocar na aba atual não muda nada.
+                        if (register == isRegister) return;
+                        setState(() => _passwordWasReset = false);
+                        controller.setMode(
+                          register ? AuthMode.register : AuthMode.login,
+                        );
+                      },
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.s7),
-                      child: Text(
-                        AppStrings.authGuestNote.tr(),
-                        textAlign: TextAlign.center,
-                        style: AppTypography.body.copyWith(
-                          color: context.colors.textMutedForeground,
+                    const SizedBox(height: AppSpacing.s6),
+                    ..._form(controller, isRegister),
+                    const SizedBox(height: AppSpacing.s5),
+                    SafeButton(
+                      label: primaryLabel,
+                      iconRight: const Icon(LucideIcons.arrowRight),
+                      loading: controller.isSubmitting,
+                      // Só com todos os campos corretos (no cadastro, a
+                      // senha cumprindo as 5 regras e o aceite).
+                      disabled:
+                          !controller.canSubmit && !controller.isSubmitting,
+                      onPressed: _submit,
+                    ),
+                    const SizedBox(height: AppSpacing.s3),
+                    Center(
+                      child: TextButton(
+                        onPressed: controller.continueAsGuest,
+                        style: TextButton.styleFrom(
+                          foregroundColor: context.colors.primaryPressed,
+                          minimumSize: const Size(48, 48),
+                          textStyle: AppTypography.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
+                        child: Text(AppStrings.authContinueAsGuest.tr()),
                       ),
                     ),
                   ],
@@ -218,7 +211,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -322,7 +315,8 @@ class _LoginPageState extends State<LoginPage> {
           : Padding(
               padding: const EdgeInsets.only(top: AppSpacing.s1),
               child: Align(
-                alignment: Alignment.centerLeft,
+                // À direita, como na versão A (specs/026 FR-012).
+                alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _openForgotPassword,
                   style: TextButton.styleFrom(

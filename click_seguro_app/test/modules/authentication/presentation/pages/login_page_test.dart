@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:click_seguro_app/core/widgets/brand_scene.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
@@ -103,16 +104,17 @@ void main() {
       expect(find.text('Entrar'), findsWidgets);
     });
 
-    testWidgets('campos com rótulo acima e o aviso do visitante', (
+    testWidgets('campos com rótulo acima, sem o aviso do visitante', (
       tester,
     ) async {
       await pumpLogin(tester);
 
       expect(find.text('E-mail'), findsOneWidget);
       expect(find.text('Senha'), findsOneWidget);
+      // Saiu do login e do cadastro (specs/026 FR-014).
       expect(
         find.text('Sem conta, seu progresso vale só até fechar o app.'),
-        findsOneWidget,
+        findsNothing,
       );
 
       await tester.tap(registerTab);
@@ -459,28 +461,135 @@ void main() {
       tester,
     ) async {
       await pumpLogin(tester);
-      expect(find.text('ou'), findsOneWidget);
       expect(find.text('Continuar sem login'), findsOneWidget);
 
       await tester.tap(registerTab);
       await tester.pumpAndSettle();
       expect(find.text('Continuar sem login'), findsOneWidget);
-
-      // Redesign 2.0 (Figma, quadro 03): o botão creme.
       expect(
-        tester
-            .widget<SafeButton>(
-              find.widgetWithText(SafeButton, 'Continuar sem login'),
-            )
-            .tone,
-        SafeButtonTone.secondary,
+        find.text('Sem conta, seu progresso vale só até fechar o app.'),
+        findsNothing,
       );
 
-      await tapPrimary(tester, 'Continuar sem login');
+      // Versão A (specs/026 FR-012): link coral no lugar do botão creme.
+      final Finder guest = find.widgetWithText(
+        TextButton,
+        'Continuar sem login',
+      );
+      await tester.ensureVisible(guest);
+      await tester.pumpAndSettle();
+      await tester.tap(guest);
+      await tester.pumpAndSettle();
 
       expect(find.text('HOME'), findsOneWidget);
       expect(repository.guestCalls, 1);
     });
+  });
+
+  // specs/026 US3: versão A, que continua a splash.
+  group('visual da versão A', () {
+    testWidgets('ordem: marca, título, slogan, abas, campos, "Esqueci", '
+        '"Entrar" e "Continuar sem login"', (tester) async {
+      await pumpLogin(tester);
+
+      final List<Finder> order = [
+        find.byType(AuthHeader),
+        find.byType(SafePillTabs),
+        field('seu@email.com'),
+        field('Digite sua senha'),
+        find.text('Esqueci minha senha'),
+        find.widgetWithText(SafeButton, 'Entrar'),
+        find.text('Continuar sem login'),
+      ];
+      for (int i = 1; i < order.length; i++) {
+        expect(
+          tester.getTopLeft(order[i]).dy,
+          greaterThan(tester.getTopLeft(order[i - 1]).dy),
+          reason: '${order[i]}',
+        );
+      }
+    });
+
+    testWidgets('sem o divisor "ou"', (tester) async {
+      await pumpLogin(tester);
+
+      expect(find.text('ou'), findsNothing);
+    });
+
+    testWidgets('"Esqueci minha senha" alinhado à direita', (tester) async {
+      await pumpLogin(tester);
+
+      expect(
+        tester.getTopRight(find.text('Esqueci minha senha')).dx,
+        closeTo(tester.getTopRight(field('seu@email.com')).dx, 24),
+      );
+      expect(
+        tester.getCenter(find.text('Esqueci minha senha')).dx,
+        greaterThan(tester.getSize(find.byType(Scaffold)).width / 2),
+      );
+    });
+
+    testWidgets('"Entrar" e "Criar conta" com a seta à direita', (
+      tester,
+    ) async {
+      await pumpLogin(tester);
+      SafeButton primary(String label) =>
+          tester.widget<SafeButton>(find.widgetWithText(SafeButton, label));
+
+      expect(
+        (primary('Entrar').iconRight! as Icon).icon,
+        LucideIcons.arrowRight,
+      );
+
+      await tester.tap(registerTab);
+      await tester.pumpAndSettle();
+      expect(
+        (tester
+                    .widget<SafeButton>(
+                      find.widgetWithText(SafeButton, 'Criar conta').last,
+                    )
+                    .iconRight!
+                as Icon)
+            .icon,
+        LucideIcons.arrowRight,
+      );
+    });
+
+    testWidgets('a onda da splash fica no pé da tela', (tester) async {
+      await pumpLogin(tester);
+
+      expect(find.byType(BrandWave), findsOneWidget);
+      final double screen = tester.getSize(find.byType(Scaffold)).height;
+      expect(tester.getBottomLeft(find.byType(BrandWave)).dy, screen);
+    });
+
+    testWidgets(
+      'fonte 2× numa tela baixa: o fim rola até ficar acima da onda',
+      (tester) async {
+        tester.view
+          ..physicalSize = const Size(1080, 1920)
+          ..devicePixelRatio = 3;
+        tester.platformDispatcher.textScaleFactorTestValue = 2;
+        addTearDown(tester.view.reset);
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+        await pumpLogin(tester);
+        await tester.tap(registerTab);
+        await tester.pumpAndSettle();
+        await tester.drag(
+          find.byType(Scrollable).first,
+          const Offset(0, -5000),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        final double screen = tester.getSize(find.byType(Scaffold)).height;
+        expect(
+          tester.getBottomLeft(find.text('Continuar sem login')).dy,
+          lessThan(screen - BrandScene.footerHeight),
+        );
+      },
+    );
   });
 
   // Sem aviso de servidor lento (validação da usuária, specs/024).
