@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.5.0
+**Versão**: 2.6.0
 
 **Criado em**: 2026-09-07
 
@@ -102,13 +102,18 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
 ### 3.1 Entrada no app (A1)
 
 - **RF-001**: O sistema MUST exibir um splash ao abrir o app enquanto a sessão e as preferências
-  são restauradas.
+  são restauradas. Quando o splash leva ao login, a passagem MUST ser contínua: a marca sobe até o
+  topo do login e a onda do rodapé fica parada; com "Reduzir animações", o login aparece pronto
+  (specs/026-login-termos-uso).
 - **RF-002**: O sistema MUST exibir o onboarding (3 slides com indicador de página, botões
   "Continuar"/"Começar" e "Pular") **apenas na primeira abertura** do aparelho (RN-004).
 
 ### 3.2 Autenticação e sessão (A2)
 
-- **RF-003**: O sistema MUST permitir cadastro com nome, e-mail e senha.
+- **RF-003**: O sistema MUST permitir cadastro com nome, e-mail e senha. O cadastro MUST exigir
+  a caixa "Li e aceito os Termos de uso e a Política de privacidade.", desmarcada ao abrir a tela,
+  com links para as duas telas (que abrem também sem sessão); o aceite só libera o botão e não é
+  enviado ao serviço (specs/026-login-termos-uso).
 - **RF-004**: O sistema MUST permitir login com e-mail e senha, alternando com o cadastro na
   mesma tela, com opção de mostrar/ocultar a senha.
 - **RF-005**: O sistema MUST permitir **entrar como visitante**, sem conta (RN-003).
@@ -229,7 +234,8 @@ indicar a alguém). Pode ler e praticar, mas não guarda nada entre sessões.
   carregamento; se carregar a conta ou salvar falhar, ela dá lugar a um botão de **tentar de
   novo**, que refaz a ação que falhou, com a mensagem na própria linha. Na troca de senha, a
   validação MUST acontecer enquanto a pessoa digita e o botão fica desativado até o formulário
-  ficar válido (specs/024-redesign-visual).
+  ficar válido (specs/024-redesign-visual). A seção Sobre MUST ter, para todos, "Privacidade",
+  "Termos de uso" e "Sobre o Click Seguro" (specs/026-login-termos-uso).
 - **RF-042**: O app MUST usar o idioma do aparelho (português do Brasil ou inglês dos EUA; outro
   idioma cai em português) e as configurações MUST permitir escolher o idioma (Português/English).
   A escolha MUST ser salva no aparelho e valer para os textos do app e para a leitura em voz alta
@@ -426,9 +432,14 @@ Este documento descreve requisitos de **negócio e produto**. Se um requisito ex
 [constitution.md](constitution.md), o requisito MUST ser redesenhado. Mudanças de escopo exigem
 nova versão e registro no changelog.
 
-**Versão**: 2.5.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-11-15
+**Versão**: 2.6.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-11-23
 
 ## Changelog
+
+- **2.6.0 (2026-11-23)**: login que continua a splash, aceite dos termos e tela Termos de uso
+  (`specs/026-login-termos-uso`). RF-001 com a passagem animada para o login, RF-003 com o aceite
+  obrigatório no cadastro (não enviado ao serviço), RF-037 com a linha "Termos de uso" na seção
+  Sobre.
 
 - **2.5.0 (2026-11-15)**: redesign visual 2.0 e as validações da usuária no aparelho
   (`specs/024-redesign-visual`). Novos RF-031a (cartão de emergência "Caiu em um golpe?" com

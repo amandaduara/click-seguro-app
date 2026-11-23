@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 /// anima essas peças; o login começa exatamente onde elas param.
 abstract final class BrandScene {
   // Larguras de referência do protótipo (390 px de largura, 164 px de marca).
-  static const double referenceWidth = 390;
+  static const double _referenceWidth = 390;
   static const double _maxLogoWidth = 164;
   static const double _minLogoWidth = 96;
 
@@ -69,7 +69,7 @@ abstract final class BrandScene {
     required double progress,
     required bool below,
   }) {
-    final double sx = size.width / referenceWidth;
+    final double sx = size.width / _referenceWidth;
     final double dy = -(size.height + 40) * (1 - progress);
     double x(int i) => edge[i] * sx;
     double y(int i) => top + dy + edge[i];

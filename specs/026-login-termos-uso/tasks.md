@@ -213,9 +213,9 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T036 Revisar o código de produção da feature atrás de código morto ou que só existe para testes (chave pública só para teste, parâmetro sem uso) e remover, ajustando os testes.
+- [X] T036 Revisar o código de produção da feature atrás de código morto ou que só existe para testes (chave pública só para teste, parâmetro sem uso) e remover, ajustando os testes.
 - [ ] T037 `flutter analyze` sem avisos novos e `flutter test` completo verde (~30 min). Registrar as contagens.
-- [ ] T038 [P] Documentos do produto (raiz do repositório):
+- [X] T038 [P] Documentos do produto (raiz do repositório):
   - em `.specify/memory/tasks.md`, a tarefa **R3 Login, aceite dos termos e Termos de uso** (aberta até a validação);
   - em `.specify/memory/specification.md`: RF-003 com o aceite, RF-037 com a linha "Termos de uso", nota da passagem splash → login no RF-001 e entrada no histórico de versões;
   - em `.specify/memory/design-system.md`: `BrandWave`/`BrandScene` e `SettingsTopicCard`.

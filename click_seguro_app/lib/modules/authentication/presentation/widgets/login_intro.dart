@@ -8,7 +8,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 /// Linha do tempo da passagem da splash para o login (specs/026 R1).
-abstract final class LoginIntroTimeline {
+abstract final class _LoginIntroTimeline {
   static const Duration total = Duration(milliseconds: 1250);
 
   static double _at(int ms) => ms / total.inMilliseconds;
@@ -55,7 +55,7 @@ class _LoginIntroState extends State<LoginIntro>
 
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: LoginIntroTimeline.total,
+    duration: _LoginIntroTimeline.total,
   );
   final GlobalKey _logoSlot = GlobalKey();
 
@@ -111,8 +111,8 @@ class _LoginIntroState extends State<LoginIntro>
             child: widget.child,
             builder: (context, child) {
               final double t = _controller.value;
-              final double flight = LoginIntroTimeline.flight.transform(t);
-              final double textExit = LoginIntroTimeline.splashText.transform(
+              final double flight = _LoginIntroTimeline.flight.transform(t);
+              final double textExit = _LoginIntroTimeline.splashText.transform(
                 t,
               );
               return Stack(
@@ -218,7 +218,7 @@ class LoginIntroReveal extends StatelessWidget {
   Widget build(BuildContext context) {
     final _LoginIntroScope? scope = _LoginIntroScope.maybeOf(context);
     if (scope == null) return child;
-    final Interval interval = LoginIntroTimeline.step(step);
+    final Interval interval = _LoginIntroTimeline.step(step);
     return AnimatedBuilder(
       animation: scope.animation,
       child: child,
@@ -254,7 +254,7 @@ class LoginIntroLogoSlot extends StatelessWidget {
         child: child,
         builder: (context, child) => Opacity(
           opacity:
-              LoginIntroTimeline.flight.transform(scope.animation.value) >= 1
+              _LoginIntroTimeline.flight.transform(scope.animation.value) >= 1
               ? 1
               : 0,
           child: child,

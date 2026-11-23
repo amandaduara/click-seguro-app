@@ -14,7 +14,7 @@ class AuthHeader extends StatelessWidget {
   const AuthHeader({super.key});
 
   /// Largura da marca no cabeçalho.
-  static const double logoSize = 68;
+  static const double _logoSize = 68;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class AuthHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Center(
-              child: LoginIntroLogoSlot(child: AppLogo(size: logoSize)),
+              child: LoginIntroLogoSlot(child: AppLogo(size: _logoSize)),
             ),
             const SizedBox(height: AppSpacing.s4),
             LoginIntroReveal(
