@@ -110,14 +110,14 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
         _controller.status != NewsDetailStatus.loaded ||
         detail == null ||
         _controller.autoReadDone ||
-        !_readAloud.isAvailable ||
+        !_readAloud.isContentAvailable ||
         !GetIt.instance<AccessibilityPreferencesNotifier>()
             .value
             .autoReadAloud) {
       return;
     }
     _controller.markAutoReadDone();
-    unawaited(_readAloud.speak(detail.spokenText));
+    unawaited(_readAloud.speak(detail.spokenText, content: true));
   }
 
   /// "Notícia salva", "Removida dos salvos" ou o erro. "Não encontrada" já
@@ -196,7 +196,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
       _controller.markAutoReadDone();
       unawaited(_readAloud.stop());
     } else {
-      unawaited(_readAloud.speak(detail.spokenText));
+      unawaited(_readAloud.speak(detail.spokenText, content: true));
     }
   }
 
@@ -382,7 +382,7 @@ class _NewsDetailPageState extends State<NewsDetailPage> {
         ListenableBuilder(
           listenable: _readAloud,
           builder: (context, _) => ReadAloudBar(
-            isAvailable: _readAloud.isAvailable,
+            isAvailable: _readAloud.isContentAvailable,
             isSpeaking: _readAloud.isSpeaking,
             speed: _readAloud.speed,
             onToggle: () => _toggleListen(detail),

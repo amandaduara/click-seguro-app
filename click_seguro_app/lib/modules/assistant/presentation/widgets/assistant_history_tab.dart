@@ -211,13 +211,39 @@ class _HistoryItem extends StatelessWidget {
     final bool chat = analysis.feature == AiAnalysisFeature.chat;
     final String date = _formatDate(context, analysis.createdAt);
     if (chat) {
+      // Material transparente entre o cartão e a linha: o fundo do cartão
+      // escondia o efeito de toque (aviso "ink splashes may be invisible").
       return SafeCard(
         padded: false,
-        child: ListTile(
-          minLeadingWidth: 44,
-          leading: const _IconTile(icon: LucideIcons.messageCircle),
+        child: Material(
+          type: MaterialType.transparency,
+          child: ListTile(
+            minLeadingWidth: 44,
+            leading: const _IconTile(icon: LucideIcons.messageCircle),
+            title: Text(
+              AppStrings.assistantHistoryConversationRecorded.tr(),
+              style: AppTypography.title3.copyWith(
+                color: context.colors.textForeground,
+              ),
+            ),
+            subtitle: Text(
+              date,
+              style: AppTypography.caption.copyWith(
+                color: context.colors.textMutedForeground,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return SafeCard(
+      padded: false,
+      child: Material(
+        type: MaterialType.transparency,
+        child: ExpansionTile(
+          leading: const _IconTile(icon: LucideIcons.shieldCheck),
           title: Text(
-            AppStrings.assistantHistoryConversationRecorded.tr(),
+            analysis.threatType.labelKey.tr(),
             style: AppTypography.title3.copyWith(
               color: context.colors.textForeground,
             ),
@@ -228,32 +254,14 @@ class _HistoryItem extends StatelessWidget {
               color: context.colors.textMutedForeground,
             ),
           ),
-        ),
-      );
-    }
-    return SafeCard(
-      padded: false,
-      child: ExpansionTile(
-        leading: const _IconTile(icon: LucideIcons.shieldCheck),
-        title: Text(
-          analysis.threatType.labelKey.tr(),
-          style: AppTypography.title3.copyWith(
-            color: context.colors.textForeground,
+          childrenPadding: const EdgeInsets.fromLTRB(
+            AppSpacing.s3,
+            0,
+            AppSpacing.s3,
+            AppSpacing.s3,
           ),
+          children: [AssistantAnalysisCard(analysis: analysis)],
         ),
-        subtitle: Text(
-          date,
-          style: AppTypography.caption.copyWith(
-            color: context.colors.textMutedForeground,
-          ),
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(
-          AppSpacing.s3,
-          0,
-          AppSpacing.s3,
-          AppSpacing.s3,
-        ),
-        children: [AssistantAnalysisCard(analysis: analysis)],
       ),
     );
   }

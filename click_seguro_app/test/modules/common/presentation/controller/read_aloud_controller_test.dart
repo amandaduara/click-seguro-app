@@ -258,4 +258,106 @@ void main() {
       expect(preferences.value.readingSpeed, ReadingSpeed.slow);
     });
   });
+
+  // O conteúdo do banco (notícias, lições, contatos, Reels) vem em português:
+  // é lido com voz em português mesmo com o app em inglês; os textos do
+  // próprio app seguem o idioma do app (validação da usuária, specs/025).
+  group('idioma do conteúdo', () {
+    setUp(() => tts.availableLanguages = {...SpeechLanguage.values});
+
+    test('conteúdo em português mesmo com o app em inglês', () async {
+      await controller.prepare(english);
+
+      unawaited(controller.speak('Golpe do Pix', content: true));
+
+      expect(tts.spoken.single.language, SpeechLanguage.ptBr);
+    });
+
+    test('texto do app no idioma do app', () async {
+      await controller.prepare(english);
+
+      unawaited(controller.speak('Module completed!'));
+
+      expect(tts.spoken.single.language, SpeechLanguage.enUs);
+    });
+
+    test('partes misturadas: cada uma no seu idioma, em ordem', () async {
+      await controller.prepare(english);
+
+      final Future<void> reading = controller.speakParts([
+        const SpeechPart('You got it right!'),
+        const SpeechPart('Nunca passe o código por telefone.', content: true),
+      ]);
+      expect(controller.isSpeaking, isTrue);
+      expect(tts.spoken.single, (
+        text: 'You got it right!',
+        language: SpeechLanguage.enUs,
+        speed: ReadingSpeed.normal,
+      ));
+
+      tts.finishSpeaking();
+      await Future<void>.delayed(Duration.zero);
+      expect(tts.spoken.last.language, SpeechLanguage.ptBr);
+      expect(tts.spoken.last.text, 'Nunca passe o código por telefone.');
+
+      tts.finishSpeaking();
+      await reading;
+      expect(controller.isSpeaking, isFalse);
+    });
+
+    test('parar no meio não lê as partes seguintes', () async {
+      await controller.prepare(english);
+
+      final Future<void> reading = controller.speakParts([
+        const SpeechPart('One'),
+        const SpeechPart('Dois', content: true),
+      ]);
+      await controller.stop();
+      await reading;
+      await Future<void>.delayed(Duration.zero);
+
+      expect(tts.spoken.map((s) => s.text), ['One']);
+    });
+
+    test('sem voz em português, o conteúdo é pulado e o resto lido', () async {
+      tts.availableLanguages = {SpeechLanguage.enUs};
+      await controller.prepare(english);
+
+      expect(controller.isContentAvailable, isFalse);
+      final Future<void> reading = controller.speakParts([
+        const SpeechPart('Hello'),
+        const SpeechPart('Olá', content: true),
+      ]);
+      tts.finishSpeaking();
+      await reading;
+
+      expect(tts.spoken.map((s) => s.text), ['Hello']);
+    });
+
+    test('isContentAvailable acompanha a voz em português', () async {
+      tts.availableLanguages = {SpeechLanguage.ptBr};
+      await controller.prepare(english);
+
+      expect(controller.isAvailable, isFalse);
+      expect(controller.isContentAvailable, isTrue);
+    });
+
+    test('canSpeak: só quando alguma parte tem texto e voz', () async {
+      tts.availableLanguages = {SpeechLanguage.ptBr};
+      await controller.prepare(english);
+
+      expect(controller.canSpeak([const SpeechPart('Hello')]), isFalse);
+      expect(
+        controller.canSpeak([const SpeechPart('Olá', content: true)]),
+        isTrue,
+      );
+      expect(
+        controller.canSpeak([
+          const SpeechPart('Hello'),
+          const SpeechPart('  ', content: true),
+        ]),
+        isFalse,
+      );
+    });
+  });
 }

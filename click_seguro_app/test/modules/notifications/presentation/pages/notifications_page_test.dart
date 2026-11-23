@@ -5,6 +5,7 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_theme.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/notifications/domain/entities/alert_entity.dart';
@@ -44,6 +45,7 @@ void main() {
           builder: (_, _) => const NotificationsPage(),
         ),
         GoRoute(path: '/login', builder: (_, _) => const Text('tela login')),
+        GoRoute(path: '/home', builder: (_, _) => const Text('tela início')),
         GoRoute(
           path: '/settings',
           builder: (_, _) => Scaffold(
@@ -143,16 +145,30 @@ void main() {
       expect(repository.fetchCalls, hasLength(1));
     });
 
-    testWidgets('título "Alertas" na barra', (tester) async {
+    testWidgets('título "Alertas" no cabeçalho, ao lado do voltar', (
+      tester,
+    ) async {
       await pumpPage(tester);
 
       expect(
         find.descendant(
-          of: find.byType(AppBar),
+          of: find.byType(SafePageHeader),
           matching: find.text('Alertas'),
         ),
         findsOneWidget,
       );
+      expect(find.byKey(SafePageHeader.defaultBackKey), findsOneWidget);
+    });
+
+    testWidgets('aberta por link direto, o voltar leva ao início', (
+      tester,
+    ) async {
+      await pumpPage(tester);
+
+      await tester.tap(find.byKey(SafePageHeader.defaultBackKey));
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela início'), findsOneWidget);
     });
 
     testWidgets('grupos Hoje, Ontem e Anteriores, na ordem', (tester) async {

@@ -5,6 +5,7 @@ import 'package:click_seguro_app/modules/authentication/presentation/controller/
 import 'package:click_seguro_app/modules/authentication/presentation/pages/forgot_password_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
 import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -140,7 +141,7 @@ void main() {
     await openForgot(tester);
     await tapButton(tester, 'Enviar código');
 
-    await tester.tap(find.byTooltip('Voltar'));
+    await tester.tap(find.byKey(SafePageHeader.defaultBackKey));
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(SafeButton, 'Enviar código'), findsOneWidget);

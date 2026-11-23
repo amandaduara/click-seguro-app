@@ -8,6 +8,7 @@ class ContactEntity {
     required this.type,
     this.relationship,
     this.photoPath,
+    this.description,
   });
 
   final String id;
@@ -16,4 +17,7 @@ class ContactEntity {
   final ContactType type;
   final String? relationship;
   final String? photoPath;
+
+  /// Para que serve o contato oficial (ex.: "Reclamações de telefonia").
+  final String? description;
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/editable_avatar.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
@@ -23,6 +24,12 @@ import '../../../../helpers/profile_dependencies.dart';
 import '../../fakes/fake_profile_repository.dart';
 
 void main() {
+  final Finder back = find.byKey(SafePageHeader.defaultBackKey);
+
+  /// O voltar do cabeçalho está ativo (fora do envio da foto).
+  bool backEnabled(WidgetTester tester) =>
+      tester.widget<SafePageHeader>(find.byType(SafePageHeader)).backEnabled;
+
   late UserSessionService session;
   late FakeProfileRepository repository;
   late FakeImageStorageService storage;
@@ -217,7 +224,7 @@ void main() {
       await open(tester);
       await tester.enterText(field('Nome'), 'Maria Souza');
       await tester.pump();
-      await tester.tap(find.byType(BackButton));
+      await tester.tap(back);
       await tester.pumpAndSettle();
     }
 
@@ -243,7 +250,7 @@ void main() {
     testWidgets('sem mudança, volta direto', (tester) async {
       await open(tester);
 
-      await tester.tap(find.byType(BackButton));
+      await tester.tap(back);
       await tester.pumpAndSettle();
 
       expect(find.text('abrir'), findsOneWidget);
@@ -421,13 +428,13 @@ void main() {
       expect(repository.profileCalls, 2);
       expect(avatar().busy, isTrue);
       expect(find.text('Enviando foto…'), findsOneWidget);
-      expect(find.byType(BackButton), findsNothing);
+      expect(backEnabled(tester), isFalse);
 
       repository.profileGate!.complete();
       await tester.pumpAndSettle();
 
       expect(avatar().busy, isFalse);
-      expect(find.byType(BackButton), findsOneWidget);
+      expect(backEnabled(tester), isTrue);
     });
 
     group('sair durante o envio', () {
@@ -464,9 +471,7 @@ void main() {
       ) async {
         await startUpload(tester);
 
-        final Finder back = find.byType(IconButton).first;
-        expect(tester.widget<IconButton>(back).onPressed, isNull);
-        expect(find.byType(BackButton), findsNothing);
+        expect(backEnabled(tester), isFalse);
         await tester.tap(back);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 500));
@@ -483,16 +488,16 @@ void main() {
       ) async {
         final semantics = tester.ensureSemantics();
         await startUpload(tester);
-        final String back = MaterialLocalizations.of(
-          tester.element(find.byType(AppBar)),
+        final String backLabel = MaterialLocalizations.of(
+          tester.element(find.byType(SafePageHeader)),
         ).backButtonTooltip;
 
-        final Finder node = find.bySemanticsLabel(back);
+        final Finder node = find.bySemanticsLabel(backLabel);
         expect(node, findsOneWidget);
         expect(
           tester.getSemantics(node),
           matchesSemantics(
-            label: back,
+            label: backLabel,
             hint: warning,
             isButton: true,
             hasEnabledState: true,
@@ -519,7 +524,7 @@ void main() {
         repository.uploadGate!.complete();
         await tester.pumpAndSettle();
 
-        await tester.tap(find.byType(BackButton));
+        await tester.tap(back);
         await tester.pumpAndSettle();
 
         expect(find.text('abrir'), findsOneWidget);

@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/controller/onboarding_controller.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/models/onboarding_page_content.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_page_indicator.dart';
@@ -9,6 +14,7 @@ import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboard
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/utils/motion_scroll.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -22,12 +28,67 @@ class OnboardingPage extends StatefulWidget {
 
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
+  final ReadAloudController _readAloud = GetIt.instance<ReadAloudController>();
+  Locale? _locale;
+
+  /// Slide já lido pela leitura automática (cada um, uma vez ao aparecer).
+  int? _autoReadSlide;
+
+  @override
+  void initState() {
+    super.initState();
+    _readAloud.addListener(_maybeAutoRead);
+  }
+
+  /// O idioma da voz é o do app: prepara de novo se ele mudar.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final Locale locale = context.locale;
+    if (locale == _locale) return;
+    _locale = locale;
+    unawaited(_readAloud.prepare(locale));
+  }
 
   @override
   void dispose() {
+    _readAloud.removeListener(_maybeAutoRead);
+    _readAloud.dispose();
     _pageController.dispose();
     super.dispose();
   }
+
+  int get _currentSlide => context.read<OnboardingController>().currentPage;
+
+  /// Com a leitura automática ligada, lê o slide atual quando a voz fica
+  /// pronta ou quando ele aparece.
+  void _maybeAutoRead() {
+    if (!mounted ||
+        _autoReadSlide == _currentSlide ||
+        !_readAloud.isAvailable ||
+        !GetIt.instance<AccessibilityPreferencesNotifier>()
+            .value
+            .autoReadAloud) {
+      return;
+    }
+    _autoReadSlide = _currentSlide;
+    unawaited(
+      _readAloud.speak(OnboardingPageContent.pages[_currentSlide].spokenText),
+    );
+  }
+
+  /// Trocar de slide para a leitura do anterior.
+  void _onPageChanged(OnboardingController controller, int page) {
+    controller.onPageChanged(page);
+    unawaited(_readAloud.stop());
+    _maybeAutoRead();
+  }
+
+  void _toggleListen(OnboardingPageContent content) => unawaited(
+    _readAloud.isSpeaking
+        ? _readAloud.stop()
+        : _readAloud.speak(content.spokenText),
+  );
 
   Future<void> _handleSkip(OnboardingController controller) async {
     await controller.skip();
@@ -83,10 +144,22 @@ class _OnboardingPageState extends State<OnboardingPage> {
             Expanded(
               child: PageView(
                 controller: _pageController,
-                onPageChanged: controller.onPageChanged,
-                children: OnboardingPageContent.pages
-                    .map((content) => OnboardingSlide(content: content))
-                    .toList(),
+                onPageChanged: (page) => _onPageChanged(controller, page),
+                children: [
+                  for (final content in OnboardingPageContent.pages)
+                    OnboardingSlide(
+                      content: content,
+                      listen: ListenableBuilder(
+                        listenable: _readAloud,
+                        builder: (context, _) => _readAloud.isAvailable
+                            ? ListenButton(
+                                isSpeaking: _readAloud.isSpeaking,
+                                onPressed: () => _toggleListen(content),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ),
+                ],
               ),
             ),
             Padding(

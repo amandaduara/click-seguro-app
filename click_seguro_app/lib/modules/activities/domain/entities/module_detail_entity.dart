@@ -17,4 +17,28 @@ class ModuleDetailEntity {
   final ModuleScoreEntity? score;
 
   bool get isEmpty => lessons.isEmpty;
+
+  /// Todas as lições válidas respondidas: o fim do módulo (RN-005).
+  bool get isFullyCompleted =>
+      lessons.isNotEmpty && lessons.every((lesson) => lesson.isCompleted);
+
+  /// Abrir o módulo começa uma tentativa nova quando a pessoa pede para
+  /// refazer ([retake]) ou quando ele já está todo concluído: o progresso
+  /// começa do zero ([forRetake]). Feito pela metade, retoma de onde parou
+  /// (specs/025).
+  bool startsNewAttempt({bool retake = false}) => retake || isFullyCompleted;
+
+  /// Uma nova tentativa (refazer): as respostas antigas do serviço não contam
+  /// no progresso; só as lições em [answeredInAttempt] (respondidas nesta
+  /// tentativa) ficam concluídas. A pontuação continua a do serviço até a
+  /// primeira resposta nova (specs/025).
+  ModuleDetailEntity forRetake({Set<String> answeredInAttempt = const {}}) =>
+      ModuleDetailEntity(
+        title: title,
+        lessons: [
+          for (final LessonEntity lesson in lessons)
+            lesson.withCompleted(answeredInAttempt.contains(lesson.id)),
+        ],
+        score: score,
+      );
 }

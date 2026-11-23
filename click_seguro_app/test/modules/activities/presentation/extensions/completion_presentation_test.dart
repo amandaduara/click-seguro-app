@@ -1,4 +1,3 @@
-import 'package:click_seguro_app/core/constants/app_identity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/completion_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
@@ -38,21 +37,6 @@ void main() {
     );
   });
 
-  testWidgets('texto para compartilhar, com e sem pontuação', (tester) async {
-    await pumpLocalized(tester, child: const SizedBox());
-
-    expect(
-      completion(3).shareText,
-      'Concluí o módulo Golpes Digitais no ${AppIdentity.name} e acertei 3 de '
-      '3 perguntas! Aprenda a se proteger de golpes também.',
-    );
-    expect(
-      completion(null).shareText,
-      'Concluí o módulo Golpes Digitais no ${AppIdentity.name}! Aprenda a se '
-      'proteger de golpes também.',
-    );
-  });
-
   testWidgets('em inglês', (tester) async {
     await pumpLocalized(
       tester,
@@ -61,10 +45,5 @@ void main() {
     );
 
     expect(completion(1).spokenText, startsWith('Module completed!\n'));
-    expect(
-      completion(3).shareText,
-      'I completed the Golpes Digitais module on ${AppIdentity.name} and got 3 '
-      'of 3 questions right! Learn to protect yourself from scams too.',
-    );
   });
 }

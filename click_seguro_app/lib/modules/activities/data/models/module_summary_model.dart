@@ -1,7 +1,9 @@
 import 'package:click_seguro_app/modules/activities/domain/entities/module_summary_entity.dart';
 
 /// Um item de `modules` em `GET /app/educational/modules`. O
-/// `progressPercent` do serviço é ignorado: o app calcula.
+/// `progressPercent` do serviço é ignorado: o app calcula. O contrato atual
+/// não traz `score`/`totalScore` na lista (só no detalhe, em `progress`); se
+/// vierem, são lidos com os mesmos nomes (specs/025).
 abstract final class ModuleSummaryModel {
   /// `null` quando falta `id` ou `title`: o módulo é descartado.
   static ModuleSummaryEntity? fromJson(Map<String, dynamic> json) {

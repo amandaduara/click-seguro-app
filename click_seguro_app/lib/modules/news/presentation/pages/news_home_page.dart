@@ -4,17 +4,20 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_controller.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_message.dart';
 import 'package:click_seguro_app/modules/news/presentation/controller/feed_status.dart';
 import 'package:click_seguro_app/modules/news/presentation/extensions/news_placeholders.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
 import 'package:click_seguro_app/modules/news/presentation/routes/news_detail_preview.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/category_filter_bar.dart';
 import 'package:click_seguro_app/modules/news/presentation/widgets/feed_list_footer.dart';
@@ -31,8 +34,14 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 /// Aba Início: o feed de notícias (specs/006-feed-inicio).
+///
+/// "Ouvir" ao lado do título "Destaques" (Figma quadro 04) lê os títulos e as
+/// fontes dos destaques (na voz em português); some sem essa voz. A leitura para ao
+/// trocar de aba, ao abrir outra tela por cima e ao fechar a página.
 class NewsHomePage extends StatefulWidget {
   const NewsHomePage({super.key});
+
+  static const Key highlightsListenKey = ValueKey('home-highlights-listen');
 
   @override
   State<NewsHomePage> createState() => _NewsHomePageState();
@@ -40,6 +49,10 @@ class NewsHomePage extends StatefulWidget {
 
 class _NewsHomePageState extends State<NewsHomePage> {
   StreamSubscription<FeedMessage>? _messages;
+  late final FeedController _feed;
+  late final ReadAloudController _readAloud;
+  Locale? _locale;
+  bool? _visible;
 
   /// Puxar para atualizar em andamento: o indicador do gesto já basta, sem
   /// a barra de progresso (specs/022 US1).
@@ -48,13 +61,63 @@ class _NewsHomePageState extends State<NewsHomePage> {
   @override
   void initState() {
     super.initState();
-    _messages = context.read<FeedController>().messages.listen(_showMessage);
+    // A voz antes de ouvir o feed: o listener do feed para a leitura.
+    _readAloud = GetIt.instance<ReadAloudController>();
+    _feed = context.read<FeedController>()..addListener(_stopWithoutHighlights);
+    _messages = _feed.messages.listen(_showMessage);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // O idioma da voz é o do app: prepara de novo se ele mudar.
+    final Locale locale = context.locale;
+    if (locale != _locale) {
+      _locale = locale;
+      unawaited(_readAloud.prepare(locale));
+    }
+    // Aba escondida ou outra tela por cima: o shell e o navegador desligam
+    // o `TickerMode` da página, e a leitura para.
+    final bool visible = TickerMode.valuesOf(context).enabled;
+    if (visible == _visible) return;
+    _visible = visible;
+    if (!visible) {
+      // Fora do build: parar avisa os ouvintes na hora.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _stopReading());
+    }
   }
 
   @override
   void dispose() {
+    _feed.removeListener(_stopWithoutHighlights);
     unawaited(_messages?.cancel());
+    _readAloud.dispose();
     super.dispose();
+  }
+
+  /// Só a leitura desta página: o motor é um só e a próxima tela pode já
+  /// estar lendo.
+  void _stopReading() {
+    if (mounted && _readAloud.isSpeaking) unawaited(_readAloud.stop());
+  }
+
+  /// O botão sumiu (filtro sem destaques, erro): a leitura para com ele.
+  void _stopWithoutHighlights() {
+    if (_feed.status != FeedStatus.loaded || _feed.highlights.isEmpty) {
+      _stopReading();
+    }
+  }
+
+  void _toggleHighlights(List<NewsItemEntity> highlights) {
+    if (_readAloud.isSpeaking) {
+      unawaited(_readAloud.stop());
+    } else {
+      unawaited(
+        _readAloud.speakParts(
+          highlights.spokenParts(AppStrings.newsSectionHighlights.tr()),
+        ),
+      );
+    }
   }
 
   /// Falha ao atualizar com a lista na tela: a lista fica e um aviso
@@ -276,7 +339,19 @@ class _NewsHomePageState extends State<NewsHomePage> {
       ],
       if (controller.highlights.isNotEmpty) ...[
         SliverToBoxAdapter(
-          child: FeedSectionTitle(AppStrings.newsSectionHighlights.tr()),
+          child: ListenableBuilder(
+            listenable: _readAloud,
+            builder: (context, _) => FeedSectionTitle(
+              AppStrings.newsSectionHighlights.tr(),
+              trailing: _readAloud.isContentAvailable
+                  ? ListenButton(
+                      key: NewsHomePage.highlightsListenKey,
+                      isSpeaking: _readAloud.isSpeaking,
+                      onPressed: () => _toggleHighlights(controller.highlights),
+                    )
+                  : null,
+            ),
+          ),
         ),
         large(_FeedSection.highlights, controller.highlights),
       ],

@@ -9,7 +9,7 @@ const int _maxInternationalDigits = 15;
 /// "+5511912345678" (ou só dígitos) → "(11) 91234-5678"; incompleto fica
 /// parcial: "(11) 9123".
 ///
-/// Com [shortCodes] (contatos de confiança): até 3 dígitos fica como está
+/// Com [shortCodes] (contatos): até 4 dígitos fica como está (190, 1331)
 /// (190, 192), 0800 vai em blocos ("0800 728 4567") e número com + de outro
 /// país fica com o + e sem a máscara do Brasil ("+14155550123", até 15
 /// dígitos), como a validação de contato aceita; "+55" segue a máscara.
@@ -29,7 +29,7 @@ String formatPhone(String phone, {bool shortCodes = false}) {
   }
   if (digits.isEmpty) return '';
   if (shortCodes) {
-    if (digits.length <= 3) return digits;
+    if (digits.length <= 4) return digits;
     if (digits.startsWith('0800')) return _tollFree(digits);
   }
   if (digits.length <= 2) return '($digits';

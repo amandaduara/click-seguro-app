@@ -5,6 +5,7 @@ import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entit
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/answer_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,22 +29,47 @@ void main() {
     ),
   ).toEntity();
 
-  group('texto falado do feedback (US5)', () {
-    testWidgets('resultado, correta, explicação e pontuação, nessa ordem', (
-      tester,
-    ) async {
+  List<(String, bool)> parts(List<SpeechPart> parts) => [
+    for (final part in parts) (part.text, part.content),
+  ];
+
+  group('trechos falados do feedback (US5, specs/025)', () {
+    testWidgets('resultado, correta, explicação e pontuação, nessa ordem; '
+        'o que vem do banco é conteúdo', (tester) async {
       await pumpLocalized(tester, child: const SizedBox());
 
       expect(
-        lesson.spokenFeedback(
-          result(isCorrect: false),
-          score: const ModuleScoreEntity(score: 1, total: 3),
+        parts(
+          lesson.feedbackParts(
+            result(isCorrect: false),
+            score: const ModuleScoreEntity(score: 1, total: 3),
+          ),
         ),
-        'Não foi dessa vez.\n'
-        'Resposta correta: Ignorar e denunciar.\n'
-        'Promessas de dinheiro em dobro são golpe.\n'
-        'Você está com 1 de 3 acertos.',
+        [
+          ('Não foi dessa vez.', false),
+          ('Resposta correta.', false),
+          ('Ignorar e denunciar.', true),
+          ('Promessas de dinheiro em dobro são golpe.', true),
+          ('Você está com 1 de 3 acertos.', false),
+        ],
       );
+    });
+
+    testWidgets('com o app em inglês, só os textos do app mudam', (
+      tester,
+    ) async {
+      await pumpLocalized(
+        tester,
+        child: const SizedBox(),
+        locale: const Locale('en', 'US'),
+      );
+
+      expect(parts(lesson.feedbackParts(result())), [
+        ('You got it right!', false),
+        ('Correct answer.', false),
+        ('Ignorar e denunciar.', true),
+        ('Promessas de dinheiro em dobro são golpe.', true),
+      ]);
     });
 
     testWidgets('sem explicação, sem pontuação e sem a correta', (
@@ -52,8 +78,12 @@ void main() {
       await pumpLocalized(tester, child: const SizedBox());
 
       expect(
-        lesson.spokenFeedback(result(correctOptionId: 'zz', explanation: null)),
-        'Você acertou!',
+        parts(
+          lesson.feedbackParts(
+            result(correctOptionId: 'zz', explanation: null),
+          ),
+        ),
+        [('Você acertou!', false)],
       );
     });
   });

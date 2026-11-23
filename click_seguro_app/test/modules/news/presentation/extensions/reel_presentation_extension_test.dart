@@ -53,4 +53,9 @@ void main() {
       'Notícia r1\nFolha de Teste',
     );
   });
+
+  test('spokenText: título e resumo; sem resumo, só o título', () {
+    expect(reel('r1').spokenText, 'Notícia r1.\n\nTexto do reel');
+    expect(reel('r1', content: '  ').spokenText, 'Notícia r1');
+  });
 }

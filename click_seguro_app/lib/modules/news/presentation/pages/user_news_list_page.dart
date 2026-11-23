@@ -8,6 +8,7 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
@@ -37,16 +38,14 @@ class UserNewsListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(kind.title.tr())),
-      body: SafeArea(
-        child: ValueListenableBuilder<UserSessionStatus>(
-          valueListenable: GetIt.instance<UserSessionService>().sessionStatus,
-          builder: (context, status, _) =>
-              status == UserSessionStatus.authenticated
-              ? _UserNewsList(kind: kind)
-              : _GuestInvite(kind: kind),
-        ),
+    return SafePageScaffold(
+      header: SafePageHeader(title: kind.title.tr()),
+      body: ValueListenableBuilder<UserSessionStatus>(
+        valueListenable: GetIt.instance<UserSessionService>().sessionStatus,
+        builder: (context, status, _) =>
+            status == UserSessionStatus.authenticated
+            ? _UserNewsList(kind: kind)
+            : _GuestInvite(kind: kind),
       ),
     );
   }

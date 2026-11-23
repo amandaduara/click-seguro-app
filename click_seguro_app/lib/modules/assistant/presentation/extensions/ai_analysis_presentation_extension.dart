@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/modules/assistant/domain/entities/ai_analysis_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -32,16 +33,21 @@ extension AiAnalysisPresentation on AiAnalysisEntity {
     _ => AppStrings.assistantUnknown,
   };
 
-  /// O que a leitura automática fala: o selo, a explicação e os cuidados,
+  /// O que a leitura fala: o selo, a explicação e os cuidados,
   /// na ordem do cartão; numa falha, só a mensagem (validação da usuária,
   /// specs/024).
-  String get spokenText {
-    if (status != AiAnalysisStatus.success) return statusMessageKey.tr();
+  List<SpeechPart> get spokenParts {
+    if (status != AiAnalysisStatus.success) {
+      return [SpeechPart(statusMessageKey.tr())];
+    }
     final String? text = explanation?.trim();
+    // O selo é texto do app; a explicação e os cuidados vêm da IA, em
+    // português, e saem na voz em português (specs/025).
     return [
-      '${riskLevel.labelKey.tr()}.',
-      if (text != null && text.isNotEmpty) text,
-      ...tips,
-    ].join('\n');
+      SpeechPart('${riskLevel.labelKey.tr()}.'),
+      if (text != null && text.isNotEmpty) SpeechPart(text, content: true),
+      for (final String tip in tips)
+        if (tip.trim().isNotEmpty) SpeechPart(tip.trim(), content: true),
+    ];
   }
 }

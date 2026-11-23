@@ -48,15 +48,23 @@ BoxDecoration assistantBubbleDecoration(AppPalette colors) => BoxDecoration(
 
 /// Balão da conversa (redesign 2.0): o da pessoa em tinta com texto branco, à
 /// direita; o do assistente em creme, à esquerda, com o avatar de brilho.
+///
+/// [footer] fica logo abaixo do balão do assistente, alinhado ao início dele
+/// (o "Ouvir" da mensagem, specs/025); vem depois do texto na ordem de
+/// leitura do leitor de tela. Ignorado no balão da pessoa.
 class AssistantChatBubble extends StatelessWidget {
   const AssistantChatBubble({
     super.key,
     required this.text,
     required this.fromUser,
+    this.footer,
   });
 
   final String text;
   final bool fromUser;
+  final Widget? footer;
+
+  static const double _avatarSize = 40;
 
   static const EdgeInsets _padding = EdgeInsets.symmetric(
     horizontal: AppSpacing.s4,
@@ -96,10 +104,10 @@ class AssistantChatBubble extends StatelessWidget {
         ),
       );
     }
-    return Row(
+    final Widget bubble = Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        const AssistantAvatar(),
+        const AssistantAvatar(size: _avatarSize),
         const SizedBox(width: AppSpacing.s3),
         Flexible(
           child: DecoratedBox(
@@ -115,6 +123,21 @@ class AssistantChatBubble extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ],
+    );
+    final Widget? below = footer;
+    if (below == null) return bubble;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        bubble,
+        const SizedBox(height: AppSpacing.s2),
+        Padding(
+          padding: const EdgeInsetsDirectional.only(
+            start: _avatarSize + AppSpacing.s3,
+          ),
+          child: below,
         ),
       ],
     );

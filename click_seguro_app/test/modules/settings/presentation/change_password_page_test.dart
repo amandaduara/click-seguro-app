@@ -1,10 +1,10 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/settings/domain/failures/settings_failures.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/change_password_page.dart';
-import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -365,7 +365,7 @@ void main() {
       await open(tester);
       await tester.enterText(field('Senha atual'), 'Senha@123');
       await tester.pump();
-      await tester.tap(find.byKey(SettingsBackButton.buttonKey));
+      await tester.tap(find.byKey(SafePageHeader.defaultBackKey));
       await tester.pumpAndSettle();
     }
 

@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/profile/domain/achievements_calculator.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/achievement_entity.dart';
@@ -81,10 +82,17 @@ void main() {
     expect(repository.totalCalls, 0);
   });
 
-  testWidgets('voltar fecha a tela', (tester) async {
+  testWidgets('título no cabeçalho; voltar fecha a tela', (tester) async {
     await openWith(tester, extra: achievements);
 
-    await tester.tap(find.byType(BackButton));
+    expect(
+      find.descendant(
+        of: find.byType(SafePageHeader),
+        matching: find.text('Conquistas'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(SafePageHeader.defaultBackKey));
     await tester.pumpAndSettle();
 
     expect(find.text('abrir'), findsOneWidget);

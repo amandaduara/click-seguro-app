@@ -5,10 +5,13 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/utils/app_haptics.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/core/widgets/safe_state_switcher.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
@@ -31,8 +34,16 @@ import 'package:provider/provider.dart';
 /// Aba central: Reels em tela cheia, um por vez (RF-013, RF-019,
 /// specs/008-reels-curtir-salvar). Sem barra superior; ao lado, só curtir,
 /// salvar e compartilhar, e trocar de Reel é arrastando.
+///
+/// "Ouvir" no começo do texto de cada Reel, acima do título, lê o título e o
+/// resumo do Reel na tela. Trocar de Reel para a leitura e, com a leitura
+/// automática ligada, lê o novo. Sair da aba ou abrir outra tela também
+/// para.
 class ReelsPage extends StatefulWidget {
   const ReelsPage({super.key, this.startNewsId, this.preview});
+
+  /// "Ouvir" do Reel [newsId].
+  static Key listenKeyFor(String newsId) => ValueKey('reel-listen-$newsId');
 
   /// `/reels?start=` com o item tocado no carrossel como `extra`; um
   /// `extra` de outra notícia é ignorado.
@@ -64,12 +75,27 @@ class _ReelsPageState extends State<ReelsPage> {
   PageController? _pageController;
   bool _isOpeningDetail = false;
   bool _isSharing = false;
+  late final ReadAloudController _readAloud;
+  Locale? _locale;
+
+  /// A aba está na tela, sem outra tela por cima ([TickerMode]).
+  bool _visible = false;
+
+  /// Reel cuja leitura está em andamento (ou foi a última pedida).
+  String? _speakingReelId;
+
+  /// Último Reel lido automaticamente: cada um só uma vez, e "Parar" não
+  /// faz ele recomeçar.
+  String? _autoReadReelId;
 
   @override
   void initState() {
     super.initState();
+    _readAloud = GetIt.instance<ReadAloudController>()
+      ..addListener(_onReadingChanged);
     _controller = context.read<ReelsController>()
-      ..addListener(_onControllerChanged);
+      ..addListener(_onControllerChanged)
+      ..addListener(_onReadingChanged);
     _messages = _controller.messages.listen(_showMessage);
     // Fora do build: a carga avisa os ouvintes na hora.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,20 +104,95 @@ class _ReelsPageState extends State<ReelsPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // O idioma da voz é o do app: prepara de novo se ele mudar.
+    final Locale locale = context.locale;
+    if (locale != _locale) {
+      _locale = locale;
+      unawaited(_readAloud.prepare(locale));
+    }
+    // Aba escondida ou outra tela por cima: o shell e o navegador desligam
+    // o `TickerMode` da página.
+    final bool visible = TickerMode.valuesOf(context).enabled;
+    if (visible == _visible) return;
+    _visible = visible;
+    // Fora do build: parar e ler avisam os ouvintes na hora.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onReadingChanged());
+  }
+
+  @override
   void didUpdateWidget(ReelsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     final String? start = widget.startNewsId;
     if (start != null && start != oldWidget.startNewsId) {
-      unawaited(_controller.open(start));
+      // Fora do build, como no initState: o didUpdateWidget roda durante a
+      // construção e a abertura avisa os ouvintes na hora.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_controller.open(start));
+      });
     }
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_onControllerChanged);
+    _controller
+      ..removeListener(_onControllerChanged)
+      ..removeListener(_onReadingChanged);
+    _readAloud
+      ..removeListener(_onReadingChanged)
+      ..dispose();
     unawaited(_messages?.cancel());
     _pageController?.dispose();
     super.dispose();
+  }
+
+  /// Reel na tela, com a lista carregada.
+  ReelEntity? get _currentReel => _showsList(_controller)
+      ? _controller.reels[_controller.currentIndex]
+      : null;
+
+  /// Outro Reel na tela (arrastando ou pelo carrossel), aba escondida ou
+  /// lista fora da tela: a leitura do Reel anterior para. Depois, a leitura
+  /// automática do Reel atual, se ligada.
+  void _onReadingChanged() {
+    if (!mounted) return;
+    final ReelEntity? current = _currentReel;
+    if (_readAloud.isSpeaking &&
+        (!_visible || current == null || current.id != _speakingReelId)) {
+      unawaited(_readAloud.stop());
+    }
+    _maybeAutoRead();
+  }
+
+  /// Leitura automática (RF-040): uma vez por Reel que aparece, com a voz
+  /// pronta e a aba na tela.
+  void _maybeAutoRead() {
+    final ReelEntity? current = _currentReel;
+    if (!_visible ||
+        current == null ||
+        current.id == _autoReadReelId ||
+        !_readAloud.isContentAvailable ||
+        !GetIt.instance<AccessibilityPreferencesNotifier>()
+            .value
+            .autoReadAloud) {
+      return;
+    }
+    _autoReadReelId = current.id;
+    _speak(current);
+  }
+
+  void _speak(ReelEntity reel) {
+    _speakingReelId = reel.id;
+    unawaited(_readAloud.speak(reel.spokenText, content: true));
+  }
+
+  void _toggleListen(ReelEntity reel) {
+    if (_readAloud.isSpeaking && _speakingReelId == reel.id) {
+      unawaited(_readAloud.stop());
+    } else {
+      _speak(reel);
+    }
   }
 
   bool get _isAuthenticated =>
@@ -279,6 +380,20 @@ class _ReelsPageState extends State<ReelsPage> {
           onReadFull: () => unawaited(_openDetail(reel)),
           footer: index == reels.length - 1 ? _footer(controller) : null,
           onDoubleTap: () => unawaited(_like(reel, onlyLike: true)),
+          listen: ListenableBuilder(
+            listenable: _readAloud,
+            builder: (context, _) => _readAloud.isContentAvailable
+                ? Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+                    child: ListenButton(
+                      key: ReelsPage.listenKeyFor(reel.id),
+                      isSpeaking:
+                          _readAloud.isSpeaking && _speakingReelId == reel.id,
+                      onPressed: () => _toggleListen(reel),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
           actions: ReelActions(
             heroTags: NewsActionsPreview.tagsFor(reel.id),
             isLiked: reel.isLiked,

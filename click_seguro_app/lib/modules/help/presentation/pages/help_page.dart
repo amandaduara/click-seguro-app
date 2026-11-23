@@ -354,6 +354,13 @@ class _ContactCard extends StatelessWidget {
                     formatPhone(contact.phone, shortCodes: true),
                     style: AppTypography.body.copyWith(color: colors.textBody),
                   ),
+                  if (contact.description case final String description)
+                    Text(
+                      description,
+                      style: AppTypography.caption.copyWith(
+                        color: colors.textMutedForeground,
+                      ),
+                    ),
                   if (contact.relationship case final String relationship)
                     Text(
                       relationship,

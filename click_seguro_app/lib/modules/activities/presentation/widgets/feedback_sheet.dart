@@ -163,6 +163,12 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                   ),
                 ],
               ),
+              // "Ouvir" logo abaixo do título, antes da resposta certa e da
+              // explicação que ele lê (regra do app, specs/025).
+              if (widget.listen case final Widget listen) ...[
+                const SizedBox(height: AppSpacing.s3),
+                listen,
+              ],
               if (correct != null) ...[
                 const SizedBox(height: AppSpacing.s4),
                 Text(
@@ -211,10 +217,6 @@ class _FeedbackSheetState extends State<FeedbackSheet> {
                     ],
                   ),
                 ),
-              ],
-              if (widget.listen case final Widget listen) ...[
-                const SizedBox(height: AppSpacing.s4),
-                listen,
               ],
               const SizedBox(height: AppSpacing.s5),
               SafeButton(

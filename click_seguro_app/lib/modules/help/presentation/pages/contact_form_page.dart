@@ -7,6 +7,7 @@ import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/help/domain/validation/contact_validation.dart';
@@ -84,56 +85,51 @@ class _ContactFormContentState extends State<_ContactFormContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          (widget.contactId == null
-                  ? AppStrings.helpAddContact
-                  : AppStrings.helpEditContact)
-              .tr(),
-        ),
+    return SafePageScaffold(
+      header: SafePageHeader(
+        title:
+            (widget.contactId == null
+                    ? AppStrings.helpAddContact
+                    : AppStrings.helpEditContact)
+                .tr(),
       ),
-      body: SafeArea(
-        child: Consumer<ContactFormController>(
-          builder: (context, controller, _) {
-            final failure = controller.loadFailure;
-            if (failure != null) {
-              return SafeErrorState(
-                message: failure.message.tr(),
-                onRetry: _loadContact,
-              );
-            }
-            if (controller.notFound) {
-              return SafeEmptyState(
-                message: AppStrings.helpContactMissing.tr(),
-              );
-            }
-            if (controller.isLoading) return const SafeLoadingState();
-            // O botão principal fica no fim da tela; o formulário rola acima
-            // dele (validação da usuária, specs/024).
-            return Column(
-              children: [
-                Expanded(child: _form(context, controller)),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s5,
-                    AppSpacing.s3,
-                    AppSpacing.s5,
-                    AppSpacing.s5,
-                  ),
-                  child: SafeButton(
-                    label: AppStrings.helpSaveContact.tr(),
-                    loading: controller.isSaving,
-                    // Só com nome e telefone válidos, como na edição de
-                    // perfil.
-                    disabled: !controller.canSave,
-                    onPressed: _save,
-                  ),
-                ),
-              ],
+      body: Consumer<ContactFormController>(
+        builder: (context, controller, _) {
+          final failure = controller.loadFailure;
+          if (failure != null) {
+            return SafeErrorState(
+              message: failure.message.tr(),
+              onRetry: _loadContact,
             );
-          },
-        ),
+          }
+          if (controller.notFound) {
+            return SafeEmptyState(message: AppStrings.helpContactMissing.tr());
+          }
+          if (controller.isLoading) return const SafeLoadingState();
+          // O botão principal fica no fim da tela; o formulário rola acima
+          // dele (validação da usuária, specs/024).
+          return Column(
+            children: [
+              Expanded(child: _form(context, controller)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s5,
+                  AppSpacing.s3,
+                  AppSpacing.s5,
+                  AppSpacing.s5,
+                ),
+                child: SafeButton(
+                  label: AppStrings.helpSaveContact.tr(),
+                  loading: controller.isSaving,
+                  // Só com nome e telefone válidos, como na edição de
+                  // perfil.
+                  disabled: !controller.canSave,
+                  onPressed: _save,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

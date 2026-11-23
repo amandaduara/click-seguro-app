@@ -7,6 +7,7 @@ import 'package:click_seguro_app/modules/common/services/user_session_service.da
 import 'package:click_seguro_app/modules/help/help.dart';
 import 'package:click_seguro_app/modules/settings/settings.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -14,6 +15,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../fakes/fake_text_to_speech_service.dart';
 import '../../../fakes/fake_secure_storage_service.dart';
 import '../../authentication/fakes/controller_factory.dart';
 import '../../authentication/fakes/fake_auth_repository.dart';
@@ -35,6 +37,10 @@ void main() {
     GetIt.instance.registerSingleton<UserSessionService>(session);
     registerHelpDependencies(GetIt.instance);
     registerSettingsDependencies(GetIt.instance);
+    // A Início lê os destaques em voz alta (specs/025).
+    GetIt.instance.registerFactory<ReadAloudController>(
+      () => ReadAloudController(FakeTextToSpeechService()),
+    );
     router = buildAppRouter(session);
   });
 

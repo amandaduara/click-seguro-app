@@ -51,7 +51,11 @@ class ActivitiesRepositoryImpl implements ActivitiesRepository {
     if (authenticated) await syncGuestAnswers();
     try {
       final dashboard = (await _remote.getModules()).toEntity();
-      return Right(authenticated ? dashboard : _withSessionProgress(dashboard));
+      return Right(
+        authenticated
+            ? await _withServerScores(dashboard)
+            : _withSessionProgress(dashboard),
+      );
     } on ApiException catch (e) {
       return Left(e.toFailure());
     }
@@ -153,14 +157,51 @@ class ActivitiesRepositoryImpl implements ActivitiesRepository {
     }
   }
 
+  /// A lista não traz a pontuação (contrato da API): para cada módulo
+  /// concluído sem ela, o `progress` do detalhe dá os acertos, que decidem
+  /// entre "Concluído" e "Refazer" (specs/025). Detalhe que falha deixa o
+  /// módulo sem pontuação (fica "Concluído").
+  Future<ActivitiesDashboardEntity> _withServerScores(
+    ActivitiesDashboardEntity dashboard,
+  ) async {
+    Future<ModuleSummaryEntity> withScore(ModuleSummaryEntity module) async {
+      if (!module.isFinished || module.score != null) return module;
+      try {
+        final detail = await _remote.getModuleDetail(module.id);
+        return module.withScore(detail.score);
+      } on ApiException {
+        return module;
+      }
+    }
+
+    final List<ModuleSummaryEntity> modules = await Future.wait(
+      dashboard.modules.map(withScore),
+    );
+    return ActivitiesDashboardEntity(
+      modules: modules,
+      totalCompleted: dashboard.totalCompleted,
+      totalAvailable: dashboard.totalAvailable,
+    );
+  }
+
   /// Sem conta (visitante ou sessão expirada), o serviço manda o progresso
-  /// zerado: vale o registro da sessão (RN-006).
+  /// zerado: vale o registro da sessão (RN-006), com os acertos de cada
+  /// resposta para o "Refazer" (specs/025).
   ActivitiesDashboardEntity _withSessionProgress(
     ActivitiesDashboardEntity dashboard,
   ) {
     final List<ModuleSummaryEntity> modules = [
       for (final ModuleSummaryEntity module in dashboard.modules)
-        module.withCompletedCount(_store.answeredCount(module.id)),
+        module
+            .withCompletedCount(_store.answeredCount(module.id))
+            .withScore(
+              _store.answeredCount(module.id) > 0 && module.lessonsCount > 0
+                  ? ModuleScoreEntity(
+                      score: _store.correctCount(module.id),
+                      total: module.lessonsCount,
+                    )
+                  : null,
+            ),
     ];
     return ActivitiesDashboardEntity(
       modules: modules,

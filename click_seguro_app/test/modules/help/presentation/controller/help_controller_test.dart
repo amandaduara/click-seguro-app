@@ -72,6 +72,42 @@ void main() {
     controller.dispose();
   });
 
+  test('oficiais chegam na ordem do repositório, com descrição', () async {
+    final repository = FakeHelpRepository()
+      ..official = const [
+        ContactEntity(
+          id: 'pm',
+          name: 'Polícia Militar',
+          phone: '190',
+          type: ContactType.official,
+          description: 'Emergência: ligue 190 se estiver em perigo',
+        ),
+        ContactEntity(
+          id: 'anatel',
+          name: 'Anatel',
+          phone: '1331',
+          type: ContactType.official,
+          description: 'Reclamações de telefonia: 1331',
+        ),
+      ];
+    final controller = HelpController(
+      getOfficialContacts: GetOfficialContactsUseCase(repository),
+      getPersonalContacts: GetPersonalContactsUseCase(repository),
+      deletePersonalContact: DeletePersonalContactUseCase(repository),
+      launcher: FakeExternalLauncherService(),
+    );
+
+    await controller.load();
+
+    expect(controller.officialContacts.map((c) => c.id), ['pm', 'anatel']);
+    expect(
+      controller.officialContacts.first.description,
+      'Emergência: ligue 190 se estiver em perigo',
+    );
+    expect(controller.officialFailure, isNull);
+    controller.dispose();
+  });
+
   test('se chamada não abre discador, informa indisponibilidade', () async {
     final controller = HelpController(
       getOfficialContacts: GetOfficialContactsUseCase(FakeHelpRepository()),

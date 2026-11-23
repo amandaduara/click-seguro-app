@@ -1,4 +1,3 @@
-import 'package:click_seguro_app/core/constants/app_identity.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
@@ -14,9 +13,9 @@ extension ModuleCompletionPresentation on ModuleCompletion {
     final ModuleScoreEntity? value = score;
     if (value == null) return ModuleCompletionTier.good;
     if (value.score == value.total) return ModuleCompletionTier.perfect;
-    return value.score * 2 >= value.total
-        ? ModuleCompletionTier.good
-        : ModuleCompletionTier.retry;
+    return value.isMostlyWrong
+        ? ModuleCompletionTier.retry
+        : ModuleCompletionTier.good;
   }
 
   String get messageKey => switch (tier) {
@@ -41,16 +40,4 @@ extension ModuleCompletionPresentation on ModuleCompletion {
     if (scoreText case final String text) '$text.',
     messageKey.tr(),
   ].join('\n');
-
-  /// A mensagem pronta para compartilhar (FR-006).
-  String get shareText {
-    final ModuleScoreEntity? value = score;
-    return value == null
-        ? AppStrings.activitiesCompletionShareTextNoScore.tr(
-            args: [title, AppIdentity.name],
-          )
-        : AppStrings.activitiesCompletionShareText.tr(
-            args: [title, AppIdentity.name, '${value.score}', '${value.total}'],
-          );
-  }
 }

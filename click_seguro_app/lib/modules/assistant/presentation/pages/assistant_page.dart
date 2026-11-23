@@ -7,6 +7,7 @@ import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_chip.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
@@ -109,6 +110,49 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
   /// O resultado já lido (cada análise nova é lida uma vez).
   AiAnalysisEntity? _readAnalysis;
 
+  /// O que está sendo lido: a mensagem ([AiChatTurn]), o resultado
+  /// ([AiAnalysisEntity]) ou as boas-vindas ([_greetingId]). Só ele mostra
+  /// "Parar"; ao terminar ou parar, volta a nulo (specs/025).
+  Object? _speakingId;
+  static const Object _greetingId = 'assistant-greeting';
+
+  /// As boas-vindas já foram lidas (ou não cabia ler): uma vez por abertura.
+  bool _greetingHandled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _readAloud.addListener(_onReadAloudChanged);
+  }
+
+  /// Voz verificada, leitura começou ou acabou: os botões se atualizam.
+  void _onReadAloudChanged() {
+    if (!mounted) return;
+    setState(() {
+      if (!_readAloud.isSpeaking) _speakingId = null;
+    });
+    _autoReadGreeting();
+  }
+
+  /// Com a leitura automática ligada, as boas-vindas são lidas ao abrir a
+  /// conversa vazia, como o conteúdo das outras telas (validação da
+  /// usuária, specs/025). Só depois da voz verificada, e uma vez.
+  void _autoReadGreeting() {
+    if (_greetingHandled || !_readAloud.isAvailable) return;
+    _greetingHandled = true;
+    final AssistantController? controller = _controller;
+    if (controller == null ||
+        controller.activeTab != AssistantTab.chat ||
+        controller.chatMessages.isNotEmpty ||
+        _readAloud.isSpeaking ||
+        !GetIt.instance<AccessibilityPreferencesNotifier>()
+            .value
+            .autoReadAloud) {
+      return;
+    }
+    _read(_greetingId, [SpeechPart(_greeting)]);
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -134,7 +178,9 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
     _controller
       ?..removeListener(_scrollChatToEnd)
       ..removeListener(_autoRead);
-    _readAloud.dispose();
+    _readAloud
+      ..removeListener(_onReadAloudChanged)
+      ..dispose();
     _chatInput.dispose();
     _analysisInput.dispose();
     _chatScroll.dispose();
@@ -155,16 +201,39 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
         analysis != null && !identical(analysis, _readAnalysis);
     _readAnalysis = analysis;
     if (!newReply && !newAnalysis) return;
-    if (!_readAloud.isAvailable ||
-        !GetIt.instance<AccessibilityPreferencesNotifier>()
-            .value
-            .autoReadAloud) {
+    if (!GetIt.instance<AccessibilityPreferencesNotifier>()
+        .value
+        .autoReadAloud) {
       return;
     }
-    unawaited(
-      _readAloud.speak(
-        newAnalysis ? analysis.spokenText : messages.last.content,
-      ),
+    if (newAnalysis) {
+      _read(analysis, analysis.spokenParts);
+    } else {
+      _read(messages.last, [SpeechPart(messages.last.content, content: true)]);
+    }
+  }
+
+  /// Lê [parts] e marca [id] como o que está tocando. As respostas da IA
+  /// vêm em português (assistente de segurança digital brasileira) e saem
+  /// na voz em português; os textos do app, no idioma do app (specs/025).
+  void _read(Object id, List<SpeechPart> parts) {
+    if (!_readAloud.canSpeak(parts)) return;
+    setState(() => _speakingId = id);
+    unawaited(_readAloud.speakParts(parts));
+  }
+
+  /// "Ouvir" embaixo de uma mensagem, das boas-vindas ou do resultado: lê
+  /// [parts]; se [id] já está tocando, para. Sem voz para nenhuma das
+  /// partes (ex.: app em inglês só com a voz em português, nas boas-vindas),
+  /// não aparece.
+  Widget? _listenButton(Object id, String key, List<SpeechPart> parts) {
+    if (!_readAloud.canSpeak(parts)) return null;
+    final bool speaking = _readAloud.isSpeaking && identical(_speakingId, id);
+    return ListenButton(
+      key: ValueKey(key),
+      isSpeaking: speaking,
+      onPressed: () =>
+          speaking ? unawaited(_readAloud.stop()) : _read(id, parts),
     );
   }
 
@@ -224,10 +293,11 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
         children: [
           // Boas-vindas como o primeiro balão do assistente (redesign 2.0).
           AssistantChatBubble(
-            text:
-                '${AppStrings.assistantGreeting.tr()} '
-                '${AppStrings.assistantChatIntro.tr()}',
+            text: _greeting,
             fromUser: false,
+            footer: _listenButton(_greetingId, 'assistant-listen-greeting', [
+              SpeechPart(_greeting),
+            ]),
           ),
           // Conversa vazia: um aviso curto e duas sugestões. Depois da
           // primeira mensagem, só os balões.
@@ -260,6 +330,11 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
                 child: AssistantChatBubble(
                   text: message.content,
                   fromUser: message.role == AiChatRole.user,
+                  footer: message.role == AiChatRole.user
+                      ? null
+                      : _listenButton(message, 'assistant-listen-$index', [
+                          SpeechPart(message.content, content: true),
+                        ]),
                 ),
               ),
             ),
@@ -292,29 +367,25 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
         onSubmit: _submitChat,
         onCamera: _openCamera,
       );
-      final compact =
-          constraints.maxHeight < 480 ||
-          MediaQuery.textScalerOf(context).scale(1) > 1.5;
-      if (compact) {
-        final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-        return Column(
-          children: [
-            Expanded(flex: keyboardOpen ? 1 : 2, child: messages),
-            Expanded(
-              flex: keyboardOpen ? 2 : 1,
-              child: SingleChildScrollView(child: composer),
-            ),
-          ],
-        );
-      }
+      // A mesma estrutura em qualquer altura: trocar de layout quando o
+      // teclado abria recriava o campo, que perdia o foco e fechava o
+      // teclado. Com pouca altura ou letra grande, o rodapé fica limitado à
+      // metade da área e rola.
       return Column(
         children: [
           Expanded(child: messages),
-          composer,
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: constraints.maxHeight / 2),
+            child: SingleChildScrollView(child: composer),
+          ),
         ],
       );
     },
   );
+
+  String get _greeting =>
+      '${AppStrings.assistantGreeting.tr()} '
+      '${AppStrings.assistantChatIntro.tr()}';
 
   void _fillSuggestion(String text) {
     _chatInput.value = TextEditingValue(
@@ -382,6 +453,14 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
     onSourceChanged: controller.setAnalysisSource,
     onAnalyzeText: _runTextAnalysis,
     onRetry: controller.retryAnalysis,
+    listenButton: switch (controller.analysis) {
+      final AiAnalysisEntity analysis => _listenButton(
+        analysis,
+        'assistant-listen-analysis',
+        analysis.spokenParts,
+      ),
+      null => null,
+    },
   );
 
   Future<void> _runTextAnalysis() =>
@@ -707,6 +786,7 @@ class _VerifyArea extends StatelessWidget {
     required this.onSourceChanged,
     required this.onAnalyzeText,
     required this.onRetry,
+    this.listenButton,
   });
   final bool imageMode;
   final String? source;
@@ -716,6 +796,9 @@ class _VerifyArea extends StatelessWidget {
   final ValueChanged<String?> onSourceChanged;
   final VoidCallback onAnalyzeText;
   final VoidCallback onRetry;
+
+  /// "Ouvir" do resultado; nulo sem voz para o que ele lê.
+  final Widget? listenButton;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -807,7 +890,10 @@ class _VerifyArea extends StatelessWidget {
       ],
       if (controller.analysis != null) ...[
         const SizedBox(height: AppSpacing.s5),
-        AssistantAnalysisCard(analysis: controller.analysis!),
+        AssistantAnalysisCard(
+          analysis: controller.analysis!,
+          footer: listenButton,
+        ),
       ],
       const SizedBox(height: AppSpacing.s5),
       const _PrivacyNote(),

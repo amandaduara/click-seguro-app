@@ -12,7 +12,7 @@ void main() {
 
     expect(
       [for (final status in ModuleStatus.values) status.label],
-      ['Não iniciado', 'Em andamento', 'Concluído', 'Indisponível'],
+      ['Não iniciado', 'Em andamento', 'Concluído', 'Refazer', 'Indisponível'],
     );
   });
 
@@ -25,7 +25,7 @@ void main() {
 
     expect(
       [for (final status in ModuleStatus.values) status.label],
-      ['Not started', 'In progress', 'Completed', 'Unavailable'],
+      ['Not started', 'In progress', 'Completed', 'Redo', 'Unavailable'],
     );
   });
 
@@ -36,6 +36,7 @@ void main() {
         LucideIcons.circle,
         LucideIcons.circleDashed,
         LucideIcons.circleCheck,
+        LucideIcons.rotateCcw,
         LucideIcons.lock,
       ],
     );

@@ -5,6 +5,7 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
 import 'package:click_seguro_app/core/widgets/editable_avatar.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
@@ -38,13 +39,11 @@ class ProfileEditPage extends StatelessWidget {
               create: (_) => GetIt.instance<EditProfileController>()..load(),
               child: const _EditView(),
             )
-          : Scaffold(
-              appBar: AppBar(title: Text(AppStrings.profileEditTitle.tr())),
-              body: const SafeArea(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(AppSpacing.s5),
-                  child: GuestInvite(),
-                ),
+          : SafePageScaffold(
+              header: SafePageHeader(title: AppStrings.profileEditTitle.tr()),
+              body: const SingleChildScrollView(
+                padding: EdgeInsets.all(AppSpacing.s5),
+                child: GuestInvite(),
               ),
             ),
     );
@@ -100,55 +99,28 @@ class _EditView extends StatelessWidget {
           _confirmDiscard(context);
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          // Durante o envio, o voltar da barra fica desativado; o toque nele
-          // só mostra o aviso.
-          leading: uploading
-              ? _BlockedBackButton(onTap: () => _warnUploading(context))
-              : null,
-          title: Text(AppStrings.profileEditTitle.tr()),
+      child: SafePageScaffold(
+        // Durante o envio, o voltar fica desativado; o toque nele (ou o do
+        // leitor de tela, que ouve "desativado" e o aviso como dica) só
+        // mostra o aviso.
+        header: SafePageHeader(
+          title: AppStrings.profileEditTitle.tr(),
+          backEnabled: !uploading,
+          backHint: uploading ? AppStrings.profilePhotoWaitUpload.tr() : null,
+          onBack: uploading ? () => _warnUploading(context) : null,
         ),
-        body: SafeArea(
-          child: switch (controller.status) {
-            EditProfileStatus.loading => const SafeLoadingState(),
-            EditProfileStatus.error => SafeErrorState(
-              message: (controller.failure?.message ?? AppStrings.errorGeneric)
-                  .tr(),
-              onRetry: controller.load,
-            ),
-            EditProfileStatus.ready => _Form(
-              controller: controller,
-              profile: controller.profile!,
-            ),
-          },
-        ),
-      ),
-    );
-  }
-}
-
-/// Voltar da barra desativado durante o envio; o toque mostra o aviso. O
-/// leitor de tela ouve "Voltar, desativado" e o aviso como dica, e o toque
-/// dele também mostra o aviso (uma só ação).
-class _BlockedBackButton extends StatelessWidget {
-  const _BlockedBackButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      enabled: false,
-      label: MaterialLocalizations.of(context).backButtonTooltip,
-      hint: AppStrings.profilePhotoWaitUpload.tr(),
-      onTap: onTap,
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: const IconButton(onPressed: null, icon: BackButtonIcon()),
+        body: switch (controller.status) {
+          EditProfileStatus.loading => const SafeLoadingState(),
+          EditProfileStatus.error => SafeErrorState(
+            message: (controller.failure?.message ?? AppStrings.errorGeneric)
+                .tr(),
+            onRetry: controller.load,
+          ),
+          EditProfileStatus.ready => _Form(
+            controller: controller,
+            profile: controller.profile!,
+          ),
+        },
       ),
     );
   }

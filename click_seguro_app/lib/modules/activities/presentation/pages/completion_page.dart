@@ -5,12 +5,12 @@ import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/presentation/extensions/completion_presentation.dart';
 import 'package:click_seguro_app/modules/activities/presentation/widgets/spring_in.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
-import 'package:click_seguro_app/modules/common/services/share_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
@@ -53,9 +53,6 @@ class _CompletionPageState extends State<CompletionPage> {
 
   /// A leitura automática acontece uma vez, quando a voz fica pronta.
   bool _autoReadDone = false;
-
-  /// Menu do aparelho abrindo: um toque por vez.
-  bool _sharing = false;
 
   @override
   void initState() {
@@ -100,20 +97,6 @@ class _CompletionPageState extends State<CompletionPage> {
     unawaited(_readAloud.speak(completion.spokenText));
   }
 
-  /// Cancelar ou falhar não mostra aviso, como na notícia (FR-006).
-  Future<void> _share(ModuleCompletion completion) async {
-    if (_sharing) return;
-    _sharing = true;
-    try {
-      await GetIt.instance<ShareService>().shareText(
-        completion.shareText,
-        subject: completion.title,
-      );
-    } finally {
-      _sharing = false;
-    }
-  }
-
   void _toggleListen(String text) => unawaited(
     _readAloud.isSpeaking ? _readAloud.stop() : _readAloud.speak(text),
   );
@@ -127,96 +110,100 @@ class _CompletionPageState extends State<CompletionPage> {
     final ModuleScoreEntity? score = completion.score;
     // Redesign 2.0 (Figma, quadro 09): troféu com confete, título, o placar
     // em destaque contando de 0 até o resultado e os botões da feature 020.
-    return Scaffold(
-      appBar: AppBar(title: Text(completion.title)),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s6,
-                AppSpacing.s2,
-                AppSpacing.s6,
-                AppSpacing.s6,
+    return SafePageScaffold(
+      header: SafePageHeader(title: completion.title),
+      body: Stack(
+        children: [
+          ListView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s6,
+              AppSpacing.s2,
+              AppSpacing.s6,
+              AppSpacing.s6,
+            ),
+            children: [
+              const SpringIn(
+                child: SafeIllustration(
+                  AppIllustration.stateTrophy,
+                  height: 190,
+                ),
               ),
-              children: [
-                const SpringIn(
-                  child: SafeIllustration(
-                    AppIllustration.stateTrophy,
-                    height: 190,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.s4),
-                Semantics(
-                  liveRegion: true,
-                  header: true,
-                  child: Text(
-                    AppStrings.activitiesCompletionTitle.tr(),
-                    textAlign: TextAlign.center,
-                    style: AppTypography.display.copyWith(
-                      color: colors.textForeground,
-                    ),
-                  ),
-                ),
-                if (score != null && scoreText != null) ...[
-                  const SizedBox(height: AppSpacing.s4),
-                  _CountUp(value: score.score),
-                  Text(
-                    scoreText,
-                    textAlign: TextAlign.center,
-                    style: AppTypography.title3.copyWith(
-                      color: colors.textMutedForeground,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: AppSpacing.s4),
-                Text(
-                  completion.messageKey.tr(),
+              const SizedBox(height: AppSpacing.s4),
+              Semantics(
+                liveRegion: true,
+                header: true,
+                child: Text(
+                  AppStrings.activitiesCompletionTitle.tr(),
                   textAlign: TextAlign.center,
-                  style: AppTypography.bodyLarge.copyWith(
+                  style: AppTypography.display.copyWith(
                     color: colors.textForeground,
                   ),
                 ),
+              ),
+              // "Ouvir" logo abaixo do título, antes do placar e da mensagem
+              // que ele lê (regra do app, specs/025).
+              const SizedBox(height: AppSpacing.s3),
+              Center(
+                child: ListenableBuilder(
+                  listenable: _readAloud,
+                  builder: (context, _) => _readAloud.isAvailable
+                      ? ListenButton(
+                          isSpeaking: _readAloud.isSpeaking,
+                          onPressed: () => _toggleListen(completion.spokenText),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+              if (score != null && scoreText != null) ...[
                 const SizedBox(height: AppSpacing.s4),
-                Center(
-                  child: ListenableBuilder(
-                    listenable: _readAloud,
-                    builder: (context, _) => _readAloud.isAvailable
-                        ? ListenButton(
-                            isSpeaking: _readAloud.isSpeaking,
-                            onPressed: () =>
-                                _toggleListen(completion.spokenText),
-                          )
-                        : const SizedBox.shrink(),
+                _CountUp(value: score.score),
+                Text(
+                  scoreText,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.title3.copyWith(
+                    color: colors.textMutedForeground,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.s6),
-                SafeButton(
-                  label: AppStrings.activitiesFeedbackFinish.tr(),
-                  onPressed: () => context.pop(CompletionAction.finish),
-                ),
-                const SizedBox(height: AppSpacing.s3),
-                SafeButton(
-                  label: AppStrings.activitiesCompletionShare.tr(),
-                  tone: SafeButtonTone.secondary,
-                  icon: const Icon(LucideIcons.share2),
-                  onPressed: () => _share(completion),
-                ),
-                const SizedBox(height: AppSpacing.s3),
-                SafeButton(
-                  label: AppStrings.activitiesCompletionRedo.tr(),
-                  tone: SafeButtonTone.secondary,
-                  icon: const Icon(LucideIcons.rotateCcw),
-                  onPressed: () => context.pop(CompletionAction.redo),
-                ),
               ],
-            ),
-            // Confete por cima, sem bloquear toques nem o leitor de tela.
-            const Positioned.fill(child: IgnorePointer(child: _Confetti())),
-          ],
-        ),
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                completion.messageKey.tr(),
+                textAlign: TextAlign.center,
+                style: AppTypography.bodyLarge.copyWith(
+                  color: colors.textForeground,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              ..._actions(context, redoFirst: score?.isMostlyWrong ?? false),
+            ],
+          ),
+          // Confete por cima, sem bloquear toques nem o leitor de tela.
+          const Positioned.fill(child: IgnorePointer(child: _Confetti())),
+        ],
       ),
     );
+  }
+
+  /// "Voltar às atividades" e "Refazer o módulo". Quem errou a maioria vê
+  /// "Refazer" primeiro e em destaque (specs/025); senão (ou sem pontuação),
+  /// "Voltar" é o principal.
+  List<Widget> _actions(BuildContext context, {required bool redoFirst}) {
+    final Widget finish = SafeButton(
+      label: AppStrings.activitiesFeedbackFinish.tr(),
+      tone: redoFirst ? SafeButtonTone.secondary : SafeButtonTone.primary,
+      onPressed: () => context.pop(CompletionAction.finish),
+    );
+    final Widget redo = SafeButton(
+      label: AppStrings.activitiesCompletionRedo.tr(),
+      tone: redoFirst ? SafeButtonTone.primary : SafeButtonTone.secondary,
+      icon: const Icon(LucideIcons.rotateCcw),
+      onPressed: () => context.pop(CompletionAction.redo),
+    );
+    return [
+      redoFirst ? redo : finish,
+      const SizedBox(height: AppSpacing.s3),
+      redoFirst ? finish : redo,
+    ];
   }
 }
 

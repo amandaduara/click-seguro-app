@@ -10,6 +10,7 @@ import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
@@ -78,6 +79,10 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   /// Módulo cujas imagens já foram para o cache.
   Object? _precachedModule;
 
+  /// A rolagem da pergunta, com o cabeçalho dentro: cada pergunta que
+  /// aparece começa no topo, com o título e o enunciado (specs/025).
+  final ScrollController _scroll = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -104,6 +109,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     _controller.removeListener(_onLessonChanged);
     _readAloud.removeListener(_maybeAutoRead);
     _readAloud.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -117,6 +123,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       _shownIndex = index;
       _autoReadDone = false;
       unawaited(_readAloud.stop());
+      if (_scroll.hasClients) _scroll.jumpTo(0);
     }
     _shownIndex = index;
     _maybeAutoRead();
@@ -150,7 +157,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       return;
     }
     _autoReadDone = true;
-    unawaited(_readAloud.speak(lesson.spokenText));
+    unawaited(_readAloud.speakParts(lesson.spokenParts));
   }
 
   /// A leitura da pergunta para antes do envio (FR-017).
@@ -183,7 +190,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     final LessonEntity? lesson = _controller.current;
     final AnswerResultEntity? result = _controller.currentResult;
     if (lesson == null || result == null) return;
-    final String spoken = lesson.spokenFeedback(
+    final List<SpeechPart> spoken = lesson.feedbackParts(
       result,
       score: _controller.score,
     );
@@ -197,7 +204,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       listen: _listenButton(spoken),
     );
     // Com a leitura automática, o feedback é lido uma vez ao aparecer.
-    if (_autoReadEnabled) unawaited(_readAloud.speak(spoken));
+    if (_autoReadEnabled) unawaited(_readAloud.speakParts(spoken));
     final FeedbackAction? action = await closed;
     if (!mounted) return;
     switch (action) {
@@ -250,28 +257,38 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     );
     if (!mounted) return;
     switch (action) {
+      // Refazer: o progresso começa do zero, sem as respostas antigas
+      // (specs/025).
       case CompletionAction.redo:
-        unawaited(_controller.load(widget.moduleId));
+        // Num módulo de uma lição só o índice não muda: a pergunta volta a
+        // ser lida sozinha mesmo assim.
+        _autoReadDone = false;
+        unawaited(_controller.load(widget.moduleId, retake: true));
       case CompletionAction.finish || null:
         context.pop();
     }
   }
 
+  /// Há voz para algo do que a lição lê: o enunciado e as alternativas
+  /// (conteúdo, em português) ou os rótulos do app (specs/025).
+  bool get _canListen =>
+      _readAloud.isAvailable || _readAloud.isContentAvailable;
+
   bool get _autoReadEnabled =>
-      _readAloud.isAvailable &&
+      _canListen &&
       GetIt.instance<AccessibilityPreferencesNotifier>().value.autoReadAloud;
 
-  void _toggleListen(String text) => unawaited(
-    _readAloud.isSpeaking ? _readAloud.stop() : _readAloud.speak(text),
+  void _toggleListen(List<SpeechPart> parts) => unawaited(
+    _readAloud.isSpeaking ? _readAloud.stop() : _readAloud.speakParts(parts),
   );
 
-  /// "Ouvir"/"Parar" de [text]; some sem voz no idioma do app.
-  Widget _listenButton(String text) => ListenableBuilder(
+  /// "Ouvir"/"Parar" de [parts]; some sem voz para o que seria lido.
+  Widget _listenButton(List<SpeechPart> parts) => ListenableBuilder(
     listenable: _readAloud,
-    builder: (context, _) => _readAloud.isAvailable
+    builder: (context, _) => _canListen
         ? ListenButton(
             isSpeaking: _readAloud.isSpeaking,
-            onPressed: () => _toggleListen(text),
+            onPressed: () => _toggleListen(parts),
           )
         : const SizedBox.shrink(),
   );
@@ -280,55 +297,75 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
   Widget build(BuildContext context) {
     final LessonController controller = context.watch<LessonController>();
     final LessonEntity? lesson = controller.current;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          controller.module?.title ?? AppStrings.activitiesModuleTitle.tr(),
-        ),
+    final SafePageHeader header = SafePageHeader(
+      title: controller.module?.title ?? AppStrings.activitiesModuleTitle.tr(),
+    );
+    final Widget? state = switch (controller.status) {
+      LessonStatus.loading => const SafeLoadingState(
+        layout: SafeLoadingLayout.detail,
       ),
+      LessonStatus.error => SafeErrorState(
+        message: AppStrings.activitiesErrorTitle.tr(),
+        onRetry: () => controller.load(widget.moduleId),
+      ),
+      LessonStatus.empty => SafeEmptyState(
+        message: AppStrings.activitiesModuleUnavailable.tr(),
+      ),
+      LessonStatus.loaded when lesson != null => null,
+      _ => const SizedBox.shrink(),
+    };
+    if (state != null) return SafePageScaffold(header: header, body: state);
+    // Na pergunta, o cabeçalho sobe junto com a rolagem; só o rodapé com
+    // "Confirmar resposta", "Anterior" e "Próxima" fica fixo (specs/025).
+    return Scaffold(
       body: SafeArea(
-        child: switch (controller.status) {
-          LessonStatus.loading => const SafeLoadingState(
-            layout: SafeLoadingLayout.detail,
-          ),
-          LessonStatus.error => SafeErrorState(
-            message: AppStrings.activitiesErrorTitle.tr(),
-            onRetry: () => controller.load(widget.moduleId),
-          ),
-          LessonStatus.empty => SafeEmptyState(
-            message: AppStrings.activitiesModuleUnavailable.tr(),
-          ),
-          LessonStatus.loaded when lesson != null => Column(
-            children: [
-              Expanded(
-                child: PageTransitionSwitcher(
-                  duration: AppMotion.of(context).long,
-                  reverse: _backwards,
-                  transitionBuilder: (child, primary, secondary) =>
-                      SharedAxisTransition(
-                        animation: primary,
-                        secondaryAnimation: secondary,
-                        transitionType: SharedAxisTransitionType.horizontal,
-                        fillColor: Colors.transparent,
-                        child: child,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scroll,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    header,
+                    PageTransitionSwitcher(
+                      duration: AppMotion.of(context).long,
+                      reverse: _backwards,
+                      // A pergunta que entra começa no topo, logo abaixo do
+                      // cabeçalho, mesmo menor que a que sai.
+                      layoutBuilder: (entries) => Stack(
+                        alignment: Alignment.topCenter,
+                        children: entries,
                       ),
-                  child: _LessonBody(
-                    key: ValueKey(lesson.id),
-                    lesson: lesson,
-                    lessons: controller.module!.lessons,
-                    currentIndex: controller.currentIndex,
-                    selectedOptionId: controller.selectedOptionId,
-                    result: controller.currentResult,
-                    onSelect: controller.canSelect ? controller.select : null,
-                    listen: _listenButton(lesson.spokenText),
-                  ),
+                      transitionBuilder: (child, primary, secondary) =>
+                          SharedAxisTransition(
+                            animation: primary,
+                            secondaryAnimation: secondary,
+                            transitionType: SharedAxisTransitionType.horizontal,
+                            fillColor: Colors.transparent,
+                            child: child,
+                          ),
+                      child: _LessonBody(
+                        key: ValueKey(lesson!.id),
+                        lesson: lesson,
+                        lessons: controller.module!.lessons,
+                        currentIndex: controller.currentIndex,
+                        selectedOptionId: controller.selectedOptionId,
+                        result: controller.currentResult,
+                        onSelect: controller.canSelect
+                            ? controller.select
+                            : null,
+                        listen: _listenButton(lesson.spokenParts),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              ConfirmAnswerFooter(controller: controller, onConfirm: _confirm),
-            ],
-          ),
-          _ => const SizedBox.shrink(),
-        },
+            ),
+            ConfirmAnswerFooter(controller: controller, onConfirm: _confirm),
+          ],
+        ),
       ),
     );
   }
@@ -367,62 +404,65 @@ class _LessonBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppPalette colors = context.colors;
     final String? image = lesson.imageUrl;
-    return ListView(
-      // Cada pergunta que aparece começa no topo, com o enunciado.
-      key: ValueKey(lesson.id),
+    return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s5,
         AppSpacing.s4,
         AppSpacing.s5,
         AppSpacing.s6,
       ),
-      children: [
-        LessonProgressIndicator(lessons: lessons, currentIndex: currentIndex),
-        const SizedBox(height: AppSpacing.s4),
-        if (image != null)
-          ExcludeSemantics(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: maxImageHeight),
-              child: ClipRRect(
-                borderRadius: AppSpacing.radiusLg,
-                // O espaço depois da imagem só existe com ela (FR-013).
-                child: SafeNetworkImage(
-                  url: image,
-                  fit: BoxFit.contain,
-                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-                  placeholder: const SizedBox.shrink(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LessonProgressIndicator(lessons: lessons, currentIndex: currentIndex),
+          const SizedBox(height: AppSpacing.s4),
+          if (image != null)
+            ExcludeSemantics(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: maxImageHeight),
+                child: ClipRRect(
+                  borderRadius: AppSpacing.radiusLg,
+                  // O espaço depois da imagem só existe com ela (FR-013).
+                  child: SafeNetworkImage(
+                    url: image,
+                    fit: BoxFit.contain,
+                    padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                    placeholder: const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ),
-          ),
-        Semantics(
-          header: true,
-          child: Text(
-            lesson.question,
-            style: AppTypography.title2.copyWith(
-              height: 1.3,
-              color: colors.textForeground,
-            ),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s5),
-        for (final (index, option) in lesson.options.indexed)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.s3),
-            child: LessonOptionCard(
-              number: index + 1,
-              text: option.text,
-              state: lesson.optionState(
-                option,
-                selectedOptionId: selectedOptionId,
-                result: result,
+          Semantics(
+            header: true,
+            child: Text(
+              lesson.question,
+              style: AppTypography.title2.copyWith(
+                height: 1.3,
+                color: colors.textForeground,
               ),
-              onTap: onSelect == null ? null : () => onSelect!(option.id),
             ),
           ),
-        const SizedBox(height: AppSpacing.s2),
-        listen,
-      ],
+          // "Ouvir" logo abaixo do enunciado, antes das alternativas: perto do
+          // que ele lê, sem rolar (regra do app, specs/025).
+          const SizedBox(height: AppSpacing.s3),
+          listen,
+          const SizedBox(height: AppSpacing.s5),
+          for (final (index, option) in lesson.options.indexed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+              child: LessonOptionCard(
+                number: index + 1,
+                text: option.text,
+                state: lesson.optionState(
+                  option,
+                  selectedOptionId: selectedOptionId,
+                  result: result,
+                ),
+                onTap: onSelect == null ? null : () => onSelect!(option.id),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

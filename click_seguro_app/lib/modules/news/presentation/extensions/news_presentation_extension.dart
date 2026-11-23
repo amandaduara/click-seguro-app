@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -74,6 +75,21 @@ extension NewsItemsPresentation on Iterable<NewsItemEntity> {
       (item) => seen.add(item.id) && item.originalPublishedAt.isAfter(since),
     ).length;
   }
+
+  /// O que o "Ouvir" de uma seção lê: o título da seção (texto do app, no
+  /// idioma do app) e, na ordem, o título e a fonte de cada notícia
+  /// ("Golpe do Pix. Folha."), como conteúdo do banco, na voz em português
+  /// (specs/025). Sem fonte, só o título.
+  List<SpeechPart> spokenParts(String heading) => [
+    SpeechPart('${heading.trim()}.'),
+    for (final item in this)
+      SpeechPart(
+        item.source.trim().isEmpty
+            ? '${item.title.trim()}.'
+            : '${item.title.trim()}. ${item.source.trim()}.',
+        content: true,
+      ),
+  ];
 }
 
 /// "999", "1 mil", "1,2 mil" (en-US: "1.2K"); a casa decimal é cortada.

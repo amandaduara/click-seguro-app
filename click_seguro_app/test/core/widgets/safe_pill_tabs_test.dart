@@ -128,4 +128,28 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  // Erro visto no aparelho: com o Histórico do Assistente aberto nenhuma aba
+  // fica selecionada (índice -1) e o fundo branco aparecia fora do trilho.
+  testWidgets('sem aba selecionada, sem indicador', (tester) async {
+    await pumpComponent(
+      tester,
+      SizedBox(
+        width: 300,
+        child: SafePillTabs(
+          tabs: const ['Conversar', 'Verificar'],
+          selectedIndex: -1,
+          onChanged: (_) {},
+        ),
+      ),
+    );
+
+    expect(
+      find.descendant(
+        of: find.byType(SafePillTabs),
+        matching: find.byType(FractionallySizedBox),
+      ),
+      findsNothing,
+    );
+  });
 }

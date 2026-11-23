@@ -4,6 +4,7 @@ import 'package:click_seguro_app/modules/authentication/presentation/controller/
 import 'package:click_seguro_app/modules/authentication/presentation/pages/forgot_password_page.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/pages/login_page.dart';
 import 'package:click_seguro_app/core/widgets/safe_pill_tabs.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -109,7 +110,9 @@ void main() {
     await pumpSmallScreen(tester, '/forgot-password');
 
     expect(tester.takeException(), isNull);
-    expect(find.byTooltip('Voltar'), findsOneWidget);
+    expect(find.byKey(SafePageHeader.defaultBackKey), findsOneWidget);
+    expect(find.bySemanticsLabel('Voltar'), findsOneWidget);
+    expectMinTarget(tester, find.byKey(SafePageHeader.defaultBackKey));
     expectMinTarget(tester, find.byType(SafeButton));
   });
 }

@@ -1,5 +1,6 @@
 import 'package:click_seguro_app/modules/activities/data/models/activities_dashboard_model.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_status.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../fakes/activities_fixtures.dart';
@@ -71,5 +72,16 @@ void main() {
     );
 
     expect([for (final m in dashboard.modules) m.id], ['m3']);
+  });
+
+  // O contrato da lista não traz a pontuação: ela vem do detalhe, no
+  // repositório (specs/025).
+  test('a lista não traz pontuação: concluído fica sem ela', () {
+    final module = parse(
+      dashboardJson(modules: [moduleJson(completedCount: 3)]),
+    ).modules.single;
+
+    expect(module.score, isNull);
+    expect(module.status, ModuleStatus.completed);
   });
 }

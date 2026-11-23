@@ -1,6 +1,7 @@
 import 'package:click_seguro_app/modules/common/services/external_launcher_service.dart';
 import 'package:click_seguro_app/modules/common/services/image_storage_service.dart';
 import 'package:click_seguro_app/modules/common/services/local_cache_service.dart';
+import 'package:click_seguro_app/modules/help/data/datasources/official_contacts_remote_data_source.dart';
 import 'package:click_seguro_app/modules/help/domain/repositories/help_repository.dart';
 import 'package:click_seguro_app/modules/help/help_module.dart';
 import 'package:get_it/get_it.dart';
@@ -9,6 +10,7 @@ import '../fakes/fake_external_launcher_service.dart';
 import '../fakes/fake_image_storage_service.dart';
 import '../fakes/fake_local_cache_service.dart';
 import '../modules/help/fakes/fake_help_repository.dart';
+import '../modules/help/fakes/fake_official_contacts_remote_data_source.dart';
 
 FakeHelpRepository registerHelpDependencies(
   GetIt injector, {
@@ -24,7 +26,12 @@ FakeHelpRepository registerHelpDependencies(
     ..registerSingleton<ImageStorageService>(imageStorage)
     ..registerSingleton<ExternalLauncherService>(externalLauncher);
   HelpModule().registerServices(injector);
+  // Nenhum teste de tela vai à rede pelos contatos oficiais.
   injector
+    ..unregister<OfficialContactsRemoteDataSource>()
+    ..registerSingleton<OfficialContactsRemoteDataSource>(
+      FakeOfficialContactsRemoteDataSource(),
+    )
     ..unregister<HelpRepository>()
     ..registerSingleton<HelpRepository>(fakeRepository);
   return fakeRepository;

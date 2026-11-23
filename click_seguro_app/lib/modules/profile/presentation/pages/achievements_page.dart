@@ -2,6 +2,7 @@ import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/profile/domain/entities/achievement_entity.dart';
 import 'package:click_seguro_app/modules/profile/presentation/controller/area_state.dart';
@@ -26,21 +27,19 @@ class AchievementsPage extends StatelessWidget {
     final List<AchievementEntity>? given = achievements;
     final bool hasAccount =
         GetIt.instance<UserSessionService>().isAuthenticated;
-    return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.profileAchievements.tr())),
-      body: SafeArea(
-        child: given != null
-            ? _Grid(achievements: given)
-            : hasAccount
-            ? ChangeNotifierProvider<ProfileController>(
-                create: (_) => GetIt.instance<ProfileController>()..load(),
-                child: const _LoadingGrid(),
-              )
-            : ListView(
-                padding: const EdgeInsets.all(AppSpacing.s5),
-                children: const [GuestInvite()],
-              ),
-      ),
+    return SafePageScaffold(
+      header: SafePageHeader(title: AppStrings.profileAchievements.tr()),
+      body: given != null
+          ? _Grid(achievements: given)
+          : hasAccount
+          ? ChangeNotifierProvider<ProfileController>(
+              create: (_) => GetIt.instance<ProfileController>()..load(),
+              child: const _LoadingGrid(),
+            )
+          : ListView(
+              padding: const EdgeInsets.all(AppSpacing.s5),
+              children: const [GuestInvite()],
+            ),
     );
   }
 }
