@@ -36,7 +36,7 @@ import 'package:provider/provider.dart';
 /// Aba Início: o feed de notícias (specs/006-feed-inicio).
 ///
 /// "Ouvir" ao lado do título "Destaques" (Figma quadro 04) lê os títulos e as
-/// fontes dos destaques; some sem voz no idioma do app. A leitura para ao
+/// fontes dos destaques (na voz em português); some sem essa voz. A leitura para ao
 /// trocar de aba, ao abrir outra tela por cima e ao fechar a página.
 class NewsHomePage extends StatefulWidget {
   const NewsHomePage({super.key});
@@ -61,7 +61,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
   @override
   void initState() {
     super.initState();
-    // A voz antes de ouvir o feed: um aviso do feed já usa a leitura.
+    // A voz antes de ouvir o feed: o listener do feed para a leitura.
     _readAloud = GetIt.instance<ReadAloudController>();
     _feed = context.read<FeedController>()..addListener(_stopWithoutHighlights);
     _messages = _feed.messages.listen(_showMessage);

@@ -427,13 +427,34 @@ void main() {
       expect(_listenLabel(tester, 'assistant-listen-analysis'), 'Parar');
     });
 
-    testWidgets('sem voz no idioma do app, não há botões', (tester) async {
+    testWidgets('sem nenhuma voz, não há botões', (tester) async {
       tts.availableLanguages = {};
       await signIn();
       await open(tester);
       await send(tester, 'Como saber se um link é seguro?');
 
       expect(find.byType(ListenButton), findsNothing);
+    });
+
+    // Revisão: o botão das boas-vindas (texto do app) aparecia e não lia
+    // nada com o app em inglês e só a voz em português (specs/025).
+    testWidgets('app em inglês, só voz em português: boas-vindas sem botão, '
+        'respostas com botão', (tester) async {
+      tts.availableLanguages = {SpeechLanguage.ptBr};
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: router,
+        theme: AppTheme.lightTheme,
+        locale: const Locale('en', 'US'),
+      );
+      await send(tester, 'Como saber se um link é seguro?');
+
+      expect(
+        find.byKey(const ValueKey('assistant-listen-greeting')),
+        findsNothing,
+      );
+      expect(find.byKey(const ValueKey('assistant-listen-1')), findsOneWidget);
     });
 
     testWidgets('com letra 2×, o botão cabe sem estourar', (tester) async {

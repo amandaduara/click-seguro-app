@@ -260,6 +260,9 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
       // Refazer: o progresso começa do zero, sem as respostas antigas
       // (specs/025).
       case CompletionAction.redo:
+        // Num módulo de uma lição só o índice não muda: a pergunta volta a
+        // ser lida sozinha mesmo assim.
+        _autoReadDone = false;
         unawaited(_controller.load(widget.moduleId, retake: true));
       case CompletionAction.finish || null:
         context.pop();

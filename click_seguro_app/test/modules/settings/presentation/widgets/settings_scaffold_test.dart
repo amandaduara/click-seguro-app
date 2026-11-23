@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,7 +26,7 @@ void main() {
     usePhone(tester);
     await pumpScaffold(tester, 'Privacidade');
 
-    final Rect back = tester.getRect(find.byKey(SettingsBackButton.buttonKey));
+    final Rect back = tester.getRect(find.byKey(SafePageHeader.defaultBackKey));
     final Rect title = tester.getRect(find.text('Privacidade'));
 
     expect(title.left, greaterThan(back.right));
@@ -55,7 +56,7 @@ void main() {
     await pumpScaffold(tester, 'Sobre o Click Seguro');
 
     expect(tester.takeException(), isNull);
-    final Rect back = tester.getRect(find.byKey(SettingsBackButton.buttonKey));
+    final Rect back = tester.getRect(find.byKey(SafePageHeader.defaultBackKey));
     final Rect title = tester.getRect(find.text('Sobre o Click Seguro'));
     expect(title.left, greaterThan(back.right));
     expect(title.right, lessThanOrEqualTo(360));

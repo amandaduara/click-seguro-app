@@ -4,6 +4,8 @@ import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
 import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/activities_dashboard_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
 import 'package:click_seguro_app/modules/activities/domain/usecases/get_activities_dashboard_usecase.dart';
 import 'package:click_seguro_app/modules/activities/presentation/controller/activities_dashboard_controller.dart';
@@ -174,13 +176,12 @@ void main() {
       '(specs/025)', (tester) async {
     repository = FakeActivitiesRepository([
       Right(
-        dashboard(
-          modules: [
-            moduleJson(completedCount: 3)
-              ..['score'] = 1
-              ..['totalScore'] = 3,
-          ],
-          totalLessonsCompleted: 3,
+        _scored(
+          dashboard(
+            modules: [moduleJson(completedCount: 3)],
+            totalLessonsCompleted: 3,
+          ),
+          score: 1,
         ),
       ),
     ]);
@@ -212,13 +213,7 @@ void main() {
   testWidgets('"Refazer" em inglês: "Redo"', (tester) async {
     repository = FakeActivitiesRepository([
       Right(
-        dashboard(
-          modules: [
-            moduleJson(completedCount: 3)
-              ..['score'] = 0
-              ..['totalScore'] = 3,
-          ],
-        ),
+        _scored(dashboard(modules: [moduleJson(completedCount: 3)]), score: 0),
       ),
     ]);
     await open(tester, locale: const Locale('en', 'US'));
@@ -727,3 +722,16 @@ void main() {
     expect(find.text('In progress'), findsOneWidget);
   });
 }
+
+/// A pontuação vem do detalhe, no repositório (a lista não a traz): aqui ela
+/// entra direto no módulo único do painel, de 3 lições.
+ActivitiesDashboardEntity _scored(
+  ActivitiesDashboardEntity value, {
+  required int score,
+}) => ActivitiesDashboardEntity(
+  modules: [
+    value.modules.single.withScore(ModuleScoreEntity(score: score, total: 3)),
+  ],
+  totalCompleted: value.totalCompleted,
+  totalAvailable: value.totalAvailable,
+);

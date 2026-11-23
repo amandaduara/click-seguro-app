@@ -28,11 +28,7 @@ class SettingsScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafePageScaffold(
-      header: SafePageHeader(
-        title: title,
-        fallbackLocation: fallbackLocation,
-        backKey: SettingsBackButton.buttonKey,
-      ),
+      header: SafePageHeader(title: title, fallbackLocation: fallbackLocation),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.s5,
@@ -45,11 +41,4 @@ class SettingsScaffold extends StatelessWidget {
       bottom: bottom,
     );
   }
-}
-
-/// O voltar das Configurações: a chave que os testes usam para achar o
-/// botão do [SafePageHeader]. Ele usa o `maybePop`, para o aviso de descartar
-/// da troca de senha (PopScope) continuar valendo.
-abstract final class SettingsBackButton {
-  static const Key buttonKey = ValueKey('settings-back');
 }

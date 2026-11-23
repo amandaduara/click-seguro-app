@@ -89,15 +89,7 @@ class ReadAloudController extends ChangeNotifier {
   /// anterior. Partes vazias ou sem voz no aparelho são puladas; parar (ou
   /// outra leitura) encerra as que faltam.
   Future<void> speakParts(List<SpeechPart> parts) async {
-    final SpeechLanguage? appLanguage = _language;
-    if (appLanguage == null) return;
-    final List<(String, SpeechLanguage)> readable = [
-      for (final SpeechPart part in parts)
-        if (part.text.trim().isNotEmpty &&
-            (_availability[part.content ? contentLanguage : appLanguage] ??
-                false))
-          (part.text, part.content ? contentLanguage : appLanguage),
-    ];
+    final List<(String, SpeechLanguage)> readable = _readable(parts);
     if (readable.isEmpty) return;
 
     final int generation = ++_generation;
@@ -111,6 +103,23 @@ class ReadAloudController extends ChangeNotifier {
       if (!finished || generation != _generation) break;
     }
     if (generation == _generation) _setSpeaking(false);
+  }
+
+  /// Alguma das [parts] tem texto e voz no aparelho: só assim um "Ouvir"
+  /// de várias partes faz algo ao ser tocado (specs/025).
+  bool canSpeak(List<SpeechPart> parts) => _readable(parts).isNotEmpty;
+
+  /// As partes com texto e voz, cada uma com o idioma em que sai.
+  List<(String, SpeechLanguage)> _readable(List<SpeechPart> parts) {
+    final SpeechLanguage? appLanguage = _language;
+    if (appLanguage == null) return const [];
+    return [
+      for (final SpeechPart part in parts)
+        if (part.text.trim().isNotEmpty &&
+            (_availability[part.content ? contentLanguage : appLanguage] ??
+                false))
+          (part.text, part.content ? contentLanguage : appLanguage),
+    ];
   }
 
   /// O motor recebe o "parar" antes do aviso: quem ouve o "parado" pode

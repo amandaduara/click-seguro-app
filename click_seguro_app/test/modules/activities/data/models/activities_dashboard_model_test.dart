@@ -74,34 +74,14 @@ void main() {
     expect([for (final m in dashboard.modules) m.id], ['m3']);
   });
 
-  group('pontuação na lista (specs/025)', () {
-    test('score/totalScore viram a pontuação do módulo', () {
-      final Map<String, dynamic> json = moduleJson(completedCount: 3)
-        ..['score'] = 1
-        ..['totalScore'] = 3;
+  // O contrato da lista não traz a pontuação: ela vem do detalhe, no
+  // repositório (specs/025).
+  test('a lista não traz pontuação: concluído fica sem ela', () {
+    final module = parse(
+      dashboardJson(modules: [moduleJson(completedCount: 3)]),
+    ).modules.single;
 
-      final module = parse(dashboardJson(modules: [json])).modules.single;
-
-      expect(module.score?.score, 1);
-      expect(module.score?.total, 3);
-      expect(module.status, ModuleStatus.retry);
-    });
-
-    test('ausentes ou totalScore 0 → sem pontuação (concluído)', () {
-      final Map<String, dynamic> zero = moduleJson(completedCount: 3)
-        ..['score'] = 0
-        ..['totalScore'] = 0;
-      final dashboard = parse(
-        dashboardJson(
-          modules: [
-            moduleJson(completedCount: 3),
-            {...zero, 'id': 'm2', 'order': 2},
-          ],
-        ),
-      );
-
-      expect([for (final m in dashboard.modules) m.score], [null, null]);
-      expect(dashboard.modules.first.status, ModuleStatus.completed);
-    });
+    expect(module.score, isNull);
+    expect(module.status, ModuleStatus.completed);
   });
 }

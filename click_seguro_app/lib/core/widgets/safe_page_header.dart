@@ -24,7 +24,6 @@ class SafePageHeader extends StatelessWidget {
     this.backEnabled = true,
     this.backHint,
     this.backLabel,
-    this.backKey = defaultBackKey,
     this.actions = const [],
   });
 
@@ -50,8 +49,6 @@ class SafePageHeader extends StatelessWidget {
   /// Rótulo do voltar; o padrão é o do Material ("Voltar").
   final String? backLabel;
 
-  final Key backKey;
-
   /// Botões à direita do título (ex.: [SafeIconButton]).
   final List<Widget> actions;
 
@@ -73,8 +70,8 @@ class SafePageHeader extends StatelessWidget {
       child: Row(
         children: [
           if (showBack) ...[
-            SafeBackButton(
-              key: backKey,
+            _SafeBackButton(
+              key: defaultBackKey,
               fallbackLocation: fallbackLocation,
               onBack: onBack,
               enabled: backEnabled,
@@ -161,8 +158,8 @@ class _PageTitle extends StatelessWidget {
 }
 
 /// Botão redondo de voltar do [SafePageHeader].
-class SafeBackButton extends StatelessWidget {
-  const SafeBackButton({
+class _SafeBackButton extends StatelessWidget {
+  const _SafeBackButton({
     super.key,
     this.fallbackLocation,
     this.onBack,

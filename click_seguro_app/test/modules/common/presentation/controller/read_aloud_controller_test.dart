@@ -341,5 +341,23 @@ void main() {
       expect(controller.isAvailable, isFalse);
       expect(controller.isContentAvailable, isTrue);
     });
+
+    test('canSpeak: só quando alguma parte tem texto e voz', () async {
+      tts.availableLanguages = {SpeechLanguage.ptBr};
+      await controller.prepare(english);
+
+      expect(controller.canSpeak([const SpeechPart('Hello')]), isFalse);
+      expect(
+        controller.canSpeak([const SpeechPart('Olá', content: true)]),
+        isTrue,
+      );
+      expect(
+        controller.canSpeak([
+          const SpeechPart('Hello'),
+          const SpeechPart('  ', content: true),
+        ]),
+        isFalse,
+      );
+    });
   });
 }

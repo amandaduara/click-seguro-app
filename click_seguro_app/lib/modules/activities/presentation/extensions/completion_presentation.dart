@@ -13,9 +13,9 @@ extension ModuleCompletionPresentation on ModuleCompletion {
     final ModuleScoreEntity? value = score;
     if (value == null) return ModuleCompletionTier.good;
     if (value.score == value.total) return ModuleCompletionTier.perfect;
-    return value.score * 2 >= value.total
-        ? ModuleCompletionTier.good
-        : ModuleCompletionTier.retry;
+    return value.isMostlyWrong
+        ? ModuleCompletionTier.retry
+        : ModuleCompletionTier.good;
   }
 
   String get messageKey => switch (tier) {

@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
 import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
 import 'package:click_seguro_app/modules/settings/domain/entities/account_summary_entity.dart';
 import 'package:click_seguro_app/modules/settings/domain/entities/language_choice.dart';
 import 'package:click_seguro_app/modules/settings/presentation/pages/settings_page.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/alerts_switch_tile.dart';
-import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -197,7 +197,7 @@ void main() {
     final semantics = tester.ensureSemantics();
     expect(find.bySemanticsLabel('Voltar'), findsOneWidget);
     semantics.dispose();
-    await tester.tap(find.byKey(SettingsBackButton.buttonKey));
+    await tester.tap(find.byKey(SafePageHeader.defaultBackKey));
     await tester.pumpAndSettle();
 
     expect(find.text('page:/home'), findsOneWidget);

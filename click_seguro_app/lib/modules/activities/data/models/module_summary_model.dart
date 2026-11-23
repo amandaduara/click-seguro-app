@@ -1,4 +1,3 @@
-import 'package:click_seguro_app/modules/activities/domain/entities/module_score_entity.dart';
 import 'package:click_seguro_app/modules/activities/domain/entities/module_summary_entity.dart';
 
 /// Um item de `modules` em `GET /app/educational/modules`. O
@@ -22,17 +21,6 @@ abstract final class ModuleSummaryModel {
       iconUrl: icon is String && icon.isNotEmpty ? icon : null,
       lessonsCount: (json['lessonsCount'] as num?)?.toInt() ?? 0,
       completedCount: (json['completedCount'] as num?)?.toInt() ?? 0,
-      score: _scoreFromJson(json),
-    );
-  }
-
-  /// `totalScore` ausente ou 0: sem pontuação (nunca "0 de 0").
-  static ModuleScoreEntity? _scoreFromJson(Map<String, dynamic> json) {
-    final int total = (json['totalScore'] as num?)?.toInt() ?? 0;
-    if (total <= 0) return null;
-    return ModuleScoreEntity(
-      score: (json['score'] as num?)?.toInt() ?? 0,
-      total: total,
     );
   }
 }

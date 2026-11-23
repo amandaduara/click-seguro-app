@@ -130,7 +130,6 @@ abstract class AppStrings {
   static const String newsSectionRecent = 'news_section_recent';
   static const String newsSectionResults = 'news_section_results';
 
-  /// Item de uma lista lida em voz alta: "Título. Fonte: Folha."
   static const String newsReelsBadge = 'news_reels_badge';
   static const String newsGreetingNamed = 'news_greeting_named';
   static const String newsGreetingGuest = 'news_greeting_guest';

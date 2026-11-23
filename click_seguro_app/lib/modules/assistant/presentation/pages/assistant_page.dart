@@ -201,10 +201,9 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
         analysis != null && !identical(analysis, _readAnalysis);
     _readAnalysis = analysis;
     if (!newReply && !newAnalysis) return;
-    if (!_canListen ||
-        !GetIt.instance<AccessibilityPreferencesNotifier>()
-            .value
-            .autoReadAloud) {
+    if (!GetIt.instance<AccessibilityPreferencesNotifier>()
+        .value
+        .autoReadAloud) {
       return;
     }
     if (newAnalysis) {
@@ -214,32 +213,27 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
     }
   }
 
-  /// Há voz para o idioma do app ou para o português das respostas.
-  bool get _canListen =>
-      _readAloud.isAvailable || _readAloud.isContentAvailable;
-
   /// Lê [parts] e marca [id] como o que está tocando. As respostas da IA
   /// vêm em português (assistente de segurança digital brasileira) e saem
   /// na voz em português; os textos do app, no idioma do app (specs/025).
   void _read(Object id, List<SpeechPart> parts) {
+    if (!_readAloud.canSpeak(parts)) return;
     setState(() => _speakingId = id);
     unawaited(_readAloud.speakParts(parts));
   }
 
-  /// "Ouvir" embaixo de uma mensagem ou do resultado: lê [text]; se [id] já
-  /// está tocando, para. Sem voz no idioma do app, não aparece.
-  Widget? _listenButton(
-    Object id,
-    String key,
-    List<SpeechPart> Function() parts,
-  ) {
-    if (!_canListen) return null;
+  /// "Ouvir" embaixo de uma mensagem, das boas-vindas ou do resultado: lê
+  /// [parts]; se [id] já está tocando, para. Sem voz para nenhuma das
+  /// partes (ex.: app em inglês só com a voz em português, nas boas-vindas),
+  /// não aparece.
+  Widget? _listenButton(Object id, String key, List<SpeechPart> parts) {
+    if (!_readAloud.canSpeak(parts)) return null;
     final bool speaking = _readAloud.isSpeaking && identical(_speakingId, id);
     return ListenButton(
       key: ValueKey(key),
       isSpeaking: speaking,
       onPressed: () =>
-          speaking ? unawaited(_readAloud.stop()) : _read(id, parts()),
+          speaking ? unawaited(_readAloud.stop()) : _read(id, parts),
     );
   }
 
@@ -301,11 +295,9 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
           AssistantChatBubble(
             text: _greeting,
             fromUser: false,
-            footer: _listenButton(
-              _greetingId,
-              'assistant-listen-greeting',
-              () => [SpeechPart(_greeting)],
-            ),
+            footer: _listenButton(_greetingId, 'assistant-listen-greeting', [
+              SpeechPart(_greeting),
+            ]),
           ),
           // Conversa vazia: um aviso curto e duas sugestões. Depois da
           // primeira mensagem, só os balões.
@@ -340,11 +332,9 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
                   fromUser: message.role == AiChatRole.user,
                   footer: message.role == AiChatRole.user
                       ? null
-                      : _listenButton(
-                          message,
-                          'assistant-listen-$index',
-                          () => [SpeechPart(message.content, content: true)],
-                        ),
+                      : _listenButton(message, 'assistant-listen-$index', [
+                          SpeechPart(message.content, content: true),
+                        ]),
                 ),
               ),
             ),
@@ -467,7 +457,7 @@ class _AssistantSignedInViewState extends State<_AssistantSignedInView> {
       final AiAnalysisEntity analysis => _listenButton(
         analysis,
         'assistant-listen-analysis',
-        () => analysis.spokenParts,
+        analysis.spokenParts,
       ),
       null => null,
     },
@@ -807,7 +797,7 @@ class _VerifyArea extends StatelessWidget {
   final VoidCallback onAnalyzeText;
   final VoidCallback onRetry;
 
-  /// "Ouvir" do resultado; nulo sem voz no idioma do app.
+  /// "Ouvir" do resultado; nulo sem voz para o que ele lê.
   final Widget? listenButton;
 
   @override
