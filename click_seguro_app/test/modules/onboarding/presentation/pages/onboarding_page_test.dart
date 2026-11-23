@@ -164,6 +164,37 @@ void main() {
       );
     });
 
+    // 2ª revisão da branch (item 2): toques ignorados desde o 1º toque.
+    testWidgets('toque duplo em "Pular" grava e sai uma vez só', (
+      tester,
+    ) async {
+      await pumpLocalized(tester, router: buildRouter());
+
+      await tester.tap(find.text('Pular'));
+      await tester.tap(find.text('Pular'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(repository.completeCalls, 1);
+      expect(find.text('login'), findsOneWidget);
+    });
+
+    testWidgets('toque duplo em "Começar" grava e sai uma vez só', (
+      tester,
+    ) async {
+      await pumpLocalized(tester, router: buildRouter());
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.text('Continuar'));
+        await tester.pumpAndSettle();
+      }
+
+      await tester.tap(find.text('Começar'));
+      await tester.tap(find.text('Começar'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(repository.completeCalls, 1);
+      expect(find.text('login'), findsOneWidget);
+    });
+
     testWidgets('movimento reduzido: abre o login na hora', (tester) async {
       await pumpLocalized(
         tester,

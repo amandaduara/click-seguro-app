@@ -58,98 +58,44 @@ abstract final class OnboardingIntroTimeline {
   );
 }
 
-/// Faz a entrada do onboarding quando ele vem da splash: o primeiro quadro é
-/// o último da splash; a marca, o nome e o slogan sobem e somem, a onda desce
-/// e sai, e os blocos do slide (os `IntroReveal` com os intervalos de
-/// [OnboardingIntroTimeline]) entram em sequência. Enquanto anima, ignora
-/// toques. Com o movimento reduzido, nasce pronta.
-class OnboardingIntro extends StatefulWidget {
+/// Faz a entrada do onboarding quando ele vem da splash ([IntroHost]): o
+/// primeiro quadro é o último da splash; a marca, o nome e o slogan sobem e
+/// somem, a onda desce e sai, e os blocos do slide (os `IntroReveal` com os
+/// intervalos de [OnboardingIntroTimeline]) entram em sequência.
+class OnboardingIntro extends StatelessWidget {
   const OnboardingIntro({super.key, required this.child});
+
+  static const double _exitRise = 16;
 
   final Widget child;
 
   @override
-  State<OnboardingIntro> createState() => _OnboardingIntroState();
-}
-
-class _OnboardingIntroState extends State<OnboardingIntro>
-    with SingleTickerProviderStateMixin {
-  static const double _exitRise = 16;
-
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
+  Widget build(BuildContext context) => IntroHost(
     duration: OnboardingIntroTimeline.total,
+    overlay: (context, t, splashLogo) {
+      final double out = OnboardingIntroTimeline.splashOut.transform(t);
+      final double wave = OnboardingIntroTimeline.waveOut.transform(t);
+      return [
+        if (out < 1) ...[
+          Positioned.fromRect(
+            rect: splashLogo.shift(Offset(0, -_exitRise * out)),
+            child: Opacity(opacity: 1 - out, child: const BrandMark()),
+          ),
+          LeavingBrandTitle(
+            splashLogo: splashLogo,
+            progress: out,
+            rise: _exitRise,
+          ),
+        ],
+        if (wave < 1)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: -BrandScene.glowFooterHeight * wave,
+            child: const BrandWave(),
+          ),
+      ];
+    },
+    child: child,
   );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (AppMotion.of(context).reduced) {
-      _controller.value = 1;
-    } else if (_controller.isDismissed) {
-      _controller.forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return IntroScope(
-      animation: _controller,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final Rect logo = BrandScene.logoRectFor(
-            width: constraints.maxWidth,
-            viewportHeight: constraints.maxHeight,
-            topInset: MediaQuery.paddingOf(context).top,
-          );
-          return AnimatedBuilder(
-            animation: _controller,
-            child: widget.child,
-            builder: (context, child) {
-              final double t = _controller.value;
-              final double out = OnboardingIntroTimeline.splashOut.transform(t);
-              final double wave = OnboardingIntroTimeline.waveOut.transform(t);
-              final Offset rise = Offset(0, -_exitRise * out);
-              return Stack(
-                children: [
-                  IgnorePointer(ignoring: t < 1, child: child),
-                  if (out < 1) ...[
-                    Positioned.fromRect(
-                      rect: logo.shift(rise),
-                      child: Opacity(
-                        opacity: 1 - out,
-                        child: const BrandMark(),
-                      ),
-                    ),
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      top: BrandScene.titleTopFor(logo) + rise.dy,
-                      child: Opacity(
-                        opacity: 1 - out,
-                        child: const BrandTitle(),
-                      ),
-                    ),
-                  ],
-                  if (wave < 1)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: -BrandScene.glowFooterHeight * wave,
-                      child: const BrandWave(),
-                    ),
-                ],
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
 }

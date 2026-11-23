@@ -40,6 +40,10 @@ class _OnboardingPageState extends State<OnboardingPage>
 
   /// Saída para o login: desliza para a esquerda e some.
   late final AnimationController _exit = AnimationController(vsync: this);
+
+  /// Saindo para o login: desde o 1º toque, ignora os outros (FR-022), para
+  /// não gravar nem sair duas vezes.
+  bool _leaving = false;
   final ReadAloudController _readAloud = GetIt.instance<ReadAloudController>();
   Locale? _locale;
 
@@ -104,11 +108,17 @@ class _OnboardingPageState extends State<OnboardingPage>
   );
 
   Future<void> _handleSkip(OnboardingController controller) async {
+    if (_leaving) return;
+    setState(() => _leaving = true);
     await controller.skip();
     await _goToLogin();
   }
 
   Future<void> _handleNext(OnboardingController controller) async {
+    if (_leaving) return;
+    if (controller.isLastPage) {
+      setState(() => _leaving = true);
+    }
     final bool finished = await controller.next();
     if (finished) {
       await _goToLogin();
@@ -234,14 +244,15 @@ class _OnboardingPageState extends State<OnboardingPage>
       ),
     );
 
-    // A saída: desliza para a esquerda e some, sem aceitar mais toques.
+    // A saída: desliza para a esquerda e some, sem aceitar mais toques desde
+    // o toque que a pediu.
     final Widget leaving = AnimatedBuilder(
       animation: _exit,
       child: content,
       builder: (context, child) {
         final double progress = AppMotion.exit.transform(_exit.value);
         return IgnorePointer(
-          ignoring: progress > 0,
+          ignoring: _leaving,
           child: Opacity(
             opacity: 1 - progress,
             child: Transform.translate(

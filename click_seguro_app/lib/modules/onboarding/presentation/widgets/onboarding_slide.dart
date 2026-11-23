@@ -4,8 +4,8 @@ import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/theme/app_typography.dart';
 import 'package:click_seguro_app/core/widgets/intro_reveal.dart';
 import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
-import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_intro.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/models/onboarding_page_content.dart';
+import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_intro.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 

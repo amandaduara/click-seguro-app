@@ -9,6 +9,10 @@ import 'package:click_seguro_app/modules/help/help.dart';
 import 'package:click_seguro_app/modules/news/news.dart';
 import 'package:click_seguro_app/modules/notifications/notifications.dart';
 import 'package:click_seguro_app/modules/profile/profile.dart';
+import 'package:click_seguro_app/modules/onboarding/domain/usecases/complete_onboarding_usecase.dart';
+import 'package:click_seguro_app/modules/onboarding/onboarding.dart';
+import 'package:click_seguro_app/modules/onboarding/presentation/controller/onboarding_controller.dart';
+import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_intro.dart';
 import 'package:click_seguro_app/modules/settings/settings.dart';
 import 'package:click_seguro_app/modules/shell/presentation/widgets/app_bottom_nav.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +24,7 @@ import '../../fakes/fake_secure_storage_service.dart';
 import '../../modules/authentication/fakes/controller_factory.dart';
 import '../../modules/authentication/fakes/fake_auth_repository.dart';
 import '../../modules/authentication/fakes/forgot_password_controller_factory.dart';
+import '../../modules/onboarding/fakes/fake_onboarding_repository.dart';
 import '../../helpers/accessibility_provider.dart';
 import '../../helpers/activities_dependencies.dart';
 import '../../helpers/localized_app.dart';
@@ -51,7 +56,8 @@ void main() {
   tearDown(() => GetIt.instance.reset());
 
   Future<void> open(WidgetTester tester, String location) async {
-    // O login e a recuperação de senha leem os controllers do Provider.
+    // O login, a recuperação de senha e o onboarding leem os controllers
+    // do Provider.
     final repository = FakeAuthRepository();
     await pumpLocalized(
       tester,
@@ -62,6 +68,11 @@ void main() {
         ),
         ChangeNotifierProvider(
           create: (_) => buildForgotPasswordController(repository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OnboardingController(
+            CompleteOnboardingUseCase(FakeOnboardingRepository()),
+          ),
         ),
         fakeSplashProvider(session.sessionStatus.value),
         fakeFeedProvider(),
@@ -148,6 +159,25 @@ void main() {
 
       final page = tester.widget<ContactFormPage>(find.byType(ContactFormPage));
       expect(page.contactId, isNull);
+    });
+  });
+
+  // specs/026 US5: só a splash abre o onboarding com a entrada animada.
+  group('onboarding', () {
+    testWidgets('/onboarding?from=splash abre com a entrada animada', (
+      tester,
+    ) async {
+      await open(tester, '/onboarding?from=splash');
+
+      expect(find.byType(OnboardingPage), findsOneWidget);
+      expect(find.byType(OnboardingIntro), findsOneWidget);
+    });
+
+    testWidgets('/onboarding sem origem abre sem a entrada', (tester) async {
+      await open(tester, '/onboarding');
+
+      expect(find.byType(OnboardingPage), findsOneWidget);
+      expect(find.byType(OnboardingIntro), findsNothing);
     });
   });
 

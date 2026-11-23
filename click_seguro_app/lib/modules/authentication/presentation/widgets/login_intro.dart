@@ -54,11 +54,10 @@ abstract final class _LoginIntroTimeline {
   );
 }
 
-/// Faz a entrada do login quando ele vem da splash ou do onboarding: os
-/// blocos ([LoginIntroReveal]) entram em sequência e, conforme a [origin],
-/// a marca voa da splash até o cabeçalho ([LoginIntroLogoSlot]) ou a onda
-/// sobe ([LoginIntroWave]). Enquanto anima, ignora toques. Com o movimento
-/// reduzido, nasce pronta.
+/// Faz a entrada do login quando ele vem da splash ou do onboarding
+/// ([IntroHost]): os blocos ([LoginIntroReveal]) entram em sequência e,
+/// conforme a [origin], a marca voa da splash até o cabeçalho
+/// ([LoginIntroLogoSlot]) ou a onda sobe ([LoginIntroWave]).
 class LoginIntro extends StatefulWidget {
   const LoginIntro({super.key, required this.origin, required this.child});
 
@@ -69,14 +68,9 @@ class LoginIntro extends StatefulWidget {
   State<LoginIntro> createState() => _LoginIntroState();
 }
 
-class _LoginIntroState extends State<LoginIntro>
-    with SingleTickerProviderStateMixin {
-  static const double _textExitOffset = 10;
+class _LoginIntroState extends State<LoginIntro> {
+  static const double _textExitRise = 10;
 
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: _LoginIntroTimeline.total,
-  );
   final GlobalKey _logoSlot = GlobalKey();
 
   /// Onde a marca termina (o espaço dela no cabeçalho), medido depois do
@@ -93,95 +87,52 @@ class _LoginIntroState extends State<LoginIntro>
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (AppMotion.of(context).reduced) {
-      _controller.value = 1;
-    } else if (_controller.isDismissed) {
-      _controller.forward();
-    }
-  }
-
   void _measureTarget() {
     final RenderObject? slot = _logoSlot.currentContext?.findRenderObject();
-    final RenderObject? stack = context.findRenderObject();
-    if (!mounted || slot is! RenderBox || stack is! RenderBox) return;
+    final RenderObject? host = context.findRenderObject();
+    if (!mounted || slot is! RenderBox || host is! RenderBox) return;
     setState(() {
-      _target = slot.localToGlobal(Offset.zero, ancestor: stack) & slot.size;
+      _target = slot.localToGlobal(Offset.zero, ancestor: host) & slot.size;
     });
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return IntroScope(
-      animation: _controller,
-      child: _LoginIntroScope(
-        origin: widget.origin,
-        animation: _controller,
-        logoSlotKey: _logoSlot,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final Rect start = BrandScene.logoRectFor(
-              width: constraints.maxWidth,
-              viewportHeight: constraints.maxHeight,
-              topInset: MediaQuery.paddingOf(context).top,
-            );
-            return AnimatedBuilder(
-              animation: _controller,
-              child: widget.child,
-              builder: (context, child) {
-                final double t = _controller.value;
-                final double flight = _LoginIntroTimeline.flight.transform(t);
-                final double textExit = _LoginIntroTimeline.splashText
-                    .transform(t);
-                return Stack(
-                  children: [
-                    IgnorePointer(ignoring: t < 1, child: child),
-                    if (_fromSplash && textExit < 1)
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        top:
-                            BrandScene.titleTopFor(start) -
-                            _textExitOffset * textExit,
-                        child: Opacity(
-                          opacity: 1 - textExit,
-                          child: const BrandTitle(),
-                        ),
-                      ),
-                    if (_fromSplash && flight < 1)
-                      Positioned.fromRect(
-                        rect: Rect.lerp(start, _target ?? start, flight)!,
-                        child: const BrandMark(),
-                      ),
-                  ],
-                );
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => _LoginIntroScope(
+    origin: widget.origin,
+    logoSlotKey: _logoSlot,
+    child: IntroHost(
+      duration: _LoginIntroTimeline.total,
+      overlay: (context, t, splashLogo) {
+        if (!_fromSplash) return const [];
+        final double flight = _LoginIntroTimeline.flight.transform(t);
+        final double textExit = _LoginIntroTimeline.splashText.transform(t);
+        return [
+          if (textExit < 1)
+            LeavingBrandTitle(
+              splashLogo: splashLogo,
+              progress: textExit,
+              rise: _textExitRise,
+            ),
+          if (flight < 1)
+            Positioned.fromRect(
+              rect: Rect.lerp(splashLogo, _target ?? splashLogo, flight)!,
+              child: const BrandMark(),
+            ),
+        ];
+      },
+      child: widget.child,
+    ),
+  );
 }
 
 class _LoginIntroScope extends InheritedWidget {
   const _LoginIntroScope({
     required this.origin,
-    required this.animation,
     required this.logoSlotKey,
     required super.child,
   });
 
   final LoginIntroOrigin origin;
-  final Animation<double> animation;
   final GlobalKey logoSlotKey;
 
   static _LoginIntroScope? maybeOf(BuildContext context) =>
@@ -189,9 +140,7 @@ class _LoginIntroScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(_LoginIntroScope oldWidget) =>
-      origin != oldWidget.origin ||
-      animation != oldWidget.animation ||
-      logoSlotKey != oldWidget.logoSlotKey;
+      origin != oldWidget.origin || logoSlotKey != oldWidget.logoSlotKey;
 }
 
 /// Bloco do login que entra subindo 14 px no passo [step] da entrada. Fora
@@ -220,7 +169,8 @@ class LoginIntroLogoSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _LoginIntroScope? scope = _LoginIntroScope.maybeOf(context);
-    if (scope == null) return child;
+    final Animation<double>? animation = IntroScope.maybeOf(context);
+    if (scope == null || animation == null) return child;
     if (scope.origin == LoginIntroOrigin.onboarding) {
       return IntroReveal(
         interval: _LoginIntroTimeline.logoIn,
@@ -232,11 +182,10 @@ class LoginIntroLogoSlot extends StatelessWidget {
     return KeyedSubtree(
       key: scope.logoSlotKey,
       child: AnimatedBuilder(
-        animation: scope.animation,
+        animation: animation,
         child: child,
         builder: (context, child) => Opacity(
-          opacity:
-              _LoginIntroTimeline.flight.transform(scope.animation.value) >= 1
+          opacity: _LoginIntroTimeline.flight.transform(animation.value) >= 1
               ? 1
               : 0,
           child: child,
@@ -255,18 +204,20 @@ class LoginIntroWave extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _LoginIntroScope? scope = _LoginIntroScope.maybeOf(context);
-    if (scope == null || scope.origin != LoginIntroOrigin.onboarding) {
+    final Animation<double>? animation = IntroScope.maybeOf(context);
+    if (animation == null ||
+        _LoginIntroScope.maybeOf(context)?.origin !=
+            LoginIntroOrigin.onboarding) {
       return child;
     }
     return AnimatedBuilder(
-      animation: scope.animation,
+      animation: animation,
       child: child,
       builder: (context, child) => Transform.translate(
         offset: Offset(
           0,
           BrandScene.glowFooterHeight *
-              (1 - _LoginIntroTimeline.waveIn.transform(scope.animation.value)),
+              (1 - _LoginIntroTimeline.waveIn.transform(animation.value)),
         ),
         child: child,
       ),
