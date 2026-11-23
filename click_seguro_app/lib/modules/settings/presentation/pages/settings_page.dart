@@ -209,7 +209,8 @@ class _ReadingSection extends StatelessWidget {
   }
 }
 
-/// "Sobre": Privacidade e Sobre o Click Seguro com a versão, com ou sem conta.
+/// "Sobre": Privacidade, Termos de uso e Sobre o Click Seguro com a versão,
+/// com ou sem conta.
 class _AboutSection extends StatelessWidget {
   const _AboutSection({required this.version});
 
@@ -227,6 +228,12 @@ class _AboutSection extends StatelessWidget {
           title: AppStrings.settingsPrivacy.tr(),
           subtitle: AppStrings.settingsPrivacySub.tr(),
           onTap: () => context.push('/settings/privacy'),
+        ),
+        SettingsTile(
+          icon: LucideIcons.fileText,
+          title: AppStrings.settingsTerms.tr(),
+          subtitle: AppStrings.settingsTermsSub.tr(),
+          onTap: () => context.push('/settings/terms'),
         ),
         SettingsTile(
           icon: LucideIcons.info,

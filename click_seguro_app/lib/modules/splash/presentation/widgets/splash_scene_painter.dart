@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
-import 'package:click_seguro_app/core/theme/app_spacing.dart';
 import 'package:click_seguro_app/core/widgets/brand_mark.dart';
+import 'package:click_seguro_app/core/widgets/brand_scene.dart';
 import 'package:flutter/material.dart';
 
 /// Linha do tempo da abertura "Mancha e onda" (specs/023 R1): um único
@@ -58,46 +58,7 @@ class SplashScenePainter extends CustomPainter {
   final AppPalette colors;
   final Rect logoRect;
 
-  // Larguras de referência do protótipo (390 px de largura, 164 px de marca).
-  static const double _referenceWidth = 390;
-  static const double _maxLogoWidth = 164;
-  static const double _minLogoWidth = 96;
-
-  /// Altura da onda vermelha que fica no rodapé ao fim da abertura.
-  static const double footerHeight = 110;
-  static const double _glowFooterHeight = 136;
   static const double _breathScale = 0.035;
-
-  // Bordas das ondas (x, y de controle em 390 px; y a partir do topo da onda).
-  static const List<double> _frontEdge = [
-    0, 52, 68, 14, 128, 18, 196, 54, 262, 90, 322, 104, 390, 84, //
-  ];
-  static const List<double> _glowEdge = [
-    0, 84, 60, 112, 120, 116, 190, 84, 262, 50, 322, 26, 390, 52, //
-  ];
-
-  /// Onde a marca fica numa tela de [width] x [viewportHeight]: centrada na
-  /// largura, a 28% da altura (abaixo de [topInset]), e menor em tela curta.
-  static Rect logoRectFor({
-    required double width,
-    required double viewportHeight,
-    double topInset = 0,
-  }) {
-    final double logoWidth = (viewportHeight * 0.2).clamp(
-      _minLogoWidth,
-      _maxLogoWidth,
-    );
-    final double logoHeight =
-        logoWidth *
-        BrandMarkPaths.viewBox.height /
-        BrandMarkPaths.viewBox.width;
-    return Rect.fromLTWH(
-      (width - logoWidth) / 2,
-      math.max(viewportHeight * 0.28, topInset + AppSpacing.s6),
-      logoWidth,
-      logoHeight,
-    );
-  }
 
   double get _unit => logoRect.width / BrandMarkPaths.viewBox.width;
 
@@ -123,28 +84,28 @@ class SplashScenePainter extends CustomPainter {
         math.max(0, t - SplashTimeline.glowLag),
       );
       canvas.drawPath(
-        _wavePath(
+        BrandScene.wavePath(
           size,
-          edge: _glowEdge,
-          top: size.height - _glowFooterHeight,
+          edge: BrandScene.glowEdge,
+          top: size.height - BrandScene.glowFooterHeight,
           progress: glowWave,
           below: true,
         ),
         Paint()..color = colors.primaryGlow,
       );
-      red = _wavePath(
+      red = BrandScene.wavePath(
         size,
-        edge: _frontEdge,
-        top: size.height - footerHeight,
+        edge: BrandScene.frontEdge,
+        top: size.height - BrandScene.footerHeight,
         progress: wave,
         below: true,
       );
       canvas.drawPath(red, Paint()..color = colors.primary);
       if (!settled) {
-        revealed = _wavePath(
+        revealed = BrandScene.wavePath(
           size,
-          edge: _frontEdge,
-          top: size.height - footerHeight,
+          edge: BrandScene.frontEdge,
+          top: size.height - BrandScene.footerHeight,
           progress: wave,
           below: false,
         );
@@ -256,31 +217,6 @@ class SplashScenePainter extends CustomPainter {
       path.cubicTo(c1.dx, c1.dy, c2.dx, c2.dy, to.dx, to.dy);
     }
     return path..close();
-  }
-
-  // Onda que desce da tela inteira até o rodapé: [below] é a área vermelha
-  // (abaixo da borda); senão, a área já revelada (acima dela).
-  Path _wavePath(
-    Size size, {
-    required List<double> edge,
-    required double top,
-    required double progress,
-    required bool below,
-  }) {
-    final double sx = size.width / _referenceWidth;
-    final double dy = -(size.height + 40) * (1 - progress);
-    double x(int i) => edge[i] * sx;
-    double y(int i) => top + dy + edge[i];
-
-    final Path path = Path()
-      ..moveTo(x(0), y(1))
-      ..cubicTo(x(2), y(3), x(4), y(5), x(6), y(7))
-      ..cubicTo(x(8), y(9), x(10), y(11), x(12), y(13));
-    final double far = below ? size.height + 200 : -(size.height + 200);
-    return path
-      ..lineTo(size.width, far)
-      ..lineTo(0, far)
-      ..close();
   }
 
   // Interpola [frames] (progresso, valor) com [curve] em cada trecho.

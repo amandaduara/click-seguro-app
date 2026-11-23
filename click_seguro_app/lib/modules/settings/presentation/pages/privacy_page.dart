@@ -1,11 +1,7 @@
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
-import 'package:click_seguro_app/core/theme/app_palette.dart';
-import 'package:click_seguro_app/core/theme/app_spacing.dart';
-import 'package:click_seguro_app/core/theme/app_typography.dart';
-import 'package:click_seguro_app/core/widgets/safe_card.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_listen_button.dart';
 import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_scaffold.dart';
-import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_tile.dart';
+import 'package:click_seguro_app/modules/settings/presentation/widgets/settings_topic_card.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -40,7 +36,7 @@ class PrivacyPage extends StatelessWidget {
       children: [
         SettingsListenButton(text: privacySpokenText()),
         for (final (icon, title, body) in _sections)
-          _Paragraph(icon: icon, title: title.tr(), body: body.tr()),
+          SettingsTopicCard(icon: icon, title: title.tr(), body: body.tr()),
       ],
     );
   }
@@ -55,60 +51,3 @@ String privacySpokenText() => [
     body.tr(),
   ],
 ].join('\n');
-
-/// Um cartão padrão por assunto: ícone no círculo suave, título e o texto.
-class _Paragraph extends StatelessWidget {
-  const _Paragraph({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final AppPalette colors = context.colors;
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s5),
-      child: SafeCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                SettingsIconCircle(icon: icon, color: colors.secondary),
-                const SizedBox(width: AppSpacing.s3),
-                Expanded(
-                  child: Semantics(
-                    header: true,
-                    child: Text(
-                      title,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontSize: AppTypography.title3.fontSize,
-                        fontWeight: FontWeight.w800,
-                        color: colors.secondary,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s3),
-            Text(
-              body,
-              style: textTheme.bodyLarge?.copyWith(
-                fontSize: AppTypography.body.fontSize,
-                height: 1.5,
-                color: colors.textBody,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

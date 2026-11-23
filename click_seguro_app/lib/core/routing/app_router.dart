@@ -18,11 +18,14 @@ import 'package:click_seguro_app/modules/splash/splash.dart';
 import 'package:go_router/go_router.dart';
 
 /// Caminhos que não exigem sessão: a saída não redireciona a partir deles.
+/// Termos e Privacidade abrem pelo aceite do cadastro (specs/026 FR-006).
 const Set<String> _publicPaths = {
   '/',
   '/onboarding',
   '/login',
   '/forgot-password',
+  '/settings/terms',
+  '/settings/privacy',
 };
 
 /// Compõe as rotas dos módulos (plano do produto §2). Cada trilha edita só
@@ -47,8 +50,15 @@ GoRouter buildAppRouter(UserSessionService session) {
       GoRoute(path: '/', builder: (context, state) => const SplashPage()),
       GoRoute(
         path: '/onboarding',
+        // Vindo da splash, troca seca: o onboarding começa no último quadro
+        // da splash e faz a própria entrada (specs/026 US5).
         pageBuilder: (context, state) =>
-            appFadePage(state, const OnboardingPage()),
+            state.uri.queryParameters['from'] == 'splash'
+            ? NoTransitionPage<void>(
+                key: state.pageKey,
+                child: const OnboardingPage(fromSplash: true),
+              )
+            : appFadePage(state, const OnboardingPage()),
       ),
       ...authenticationRoutes,
       // Abas montadas juntas, com esmaecimento na que entra (specs/022 R5).

@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/widgets/intro_reveal.dart';
 import 'package:click_seguro_app/core/widgets/listen_button.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
 import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/controller/onboarding_controller.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/models/onboarding_page_content.dart';
+import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_intro.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_page_indicator.dart';
 import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_slide.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -20,14 +22,28 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 
 class OnboardingPage extends StatefulWidget {
-  const OnboardingPage({super.key});
+  const OnboardingPage({super.key, this.fromSplash = false});
+
+  /// Aberto pela splash: faz a entrada animada ([OnboardingIntro]).
+  final bool fromSplash;
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
 }
 
-class _OnboardingPageState extends State<OnboardingPage> {
+class _OnboardingPageState extends State<OnboardingPage>
+    with SingleTickerProviderStateMixin {
+  /// Quanto o onboarding desliza para a esquerda ao sair (specs/026 US5).
+  static const double _exitSlide = 48;
+
   final PageController _pageController = PageController();
+
+  /// Saída para o login: desliza para a esquerda e some.
+  late final AnimationController _exit = AnimationController(vsync: this);
+
+  /// Saindo para o login: desde o 1º toque, ignora os outros (FR-022), para
+  /// não gravar nem sair duas vezes.
+  bool _leaving = false;
   final ReadAloudController _readAloud = GetIt.instance<ReadAloudController>();
   Locale? _locale;
 
@@ -55,6 +71,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     _readAloud.removeListener(_maybeAutoRead);
     _readAloud.dispose();
     _pageController.dispose();
+    _exit.dispose();
     super.dispose();
   }
 
@@ -91,14 +108,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
   );
 
   Future<void> _handleSkip(OnboardingController controller) async {
+    if (_leaving) return;
+    setState(() => _leaving = true);
     await controller.skip();
-    if (mounted) context.go('/login');
+    await _goToLogin();
   }
 
   Future<void> _handleNext(OnboardingController controller) async {
+    if (_leaving) return;
+    if (controller.isLastPage) {
+      setState(() => _leaving = true);
+    }
     final bool finished = await controller.next();
     if (finished) {
-      if (mounted) context.go('/login');
+      await _goToLogin();
       return;
     }
     if (!mounted) return;
@@ -106,6 +129,19 @@ class _OnboardingPageState extends State<OnboardingPage> {
       controller.currentPage,
       duration: AppMotion.of(context).long,
     );
+  }
+
+  /// O onboarding desliza para a esquerda e some; o login faz a própria
+  /// entrada, com a onda subindo (specs/026 US5, FR-021). Com o movimento
+  /// reduzido, vai direto.
+  Future<void> _goToLogin() async {
+    if (!mounted) return;
+    final AppMotion motion = AppMotion.of(context);
+    if (!motion.reduced) {
+      _exit.duration = motion.long;
+      await _exit.forward();
+    }
+    if (mounted) context.go('/login?from=onboarding');
   }
 
   @override
@@ -117,22 +153,23 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
     // Redesign 2.0 (Figma, quadro 02): "Pular" no topo, o slide,
     // o indicador alinhado ao texto e o botão principal embaixo.
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s5,
-                AppSpacing.s3,
-                AppSpacing.s5,
-                0,
-              ),
-              child: Align(
-                alignment: Alignment.centerRight,
-                // Botão de texto: o leitor de tela anuncia "botão", não um
-                // filtro (alvo de 48 dp do tamanho compacto).
+    final Widget content = SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s5,
+              AppSpacing.s3,
+              AppSpacing.s5,
+              0,
+            ),
+            child: Align(
+              alignment: Alignment.centerRight,
+              // Botão de texto: o leitor de tela anuncia "botão", não um
+              // filtro (alvo de 48 dp do tamanho compacto).
+              child: IntroReveal(
+                interval: OnboardingIntroTimeline.skip,
                 child: SafeButton(
                   label: AppStrings.onboardingSkip.tr(),
                   size: SafeButtonSize.compact,
@@ -141,49 +178,55 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
               ),
             ),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (page) => _onPageChanged(controller, page),
-                children: [
-                  for (final content in OnboardingPageContent.pages)
-                    OnboardingSlide(
-                      content: content,
-                      listen: ListenableBuilder(
-                        listenable: _readAloud,
-                        builder: (context, _) => _readAloud.isAvailable
-                            ? ListenButton(
-                                isSpeaking: _readAloud.isSpeaking,
-                                onPressed: () => _toggleListen(content),
-                              )
-                            : const SizedBox.shrink(),
-                      ),
+          ),
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (page) => _onPageChanged(controller, page),
+              children: [
+                for (final content in OnboardingPageContent.pages)
+                  OnboardingSlide(
+                    content: content,
+                    listen: ListenableBuilder(
+                      listenable: _readAloud,
+                      builder: (context, _) => _readAloud.isAvailable
+                          ? ListenButton(
+                              isSpeaking: _readAloud.isSpeaking,
+                              onPressed: () => _toggleListen(content),
+                            )
+                          : const SizedBox.shrink(),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s6,
-                AppSpacing.s4,
-                AppSpacing.s6,
-                0,
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s6,
+              AppSpacing.s4,
+              AppSpacing.s6,
+              0,
+            ),
+            child: IntroReveal(
+              interval: OnboardingIntroTimeline.dots,
               child: OnboardingPageIndicator(
                 pageCount: OnboardingPageContent.pages.length,
                 currentPage: controller.currentPage,
                 controller: _pageController,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s6,
-                AppSpacing.s6,
-                AppSpacing.s6,
-                AppSpacing.s7,
-              ),
-              // "Continuar" vira "Começar" esmaecendo; o fundo é o mesmo,
-              // então só o rótulo parece trocar.
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s6,
+              AppSpacing.s6,
+              AppSpacing.s6,
+              AppSpacing.s7,
+            ),
+            // "Continuar" vira "Começar" esmaecendo; o fundo é o mesmo,
+            // então só o rótulo parece trocar.
+            child: IntroReveal(
+              interval: OnboardingIntroTimeline.button,
               child: AnimatedSwitcher(
                 duration: AppMotion.of(context).medium,
                 switchInCurve: AppMotion.enter,
@@ -196,9 +239,33 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+
+    // A saída: desliza para a esquerda e some, sem aceitar mais toques desde
+    // o toque que a pediu.
+    final Widget leaving = AnimatedBuilder(
+      animation: _exit,
+      child: content,
+      builder: (context, child) {
+        final double progress = AppMotion.exit.transform(_exit.value);
+        return IgnorePointer(
+          ignoring: _leaving,
+          child: Opacity(
+            opacity: 1 - progress,
+            child: Transform.translate(
+              offset: Offset(-_exitSlide * progress, 0),
+              child: child,
+            ),
+          ),
+        );
+      },
+    );
+
+    return Scaffold(
+      body: widget.fromSplash ? OnboardingIntro(child: leaving) : leaving,
     );
   }
 }

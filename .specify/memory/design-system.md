@@ -2,9 +2,9 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **Click Seguro** (antes "SafeNews")
 
-**Versão**: 2.0.0
+**Versão**: 2.1.0
 
-**Criado em**: 2026-10-04 · **Última alteração**: 2026-11-15
+**Criado em**: 2026-10-04 · **Última alteração**: 2026-11-23
 
 **Para quem**: quem vai reproduzir o visual do Click Seguro em outra plataforma (em especial a
 **versão web**), e quem cria telas novas no app Flutter.
@@ -435,6 +435,10 @@ quando a validação da sessão também terminou (sem mínimo fixo). A abertura 
 iOS) mostra só o fundo `background` (`#FFFFFF`), para emendar sem piscar; os ícones do app e
 o SVG da marca usam o `primary` da 2.0 (`#E31C3D`).
 
+A posição da marca, do nome e da onda no fim da splash fica em `BrandScene`
+(`core/widgets/brand_scene.dart`), e a onda parada é o widget `BrandWave`. O login usa as duas
+para começar exatamente onde a splash parou (feature 026).
+
 ### 7.14 Onboarding
 
 Três slides com as ilustrações de boas-vindas (`onboarding*`), título, descrição, botão "Ouvir",
@@ -443,10 +447,26 @@ indicador de página (ponto ativo alongado em `primary`), "Pular" e o botão `la
 
 ### 7.15 Login e recuperar senha
 
-Cabeçalho com a logo oficial (44) e "Bem-vindo ao / Click Seguro"; seletor em pílula "Entrar /
-Criar conta" (§7.7); campos `SafeTextField` com rótulo acima; "Esqueci minha senha" como `link`;
-botão `large`; "Continuar sem login" como `ghost`. Na recuperação, o botão principal de cada
-passo fica fixo no fim da tela.
+Versão A (feature 026), que continua a splash:
+
+- **Cabeçalho centralizado**: marca em `primary` (68), "Bem-vindo ao Click Seguro" em `title1`
+  e o slogan da splash em `body` (`textBody`).
+- **Formulário**: seletor em pílula "Entrar / Criar conta" (§7.7); campos `SafeTextField` com
+  rótulo acima; "Esqueci minha senha" como `link`, alinhado à direita; botão `large` com a seta à
+  direita; "Continuar sem login" como link coral (`primaryPressed`, 16/600, 48 de altura).
+- **Rodapé**: a `BrandWave` é o último item da rolagem: no pé da tela quando tudo cabe e, senão,
+  depois do último item, rolando junto. Nunca fica por cima do texto.
+- **Aceite do cadastro**: abaixo das regras da senha, um cartão com canto 16 e a caixa de 28 com
+  canto 8, numa área de 48. Desmarcado, o cartão é `card` com borda `border`; marcado, é
+  `primarySoft` com borda `primary`, e a caixa fica `primary` com o visto branco. "Termos de uso"
+  e "Política de privacidade" aparecem em `primaryPressed`, negrito e sublinhado.
+- **Abertura**: vindo da splash, a marca voa até o cabeçalho e os blocos entram subindo 14 px em
+  sequência (1,25 s).
+
+Na recuperação, o botão principal de cada passo fica fixo no fim da tela.
+
+As telas de texto das Configurações (Privacidade, Termos de uso) usam um cartão por assunto
+(`SettingsTopicCard`): ícone no círculo `surface`, título 18/800 em `secondary` e texto 16.
 
 ### 7.16 Estados comuns
 
@@ -573,6 +593,11 @@ de abrir a fonte na coluna do Reel.
   nova versão abaixo) e avise quem mantém a versão web.
 
 ## Histórico de versões
+
+- **2.1.0 (2026-11-23)**: §7.13 e §7.15 com a versão A do login (feature 026): cabeçalho
+  centralizado, `BrandWave` no rodapé, link do visitante, aceite dos termos e a abertura que
+  continua a splash; `BrandScene` como fonte única da posição da marca e da onda;
+  `SettingsTopicCard` nas telas de texto das Configurações.
 
 - **2.0.0 (2026-11-15)**: MAJOR, redesign visual 2.0 (feature 024, validado pela usuária). Nome
   "Click Seguro" no lugar de "SafeNews". Paleta nova (coral `#E31C3D`, tinta `#1B2440`, creme,

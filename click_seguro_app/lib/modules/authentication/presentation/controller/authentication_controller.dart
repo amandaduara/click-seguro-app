@@ -59,8 +59,18 @@ class AuthenticationController extends ChangeNotifier {
   });
 
   /// Botão principal habilitado só com tudo válido (no cadastro, a senha
-  /// cumprindo as 5 regras) e fora de um envio.
-  bool get canSubmit => _formErrors.isEmpty && !_isSubmitting;
+  /// cumprindo as 5 regras e o aceite dos termos) e fora de um envio.
+  bool get canSubmit => _formReady && !_isSubmitting;
+
+  /// No cadastro, o aceite dos termos também libera o envio (specs/026
+  /// FR-009); nada dele vai para o serviço.
+  bool get _formReady =>
+      _formErrors.isEmpty && (_mode == AuthMode.login || _termsAccepted);
+
+  /// Caixa "Li e aceito os Termos de uso e a Política de privacidade" do
+  /// cadastro. Sobrevive à troca de abas; [reset] a desmarca.
+  bool _termsAccepted = false;
+  bool get termsAccepted => _termsAccepted;
 
   Failure? _failure;
   Failure? get failure => _failure;
@@ -83,6 +93,12 @@ class AuthenticationController extends ChangeNotifier {
     _touched = const {};
     _failure = null;
     _revalidate();
+    notifyListeners();
+  }
+
+  void setTermsAccepted(bool value) {
+    if (_termsAccepted == value) return;
+    _termsAccepted = value;
     notifyListeners();
   }
 
@@ -124,6 +140,9 @@ class AuthenticationController extends ChangeNotifier {
       notifyListeners();
       return Future.value();
     }
+    // Sem o aceite, o botão já está desativado; o "OK" do teclado também
+    // não envia.
+    if (!_formReady) return Future.value();
     return _run(
       () => _mode == AuthMode.login
           ? _login(email: _email, password: _password)
@@ -150,6 +169,7 @@ class AuthenticationController extends ChangeNotifier {
     _failure = null;
     _passwordRules = const {};
     _isPasswordVisible = false;
+    _termsAccepted = false;
     _authenticated = false;
     notifyListeners();
   }

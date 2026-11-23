@@ -399,6 +399,19 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - Cabeçalho único `SafePageHeader` nas telas internas.
   - Contatos oficiais vindos da API, com cópia offline (api-contract 1.1.3).
   - Validado pela usuária no aparelho.
+- [x] **R3 Login, aceite dos termos e Termos de uso** (RF-001, RF-003, RF-004, RF-005, RF-037,
+  RF-041, RNF-003, RNF-004) (specs/026-login-termos-uso)
+  - Login e cadastro na versão A: cabeçalho centralizado com a marca, onda coral da splash no fim
+    do conteúdo (no pé da tela quando tudo cabe), "Continuar sem login" como link; saem o divisor
+    "ou" e o aviso do visitante.
+  - Passagens animadas da primeira abertura: splash → login (a marca voa até o cabeçalho), splash
+    → onboarding (a onda desce, o slide sobe) e onboarding → login (a onda sobe, o login entra);
+    com "Reduzir animações", trocas diretas.
+  - Aceite "Li e aceito os Termos de uso e a Política de privacidade" no cadastro: desmarcado,
+    obrigatório para "Criar conta", não enviado ao serviço.
+  - Tela Termos de uso nas Configurações (com e sem conta); Termos e Privacidade abrem sem
+    sessão.
+  - Validado pela usuária no aparelho (2026-11-23).
 
 ---
 

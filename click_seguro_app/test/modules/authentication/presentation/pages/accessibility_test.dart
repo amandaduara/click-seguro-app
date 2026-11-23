@@ -86,7 +86,7 @@ void main() {
     }
     expect(find.byTooltip('Mostrar senha'), findsOneWidget);
 
-    final guest = find.widgetWithText(SafeButton, 'Continuar sem login');
+    final guest = find.widgetWithText(TextButton, 'Continuar sem login');
     await tester.ensureVisible(guest);
     expect(guest.hitTestable(), findsOneWidget);
     semantics.dispose();
