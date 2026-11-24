@@ -1,0 +1,473 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/utils/app_haptics.dart';
+import 'package:click_seguro_app/core/widgets/listen_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/answer_result_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/lesson_entity.dart';
+import 'package:click_seguro_app/modules/activities/domain/entities/module_detail_entity.dart';
+import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_controller.dart';
+import 'package:click_seguro_app/modules/activities/presentation/controller/lesson_status.dart';
+import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
+import 'package:click_seguro_app/modules/activities/presentation/extensions/answer_presentation.dart';
+import 'package:click_seguro_app/modules/activities/presentation/extensions/lesson_presentation.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/confirm_answer_footer.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/feedback_sheet.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/guest_progress_alert.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_progress_indicator.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:animations/animations.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+/// Perguntas de um módulo, uma por vez (B2, specs/017-perguntas-atividades).
+class LessonPage extends StatelessWidget {
+  const LessonPage({super.key, required this.moduleId});
+
+  final String moduleId;
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<LessonController>(
+      create: (_) => GetIt.instance<LessonController>()..load(moduleId),
+      child: _LessonScaffold(moduleId: moduleId),
+    );
+  }
+}
+
+/// Também cuida da voz: "Ouvir", leitura automática uma vez por pergunta e
+/// parar ao trocar de pergunta ou sair (R5, R6), como no detalhe da notícia.
+class _LessonScaffold extends StatefulWidget {
+  const _LessonScaffold({required this.moduleId});
+
+  final String moduleId;
+
+  @override
+  State<_LessonScaffold> createState() => _LessonScaffoldState();
+}
+
+class _LessonScaffoldState extends State<_LessonScaffold> {
+  late final LessonController _controller;
+  late final ReadAloudController _readAloud;
+  Locale? _locale;
+  int? _shownIndex;
+
+  /// A troca para a pergunta atual foi para trás: voltar desliza no sentido
+  /// oposto a avançar (specs/022 FR-027).
+  bool _backwards = false;
+
+  /// A pergunta na tela já foi lida sozinha. Volta a `false` a cada troca de
+  /// pergunta: voltar ou avançar para uma pergunta lê de novo (relato do
+  /// aparelho, 2026-10-22); a mesma pergunta na tela não repete.
+  bool _autoReadDone = false;
+
+  /// Módulo cujas imagens já foram para o cache.
+  Object? _precachedModule;
+
+  /// A rolagem da pergunta, com o cabeçalho dentro: cada pergunta que
+  /// aparece começa no topo, com o título e o enunciado (specs/025).
+  final ScrollController _scroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = context.read<LessonController>();
+    _readAloud = GetIt.instance<ReadAloudController>();
+    _controller.addListener(_onLessonChanged);
+    _readAloud.addListener(_maybeAutoRead);
+    // Módulo já carregado antes da tela: o ouvinte não seria chamado.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _precacheImages());
+  }
+
+  /// O idioma da voz é o do app: prepara de novo se ele mudar.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final Locale locale = context.locale;
+    if (locale == _locale) return;
+    _locale = locale;
+    unawaited(_readAloud.prepare(locale));
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onLessonChanged);
+    _readAloud.removeListener(_maybeAutoRead);
+    _readAloud.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _onLessonChanged() {
+    if (_controller.status != LessonStatus.loaded) return;
+    _precacheImages();
+    final int index = _controller.currentIndex;
+    if (_shownIndex != null && index != _shownIndex) {
+      _backwards = index < _shownIndex!;
+      // Antes do parar: o aviso de "parado" já pode ler a pergunta nova.
+      _shownIndex = index;
+      _autoReadDone = false;
+      unawaited(_readAloud.stop());
+      if (_scroll.hasClients) _scroll.jumpTo(0);
+    }
+    _shownIndex = index;
+    _maybeAutoRead();
+  }
+
+  /// As imagens de todas as perguntas vão ao cache na carga: a de cada
+  /// pergunta já está pronta quando ela aparece e não empurra as
+  /// alternativas para baixo do dedo (achado da T058, specs/022).
+  void _precacheImages() {
+    final module = _controller.module;
+    if (!mounted ||
+        _controller.status != LessonStatus.loaded ||
+        module == null ||
+        identical(module, _precachedModule)) {
+      return;
+    }
+    _precachedModule = module;
+    for (final LessonEntity lesson in module.lessons) {
+      final String? url = lesson.imageUrl;
+      if (url != null) unawaited(SafeNetworkImage.precache(context, url));
+    }
+  }
+
+  void _maybeAutoRead() {
+    final LessonEntity? lesson = _controller.current;
+    if (!mounted ||
+        _controller.status != LessonStatus.loaded ||
+        lesson == null ||
+        _autoReadDone ||
+        !_autoReadEnabled) {
+      return;
+    }
+    _autoReadDone = true;
+    unawaited(_readAloud.speakParts(lesson.spokenParts));
+  }
+
+  /// A leitura da pergunta para antes do envio (FR-017).
+  Future<void> _confirm() async {
+    unawaited(_readAloud.stop());
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final AnswerAttempt attempt = await _controller.confirm();
+    if (!mounted) return;
+    final String? message = switch (attempt) {
+      AnswerAttempt.failed =>
+        _controller.answerFailure
+            .messageKeyOr(AppStrings.activitiesAnswerFailed)
+            .tr(),
+      AnswerAttempt.rejected => AppStrings.activitiesAnswerRejected.tr(),
+      AnswerAttempt.answered || AnswerAttempt.ignored => null,
+    };
+    if (message != null) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    }
+    if (attempt == AnswerAttempt.answered) {
+      // Uma vibração, distinta para acerto e erro (specs/022 FR-022).
+      final bool correct = _controller.currentResult?.isCorrect ?? false;
+      unawaited(correct ? AppHaptics.success() : AppHaptics.error());
+      await _showFeedback();
+    }
+  }
+
+  /// Painel de feedback; seguir vai à próxima pergunta ou, na última, de
+  /// volta às atividades (até a B4 trazer a conclusão).
+  Future<void> _showFeedback() async {
+    final LessonEntity? lesson = _controller.current;
+    final AnswerResultEntity? result = _controller.currentResult;
+    if (lesson == null || result == null) return;
+    final List<SpeechPart> spoken = lesson.feedbackParts(
+      result,
+      score: _controller.score,
+    );
+    final Future<FeedbackAction?> closed = showFeedbackSheet(
+      context,
+      lesson: lesson,
+      result: result,
+      isLast: _controller.isLastLesson,
+      completed: _controller.isModuleCompleted,
+      score: _controller.score,
+      listen: _listenButton(spoken),
+    );
+    // Com a leitura automática, o feedback é lido uma vez ao aparecer.
+    if (_autoReadEnabled) unawaited(_readAloud.speakParts(spoken));
+    final FeedbackAction? action = await closed;
+    if (!mounted) return;
+    switch (action) {
+      // Trocar de pergunta já para a leitura e lê a nova (B2).
+      case FeedbackAction.next:
+        _controller.goNext();
+      case FeedbackAction.finish:
+        context.pop();
+      case FeedbackAction.result:
+        await _finishModule();
+      case null:
+        unawaited(_readAloud.stop());
+    }
+  }
+
+  /// Fim do módulo (specs/020): sem conta, o aviso antes (RN-006); depois a
+  /// conclusão, de onde refazer recarrega o módulo e voltar sai das
+  /// perguntas.
+  Future<void> _finishModule() async {
+    final ModuleDetailEntity? module = _controller.module;
+    if (module == null) return;
+    // Esta tela fica embaixo do aviso, do login e da conclusão: a leitura do
+    // feedback não pode continuar por cima deles (achado no aparelho).
+    unawaited(_readAloud.stop());
+    if (!GetIt.instance<UserSessionService>().isAuthenticated) {
+      // Com a leitura automática, o aviso é lido no lugar do feedback.
+      if (_autoReadEnabled) {
+        unawaited(
+          _readAloud.speak(
+            [
+              AppStrings.activitiesGuestAlertTitle.tr(),
+              AppStrings.activitiesGuestAlertBody.tr(),
+            ].join('\n'),
+          ),
+        );
+      }
+      final GuestAlertAction? choice = await showGuestProgressAlert(context);
+      unawaited(_readAloud.stop());
+      if (!mounted) return;
+      if (choice == GuestAlertAction.createAccount) {
+        // Entrando, o login vai para Atividades e esta tela sai da pilha;
+        // voltando sem entrar, segue para a conclusão como visitante.
+        await context.push<void>('/login?mode=register&next=/activities');
+        if (!mounted) return;
+      }
+    }
+    final CompletionAction? action = await context.push<CompletionAction>(
+      '/activities/${widget.moduleId}/done',
+      extra: ModuleCompletion(title: module.title, score: _controller.score),
+    );
+    if (!mounted) return;
+    switch (action) {
+      // Refazer: o progresso começa do zero, sem as respostas antigas
+      // (specs/025).
+      case CompletionAction.redo:
+        // Num módulo de uma lição só o índice não muda: a pergunta volta a
+        // ser lida sozinha mesmo assim.
+        _autoReadDone = false;
+        unawaited(_controller.load(widget.moduleId, retake: true));
+      case CompletionAction.finish || null:
+        context.pop();
+    }
+  }
+
+  /// Há voz para algo do que a lição lê: o enunciado e as alternativas
+  /// (conteúdo, em português) ou os rótulos do app (specs/025).
+  bool get _canListen =>
+      _readAloud.isAvailable || _readAloud.isContentAvailable;
+
+  bool get _autoReadEnabled =>
+      _canListen &&
+      GetIt.instance<AccessibilityPreferencesNotifier>().value.autoReadAloud;
+
+  void _toggleListen(List<SpeechPart> parts) => unawaited(
+    _readAloud.isSpeaking ? _readAloud.stop() : _readAloud.speakParts(parts),
+  );
+
+  /// "Ouvir"/"Parar" de [parts]; some sem voz para o que seria lido.
+  Widget _listenButton(List<SpeechPart> parts) => ListenableBuilder(
+    listenable: _readAloud,
+    builder: (context, _) => _canListen
+        ? ListenButton(
+            isSpeaking: _readAloud.isSpeaking,
+            onPressed: () => _toggleListen(parts),
+          )
+        : const SizedBox.shrink(),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final LessonController controller = context.watch<LessonController>();
+    final LessonEntity? lesson = controller.current;
+    final SafePageHeader header = SafePageHeader(
+      title: controller.module?.title ?? AppStrings.activitiesModuleTitle.tr(),
+    );
+    final Widget? state = switch (controller.status) {
+      LessonStatus.loading => const SafeLoadingState(
+        layout: SafeLoadingLayout.detail,
+      ),
+      LessonStatus.error => SafeErrorState(
+        failure: controller.failure,
+        message: AppStrings.activitiesErrorTitle.tr(),
+        onRetry: () => controller.load(widget.moduleId),
+      ),
+      LessonStatus.empty => SafeEmptyState(
+        message: AppStrings.activitiesModuleUnavailable.tr(),
+      ),
+      LessonStatus.loaded when lesson != null => null,
+      _ => const SizedBox.shrink(),
+    };
+    if (state != null) return SafePageScaffold(header: header, body: state);
+    // Na pergunta, o cabeçalho sobe junto com a rolagem; só o rodapé com
+    // "Confirmar resposta", "Anterior" e "Próxima" fica fixo (specs/025).
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scroll,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    header,
+                    PageTransitionSwitcher(
+                      duration: AppMotion.of(context).long,
+                      reverse: _backwards,
+                      // A pergunta que entra começa no topo, logo abaixo do
+                      // cabeçalho, mesmo menor que a que sai.
+                      layoutBuilder: (entries) => Stack(
+                        alignment: Alignment.topCenter,
+                        children: entries,
+                      ),
+                      transitionBuilder: (child, primary, secondary) =>
+                          SharedAxisTransition(
+                            animation: primary,
+                            secondaryAnimation: secondary,
+                            transitionType: SharedAxisTransitionType.horizontal,
+                            fillColor: Colors.transparent,
+                            child: child,
+                          ),
+                      child: _LessonBody(
+                        key: ValueKey(lesson!.id),
+                        lesson: lesson,
+                        lessons: controller.module!.lessons,
+                        currentIndex: controller.currentIndex,
+                        selectedOptionId: controller.selectedOptionId,
+                        result: controller.currentResult,
+                        onSelect: controller.canSelect
+                            ? controller.select
+                            : null,
+                        listen: _listenButton(lesson.spokenParts),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ConfirmAnswerFooter(controller: controller, onConfirm: _confirm),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LessonBody extends StatelessWidget {
+  const _LessonBody({
+    super.key,
+    required this.lesson,
+    required this.lessons,
+    required this.currentIndex,
+    required this.selectedOptionId,
+    required this.result,
+    required this.onSelect,
+    required this.listen,
+  });
+
+  /// Altura máxima da imagem: o enunciado aparece sem rolar muito.
+  static const double maxImageHeight = 220;
+
+  final LessonEntity lesson;
+  final List<LessonEntity> lessons;
+  final int currentIndex;
+  final String? selectedOptionId;
+
+  /// A correção desta pergunta nesta visita: mostra a correta e a errada.
+  final AnswerResultEntity? result;
+
+  /// `null` quando não pode escolher (enviando ou já corrigida).
+  final ValueChanged<String>? onSelect;
+
+  /// "Ouvir"/"Parar" (some sem voz no idioma do app).
+  final Widget listen;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppPalette colors = context.colors;
+    final String? image = lesson.imageUrl;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s5,
+        AppSpacing.s4,
+        AppSpacing.s5,
+        AppSpacing.s6,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LessonProgressIndicator(lessons: lessons, currentIndex: currentIndex),
+          const SizedBox(height: AppSpacing.s4),
+          if (image != null)
+            ExcludeSemantics(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: maxImageHeight),
+                child: ClipRRect(
+                  borderRadius: AppSpacing.radiusLg,
+                  // O espaço depois da imagem só existe com ela (FR-013).
+                  child: SafeNetworkImage(
+                    url: image,
+                    fit: BoxFit.contain,
+                    padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                    placeholder: const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            ),
+          Semantics(
+            header: true,
+            child: Text(
+              lesson.question,
+              style: AppTypography.title2.copyWith(
+                height: 1.3,
+                color: colors.textForeground,
+              ),
+            ),
+          ),
+          // "Ouvir" logo abaixo do enunciado, antes das alternativas: perto do
+          // que ele lê, sem rolar (regra do app, specs/025).
+          const SizedBox(height: AppSpacing.s3),
+          listen,
+          const SizedBox(height: AppSpacing.s5),
+          for (final (index, option) in lesson.options.indexed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s3),
+              child: LessonOptionCard(
+                number: index + 1,
+                text: option.text,
+                state: lesson.optionState(
+                  option,
+                  selectedOptionId: selectedOptionId,
+                  result: result,
+                ),
+                onTap: onSelect == null ? null : () => onSelect!(option.id),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

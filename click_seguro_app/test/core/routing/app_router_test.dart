@@ -1,0 +1,284 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/routing/app_router.dart';
+import 'package:click_seguro_app/core/routing/not_found_page.dart';
+import 'package:click_seguro_app/modules/activities/activities.dart';
+import 'package:click_seguro_app/modules/authentication/authentication.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/help/help.dart';
+import 'package:click_seguro_app/modules/news/news.dart';
+import 'package:click_seguro_app/modules/notifications/notifications.dart';
+import 'package:click_seguro_app/modules/profile/profile.dart';
+import 'package:click_seguro_app/modules/onboarding/domain/usecases/complete_onboarding_usecase.dart';
+import 'package:click_seguro_app/modules/onboarding/onboarding.dart';
+import 'package:click_seguro_app/modules/onboarding/presentation/controller/onboarding_controller.dart';
+import 'package:click_seguro_app/modules/onboarding/presentation/widgets/onboarding_intro.dart';
+import 'package:click_seguro_app/modules/settings/settings.dart';
+import 'package:click_seguro_app/modules/shell/presentation/widgets/app_bottom_nav.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../../fakes/fake_secure_storage_service.dart';
+import '../../modules/authentication/fakes/controller_factory.dart';
+import '../../modules/authentication/fakes/fake_auth_repository.dart';
+import '../../modules/authentication/fakes/forgot_password_controller_factory.dart';
+import '../../modules/onboarding/fakes/fake_onboarding_repository.dart';
+import '../../helpers/accessibility_provider.dart';
+import '../../helpers/activities_dependencies.dart';
+import '../../helpers/localized_app.dart';
+import '../../helpers/news_detail_dependencies.dart';
+import '../../helpers/profile_dependencies.dart';
+import '../../helpers/settings_dependencies.dart';
+import '../../helpers/feed_provider.dart';
+import '../../helpers/help_dependencies.dart';
+import '../../helpers/notifications_provider.dart';
+import '../../helpers/reels_provider.dart';
+import '../../helpers/splash_provider.dart';
+
+void main() {
+  late UserSessionService session;
+  late GoRouter router;
+
+  setUp(() async {
+    session = UserSessionService(FakeSecureStorageService());
+    GetIt.instance.registerSingleton<UserSessionService>(session);
+    registerHelpDependencies(GetIt.instance);
+    registerNewsDetailDependencies(GetIt.instance);
+    registerProfileDependencies(GetIt.instance);
+    registerSettingsDependencies(GetIt.instance);
+    registerActivitiesDependencies(GetIt.instance);
+    await session.startGuestSession();
+    router = buildAppRouter(session);
+  });
+
+  tearDown(() => GetIt.instance.reset());
+
+  Future<void> open(WidgetTester tester, String location) async {
+    // O login, a recuperação de senha e o onboarding leem os controllers
+    // do Provider.
+    final repository = FakeAuthRepository();
+    await pumpLocalized(
+      tester,
+      router: router,
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => buildAuthenticationController(repository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => buildForgotPasswordController(repository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OnboardingController(
+            CompleteOnboardingUseCase(FakeOnboardingRepository()),
+          ),
+        ),
+        fakeSplashProvider(session.sessionStatus.value),
+        fakeFeedProvider(),
+        fakeReelsProvider(),
+        fakeNotificationsProvider(),
+        fakeAccessibilityProvider(),
+      ],
+    );
+    router.go(location);
+    await tester.pumpAndSettle();
+  }
+
+  Finder visibleBottomNav() => find.byType(AppBottomNav).hitTestable();
+
+  group('caminhos do plano do produto', () {
+    const tabPaths = <String, Type>{
+      '/home': NewsHomePage,
+      '/activities': ActivitiesDashboardPage,
+      '/reels': ReelsPage,
+      '/reels?start=n1': ReelsPage,
+      '/help': HelpPage,
+      '/profile': ProfilePage,
+    };
+    const overlayPaths = <String, Type>{
+      '/activities/m1': LessonPage,
+      '/help/contact/new': ContactFormPage,
+      '/help/contact/c1': ContactFormPage,
+      '/profile/edit': ProfileEditPage,
+      '/news/n1': NewsDetailPage,
+      '/news/saved': UserNewsListPage,
+      '/news/read': UserNewsListPage,
+      '/news/liked': UserNewsListPage,
+      '/profile/achievements': AchievementsPage,
+      '/notifications': NotificationsPage,
+      '/settings': SettingsPage,
+      '/settings/security': ChangePasswordPage,
+      '/settings/accessibility': AccessibilityPage,
+      '/settings/privacy': PrivacyPage,
+      '/settings/about': AboutPage,
+    };
+
+    tabPaths.forEach((path, page) {
+      testWidgets('$path abre na aba, com a barra inferior', (tester) async {
+        await open(tester, path);
+
+        expect(find.byType(page), findsOneWidget);
+        expect(find.byType(NotFoundPage), findsNothing);
+        expect(visibleBottomNav(), findsOneWidget);
+      });
+    });
+
+    overlayPaths.forEach((path, page) {
+      testWidgets('$path abre sobre as abas', (tester) async {
+        await open(tester, path);
+
+        expect(find.byType(page), findsOneWidget);
+        expect(find.byType(NotFoundPage), findsNothing);
+        expect(visibleBottomNav(), findsNothing);
+      });
+    });
+
+    testWidgets('/activities/m1/done sem dados volta, sem erro (specs/020)', (
+      tester,
+    ) async {
+      await open(tester, '/activities/m1/done');
+
+      expect(find.byType(CompletionPage), findsNothing);
+      expect(find.byType(NotFoundPage), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('subtelas de configurações têm o próprio título', (
+      tester,
+    ) async {
+      await open(tester, '/settings/security');
+
+      expect(find.text('Alterar senha'), findsWidgets);
+    });
+
+    testWidgets('/help/contact/new não é lido como identificador', (
+      tester,
+    ) async {
+      await open(tester, '/help/contact/new');
+
+      final page = tester.widget<ContactFormPage>(find.byType(ContactFormPage));
+      expect(page.contactId, isNull);
+    });
+  });
+
+  // specs/026 US5: só a splash abre o onboarding com a entrada animada.
+  group('onboarding', () {
+    testWidgets('/onboarding?from=splash abre com a entrada animada', (
+      tester,
+    ) async {
+      await open(tester, '/onboarding?from=splash');
+
+      expect(find.byType(OnboardingPage), findsOneWidget);
+      expect(find.byType(OnboardingIntro), findsOneWidget);
+    });
+
+    testWidgets('/onboarding sem origem abre sem a entrada', (tester) async {
+      await open(tester, '/onboarding');
+
+      expect(find.byType(OnboardingPage), findsOneWidget);
+      expect(find.byType(OnboardingIntro), findsNothing);
+    });
+  });
+
+  group('saída', () {
+    Future<void> signIn() => session.saveSession(
+      accessToken: 'acesso-1',
+      refreshToken: 'renovacao-1',
+      email: 'maria@exemplo.com',
+      userName: 'Maria',
+    );
+
+    testWidgets('conectada sai da conta numa aba → login', (tester) async {
+      await signIn();
+      await open(tester, '/help');
+
+      await session.logout();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
+    });
+
+    testWidgets('visitante sai numa aba → login', (tester) async {
+      await open(tester, '/profile');
+
+      await session.logout();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
+    });
+
+    testWidgets('caminho público não é redirecionado depois da saída', (
+      tester,
+    ) async {
+      await open(tester, '/help');
+      await session.logout();
+      await tester.pumpAndSettle();
+
+      router.go('/forgot-password');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ForgotPasswordPage), findsOneWidget);
+    });
+
+    testWidgets('Termos e Privacidade abrem do login depois da saída, e o '
+        'voltar retorna ao login (specs/026 FR-006)', (tester) async {
+      await open(tester, '/help');
+      await session.logout();
+      await tester.pumpAndSettle();
+      expect(find.byType(LoginPage), findsOneWidget);
+
+      for (final (path, page) in [
+        ('/settings/terms', TermsPage),
+        ('/settings/privacy', PrivacyPage),
+      ]) {
+        unawaited(router.push(path));
+        await tester.pumpAndSettle();
+        expect(find.byType(page), findsOneWidget, reason: path);
+
+        router.pop();
+        await tester.pumpAndSettle();
+        expect(find.byType(LoginPage), findsOneWidget, reason: path);
+      }
+    });
+
+    testWidgets('outras telas das Configurações continuam pedindo login', (
+      tester,
+    ) async {
+      await open(tester, '/help');
+      await session.logout();
+      await tester.pumpAndSettle();
+
+      router.go('/settings/about');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
+    });
+
+    testWidgets('expiração não redireciona', (tester) async {
+      await signIn();
+      await open(tester, '/help');
+
+      await session.expire();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HelpPage), findsOneWidget);
+      expect(find.byType(LoginPage), findsNothing);
+    });
+  });
+
+  group('página não encontrada', () {
+    testWidgets('caminho desconhecido mostra a página e volta ao Início', (
+      tester,
+    ) async {
+      await open(tester, '/nao-existe');
+
+      expect(find.text('Página não encontrada'), findsOneWidget);
+
+      await tester.tap(find.text('Voltar ao Início'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NewsHomePage), findsOneWidget);
+    });
+  });
+}

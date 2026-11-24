@@ -1,0 +1,205 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/theme/app_motion.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_category_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_cover.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../../../../helpers/localized_app.dart';
+import '../../fakes/fake_news_repository.dart';
+import '../../fakes/feed_controller_factory.dart';
+
+void main() {
+  Future<void> pumpCard(
+    WidgetTester tester,
+    NewsItemEntity item, {
+    bool compact = true,
+    bool showSignals = true,
+    Future<void> Function()? onTap,
+  }) => pumpLocalized(
+    tester,
+    child: Scaffold(
+      body: ListView(
+        children: [
+          NewsCard(
+            item: item,
+            compact: compact,
+            showSignals: showSignals,
+            now: feedNow,
+            onTap: onTap ?? () async {},
+          ),
+        ],
+      ),
+    ),
+  );
+
+  // Sem imagem, a capa é a ilustração do tema (FR-015 de specs/024).
+  Finder placeholder() => find.byType(SafeIllustration);
+
+  Finder cover() => find.byType(NewsCover);
+
+  NewsCategoryEntity category(String name) =>
+      NewsCategoryEntity(id: name, name: name, slug: name);
+
+  testWidgets('compacto: título, fonte, data e categorias', (tester) async {
+    await pumpCard(
+      tester,
+      newsItem(
+        'n1',
+        originalPublishedAt: DateTime(2026, 10, 3),
+        categories: [
+          category('Phishing'),
+          category('Pix'),
+          category('WhatsApp'),
+        ],
+      ),
+    );
+
+    expect(find.text('Notícia n1'), findsOneWidget);
+    expect(find.textContaining('Folha de Teste'), findsOneWidget);
+    expect(find.textContaining('Há 2 dias'), findsOneWidget);
+    expect(find.text('Phishing'), findsOneWidget);
+    expect(find.text('Pix'), findsOneWidget);
+    expect(find.text('+1'), findsOneWidget);
+    expect(find.text('WhatsApp'), findsNothing);
+  });
+
+  testWidgets('sem categoria, sem rótulo', (tester) async {
+    await pumpCard(tester, newsItem('n1', categories: const []));
+
+    expect(find.text('Phishing'), findsNothing);
+  });
+
+  testWidgets('sem imagem mostra a capa ilustrada', (tester) async {
+    await pumpCard(tester, newsItem('n1'));
+
+    expect(placeholder(), findsOneWidget);
+  });
+
+  // O mesmo texto do detalhe: a capa não muda de desenho ao abrir.
+  testWidgets('tema da capa: todas as categorias e o título', (tester) async {
+    final item = newsItem(
+      'n1',
+      categories: [category('Phishing'), category('Pix')],
+    );
+    await pumpCard(tester, item);
+
+    expect(tester.widget<NewsCover>(cover()).themeText, item.illustrationText);
+  });
+
+  testWidgets('lida e salva aparecem só quando verdadeiras', (tester) async {
+    await pumpCard(
+      tester,
+      newsItem(
+        'n1',
+        interaction: const NewsInteraction(isRead: true, isSaved: true),
+      ),
+    );
+    expect(find.byTooltip('Lida'), findsOneWidget);
+    expect(find.byTooltip('Salva'), findsOneWidget);
+
+    await pumpCard(tester, newsItem('n2'));
+    expect(find.byTooltip('Lida'), findsNothing);
+    expect(find.byTooltip('Salva'), findsNothing);
+  });
+
+  testWidgets('sem os sinais (listas do perfil): nem lida nem salva', (
+    tester,
+  ) async {
+    await pumpCard(
+      tester,
+      newsItem(
+        'n1',
+        interaction: const NewsInteraction(isRead: true, isSaved: true),
+      ),
+      showSignals: false,
+    );
+
+    expect(find.byTooltip('Lida'), findsNothing);
+    expect(find.byTooltip('Salva'), findsNothing);
+  });
+
+  testWidgets('completo mostra a imagem grande', (tester) async {
+    await pumpCard(tester, newsItem('n1'), compact: false);
+
+    expect(tester.getSize(cover()).height, 190);
+  });
+
+  // specs/022 FR-010: com "Reduzir animações", a imagem não voa.
+  testWidgets('Hero só com movimento normal', (tester) async {
+    Future<void> pumpWithTag({required bool reduceMotion}) => pumpLocalized(
+      tester,
+      settle: false,
+      child: AppMotionScope(
+        appReduceMotion: reduceMotion,
+        child: Scaffold(
+          body: NewsCard(
+            item: newsItem('n1', imageUrl: 'https://img.test/n.jpg'),
+            now: feedNow,
+            heroTag: 'news-image-recent-n1',
+            onTap: () async {},
+          ),
+        ),
+      ),
+    );
+
+    await pumpWithTag(reduceMotion: false);
+    expect(find.byType(Hero), findsOneWidget);
+
+    await pumpWithTag(reduceMotion: true);
+    expect(find.byType(Hero), findsNothing);
+  });
+
+  testWidgets('dois toques rápidos abrem uma vez', (tester) async {
+    var taps = 0;
+    final pending = Completer<void>();
+    await pumpCard(
+      tester,
+      newsItem('n1'),
+      onTap: () {
+        taps++;
+        return pending.future;
+      },
+    );
+
+    await tester.tap(find.byType(NewsCard));
+    await tester.tap(find.byType(NewsCard));
+    await tester.pump();
+
+    expect(taps, 1);
+    pending.complete();
+  });
+
+  testWidgets('rótulo acessível e área de toque', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await pumpCard(
+      tester,
+      newsItem('n1', originalPublishedAt: DateTime(2026, 10, 5)),
+    );
+
+    expect(
+      find.bySemanticsLabel('Notícia n1, Folha de Teste, Hoje, Phishing'),
+      findsOneWidget,
+    );
+    expect(
+      tester.getSize(find.byType(NewsCard)).height,
+      greaterThanOrEqualTo(48),
+    );
+    semantics.dispose();
+  });
+
+  testWidgets('fonte em 200% não estoura', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await pumpCard(tester, newsItem('n1'));
+    await pumpCard(tester, newsItem('n2'), compact: false);
+
+    expect(tester.takeException(), isNull);
+  });
+}

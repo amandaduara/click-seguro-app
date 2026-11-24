@@ -1,0 +1,120 @@
+import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_detail_presentation_extension.dart';
+import 'package:click_seguro_app/modules/news/presentation/extensions/news_presentation_extension.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../../../../helpers/localized_app.dart';
+import '../../fakes/fake_news_repository.dart';
+import '../../fakes/feed_controller_factory.dart';
+
+void main() {
+  Future<void> localized(WidgetTester tester) =>
+      pumpLocalized(tester, child: const SizedBox());
+
+  group('hasContent', () {
+    test('texto com conteúdo', () {
+      expect(newsDetail('n1', content: 'Texto').hasContent, isTrue);
+    });
+
+    test('vazio ou só com espaços → false', () {
+      expect(newsDetail('n1', content: '').hasContent, isFalse);
+      expect(newsDetail('n1', content: '  \n ').hasContent, isFalse);
+    });
+  });
+
+  testWidgets('headerLabel: título, fonte e data, nessa ordem', (tester) async {
+    await localized(tester);
+
+    final label = newsDetail('n1').news.headerLabel(feedNow);
+
+    expect(label, 'Notícia n1, Folha de Teste, 20 de set.');
+  });
+
+  group('readingMinutes', () {
+    test('200 palavras por minuto, arredondando para cima', () {
+      expect(newsDetail('n1', content: 'Texto').readingMinutes, 1);
+      expect(
+        newsDetail(
+          'n1',
+          content: List.filled(200, 'a').join(' '),
+        ).readingMinutes,
+        1,
+      );
+      expect(
+        newsDetail(
+          'n1',
+          content: List.filled(201, 'a').join(' '),
+        ).readingMinutes,
+        2,
+      );
+      expect(
+        newsDetail(
+          'n1',
+          content: List.filled(600, 'a').join(' \n '),
+        ).readingMinutes,
+        3,
+      );
+    });
+
+    test('sem texto → null', () {
+      expect(newsDetail('n1', content: '  ').readingMinutes, isNull);
+    });
+  });
+
+  group('spokenText', () {
+    test('título, ponto e texto', () {
+      expect(
+        newsDetail('n1', content: 'Corpo').spokenText,
+        'Notícia n1.\n\nCorpo',
+      );
+    });
+
+    test('sem texto, só o título', () {
+      expect(newsDetail('n1', content: ' ').spokenText, 'Notícia n1');
+    });
+  });
+
+  group('shareText', () {
+    test('título, fonte e endereço da fonte em linhas', () {
+      expect(
+        newsDetail('n1').shareText,
+        'Notícia n1\nFolha de Teste\nhttps://fonte.test/n',
+      );
+    });
+
+    test('sem endereço válido, só título e fonte', () {
+      expect(
+        newsDetail('n1', sourceUrl: '').shareText,
+        'Notícia n1\nFolha de Teste',
+      );
+      expect(
+        newsDetail('n1', sourceUrl: 'www.fonte.test').shareText,
+        'Notícia n1\nFolha de Teste',
+      );
+    });
+  });
+
+  testWidgets('rótulos de velocidade', (tester) async {
+    await localized(tester);
+
+    expect(readingSpeedName(ReadingSpeed.slow), 'lenta');
+    expect(readingSpeedName(ReadingSpeed.normal), 'normal');
+    expect(readingSpeedName(ReadingSpeed.fast), 'rápida');
+    expect(speedSemanticLabel(ReadingSpeed.normal), 'Velocidade: normal');
+  });
+
+  testWidgets('pílula de velocidade: 0,5x, 1x e 2x', (tester) async {
+    await localized(tester);
+
+    expect(readingSpeedShort(ReadingSpeed.slow), '0,5x');
+    expect(readingSpeedShort(ReadingSpeed.normal), '1x');
+    expect(readingSpeedShort(ReadingSpeed.fast), '2x');
+  });
+
+  test('a pílula passa de 1x para 2x, depois 0,5x e volta a 1x', () {
+    expect(nextReadingSpeed(ReadingSpeed.normal), ReadingSpeed.fast);
+    expect(nextReadingSpeed(ReadingSpeed.fast), ReadingSpeed.slow);
+    expect(nextReadingSpeed(ReadingSpeed.slow), ReadingSpeed.normal);
+  });
+}

@@ -1,0 +1,322 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/i18n/app_strings.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_spacing.dart';
+import 'package:click_seguro_app/core/theme/app_typography.dart';
+import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
+import 'package:click_seguro_app/core/widgets/safe_text_field.dart';
+import 'package:click_seguro_app/modules/authentication/domain/enums/auth_field.dart';
+import 'package:click_seguro_app/modules/authentication/domain/enums/reset_step.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/controller/forgot_password_controller.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/extensions/auth_presentation_extension.dart';
+import 'package:click_seguro_app/modules/authentication/presentation/widgets/resend_code_button.dart';
+import 'package:click_seguro_app/modules/common/presentation/extensions/password_rule_presentation.dart';
+import 'package:click_seguro_app/modules/common/validators/password_policy.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+/// Recuperação de senha: e-mail → código → nova senha. Ao concluir, volta
+/// à tela de login devolvendo o e-mail (`pop(email)`).
+class ForgotPasswordPage extends StatefulWidget {
+  const ForgotPasswordPage({super.key, this.initialEmail});
+
+  /// E-mail já digitado na tela de login, se houver.
+  final String? initialEmail;
+
+  @override
+  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
+}
+
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+  final _emailController = TextEditingController();
+  final _codeController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmationController = TextEditingController();
+  final _confirmationFocus = FocusNode();
+
+  late final ForgotPasswordController _controller;
+
+  /// Redesenha a contagem do reenvio; existe só no passo do código.
+  Timer? _countdown;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.text = widget.initialEmail?.trim() ?? '';
+    _controller = context.read<ForgotPasswordController>();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _controller.start(widget.initialEmail),
+    );
+    _controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void dispose() {
+    _countdown?.cancel();
+    _controller.removeListener(_onControllerChanged);
+    _emailController.dispose();
+    _codeController.dispose();
+    _passwordController.dispose();
+    _confirmationController.dispose();
+    _confirmationFocus.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (!mounted) return;
+    _syncCountdown();
+    if (_controller.completed) {
+      final email = _controller.email;
+      _controller.start(null);
+      context.pop(email);
+    }
+  }
+
+  void _syncCountdown() {
+    final onCodeStep = _controller.step == ResetStep.code;
+    if (onCodeStep && _countdown == null) {
+      _countdown = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    } else if (!onCodeStep) {
+      _countdown?.cancel();
+      _countdown = null;
+    }
+  }
+
+  void _goBack() {
+    if (!_controller.back()) context.pop();
+  }
+
+  String? _errorFor(ForgotPasswordController controller, AuthField field) =>
+      controller.fieldErrors[field]?.messageKey.tr();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<ForgotPasswordController>();
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _goBack();
+      },
+      child: SafePageScaffold(
+        // O voltar do cabeçalho volta ao passo anterior (ou sai no primeiro).
+        header: SafePageHeader(
+          title: AppStrings.authResetTitle.tr(),
+          backLabel: AppStrings.authBack.tr(),
+          onBack: _goBack,
+        ),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s6,
+                  AppSpacing.s4,
+                  AppSpacing.s6,
+                  AppSpacing.s6,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _StepBadge(
+                      icon: switch (controller.step) {
+                        ResetStep.email => LucideIcons.mail,
+                        ResetStep.code => LucideIcons.keyRound,
+                        ResetStep.newPassword => LucideIcons.lockKeyhole,
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.s5),
+                    ...switch (controller.step) {
+                      ResetStep.email => _emailStep(controller),
+                      ResetStep.code => _codeStep(controller),
+                      ResetStep.newPassword => _newPasswordStep(controller),
+                    },
+                    if (controller.failure != null) ...[
+                      const SizedBox(height: AppSpacing.s4),
+                      Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          controller.failure!.message.tr(),
+                          style: AppTypography.body.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: context.colors.destructive,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s6,
+                AppSpacing.s3,
+                AppSpacing.s6,
+                AppSpacing.s4,
+              ),
+              child: _primaryButton(controller),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Botão principal do passo, fixo no fim da tela (fora da rolagem): fica
+  /// acima da área segura e sobe com o teclado.
+  Widget _primaryButton(ForgotPasswordController controller) =>
+      switch (controller.step) {
+        ResetStep.email => SafeButton(
+          label: AppStrings.authResetSendCode.tr(),
+          loading: controller.isSubmitting,
+          onPressed: () => controller.submitEmail(_emailController.text),
+        ),
+        ResetStep.code => SafeButton(
+          label: AppStrings.authResetContinue.tr(),
+          loading: controller.isSubmitting,
+          onPressed: () => controller.submitCode(_codeController.text),
+        ),
+        ResetStep.newPassword => SafeButton(
+          label: AppStrings.authResetSave.tr(),
+          loading: controller.isSubmitting,
+          onPressed: () => _saveNewPassword(controller),
+        ),
+      };
+
+  /// Texto de apoio de cada passo, no corpo grande do app.
+  Widget _description(String text) => Text(
+    text,
+    style: AppTypography.bodyLarge.copyWith(
+      color: context.colors.textForeground,
+    ),
+  );
+
+  List<Widget> _emailStep(ForgotPasswordController controller) => [
+    _description(AppStrings.authResetEmailDescription.tr()),
+    const SizedBox(height: AppSpacing.s6),
+    SafeTextField(
+      controller: _emailController,
+      label: AppStrings.authEmailLabel.tr(),
+      semanticsLabel: AppStrings.authEmailLabel.tr(),
+      placeholder: AppStrings.authEmailPlaceholder.tr(),
+      leftIcon: const Icon(LucideIcons.mail),
+      keyboardType: TextInputType.emailAddress,
+      textInputAction: TextInputAction.done,
+      autofillHints: const [AutofillHints.email],
+      onSubmitted: (_) => controller.submitEmail(_emailController.text),
+      error: _errorFor(controller, AuthField.email),
+    ),
+  ];
+
+  List<Widget> _codeStep(ForgotPasswordController controller) => [
+    _description(AppStrings.authResetCodeSent.tr()),
+    const SizedBox(height: AppSpacing.s6),
+    SafeTextField(
+      controller: _codeController,
+      label: AppStrings.authResetCodeLabel.tr(),
+      semanticsLabel: AppStrings.authResetCodeLabel.tr(),
+      placeholder: AppStrings.authResetCodePlaceholder.tr(),
+      leftIcon: const Icon(LucideIcons.hash),
+      textInputAction: TextInputAction.done,
+      autofillHints: const [AutofillHints.oneTimeCode],
+      onSubmitted: (_) => controller.submitCode(_codeController.text),
+      error: _errorFor(controller, AuthField.code),
+    ),
+    const SizedBox(height: AppSpacing.s3),
+    Center(
+      child: ResendCodeButton(
+        secondsUntilResend: controller.secondsUntilResend,
+        onPressed: controller.resendCode,
+      ),
+    ),
+  ];
+
+  List<Widget> _newPasswordStep(ForgotPasswordController controller) => [
+    SafeTextField(
+      controller: _passwordController,
+      label: AppStrings.authResetNewPasswordLabel.tr(),
+      semanticsLabel: AppStrings.authResetNewPasswordLabel.tr(),
+      placeholder: AppStrings.authResetNewPasswordPlaceholder.tr(),
+      leftIcon: const Icon(LucideIcons.lock),
+      obscureText: !controller.isPasswordVisible,
+      textInputAction: TextInputAction.next,
+      autofillHints: const [AutofillHints.newPassword],
+      onChanged: controller.onPasswordChanged,
+      onSubmitted: (_) => _confirmationFocus.requestFocus(),
+      error: _errorFor(controller, AuthField.password),
+      rightIcon: IconButton(
+        onPressed: controller.togglePasswordVisibility,
+        tooltip: controller.isPasswordVisible
+            ? AppStrings.authPasswordHide.tr()
+            : AppStrings.authPasswordShow.tr(),
+        icon: Icon(
+          controller.isPasswordVisible ? LucideIcons.eyeOff : LucideIcons.eye,
+        ),
+      ),
+    ),
+    const SizedBox(height: AppSpacing.s3),
+    PasswordRulesList(
+      rules: [
+        for (final rule in PasswordRule.values)
+          (
+            label: rule.labelKey.tr(),
+            met: controller.passwordRules.contains(rule),
+          ),
+      ],
+    ),
+    const SizedBox(height: AppSpacing.s5),
+    SafeTextField(
+      controller: _confirmationController,
+      focusNode: _confirmationFocus,
+      label: AppStrings.authResetConfirmPasswordLabel.tr(),
+      semanticsLabel: AppStrings.authResetConfirmPasswordLabel.tr(),
+      placeholder: AppStrings.authResetConfirmPasswordPlaceholder.tr(),
+      leftIcon: const Icon(LucideIcons.lock),
+      obscureText: !controller.isPasswordVisible,
+      textInputAction: TextInputAction.done,
+      onSubmitted: (_) => _saveNewPassword(controller),
+      error: _errorFor(controller, AuthField.passwordConfirmation),
+    ),
+  ];
+
+  void _saveNewPassword(ForgotPasswordController controller) =>
+      controller.submitNewPassword(
+        password: _passwordController.text,
+        confirmation: _confirmationController.text,
+      );
+}
+
+/// Ícone do passo num círculo rosado, como os selos do redesign 2.0.
+/// Decorativo: o título e o texto do passo já dizem o que fazer.
+class _StepBadge extends StatelessWidget {
+  const _StepBadge({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          color: context.colors.primarySoft,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 32, color: context.colors.primary),
+      ),
+    ),
+  );
+}

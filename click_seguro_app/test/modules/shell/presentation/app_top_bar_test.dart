@@ -1,0 +1,347 @@
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/shell/presentation/widgets/app_top_bar.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../fakes/fake_secure_storage_service.dart';
+import '../../../helpers/localized_app.dart';
+import '../../../helpers/notifications_provider.dart';
+import '../../notifications/fakes/alerts_fixtures.dart';
+import '../../notifications/fakes/fake_notifications_repository.dart';
+
+void main() {
+  late UserSessionService session;
+
+  setUp(() {
+    session = UserSessionService(FakeSecureStorageService());
+    GetIt.instance.registerSingleton<UserSessionService>(session);
+  });
+
+  tearDown(() => GetIt.instance.reset());
+
+  Future<void> signIn() => session.saveSession(
+    accessToken: 'acesso-1',
+    refreshToken: 'renovacao-1',
+    email: 'maria@exemplo.com',
+    userName: 'Maria',
+  );
+
+  GoRouter buildRouter({String? subtitle}) => GoRouter(
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (_, _) => Scaffold(
+          body: AppTopBar(title: 'Notícias seguras', subtitle: subtitle),
+        ),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (_, _) => const Scaffold(body: Text('tela alertas')),
+      ),
+      GoRoute(
+        path: '/assistant',
+        builder: (_, _) => const Scaffold(body: Text('tela assistente')),
+      ),
+    ],
+  );
+
+  // Só o Início cumprimenta (validação da usuária, specs/024): ele passa a
+  // saudação como subtítulo; as outras abas mostram só o título.
+  group('título e subtítulo', () {
+    testWidgets('sem subtítulo: só o título, sem saudação', (tester) async {
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      expect(find.text('Notícias seguras'), findsOneWidget);
+      expect(find.textContaining('Olá'), findsNothing);
+      expect(find.text('Bem-vindo'), findsNothing);
+    });
+
+    testWidgets('com subtítulo: a saudação do Início em cima do título', (
+      tester,
+    ) async {
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(subtitle: 'Olá, Maria! 3 notícias novas'),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      final Rect subtitle = tester.getRect(
+        find.text('Olá, Maria! 3 notícias novas'),
+      );
+      final Rect title = tester.getRect(find.text('Notícias seguras'));
+      expect(subtitle.bottom, lessThanOrEqualTo(title.top));
+      // A saudação fica colada ao título (validação da usuária): no máximo
+      // 8 de espaço entre as duas linhas.
+      expect(title.top - subtitle.bottom, lessThanOrEqualTo(8));
+      expect(
+        tester
+            .widget<Text>(find.text('Olá, Maria! 3 notícias novas'))
+            .style
+            ?.fontSize,
+        16,
+      );
+      expect(
+        tester.widget<Text>(find.text('Notícias seguras')).style?.fontSize,
+        28,
+      );
+    });
+
+    for (final width in [320.0, 360.0, 412.0]) {
+      testWidgets('sem subtítulo, título e botões na mesma linha, em '
+          '$width dp', (tester) async {
+        tester.view.physicalSize = Size(width, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await signIn();
+        await pumpLocalized(
+          tester,
+          router: buildRouter(),
+          providers: [fakeNotificationsProvider()],
+        );
+
+        final title = tester.getRect(find.text('Notícias seguras'));
+        final assistant = tester.getRect(find.bySemanticsLabel('Assistente'));
+        expect(assistant.left, greaterThan(title.left));
+        expect(title.right, lessThanOrEqualTo(assistant.left));
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('com subtítulo, botões na linha dele e título embaixo, em '
+          '$width dp', (tester) async {
+        tester.view.physicalSize = Size(width, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await signIn();
+        await pumpLocalized(
+          tester,
+          router: buildRouter(subtitle: 'Olá, Maria'),
+          providers: [fakeNotificationsProvider()],
+        );
+
+        final greeting = tester.getRect(find.text('Olá, Maria'));
+        final title = tester.getRect(find.text('Notícias seguras'));
+        final assistant = tester.getRect(find.bySemanticsLabel('Assistente'));
+        expect(assistant.left, greaterThan(greeting.right));
+        expect(title.top, greaterThan(assistant.bottom));
+        expect(tester.takeException(), isNull);
+      });
+    }
+  });
+
+  group('botões', () {
+    for (final (label, enter) in [
+      ('conectada', (UserSessionService s) async {}),
+      ('visitante', (UserSessionService s) => s.startGuestSession()),
+    ]) {
+      // A engrenagem fica só no Perfil (validação da usuária, specs/024).
+      testWidgets('$label: sem a engrenagem das configurações', (tester) async {
+        if (label == 'conectada') await signIn();
+        await enter(session);
+        await pumpLocalized(
+          tester,
+          router: buildRouter(),
+          providers: [fakeNotificationsProvider()],
+        );
+
+        expect(find.bySemanticsLabel('Configurações'), findsNothing);
+      });
+    }
+
+    testWidgets('conectada, "Alertas" abre /notifications', (tester) async {
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      await tester.tap(find.bySemanticsLabel('Alertas'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela alertas'), findsOneWidget);
+    });
+
+    testWidgets('conectada, o leitor de tela toca em "Assistente"', (
+      tester,
+    ) async {
+      final SemanticsHandle handle = tester.ensureSemantics();
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      final SemanticsNode node = tester.getSemantics(
+        find.bySemanticsLabel('Assistente'),
+      );
+      expect(node, isSemantics(isButton: true, hasTapAction: true));
+      node.owner!.performAction(node.id, SemanticsAction.tap);
+      await tester.pumpAndSettle();
+
+      expect(find.text('tela assistente'), findsOneWidget);
+      handle.dispose();
+    });
+
+    testWidgets('visitante: "Alertas" mostra o convite e não abre', (
+      tester,
+    ) async {
+      await session.startGuestSession();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      await tester.tap(find.bySemanticsLabel('Alertas'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Entre na sua conta'), findsOneWidget);
+      expect(find.text('tela alertas'), findsNothing);
+    });
+
+    testWidgets('conectada: o sino mostra o número de não lidos', (
+      tester,
+    ) async {
+      await signIn();
+      final repository = FakeNotificationsRepository()
+        ..stored = snapshot(
+          alerts: [
+            alert(newsId: 'a'),
+            alert(newsId: 'b'),
+            alert(newsId: 'c'),
+          ],
+        );
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider(repository)],
+      );
+
+      expect(find.bySemanticsLabel('Alertas, 3 novos'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+    });
+
+    testWidgets('visitante toca no sino: convite e nenhuma chamada ao '
+        'repository', (tester) async {
+      await session.startGuestSession();
+      final repository = FakeNotificationsRepository();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider(repository)],
+      );
+
+      await tester.tap(find.bySemanticsLabel('Alertas'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Entre na sua conta'), findsOneWidget);
+      expect(find.text('tela alertas'), findsNothing);
+      expect(repository.getSnapshotCalls, 0);
+      expect(repository.receiveCalls, 0);
+      expect(repository.fetchCalls, isEmpty);
+    });
+
+    testWidgets('dois toques rápidos abrem uma única tela de alertas', (
+      tester,
+    ) async {
+      await signIn();
+      final router = buildRouter();
+      await pumpLocalized(
+        tester,
+        router: router,
+        providers: [fakeNotificationsProvider()],
+      );
+
+      await tester.tap(find.bySemanticsLabel('Alertas'));
+      await tester.tap(find.bySemanticsLabel('Alertas'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícias seguras'), findsOneWidget);
+    });
+
+    testWidgets('os dois botões medem pelo menos 48×48', (tester) async {
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      for (final label in ['Alertas', 'Assistente']) {
+        final size = tester.getSize(find.bySemanticsLabel(label));
+        expect(size.width, greaterThanOrEqualTo(48), reason: label);
+        expect(size.height, greaterThanOrEqualTo(48), reason: label);
+      }
+    });
+
+    testWidgets('fonte em 200% não estoura a barra', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      tester.view.physicalSize = const Size(320, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await signIn();
+
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Notícias seguras'), findsOneWidget);
+      for (final label in ['Alertas', 'Assistente']) {
+        final button = find.bySemanticsLabel(label);
+        expect(button, findsOneWidget, reason: label);
+        final size = tester.getSize(button);
+        expect(size.width, greaterThanOrEqualTo(48), reason: label);
+        expect(size.height, greaterThanOrEqualTo(48), reason: label);
+      }
+    });
+
+    testWidgets('botão "Assistente" abre a rota', (tester) async {
+      await signIn();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      await tester.tap(find.byTooltip('Assistente'));
+      await tester.pumpAndSettle();
+      expect(find.text('tela assistente'), findsOneWidget);
+    });
+
+    testWidgets('visitante toca no Assistente e vê o convite padrão', (
+      tester,
+    ) async {
+      await session.startGuestSession();
+      await pumpLocalized(
+        tester,
+        router: buildRouter(),
+        providers: [fakeNotificationsProvider()],
+      );
+
+      await tester.tap(find.byTooltip('Assistente'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Entre na sua conta'), findsOneWidget);
+      expect(find.text('tela assistente'), findsNothing);
+    });
+  });
+}

@@ -1,0 +1,521 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/core/theme/app_theme.dart';
+import 'package:click_seguro_app/core/widgets/safe_offline_banner.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_interaction_change.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_item_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_list_kind.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/news_page_entity.dart';
+import 'package:click_seguro_app/modules/news/domain/entities/user_news_list_result.dart';
+import 'package:click_seguro_app/modules/news/presentation/controller/user_news_list_controller.dart';
+import 'package:click_seguro_app/modules/news/presentation/pages/user_news_list_page.dart';
+import 'package:click_seguro_app/modules/news/presentation/widgets/news_card.dart';
+import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../fakes/fake_secure_storage_service.dart';
+import '../../../../helpers/localized_app.dart';
+import '../../fakes/fake_news_repository.dart';
+import '../../fakes/user_news_list_controller_factory.dart';
+
+void main() {
+  late UserSessionService session;
+  late FakeNewsRepository repository;
+
+  setUp(() async {
+    session = UserSessionService(FakeSecureStorageService());
+    GetIt.instance.registerSingleton<UserSessionService>(session);
+    await session.startGuestSession();
+    repository = FakeNewsRepository();
+  });
+
+  tearDown(() async => GetIt.instance.reset());
+
+  Future<void> signIn() => session.saveSession(
+    accessToken: 'tk',
+    refreshToken: 'rf',
+    email: 'ana@test.com',
+    userName: 'Ana',
+  );
+
+  Right<Failure, UserNewsListResult> pageOf(
+    int count, {
+    int start = 1,
+    int page = 1,
+    bool hasMore = false,
+    bool isFromCache = false,
+  }) => Right(
+    UserNewsListResult(
+      page: NewsPageEntity(
+        items: newsItems(count, start: start),
+        hasMore: hasMore,
+        page: page,
+      ),
+      isFromCache: isFromCache,
+    ),
+  );
+
+  GoRouter buildRouter({NewsListKind kind = NewsListKind.saved}) => GoRouter(
+    initialLocation: '/news/${kind.name}',
+    routes: [
+      GoRoute(
+        path: '/news/${kind.name}',
+        builder: (_, _) => ChangeNotifierProvider<UserNewsListController>(
+          create: (_) => buildUserNewsListController(repository, kind: kind),
+          child: UserNewsListPage(kind: kind),
+        ),
+      ),
+      GoRoute(
+        path: '/home',
+        builder: (_, _) => const Scaffold(body: Text('início')),
+      ),
+      GoRoute(
+        path: '/news/:id',
+        builder: (_, state) => Scaffold(
+          appBar: AppBar(),
+          body: Text('detalhe ${state.pathParameters['id']}'),
+        ),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (_, _) => const Scaffold(body: Text('login')),
+      ),
+    ],
+  );
+
+  /// Com [settle] falso, não espera o carregando (que anima sem fim).
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    bool settle = true,
+    Size size = const Size(800, 1600),
+    ThemeData? theme,
+    NewsListKind kind = NewsListKind.saved,
+  }) async {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pumpLocalized(
+      tester,
+      router: buildRouter(kind: kind),
+      settle: settle,
+      theme: theme,
+    );
+    if (!settle) await tester.pump();
+  }
+
+  UserNewsListController controllerOf(WidgetTester tester) => tester
+      .element(find.byType(UserNewsListPage))
+      .read<UserNewsListController>();
+
+  group('com conta', () {
+    setUp(signIn);
+
+    testWidgets('cabeçalho com "Notícias salvas" ao lado do voltar', (
+      tester,
+    ) async {
+      repository.savedResults.add(pageOf(1));
+
+      await pumpPage(tester);
+
+      expect(
+        find.descendant(
+          of: find.byType(SafePageHeader),
+          matching: find.text('Notícias salvas'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('cartões do feed na ordem do serviço', (tester) async {
+      repository.savedResults.add(pageOf(3));
+
+      await pumpPage(tester);
+
+      expect(find.text('Notícia n1'), findsOneWidget);
+      expect(find.text('Folha de Teste · 20 de set.'), findsNWidgets(3));
+      final double first = tester.getTopLeft(find.text('Notícia n1')).dy;
+      final double second = tester.getTopLeft(find.text('Notícia n2')).dy;
+      final double third = tester.getTopLeft(find.text('Notícia n3')).dy;
+      expect(first, lessThan(second));
+      expect(second, lessThan(third));
+      expect(repository.savedCalls, [1]);
+    });
+
+    testWidgets('perto do fim carrega a próxima página, sem repetir', (
+      tester,
+    ) async {
+      repository.savedResults
+        ..add(pageOf(20, hasMore: true))
+        ..add(pageOf(5, start: 18, page: 2));
+      await pumpPage(tester);
+      expect(repository.savedCalls, [1]);
+
+      await tester.drag(find.byType(ListView), const Offset(0, -6000));
+      await tester.pumpAndSettle();
+
+      expect(repository.savedCalls, [1, 2]);
+      expect(controllerOf(tester).items, hasLength(22));
+    });
+
+    testWidgets('tocar num cartão abre o detalhe e, ao voltar, atualiza a '
+        'lista', (tester) async {
+      repository.savedResults
+        ..add(pageOf(3))
+        ..add(pageOf(2, start: 2));
+      await pumpPage(tester);
+
+      await tester.tap(find.text('Notícia n1'));
+      await tester.pumpAndSettle();
+      expect(find.text('detalhe n1'), findsOneWidget);
+      expect(repository.savedCalls, [1]);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(repository.savedCalls, [1, 1]);
+      expect(find.text('Notícia n1'), findsNothing);
+      expect(find.text('Notícia n2'), findsOneWidget);
+    });
+
+    testWidgets('desmarcar salvar no detalhe e voltar: o item sai, mesmo '
+        'com o servidor ainda devolvendo a lista antiga, sem esqueleto', (
+      tester,
+    ) async {
+      repository.savedResults
+        ..add(pageOf(3))
+        ..add(pageOf(3));
+      await pumpPage(tester);
+
+      await tester.tap(find.text('Notícia n1'));
+      await tester.pumpAndSettle();
+      // O detalhe confirma a remoção (o repositório avisa) e a pessoa volta.
+      repository.interactions.add(
+        const NewsInteractionChange(newsId: 'n1', isSaved: false),
+      );
+      await tester.tap(find.byType(BackButton));
+      await tester.pump();
+
+      expect(find.byType(SafeLoadingState), findsNothing);
+      await tester.pumpAndSettle();
+      expect(repository.savedCalls, [1, 1]);
+      expect(find.text('Notícia n1'), findsNothing);
+      expect(find.text('Notícia n2'), findsOneWidget);
+      expect(find.text('Notícia n3'), findsOneWidget);
+    });
+
+    testWidgets('curtidas: descurtir no detalhe e voltar tira o item', (
+      tester,
+    ) async {
+      repository.savedResults
+        ..add(pageOf(2))
+        ..add(pageOf(2));
+      await pumpPage(tester, kind: NewsListKind.liked);
+
+      await tester.tap(find.text('Notícia n2'));
+      await tester.pumpAndSettle();
+      repository.interactions.add(
+        const NewsInteractionChange(newsId: 'n2', isLiked: false),
+      );
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícia n2'), findsNothing);
+      expect(find.text('Notícia n1'), findsOneWidget);
+    });
+
+    testWidgets('lista vazia: mensagem e dica', (tester) async {
+      repository.savedResults.add(pageOf(0));
+
+      await pumpPage(tester);
+
+      expect(
+        find.text('Você ainda não salvou nenhuma notícia.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Toque no marcador de uma notícia para guardá-la aqui.'),
+        findsOneWidget,
+      );
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is SafeIllustration &&
+              widget.illustration == AppIllustration.stateEmpty,
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('cópia do aparelho: aviso de offline e a lista', (
+      tester,
+    ) async {
+      repository.savedResults.add(pageOf(2, isFromCache: true));
+
+      await pumpPage(tester);
+
+      expect(find.byType(SafeOfflineBanner), findsOneWidget);
+      expect(find.text('Notícia n1'), findsOneWidget);
+    });
+
+    testWidgets('erro sem cópia: "Tentar novamente" recarrega', (tester) async {
+      repository.savedResults
+        ..add(const Left(ConnectionFailure()))
+        ..add(pageOf(2));
+      await pumpPage(tester);
+      expect(find.text('Tentar novamente'), findsOneWidget);
+
+      await tester.tap(find.text('Tentar novamente'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícia n1'), findsOneWidget);
+      expect(find.text('Tentar novamente'), findsNothing);
+    });
+
+    // Sem aviso de servidor lento (validação da usuária, specs/024).
+    testWidgets('carregando: só os blocos, sem aviso de servidor', (
+      tester,
+    ) async {
+      repository.savedGate = Completer<void>();
+      repository.savedResults.add(pageOf(1));
+      const slow = 'Conectando ao servidor. Isso pode levar até um minuto.';
+
+      await pumpPage(tester, settle: false);
+
+      expect(find.byType(SafeLoadingState), findsOneWidget);
+      await tester.pump(const Duration(seconds: 6));
+      expect(find.text(slow), findsNothing);
+
+      repository.savedGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('Notícia n1'), findsOneWidget);
+    });
+  });
+
+  group('sem sinais de lida e salva nos cartões', () {
+    setUp(signIn);
+
+    for (final kind in NewsListKind.values) {
+      testWidgets('${kind.name}: cartões sem "Lida" nem "Salva"', (
+        tester,
+      ) async {
+        repository.savedResults.add(
+          Right(
+            UserNewsListResult(
+              page: NewsPageEntity(
+                items: [
+                  newsItem(
+                    'n1',
+                    interaction: const NewsInteraction(
+                      isRead: true,
+                      isSaved: true,
+                      isLiked: true,
+                    ),
+                  ),
+                ],
+                hasMore: false,
+                page: 1,
+              ),
+              isFromCache: false,
+            ),
+          ),
+        );
+
+        await pumpPage(tester, kind: kind);
+
+        expect(find.text('Notícia n1'), findsOneWidget);
+        expect(find.byTooltip('Lida'), findsNothing);
+        expect(find.byTooltip('Salva'), findsNothing);
+      });
+    }
+  });
+
+  group('visitante', () {
+    testWidgets('convite no lugar da lista, sem pedido e sem lista', (
+      tester,
+    ) async {
+      await pumpPage(tester);
+
+      expect(find.text('Entre na sua conta'), findsOneWidget);
+      expect(
+        find.text('Entre na sua conta para ver as notícias que você salvou.'),
+        findsOneWidget,
+      );
+      expect(find.text('Entrar ou criar conta'), findsOneWidget);
+      expect(find.byType(ListView), findsNothing);
+      expect(find.byType(AccountRequiredSheet), findsNothing);
+      expect(repository.savedCalls, isEmpty);
+    });
+
+    testWidgets('o botão grande leva ao login, sem janela', (tester) async {
+      await pumpPage(tester);
+      final size = tester.getSize(find.byKey(UserNewsListPage.loginKey));
+      expect(size.height, greaterThanOrEqualTo(48));
+
+      await tester.tap(find.byKey(UserNewsListPage.loginKey));
+      await tester.pumpAndSettle();
+
+      expect(find.text('login'), findsOneWidget);
+      expect(find.byType(AccountRequiredSheet), findsNothing);
+      expect(repository.savedCalls, isEmpty);
+    });
+
+    testWidgets('ao entrar na conta com a tela aberta, carrega a lista', (
+      tester,
+    ) async {
+      repository.savedResults.add(pageOf(2));
+      await pumpPage(tester);
+      expect(repository.savedCalls, isEmpty);
+
+      await signIn();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notícia n1'), findsOneWidget);
+      expect(repository.savedCalls, [1]);
+    });
+  });
+
+  group('acessibilidade (FR-022, SC-008)', () {
+    void useScale2x(WidgetTester tester) {
+      tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    }
+
+    testWidgets('com conta: cartões com 48 dp ou mais e leitura na ordem', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await signIn();
+      repository.savedResults.add(pageOf(3));
+      await pumpPage(tester);
+
+      final cards = find.byType(NewsCard);
+      expect(cards, findsNWidgets(3));
+      for (var i = 0; i < 3; i++) {
+        expect(tester.getSize(cards.at(i)).height, greaterThanOrEqualTo(48));
+      }
+      final tops = [
+        for (final n in ['n1', 'n2', 'n3'])
+          tester.getTopLeft(find.bySemanticsLabel(RegExp('^Notícia $n, '))).dy,
+      ];
+      expect(tops, orderedEquals([...tops]..sort()));
+      expect(tops.toSet(), hasLength(3));
+      handle.dispose();
+    });
+
+    testWidgets('fonte 2×: lista e convite sem sobreposição', (tester) async {
+      useScale2x(tester);
+      await signIn();
+      repository.savedResults.add(pageOf(3, isFromCache: true));
+      await pumpPage(tester, size: const Size(360, 800));
+
+      final context = tester.element(find.byType(UserNewsListPage));
+      expect(MediaQuery.textScalerOf(context).scale(10), 20);
+      expect(tester.takeException(), isNull);
+      final first = tester.getRect(find.byType(NewsCard).first);
+      expect(first.left, greaterThanOrEqualTo(0));
+      expect(first.right, lessThanOrEqualTo(360));
+    });
+
+    testWidgets('fonte 2×: convite do visitante, botão grande inteiro', (
+      tester,
+    ) async {
+      useScale2x(tester);
+      await pumpPage(tester, size: const Size(360, 800));
+
+      expect(tester.takeException(), isNull);
+      final rect = tester.getRect(find.byKey(UserNewsListPage.loginKey));
+      expect(rect.height, greaterThanOrEqualTo(48));
+      expect(rect.left, greaterThanOrEqualTo(0));
+      expect(rect.right, lessThanOrEqualTo(360));
+    });
+
+    testWidgets('fonte 2×: lista vazia sem estouro', (tester) async {
+      useScale2x(tester);
+      await signIn();
+      repository.savedResults.add(pageOf(0));
+      await pumpPage(tester, size: const Size(360, 800));
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text('Você ainda não salvou nenhuma notícia.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('alto contraste: paleta da feature 009 na lista e no '
+        'convite', (tester) async {
+      await signIn();
+      repository.savedResults.add(pageOf(2));
+      await pumpPage(tester, theme: AppTheme.highContrastTheme);
+
+      final context = tester.element(find.byType(UserNewsListPage));
+      expect(context.colors, AppPalette.highContrast);
+      expect(find.byType(NewsCard), findsNWidgets(2));
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('lidas e curtidas (specs/012)', () {
+    setUp(signIn);
+
+    for (final (kind, title, empty) in [
+      (
+        NewsListKind.read,
+        'Notícias lidas',
+        'Você ainda não leu nenhuma notícia.',
+      ),
+      (
+        NewsListKind.liked,
+        'Notícias curtidas',
+        'Você ainda não curtiu nenhuma notícia.',
+      ),
+    ]) {
+      testWidgets('${kind.name}: título e lista da conta', (tester) async {
+        repository.savedResults.add(pageOf(2));
+
+        await pumpPage(tester, kind: kind);
+
+        expect(find.text(title), findsOneWidget);
+        expect(find.text('Notícia n1'), findsOneWidget);
+        expect(repository.listKinds, [kind]);
+      });
+
+      testWidgets('${kind.name}: vazio com botão para o Início', (
+        tester,
+      ) async {
+        repository.savedResults.add(pageOf(0));
+        await pumpPage(tester, kind: kind);
+
+        expect(find.text(empty), findsOneWidget);
+        await tester.tap(find.text('Voltar ao Início'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('início'), findsOneWidget);
+      });
+
+      testWidgets('${kind.name}: tocar numa notícia abre o detalhe', (
+        tester,
+      ) async {
+        repository.savedResults.add(pageOf(1));
+        await pumpPage(tester, kind: kind);
+
+        await tester.tap(find.text('Notícia n1'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('detalhe n1'), findsOneWidget);
+      });
+    }
+  });
+}

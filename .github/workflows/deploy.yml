@@ -1,0 +1,45 @@
+name: Deploy Style Guide to GitHub Pages
+
+on:
+  push:
+    branches:
+      - develop
+
+# Necessário para o action conseguir fazer push na branch gh-pages
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Instalar Dependências
+        working-directory: click_seguro_app
+        run: flutter pub get
+
+      - name: Build Web (Style Guide)
+        working-directory: click_seguro_app
+        run: flutter build web -t lib/style_guide/style_guide.dart --base-href "/click-seguro-app/"
+
+      - name: Deploy para o GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: click_seguro_app/build/web
+          branch: gh-pages
+          clean: true

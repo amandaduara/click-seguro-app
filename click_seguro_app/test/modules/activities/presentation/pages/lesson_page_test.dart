@@ -1,0 +1,1693 @@
+import 'dart:async';
+
+import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/widgets/safe_illustration.dart';
+import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
+import 'package:click_seguro_app/core/theme/app_theme.dart';
+import 'package:click_seguro_app/core/widgets/safe_button.dart';
+import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
+import 'package:click_seguro_app/core/widgets/safe_page_header.dart';
+import 'package:click_seguro_app/core/widgets/safe_progress.dart';
+import 'package:click_seguro_app/modules/activities/data/datasources/guest_progress_store.dart';
+import 'package:click_seguro_app/modules/activities/data/models/answer_result_model.dart';
+import 'package:click_seguro_app/modules/activities/data/models/module_detail_model.dart';
+import 'package:click_seguro_app/modules/activities/data/repositories/activities_repository_impl.dart';
+import 'package:click_seguro_app/modules/activities/domain/failures/activities_failures.dart';
+import 'package:click_seguro_app/modules/activities/presentation/pages/completion_page.dart';
+import 'package:click_seguro_app/modules/activities/presentation/pages/lesson_page.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/feedback_sheet.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_option_card.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/presentation/controller/read_aloud_controller.dart';
+import 'package:click_seguro_app/modules/common/services/text_to_speech_service.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:animations/animations.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
+import 'package:click_seguro_app/modules/activities/presentation/widgets/lesson_progress_indicator.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../fakes/fake_secure_storage_service.dart';
+import '../../../../fakes/hanging_http_client.dart';
+import '../../../../fakes/fake_text_to_speech_service.dart';
+import '../../../../helpers/activities_dependencies.dart';
+import '../../../../helpers/localized_app.dart';
+import '../../fakes/activities_fixtures.dart';
+import '../../fakes/fake_activities_remote_data_source.dart';
+import '../../fakes/fake_activities_repository.dart';
+
+/// Respondidas: os segmentos coral do progresso da pergunta (redesign 2.0,
+/// specs/024).
+int answeredSegments(WidgetTester tester) => tester
+    .widgetList<Container>(
+      find.descendant(
+        of: find.byType(LessonProgressIndicator),
+        matching: find.byType(Container),
+      ),
+    )
+    .where(
+      (c) =>
+          (c.decoration as BoxDecoration?)?.color == AppPalette.light.primary,
+    )
+    .length;
+
+void main() {
+  late UserSessionService session;
+  late FakeActivitiesRepository repository;
+  late FakeTextToSpeechService tts;
+  late AccessibilityPreferencesNotifier preferences;
+  late GoRouter router;
+
+  /// Parâmetros com que a tela de login foi aberta (specs/020 US2).
+  Map<String, String>? loginQuery;
+
+  void useModule({
+    Set<String> answered = const {},
+    List<Map<String, dynamic>>? lessons,
+  }) => repository.moduleDetailResults = [
+    Right(
+      ModuleDetailModel.fromJson(
+        moduleDetailJson(answered: answered, lessons: lessons),
+      ).toEntity(),
+    ),
+  ];
+
+  setUp(() async {
+    session = UserSessionService(FakeSecureStorageService());
+    await session.saveSession(
+      accessToken: 'tk',
+      refreshToken: 'rf',
+      email: 'maria@exemplo.com',
+    );
+    repository = FakeActivitiesRepository();
+    tts = FakeTextToSpeechService();
+    preferences = AccessibilityPreferencesNotifier();
+    GetIt.instance
+      ..registerSingleton<UserSessionService>(session)
+      ..registerSingleton(preferences)
+      ..registerFactory(
+        () => ReadAloudController(tts, preferences: preferences),
+      );
+    registerActivitiesDependencies(GetIt.instance, repository: repository);
+    loginQuery = null;
+    router = GoRouter(
+      initialLocation: '/activities/m1',
+      routes: [
+        GoRoute(
+          path: '/login',
+          builder: (_, state) {
+            loginQuery = state.uri.queryParameters;
+            return const Scaffold(body: Text('page:/login'));
+          },
+        ),
+        GoRoute(
+          path: '/activities',
+          builder: (_, _) => const Scaffold(body: Text('page:/activities')),
+          routes: [
+            GoRoute(
+              path: ':moduleId',
+              builder: (_, state) =>
+                  LessonPage(moduleId: state.pathParameters['moduleId']!),
+              routes: [
+                GoRoute(
+                  path: 'done',
+                  builder: (_, state) => CompletionPage(
+                    completion: state.extra as ModuleCompletion?,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  });
+
+  tearDown(() => GetIt.instance.reset());
+
+  Future<void> open(
+    WidgetTester tester, {
+    Locale locale = const Locale('pt', 'BR'),
+  }) => pumpLocalized(tester, router: router, locale: locale);
+
+  /// Termina cada trecho lido, um por vez, até a leitura acabar.
+  Future<void> readToEnd(WidgetTester tester) async {
+    while (true) {
+      final int before = tts.spoken.length;
+      tts.finishSpeaking();
+      await tester.pump();
+      if (tts.spoken.length == before) break;
+    }
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> reveal(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(
+      finder,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+  }
+
+  group('ver as perguntas (US1)', () {
+    testWidgets('título, posição, enunciado e alternativas numeradas', (
+      tester,
+    ) async {
+      await open(tester);
+
+      expect(
+        find.descendant(
+          of: find.byType(SafePageHeader),
+          matching: find.text('Golpes Digitais'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      expect(
+        find.text('Promessa de dinheiro em dobro pelo PIX. O que fazer?'),
+        findsOneWidget,
+      );
+      for (final (index, text) in [
+        'Ignorar e denunciar',
+        'Enviar',
+        'Pedir prova',
+        'Repassar',
+      ].indexed) {
+        await reveal(tester, find.text(text));
+        expect(find.text('${index + 1}'), findsOneWidget);
+      }
+      expect(
+        tester.getTopLeft(find.text('Ignorar e denunciar')).dy,
+        lessThan(tester.getTopLeft(find.text('Repassar')).dy),
+      );
+    });
+
+    testWidgets('módulo já concluído, aberto pela lista: tentativa nova, '
+        'barra vazia na pergunta 1 (specs/025)', (tester) async {
+      useModule(answered: {'l1', 'l2', 'l3'});
+      await open(tester);
+
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      final SafeSegmentedProgress progress = tester
+          .widget<SafeSegmentedProgress>(find.byType(SafeSegmentedProgress));
+      expect(progress.completed, [false, false, false]);
+      expect(progress.current, 0);
+      expect(answeredSegments(tester), 0);
+      expect(
+        tester
+            .widget<SafeButton>(find.widgetWithText(SafeButton, 'Próxima'))
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('módulo feito pela metade: as feitas continuam feitas', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
+      expect(
+        tester
+            .widget<SafeSegmentedProgress>(find.byType(SafeSegmentedProgress))
+            .completed,
+        [true, true, false],
+      );
+    });
+
+    testWidgets('o cabeçalho sobe com a rolagem; o rodapé fica fixo '
+        '(specs/025)', (tester) async {
+      tester.view
+        ..physicalSize = const Size(1080, 1600)
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final Finder title = find.descendant(
+        of: find.byType(SafePageHeader),
+        matching: find.text('Golpes Digitais'),
+      );
+      await open(tester);
+      final double titleTop = tester.getTopLeft(title).dy;
+
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+      await tester.pumpAndSettle();
+
+      final Rect screen = Offset.zero & tester.view.physicalSize / 3;
+      // O título subiu com o conteúdo e saiu da tela.
+      expect(tester.getRect(title).bottom, lessThan(titleTop));
+      expect(tester.getRect(title).bottom, lessThanOrEqualTo(0));
+      expect(title.hitTestable(), findsNothing);
+      final Rect confirm = tester.getRect(find.text('Confirmar resposta'));
+      expect(screen.contains(confirm.center), isTrue);
+      expect(find.text('Confirmar resposta').hitTestable(), findsOneWidget);
+    });
+
+    testWidgets('abre na primeira pergunta não respondida', (tester) async {
+      useModule(answered: {'l1'});
+      await open(tester);
+
+      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
+      expect(
+        find.text('E-mail do banco pede para clicar num link. E agora?'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('imagem que falha ou sem imagem: sem erro', (tester) async {
+      await open(tester);
+      expect(tester.takeException(), isNull);
+
+      useModule(
+        lessons: [
+          lessonJson(imageUrl: null),
+          lessonJson(id: 'l2', order: 2),
+        ],
+      );
+      router.go('/activities');
+      await tester.pumpAndSettle();
+      router.go('/activities/m1');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Image), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    // Achado da T058 (specs/022): a imagem chegava depois e empurrava as
+    // alternativas para baixo do dedo. Todas já vão ao cache na carga.
+    testWidgets('as imagens de todas as perguntas vão ao cache', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2340)
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      useModule(
+        lessons: [
+          lessonJson(imageUrl: 'https://img.test/a.png'),
+          lessonJson(id: 'l2', order: 2, imageUrl: 'https://img.test/b.png'),
+          lessonJson(id: 'l3', order: 3, imageUrl: null),
+        ],
+      );
+
+      // Imagens que nunca chegam: ficam no cache como pendentes.
+      debugNetworkImageHttpClientProvider = HangingHttpClient.new;
+
+      await pumpLocalized(tester, router: router, settle: false);
+      await tester.pump();
+      await tester.pump();
+
+      // A chave do `SafeNetworkImage` da pergunta: largura da tela em pixels.
+      for (final String url in [
+        'https://img.test/a.png',
+        'https://img.test/b.png',
+      ]) {
+        final Object key = await ResizeImage(
+          NetworkImage(url),
+          width: 1080,
+        ).obtainKey(ImageConfiguration.empty);
+        expect(imageCache.statusForKey(key).tracked, isTrue, reason: url);
+      }
+      debugNetworkImageHttpClientProvider = null;
+    });
+
+    testWidgets('a explicação nunca aparece (FR-016)', (tester) async {
+      await open(tester);
+
+      expect(
+        find.textContaining('Explicação que só aparece depois da resposta'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('celular com letra 2×: sem estouro', (tester) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2340)
+        ..devicePixelRatio = 3;
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await open(tester);
+      await reveal(tester, find.text('Repassar'));
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('em inglês', (tester) async {
+      await open(tester, locale: const Locale('en', 'US'));
+
+      expect(find.text('Question 1 of 3'), findsOneWidget);
+    });
+  });
+
+  group('navegação (US2)', () {
+    SafeButton button(WidgetTester tester, String label) =>
+        tester.widget<SafeButton>(find.widgetWithText(SafeButton, label));
+
+    testWidgets('anterior e próxima mudam a posição', (tester) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
+
+      await tester.tap(find.text('Anterior'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
+
+      await tester.tap(find.text('Próxima'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
+    });
+
+    testWidgets('a pergunta desliza: avançar e voltar em sentidos opostos '
+        '(specs/022 FR-027)', (tester) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      bool reverse() => tester
+          .widget<PageTransitionSwitcher>(find.byType(PageTransitionSwitcher))
+          .reverse;
+
+      await tester.tap(find.text('Anterior'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget, reason: 'saindo');
+      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
+      expect(reverse(), isTrue);
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 3 de 3'), findsNothing);
+
+      await tester.tap(find.text('Próxima'));
+      await tester.pump();
+      expect(reverse(), isFalse);
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
+    });
+
+    testWidgets('"Próxima" desativado sem resposta; "Anterior" na primeira', (
+      tester,
+    ) async {
+      await open(tester);
+
+      expect(button(tester, 'Próxima').onPressed, isNull);
+      expect(button(tester, 'Anterior').onPressed, isNull);
+    });
+
+    testWidgets('marcas: respondidas com check; leitura de tela resumida', (
+      tester,
+    ) async {
+      useModule(answered: {'l1'});
+      await open(tester);
+
+      expect(answeredSegments(tester), 1);
+      expect(
+        find.bySemanticsLabel('Pergunta 2 de 3, 1 concluídas'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('sessão expira com a tela aberta: mesma pergunta, sem erro', (
+      tester,
+    ) async {
+      await open(tester);
+
+      await session.expire();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('ouvir (US3)', () {
+    const String questionL1 =
+        'Promessa de dinheiro em dobro pelo PIX. O que fazer?';
+    const List<String> spokenL1 = [
+      questionL1,
+      'Alternativa 1.',
+      'Ignorar e denunciar.',
+      'Alternativa 2.',
+      'Enviar.',
+      'Alternativa 3.',
+      'Pedir prova.',
+      'Alternativa 4.',
+      'Repassar.',
+    ];
+
+    Future<void> tapListen(WidgetTester tester) async {
+      await reveal(tester, find.text('Ouvir'));
+      await tester.tap(find.text('Ouvir'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Ouvir" lê o enunciado e as alternativas, e vira "Parar"', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(
+        readingSpeed: ReadingSpeed.slow,
+      );
+      await open(tester);
+
+      await tapListen(tester);
+
+      expect(tts.spoken.single.text, questionL1);
+      expect(tts.spoken.single.speed, ReadingSpeed.slow);
+      expect(find.text('Parar'), findsOneWidget);
+      // Cada trecho começa quando o anterior termina.
+      tts.finishSpeaking();
+      await tester.pump();
+      expect(tts.spoken.last.text, 'Alternativa 1.');
+
+      await tester.tap(find.text('Parar'));
+      await tester.pumpAndSettle();
+      expect(tts.stopCalls, greaterThanOrEqualTo(1));
+      expect(find.text('Ouvir'), findsOneWidget);
+    });
+
+    testWidgets('"Ouvir" logo abaixo do enunciado, antes das alternativas '
+        '(specs/025)', (tester) async {
+      await open(tester);
+
+      final double question = tester
+          .getBottomLeft(
+            find.text('Promessa de dinheiro em dobro pelo PIX. O que fazer?'),
+          )
+          .dy;
+      final double listen = tester.getTopLeft(find.text('Ouvir')).dy;
+      final double firstOption = tester
+          .getTopLeft(find.byType(LessonOptionCard).first)
+          .dy;
+
+      expect(listen, greaterThan(question));
+      expect(listen, lessThan(firstOption));
+    });
+
+    testWidgets('sem voz no idioma: sem "Ouvir" e nada lido sozinho', (
+      tester,
+    ) async {
+      tts.availableLanguages = {};
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+
+      expect(find.text('Ouvir'), findsNothing);
+      expect(tts.spoken, isEmpty);
+    });
+
+    testWidgets('leitura automática: lê a pergunta sozinha uma vez', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+
+      expect(tts.spoken.single.text, questionL1);
+      await readToEnd(tester);
+      expect([for (final s in tts.spoken) s.text], spokenL1);
+
+      preferences.value = preferences.value.copyWith(
+        readingSpeed: ReadingSpeed.fast,
+      );
+      await tester.pumpAndSettle();
+      expect(tts.spoken, hasLength(spokenL1.length));
+    });
+
+    testWidgets('trocar de pergunta para a leitura e lê a nova', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2'});
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+      final int stopsBefore = tts.stopCalls;
+
+      await tester.tap(find.text('Anterior'));
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+      expect(tts.spoken, hasLength(2));
+      expect(tts.spoken.last.text, startsWith('E-mail do banco'));
+      // A nova pergunta continua sendo lida: o parar não a cancela.
+      await reveal(tester, find.text('Parar'));
+      expect(find.text('Parar'), findsOneWidget);
+
+      await tester.tap(find.text('Anterior'));
+      await tester.pumpAndSettle();
+      expect(tts.spoken, hasLength(3));
+      expect(tts.spoken.last.text, startsWith('Promessa de dinheiro'));
+    });
+
+    testWidgets(
+      'voltar e avançar de novo lê a pergunta outra vez (relato do aparelho)',
+      (tester) async {
+        // Abre na 3 (1 e 2 respondidas), volta à 2 e avança de novo à 3.
+        useModule(answered: {'l1', 'l2'});
+        preferences.value = preferences.value.copyWith(autoReadAloud: true);
+        await open(tester);
+        expect(tts.spoken.single.text, startsWith('Técnico pede'));
+
+        await tester.tap(find.text('Anterior'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Próxima'));
+        await tester.pumpAndSettle();
+
+        expect(
+          [for (final s in tts.spoken) s.text.substring(0, 6)],
+          ['Técnic', 'E-mail', 'Técnic'],
+        );
+        await reveal(tester, find.text('Parar'));
+        expect(find.text('Parar'), findsOneWidget);
+      },
+    );
+
+    testWidgets('a mesma pergunta na tela não é lida de novo sozinha', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+
+      await readToEnd(tester);
+      expect(tts.spoken, hasLength(spokenL1.length));
+      preferences.value = preferences.value.copyWith(
+        readingSpeed: ReadingSpeed.fast,
+      );
+      await tester.pumpAndSettle();
+
+      expect(tts.spoken, hasLength(spokenL1.length));
+    });
+
+    testWidgets('app em inglês: enunciado e alternativas na voz em português, '
+        'o número da alternativa em inglês (specs/025)', (tester) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester, locale: const Locale('en', 'US'));
+
+      await readToEnd(tester);
+
+      expect(
+        [for (final s in tts.spoken.take(3)) (s.text, s.language)],
+        [
+          (questionL1, SpeechLanguage.ptBr),
+          ('Option 1.', SpeechLanguage.enUs),
+          ('Ignorar e denunciar.', SpeechLanguage.ptBr),
+        ],
+      );
+      expect(tts.spoken, hasLength(spokenL1.length));
+    });
+
+    testWidgets('app em inglês só com voz em português: "Listen" aparece e lê '
+        'o conteúdo (specs/025)', (tester) async {
+      tts.availableLanguages = {SpeechLanguage.ptBr};
+      await open(tester, locale: const Locale('en', 'US'));
+
+      await reveal(tester, find.text('Listen'));
+      await tester.tap(find.text('Listen'));
+      await tester.pumpAndSettle();
+      await readToEnd(tester);
+
+      expect(tts.spoken.first.text, questionL1);
+      expect(
+        tts.spoken.map((s) => s.language),
+        everyElement(SpeechLanguage.ptBr),
+      );
+      expect(tts.spoken, hasLength(5));
+    });
+
+    testWidgets('sair da tela para a leitura', (tester) async {
+      await open(tester);
+      await tapListen(tester);
+      final int stopsBefore = tts.stopCalls;
+
+      router.go('/activities');
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+    });
+  });
+
+  group('responder (specs/018 US1)', () {
+    SafeButton confirmButton(WidgetTester tester) => tester.widget<SafeButton>(
+      find.widgetWithText(SafeButton, 'Confirmar resposta'),
+    );
+
+    Future<void> choose(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Confirmar resposta" desativado sem escolha', (tester) async {
+      await open(tester);
+
+      expect(confirmButton(tester).onPressed, isNull);
+    });
+
+    testWidgets('escolher ativa; trocar muda; confirmar envia uma vez', (
+      tester,
+    ) async {
+      await open(tester);
+
+      await choose(tester, 'Enviar');
+      expect(confirmButton(tester).onPressed, isNotNull);
+      await choose(tester, 'Pedir prova');
+
+      repository.answerGate = Completer<void>();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pump();
+      expect(confirmButton(tester).loading, isTrue);
+      await tester.tap(find.text('Confirmar resposta'), warnIfMissed: false);
+      await tester.pump();
+      repository.answerGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(repository.answerCalls, hasLength(1));
+      expect(repository.answerCalls.single.selectedOptionId, 'l1-o3');
+    });
+
+    testWidgets('durante o envio as alternativas não trocam', (tester) async {
+      await open(tester);
+      await choose(tester, 'Enviar');
+      repository.answerGate = Completer<void>();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pump();
+
+      await tester.tap(find.text('Repassar'), warnIfMissed: false);
+      await tester.pump();
+      repository.answerGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(repository.answerCalls.single.selectedOptionId, 'l1-o2');
+    });
+
+    testWidgets('as alternativas ficam na ordem do serviço (RF-027)', (
+      tester,
+    ) async {
+      await open(tester);
+      await choose(tester, 'Repassar');
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      final List<String> texts = [
+        for (final card in tester.widgetList<LessonOptionCard>(
+          find.byType(LessonOptionCard, skipOffstage: false),
+        ))
+          card.text,
+      ];
+      expect(texts, [
+        'Ignorar e denunciar',
+        'Enviar',
+        'Pedir prova',
+        'Repassar',
+      ]);
+    });
+
+    testWidgets('visitante também responde', (tester) async {
+      await session.logout();
+      await session.startGuestSession();
+      await open(tester);
+
+      await choose(tester, 'Enviar');
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(repository.answerCalls, hasLength(1));
+    });
+  });
+
+  group('feedback (specs/018 US2)', () {
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    LessonOptionCard card(WidgetTester tester, String text) =>
+        tester.widget<LessonOptionCard>(
+          find.ancestor(
+            of: find.text(text),
+            matching: find.byType(LessonOptionCard),
+          ),
+        );
+
+    testWidgets('acerto e erro vibram diferente, uma vez (specs/022 FR-022)', (
+      tester,
+    ) async {
+      final List<Object?> vibrations = [];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'HapticFeedback.vibrate') {
+            vibrations.add(call.arguments);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      repository.answerResults = [
+        Right(AnswerResultModel.fromJson(answerJson()).toEntity()),
+      ];
+      await open(tester);
+
+      await answer(tester, 'Ignorar e denunciar');
+      expect(vibrations, ['HapticFeedbackType.lightImpact']);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Responder de novo'));
+      await tester.pumpAndSettle();
+      repository.answerResults = [
+        Right(
+          AnswerResultModel.fromJson(answerJson(isCorrect: false)).toEntity(),
+        ),
+      ];
+      vibrations.clear();
+      await answer(tester, 'Enviar');
+      expect(vibrations, ['HapticFeedbackType.heavyImpact']);
+    });
+
+    testWidgets('a explicação só aparece depois de confirmar (FR-018)', (
+      tester,
+    ) async {
+      await open(tester);
+      expect(
+        find.text('Promessas de dinheiro em dobro são golpe.'),
+        findsNothing,
+      );
+
+      await answer(tester, 'Ignorar e denunciar');
+
+      expect(
+        find.text('Promessas de dinheiro em dobro são golpe.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('errada: painel; fechado pelo voltar, resultado nas '
+        'alternativas e "Próxima" ativo', (tester) async {
+      repository.answerResults = [
+        Right(
+          AnswerResultModel.fromJson(answerJson(isCorrect: false)).toEntity(),
+        ),
+      ];
+      await open(tester);
+
+      await answer(tester, 'Enviar');
+      expect(find.text('Não foi dessa vez'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Não foi dessa vez'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text('Pergunta 1 de 3'),
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      expect(answeredSegments(tester), 1);
+      expect(card(tester, 'Enviar').state, LessonOptionState.wrong);
+      expect(card(tester, 'Enviar').onTap, isNull);
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      expect(
+        card(tester, 'Ignorar e denunciar').state,
+        LessonOptionState.correct,
+      );
+      expect(
+        tester
+            .widget<SafeButton>(find.widgetWithText(SafeButton, 'Próxima'))
+            .onPressed,
+        isNotNull,
+      );
+    });
+
+    testWidgets('certa: "Você acertou!"; "Próxima pergunta" vai à 2', (
+      tester,
+    ) async {
+      await open(tester);
+
+      await answer(tester, 'Ignorar e denunciar');
+      expect(find.text('Você acertou!'), findsOneWidget);
+
+      await tester.tap(find.text('Próxima pergunta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Você acertou!'), findsNothing);
+      expect(find.text('Pergunta 2 de 3'), findsOneWidget);
+      expect(
+        tester
+            .widgetList<LessonOptionCard>(find.byType(LessonOptionCard))
+            .every((c) => c.state == LessonOptionState.idle),
+        isTrue,
+      );
+    });
+  });
+
+  group('responder de novo (specs/018 US4)', () {
+    Future<void> choose(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Responder de novo" limpa e permite outra resposta', (
+      tester,
+    ) async {
+      await open(tester);
+      await choose(tester, 'Enviar');
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Confirmar resposta'), findsNothing);
+      await tester.tap(find.text('Responder de novo'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widgetList<LessonOptionCard>(find.byType(LessonOptionCard))
+            .every((c) => c.state == LessonOptionState.idle && c.onTap != null),
+        isTrue,
+      );
+      await choose(tester, 'Ignorar e denunciar');
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Você acertou!'), findsOneWidget);
+      expect(repository.answerCalls, hasLength(2));
+    });
+
+    testWidgets(
+      'respondida pelo serviço: alternativas tocáveis e "Confirmar"',
+      (tester) async {
+        // Abre na 2 (1 e 3 respondidas) e volta à 1, respondida antes.
+        useModule(answered: {'l1', 'l3'});
+        await open(tester);
+        await tester.tap(find.text('Anterior'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Confirmar resposta'), findsOneWidget);
+        expect(find.text('Responder de novo'), findsNothing);
+        await choose(tester, 'Enviar');
+        expect(
+          tester
+              .widget<SafeButton>(
+                find.widgetWithText(SafeButton, 'Confirmar resposta'),
+              )
+              .onPressed,
+          isNotNull,
+        );
+      },
+    );
+  });
+
+  group('conclusão (specs/020 US1)', () {
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('com conta: "Ver resultado" → conclusão, sem aviso', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2'});
+      repository.moduleDetailResults = [
+        ...repository.moduleDetailResults,
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(
+              answered: {'l1', 'l2', 'l3'},
+              score: 2,
+              totalScore: 3,
+            ),
+          ).toEntity(),
+        ),
+      ];
+      await open(tester);
+      expect(find.text('Pergunta 3 de 3'), findsOneWidget);
+
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Guarde seu progresso'), findsNothing);
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+      expect(find.text('Você acertou 2 de 3'), findsOneWidget);
+    });
+
+    Future<void> reachCompletion(WidgetTester tester) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Voltar às atividades" → painel de atividades', (
+      tester,
+    ) async {
+      await reachCompletion(tester);
+
+      await tester.scrollUntilVisible(
+        find.text('Voltar às atividades'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Voltar às atividades'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities'), findsOneWidget);
+    });
+
+    testWidgets('voltar do aparelho na conclusão → painel de atividades', (
+      tester,
+    ) async {
+      await reachCompletion(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities'), findsOneWidget);
+    });
+
+    testWidgets('sem todas respondidas, a 2ª pergunta segue para a próxima', (
+      tester,
+    ) async {
+      useModule(answered: {'l1'});
+      await open(tester);
+
+      await answer(tester, 'Ignorar');
+
+      expect(find.text('Próxima pergunta'), findsOneWidget);
+      expect(find.text('Ver resultado'), findsNothing);
+    });
+  });
+
+  group('visitante (specs/020 US2)', () {
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    /// Visitante com a 1 e a 2 respondidas, na 3, que acaba de responder e
+    /// toca em "Ver resultado".
+    Future<void> finishAsGuest(WidgetTester tester) async {
+      await session.logout();
+      await session.startGuestSession();
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('aviso antes da conclusão; continuar → conclusão', (
+      tester,
+    ) async {
+      await finishAsGuest(tester);
+
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
+      expect(find.text('Módulo concluído!'), findsNothing);
+
+      await tester.tap(find.text('Continuar sem conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+
+    testWidgets('voltar no aviso → conclusão', (tester) async {
+      await finishAsGuest(tester);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+
+    testWidgets('"Criar conta" abre o login em cadastro, voltando para '
+        'Atividades (achado A1)', (tester) async {
+      await finishAsGuest(tester);
+
+      await tester.tap(find.text('Criar conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/login'), findsOneWidget);
+      expect(loginQuery?['mode'], 'register');
+      expect(loginQuery?['next'], '/activities');
+    });
+
+    testWidgets('voltar do login sem entrar → conclusão como visitante', (
+      tester,
+    ) async {
+      await finishAsGuest(tester);
+      await tester.tap(find.text('Criar conta'));
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+
+    testWidgets('leitura automática: o aviso troca a leitura do feedback e '
+        'para ao ir para o login (achados no aparelho)', (tester) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await session.logout();
+      await session.startGuestSession();
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      // O feedback está sendo lido sozinho.
+      expect(find.text('Parar'), findsWidgets);
+      final int stopsBefore = tts.stopCalls;
+
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+      expect(
+        tts.spoken.last.text,
+        'Guarde seu progresso\nSem conta, seu progresso vale só até fechar '
+        'o app. Crie uma conta agora e ele fica guardado.',
+      );
+      final int spokenBefore = tts.spoken.length;
+      final int stopsOnAlert = tts.stopCalls;
+      await tester.tap(find.text('Criar conta'));
+      await tester.pumpAndSettle();
+      expect(find.text('page:/login'), findsOneWidget);
+      expect(tts.stopCalls, greaterThan(stopsOnAlert));
+      expect(tts.spoken, hasLength(spokenBefore));
+    });
+
+    testWidgets('sem leitura automática, o aviso não lê sozinho', (
+      tester,
+    ) async {
+      await finishAsGuest(tester);
+
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
+      expect(tts.spoken, isEmpty);
+    });
+
+    testWidgets('sessão que expira antes de "Ver resultado" → aviso '
+        '(achado C1)', (tester) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+
+      await session.expire();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
+    });
+  });
+
+  group('refazer (specs/020 US4)', () {
+    SafeSegmentedProgress segments(WidgetTester tester) => tester
+        .widget<SafeSegmentedProgress>(find.byType(SafeSegmentedProgress));
+
+    Future<void> answer(WidgetTester tester, String text) async {
+      await reveal(tester, find.text(text));
+      await tester.tap(find.text(text));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('"Refazer o módulo" volta à primeira pergunta, sem marcação', (
+      tester,
+    ) async {
+      useModule(answered: {'l1', 'l2'});
+      await open(tester);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+      final int loadsBefore = repository.moduleDetailCalls;
+      // Recarregado, o serviço manda as três respondidas.
+      useModule(answered: {'l1', 'l2', 'l3'});
+
+      await tester.scrollUntilVisible(
+        find.text('Refazer o módulo'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.ensureVisible(find.text('Refazer o módulo'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Refazer o módulo'));
+      await tester.pumpAndSettle();
+
+      expect(repository.moduleDetailCalls, greaterThan(loadsBefore));
+      await tester.scrollUntilVisible(
+        find.text('Pergunta 1 de 3'),
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+      expect(
+        tester
+            .widgetList<LessonOptionCard>(find.byType(LessonOptionCard))
+            .every((c) => c.state == LessonOptionState.idle),
+        isTrue,
+      );
+      // A barra mostra só esta tentativa: nada concluído na pergunta 1,
+      // mesmo com o serviço mandando as três respondidas (specs/025).
+      expect(segments(tester).completed, [false, false, false]);
+      expect(segments(tester).current, 0);
+
+      // Responder as três de novo leva à conclusão outra vez.
+      await answer(tester, 'Ignorar e denunciar');
+      await tester.tap(find.text('Próxima pergunta'));
+      await tester.pumpAndSettle();
+      expect(segments(tester).completed, [true, false, false]);
+      expect(segments(tester).current, 1);
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Próxima pergunta'));
+      await tester.pumpAndSettle();
+      await answer(tester, 'Ignorar');
+      await tester.tap(find.text('Ver resultado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+    });
+  });
+
+  group('polimento (specs/020 T023)', () {
+    Future<void> finishAsGuest(
+      WidgetTester tester, {
+      Locale locale = const Locale('pt', 'BR'),
+      ThemeData? theme,
+      String confirm = 'Confirmar resposta',
+      String result = 'Ver resultado',
+    }) async {
+      await session.logout();
+      await session.startGuestSession();
+      useModule(answered: {'l1', 'l2'});
+      await pumpLocalized(tester, router: router, locale: locale, theme: theme);
+      await reveal(tester, find.text('Ignorar'));
+      await tester.tap(find.text('Ignorar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(confirm));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text(result),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text(result));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('celular, letra 2× e alto contraste: aviso e conclusão', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2340)
+        ..devicePixelRatio = 3;
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await finishAsGuest(tester, theme: AppTheme.highContrastTheme);
+      expect(find.text('Guarde seu progresso'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Continuar sem conta'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(find.text('Continuar sem conta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Módulo concluído!'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('em inglês', (tester) async {
+      await finishAsGuest(
+        tester,
+        locale: const Locale('en', 'US'),
+        confirm: 'Confirm answer',
+        result: 'See result',
+      );
+
+      expect(find.text('Keep your progress'), findsOneWidget);
+      await tester.tap(find.text('Continue without an account'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Module completed!'), findsOneWidget);
+    });
+  });
+
+  group('polimento (specs/018 T038)', () {
+    testWidgets('celular, letra 2× e alto contraste: responder sem estouro', (
+      tester,
+    ) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2340)
+        ..devicePixelRatio = 3;
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      repository.answerResults = [
+        Right(
+          AnswerResultModel.fromJson(
+            answerJson(
+              isCorrect: false,
+              explanation: 'Uma explicação bem comprida. ' * 20,
+            ),
+          ).toEntity(),
+        ),
+      ];
+      await pumpLocalized(
+        tester,
+        router: router,
+        theme: AppTheme.highContrastTheme,
+      );
+
+      await reveal(tester, find.text('Enviar'));
+      await tester.tap(find.text('Enviar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.scrollUntilVisible(
+        find.text('Próxima pergunta'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await reveal(tester, find.text('sua resposta, errada'));
+      expect(find.text('Responder de novo'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('em inglês', (tester) async {
+      await open(tester, locale: const Locale('en', 'US'));
+
+      expect(find.text('Confirm answer'), findsOneWidget);
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      await tester.tap(find.text('Ignorar e denunciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm answer'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('You got it right!'), findsOneWidget);
+      expect(find.text('Correct answer: Ignorar e denunciar'), findsOneWidget);
+      expect(find.text('Next question'), findsOneWidget);
+    });
+  });
+
+  group('voz no feedback (specs/018 US5)', () {
+    const List<String> spokenFeedbackL1 = [
+      'Você acertou!',
+      'Resposta correta.',
+      'Ignorar e denunciar.',
+      'Promessas de dinheiro em dobro são golpe.',
+    ];
+
+    Finder inSheet(Finder finder) =>
+        find.descendant(of: find.byType(FeedbackSheet), matching: finder);
+
+    Future<void> answerFirst(WidgetTester tester) async {
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      await tester.tap(find.text('Ignorar e denunciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('confirmar para a leitura da pergunta', (tester) async {
+      await open(tester);
+      await reveal(tester, find.text('Ouvir'));
+      await tester.tap(find.text('Ouvir'));
+      await tester.pumpAndSettle();
+      final int stopsBefore = tts.stopCalls;
+
+      await answerFirst(tester);
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+    });
+
+    testWidgets('"Ouvir" no painel lê o feedback e vira "Parar"', (
+      tester,
+    ) async {
+      await open(tester);
+      await answerFirst(tester);
+
+      await tester.tap(inSheet(find.text('Ouvir')));
+      await tester.pumpAndSettle();
+
+      expect(tts.spoken.last.text, spokenFeedbackL1.first);
+      expect(inSheet(find.text('Parar')), findsOneWidget);
+      await readToEnd(tester);
+      expect([for (final s in tts.spoken) s.text], spokenFeedbackL1);
+    });
+
+    testWidgets('app em inglês: resultado e rótulo em inglês, correta e '
+        'explicação na voz em português (specs/025)', (tester) async {
+      await open(tester, locale: const Locale('en', 'US'));
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      await tester.tap(find.text('Ignorar e denunciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm answer'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(inSheet(find.text('Listen')));
+      await tester.pumpAndSettle();
+      await readToEnd(tester);
+
+      expect(
+        [for (final s in tts.spoken) (s.text, s.language)],
+        [
+          ('You got it right!', SpeechLanguage.enUs),
+          ('Correct answer.', SpeechLanguage.enUs),
+          ('Ignorar e denunciar.', SpeechLanguage.ptBr),
+          ('Promessas de dinheiro em dobro são golpe.', SpeechLanguage.ptBr),
+        ],
+      );
+    });
+
+    testWidgets('leitura automática: o feedback uma vez, a pergunta não de '
+        'novo; "Próxima pergunta" lê a 2', (tester) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+      expect(tts.spoken, hasLength(1));
+
+      await answerFirst(tester);
+
+      expect(tts.spoken, hasLength(2));
+      expect(tts.spoken.last.text, spokenFeedbackL1.first);
+
+      final int stopsBefore = tts.stopCalls;
+      await tester.tap(find.text('Próxima pergunta'));
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+      expect(tts.spoken, hasLength(3));
+      expect(tts.spoken.last.text, startsWith('E-mail do banco'));
+    });
+
+    testWidgets('fechar pelo voltar para a leitura do feedback', (
+      tester,
+    ) async {
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+      await answerFirst(tester);
+      final int stopsBefore = tts.stopCalls;
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(tts.stopCalls, greaterThan(stopsBefore));
+      expect(tts.spoken, hasLength(2));
+    });
+
+    testWidgets('sem voz no idioma: sem "Ouvir" no painel e nada lido', (
+      tester,
+    ) async {
+      tts.availableLanguages = {};
+      preferences.value = preferences.value.copyWith(autoReadAloud: true);
+      await open(tester);
+      await answerFirst(tester);
+
+      expect(find.byType(FeedbackSheet), findsOneWidget);
+      expect(inSheet(find.text('Ouvir')), findsNothing);
+      expect(tts.spoken, isEmpty);
+    });
+  });
+
+  group('erros ao responder (specs/018 US6)', () {
+    Future<void> chooseSecond(WidgetTester tester) async {
+      await reveal(tester, find.text('Enviar'));
+      await tester.tap(find.text('Enviar'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('sem internet: mensagem e a escolha continua marcada', (
+      tester,
+    ) async {
+      repository.answerResults = [const Left(ConnectionFailure())];
+      await open(tester);
+      await chooseSecond(tester);
+
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      // A frase padrão de sem internet (specs/027 FR-006).
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Não foi possível enviar sua resposta. Tente de novo.'),
+        findsNothing,
+      );
+      expect(
+        tester
+            .widget<LessonOptionCard>(
+              find.ancestor(
+                of: find.text('Enviar'),
+                matching: find.byType(LessonOptionCard),
+              ),
+            )
+            .state,
+        LessonOptionState.selected,
+      );
+      expect(find.text('Não foi dessa vez'), findsNothing);
+    });
+
+    testWidgets('erro do servidor: a mensagem própria do envio', (
+      tester,
+    ) async {
+      repository.answerResults = [const Left(ServerFailure())];
+      await open(tester);
+      await chooseSecond(tester);
+
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Não foi possível enviar sua resposta. Tente de novo.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('recusada: mensagem e o módulo recarregado', (tester) async {
+      repository.answerResults = [const Left(AnswerRejectedFailure())];
+      await open(tester);
+      final int loadsBefore = repository.moduleDetailCalls;
+      await chooseSecond(tester);
+
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Esta pergunta foi atualizada. Carregamos as atividades de novo.',
+        ),
+        findsOneWidget,
+      );
+      expect(repository.moduleDetailCalls, greaterThan(loadsBefore));
+      await tester.scrollUntilVisible(
+        find.text('Pergunta 1 de 3'),
+        -200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+    });
+
+    // Sem aviso de serviço acordando (validação da usuária, specs/024).
+    testWidgets('envio demorado: sem aviso de serviço', (tester) async {
+      await open(tester);
+      await chooseSecond(tester);
+      repository.answerGate = Completer<void>();
+
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 6));
+      expect(find.textContaining('O serviço está acordando'), findsNothing);
+
+      repository.answerGate!.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('sair da tela no meio do envio: sem erro', (tester) async {
+      await open(tester);
+      await chooseSecond(tester);
+      repository.answerGate = Completer<void>();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pump();
+
+      router.go('/activities');
+      await tester.pumpAndSettle();
+      repository.answerGate!.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('page:/activities'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('pontuação (specs/018 US3)', () {
+    testWidgets('só no painel, nunca na tela das perguntas', (tester) async {
+      repository.moduleDetailResults = [
+        Right(
+          ModuleDetailModel.fromJson(
+            moduleDetailJson(score: 1, totalScore: 3),
+          ).toEntity(),
+        ),
+      ];
+      await open(tester);
+      expect(find.textContaining('acertos'), findsNothing);
+
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      await tester.tap(find.text('Ignorar e denunciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+      expect(find.text('Você está com 1 de 3 acertos'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.textContaining('acertos'), findsNothing);
+    });
+
+    testWidgets('visitante: registro da sessão e "1 de 3" no painel', (
+      tester,
+    ) async {
+      await session.logout();
+      await session.startGuestSession();
+      final FakeActivitiesRemoteDataSource remote =
+          FakeActivitiesRemoteDataSource();
+      final GuestProgressStore store = GuestProgressStore(session);
+      addTearDown(store.dispose);
+      await GetIt.instance.reset();
+      GetIt.instance
+        ..registerSingleton<UserSessionService>(session)
+        ..registerSingleton(preferences)
+        ..registerFactory(
+          () => ReadAloudController(tts, preferences: preferences),
+        );
+      registerActivitiesDependencies(
+        GetIt.instance,
+        repository: ActivitiesRepositoryImpl(remote, store, session),
+      );
+      await open(tester);
+
+      await reveal(tester, find.text('Ignorar e denunciar'));
+      await tester.tap(find.text('Ignorar e denunciar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirmar resposta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Você está com 1 de 3 acertos'), findsOneWidget);
+      expect(store.correctCount('m1'), 1);
+      // O que a tela de atividades da B1 lê na volta (SC-007).
+      expect(store.answeredCount('m1'), 1);
+    });
+  });
+
+  group('estados (US4)', () {
+    testWidgets('carregando: sem aviso de serviço acordando', (tester) async {
+      repository.moduleDetailGate = Completer<void>();
+      await pumpLocalized(tester, router: router, settle: false);
+
+      expect(find.byType(SafeLoadingState), findsOneWidget);
+      await tester.pump(const Duration(seconds: 6));
+      expect(find.textContaining('O serviço está acordando'), findsNothing);
+
+      repository.moduleDetailGate!.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+    });
+
+    Finder illustration(AppIllustration which) => find.byWidgetPredicate(
+      (w) => w is SafeIllustration && w.illustration == which,
+    );
+
+    // Padrão de sem internet (specs/027 FR-003).
+    testWidgets('sem internet: nuvem e a frase padrão', (tester) async {
+      repository.moduleDetailResults = [const Left(ConnectionFailure())];
+      await open(tester);
+
+      expect(illustration(AppIllustration.stateOffline), findsOneWidget);
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Não foi possível carregar as atividades'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('erro do servidor com "Tentar novamente", que recarrega', (
+      tester,
+    ) async {
+      repository.moduleDetailResults = [
+        const Left(ServerFailure()),
+        Right(ModuleDetailModel.fromJson(moduleDetailJson()).toEntity()),
+      ];
+      await open(tester);
+
+      expect(illustration(AppIllustration.stateError), findsOneWidget);
+      expect(
+        find.text('Não foi possível carregar as atividades'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Tentar novamente'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pergunta 1 de 3'), findsOneWidget);
+    });
+
+    testWidgets('módulo que não existe: "sem atividades"', (tester) async {
+      repository.moduleDetailResults = [const Left(ModuleNotFoundFailure())];
+      await open(tester);
+
+      expect(find.text('Este módulo ainda não tem atividades'), findsOneWidget);
+    });
+
+    testWidgets('módulo sem lições válidas: "sem atividades"', (tester) async {
+      useModule(
+        lessons: [
+          lessonJson(options: const ['Só uma']),
+        ],
+      );
+      await open(tester);
+
+      expect(find.text('Este módulo ainda não tem atividades'), findsOneWidget);
+    });
+
+    testWidgets('lição com uma alternativa fica de fora da contagem', (
+      tester,
+    ) async {
+      useModule(
+        lessons: [
+          lessonJson(options: const ['Só uma']),
+          lessonJson(id: 'l2', order: 2),
+          lessonJson(id: 'l3', order: 3),
+        ],
+      );
+      await open(tester);
+
+      expect(find.text('Pergunta 1 de 2'), findsOneWidget);
+    });
+  });
+}
+
+/// Pedido de imagem que nunca responde (a imagem fica pendente no cache).

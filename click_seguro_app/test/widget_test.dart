@@ -1,0 +1,141 @@
+import 'package:click_seguro_app/core/routing/app_router.dart';
+import 'package:click_seguro_app/main.dart';
+import 'package:click_seguro_app/modules/activities/activities.dart';
+import 'package:click_seguro_app/modules/activities/domain/repositories/activities_repository.dart';
+import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
+import 'package:click_seguro_app/modules/common/common.dart';
+import 'package:click_seguro_app/modules/common/services/app_info_service.dart';
+import 'package:click_seguro_app/modules/common/services/secure_storage_service.dart';
+import 'package:click_seguro_app/modules/common/services/user_session_service.dart';
+import 'package:click_seguro_app/modules/help/help.dart';
+import 'package:click_seguro_app/modules/news/domain/repositories/news_repository.dart';
+import 'package:click_seguro_app/modules/news/news.dart';
+import 'package:click_seguro_app/modules/notifications/domain/repositories/notifications_repository.dart';
+import 'package:click_seguro_app/modules/profile/domain/repositories/profile_repository.dart';
+import 'package:click_seguro_app/modules/profile/profile.dart';
+import 'package:click_seguro_app/modules/settings/domain/repositories/account_repository.dart';
+import 'package:click_seguro_app/modules/shell/presentation/widgets/app_bottom_nav.dart';
+import 'package:click_seguro_app/modules/splash/splash.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'fakes/fake_app_info_service.dart';
+import 'fakes/fake_secure_storage_service.dart';
+import 'modules/activities/fakes/fake_activities_repository.dart';
+import 'modules/news/fakes/fake_news_repository.dart';
+import 'modules/notifications/fakes/fake_notifications_repository.dart';
+import 'modules/profile/fakes/fake_profile_repository.dart';
+import 'modules/settings/fakes/fake_account_repository.dart';
+
+/// Teste de fumaça (F0.11): sobe o app real, com os módulos do `main.dart`,
+/// como visitante e sem plataforma, e passa pelas cinco abas.
+void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({'onboarding_seen': true});
+    EasyLocalization.logger.enableBuildModes = [];
+  });
+
+  tearDown(() async {
+    await GetIt.instance.reset();
+    GetIt.instance.allowReassignment = false;
+  });
+
+  testWidgets('abre como visitante e navega pelas cinco abas', (tester) async {
+    final ModuleManagerInterface moduleManager = ModuleManager();
+    late UserSessionService session;
+
+    await tester.runAsync(() async {
+      await EasyLocalization.ensureInitialized();
+      await moduleManager.registerModules(appModules());
+      // Antes de qualquer resolução: os registros do CommonModule são lazy.
+      GetIt.instance.allowReassignment = true;
+      GetIt.instance.registerSingleton<SecureStorageService>(
+        FakeSecureStorageService({
+          UserSessionService.storageKey: '{"status":"guest"}',
+        }),
+      );
+      // O Início carrega o feed: sem rede no teste (constituição, Seção III).
+      GetIt.instance.registerSingleton<NewsRepository>(FakeNewsRepository());
+      // Os alertas também não vão à rede no teste.
+      GetIt.instance.registerSingleton<NotificationsRepository>(
+        FakeNotificationsRepository(),
+      );
+      // Nem o perfil.
+      GetIt.instance.registerSingleton<ProfileRepository>(
+        FakeProfileRepository(),
+      );
+      // Nem as Configurações (conta e versão do app).
+      GetIt.instance.registerSingleton<AccountRepository>(
+        FakeAccountRepository(),
+      );
+      GetIt.instance.registerSingleton<AppInfoService>(FakeAppInfoService());
+      // Nem as atividades.
+      GetIt.instance.registerSingleton<ActivitiesRepository>(
+        FakeActivitiesRepository(),
+      );
+      session = GetIt.instance<UserSessionService>();
+      await session.restoreSession();
+    });
+
+    // Montado fora do runAsync, para que o tempo mínimo do splash use o
+    // relógio falso; só a carga das traduções precisa de tempo real.
+    await tester.pumpWidget(
+      EasyLocalization(
+        supportedLocales: const [Locale('pt', 'BR'), Locale('en', 'US')],
+        path: 'assets/translations',
+        fallbackLocale: const Locale('pt', 'BR'),
+        startLocale: const Locale('pt', 'BR'),
+        child: ClickSeguroApp(
+          moduleManager: moduleManager,
+          router: buildAppRouter(session),
+          accessibility: GetIt.instance<AccessibilityPreferencesNotifier>(),
+        ),
+      ),
+    );
+    // Aguarda a tradução montar o splash antes de avançar seu tempo mínimo.
+    // Um atraso real fixo pode terminar antes da leitura dos assets.
+    for (var i = 0; i < 50 && find.byType(SplashPage).evaluate().isEmpty; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+    }
+    expect(find.byType(SplashPage), findsOneWidget);
+    expect(find.text('Click Seguro'), findsOneWidget);
+
+    // Splash: tempo mínimo no relógio falso.
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NewsHomePage), findsOneWidget);
+    expect(find.text('Bem-vindo!'), findsOneWidget);
+
+    Future<void> tapTab(String label) async {
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AppBottomNav),
+          matching: find.bySemanticsLabel(label),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await tapTab('Atividades');
+    expect(find.byType(ActivitiesDashboardPage), findsOneWidget);
+
+    await tapTab('Notícias');
+    expect(find.byType(ReelsPage), findsOneWidget);
+
+    await tapTab('Ajuda');
+    expect(find.byType(HelpPage), findsOneWidget);
+
+    await tapTab('Perfil');
+    expect(find.byType(ProfilePage), findsOneWidget);
+
+    await tapTab('Início');
+    expect(find.byType(NewsHomePage), findsOneWidget);
+  });
+}
