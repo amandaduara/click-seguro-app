@@ -38,6 +38,16 @@ Verifique sua rede.". O que falta é usá-las do mesmo jeito em todas as telas. 
 Para quem é idoso, ver três desenhos e cinco frases diferentes para a mesma situação confunde:
 parece que cada tela tem um defeito diferente, quando basta ligar a internet.
 
+## Clarifications
+
+### Session 2026-11-23
+
+- Implementação: apagar e salvar contato na Central de ajuda usam só o armazenamento do aparelho
+  (RNF-002) e nunca falham por falta de internet; ficam fora de FR-006, sem caso de teste de
+  conexão.
+- Implementação: o texto curto da faixa em inglês segue o estilo do texto longo: "You're
+  offline." (em vez de "You are offline.").
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Tela sem nada para mostrar avisa sempre do mesmo jeito (Priority: P1)
@@ -76,7 +86,7 @@ tela.
 
 Com uma tela já aberta, a pessoa faz algo que precisa da rede (responder uma questão, trocar a
 senha, salvar o perfil, trocar a foto, ligar ou desligar os alertas, carregar mais notícias, salvar
-ou denunciar uma notícia, apagar um contato, entrar, criar conta, recuperar a senha) e a internet
+ou denunciar uma notícia, entrar, criar conta, recuperar a senha) e a internet
 caiu. Ela recebe sempre a mesma frase: "Sem conexão com a internet. Verifique sua rede.". Nos
 formulários de entrada (login, criar conta, esqueci a senha) a frase aparece na própria tela, como
 hoje; nas demais ações, num aviso rápido no rodapé. O que ela já tinha digitado ou escolhido
@@ -178,8 +188,7 @@ conferir o texto da faixa.
   "Sem conexão com a internet. Verifique sua rede.", e não um texto genérico da ação. Isso vale
   pelo menos para: responder questão, trocar senha, salvar o perfil, trocar a foto, mudar os
   alertas, carregar a conta nas Configurações, carregar mais notícias (feed e Reels), números e
-  conquistas no Perfil, salvar, curtir ou denunciar notícia, apagar contato, enviar contato e as
-  ações do Assistente.
+  conquistas no Perfil, salvar, curtir ou denunciar notícia e as ações do Assistente.
 - **FR-007**: Nos formulários de entrada (login, criar conta, esqueci a senha) e no envio do
   Assistente a frase MUST aparecer na própria tela, como já acontece hoje; nas demais ações, MUST aparecer num aviso rápido
   no rodapé; nos blocos parciais de uma tela já carregada (números e conquistas no Perfil, fim da

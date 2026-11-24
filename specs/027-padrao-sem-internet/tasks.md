@@ -136,11 +136,11 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T044 Procurar sobras: `grep -rn "errorConnection.tr()" lib` (só pode sobrar no `SafeErrorState`, se sobrar) e qualquer `Failed.tr()` de ação de rede que ainda não passe por `messageKeyOr`; revisar código só usado por teste (prática do projeto)
-- [ ] T045 `flutter analyze` (esperado: 1 info de base) e `flutter test` completo: verde; formatar só os arquivos tocados com `dart format`
-- [ ] T046 [P] Atualizar `.specify/memory/design-system.md` (repo root): linhas "Vazio e erro" e "Sem internet" com o padrão dos três casos (tela sem conteúdo, ação/bloco, conteúdo guardado), a decisão pela falha e a variação curta da faixa (FR-014)
-- [ ] T047 [P] Atualizar `.specify/memory/specification.md` (repo root): CB-001/CB-002 citando o padrão e a spec 027; subir a versão do documento
-- [ ] T048 [P] Adicionar **R4 Padrão de sem internet** na Fase R de `.specify/memory/tasks.md` (repo root), em aberto até a validação
+- [X] T044 Procurar sobras: `grep -rn "errorConnection.tr()" lib` (só pode sobrar no `SafeErrorState`, se sobrar) e qualquer `Failed.tr()` de ação de rede que ainda não passe por `messageKeyOr`; revisar código só usado por teste (prática do projeto)
+- [X] T045 `flutter analyze` (esperado: 1 info de base) e `flutter test` completo: verde; formatar só os arquivos tocados com `dart format`
+- [X] T046 [P] Atualizar `.specify/memory/design-system.md` (repo root): linhas "Vazio e erro" e "Sem internet" com o padrão dos três casos (tela sem conteúdo, ação/bloco, conteúdo guardado), a decisão pela falha e a variação curta da faixa (FR-014)
+- [X] T047 [P] Atualizar `.specify/memory/specification.md` (repo root): CB-001/CB-002 citando o padrão e a spec 027; subir a versão do documento
+- [X] T048 [P] Adicionar **R4 Padrão de sem internet** na Fase R de `.specify/memory/tasks.md` (repo root), em aberto até a validação
 - [ ] T049 Validação no aparelho pela usuária com [quickstart.md](quickstart.md) (passos 1 a 15); ajustes viram esclarecimentos na spec
 - [ ] T050 Marcar R4 como concluída, `/revisar-pr` na branch, push e PR para `develop`
 

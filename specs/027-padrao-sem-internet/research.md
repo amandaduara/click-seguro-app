@@ -75,8 +75,8 @@ Levantamento das ações que hoje mostram texto genérico (FR-006), e o que muda
 | Configurações: alertas | `setReceiveAlerts` devolve a falha mas não guarda; `AccountFailed(:failure)` | guardar `alertsFailure` |
 | Feed, Salvas e Reels: carregar mais | `loadMoreFailure` existe | `FeedListFooter` recebe a falha; Reels, só a tela |
 
-Já corretas (só conferir em teste): login, cadastro, esqueci a senha, Assistente, apagar e
-enviar contato, mensagens do feed e do detalhe (`failure.message`).
+Já corretas (só conferir em teste): login, cadastro, esqueci a senha, Assistente, mensagens do feed e do
+detalhe (`failure.message`). Apagar e salvar contato são locais e não dependem da rede.
 
 **Rationale**: a mudança mínima é guardar a falha onde ela é jogada fora; o resto é troca de
 texto na tela.

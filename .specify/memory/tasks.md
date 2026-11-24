@@ -412,6 +412,15 @@ Módulos: `activities`, `help`, `profile`, `settings`.
   - Tela Termos de uso nas Configurações (com e sem conta); Termos e Privacidade abrem sem
     sessão.
   - Validado pela usuária no aparelho (2026-11-23).
+- [ ] **R4 Padrão de sem internet** (RNF-002, CB-001, CB-002, RNF-003, RNF-004, RNF-006)
+  (specs/027-padrao-sem-internet)
+  - Tela sem conteúdo: o estado de erro decide pelo tipo da falha; sem internet, a nuvem com
+    "Sem conexão com a internet. Verifique sua rede." em todas as telas (Atividades e Lição
+    corrigidas; Reels legível no fundo preto); a frase é anunciada ao leitor de tela.
+  - Ação ou bloco que falha: a mesma frase no lugar de "Não foi possível…" (responder, trocar
+    senha, editar perfil e foto, números e conquistas, alertas, carregar mais).
+  - Conteúdo guardado: a faixa azul; nos Alertas vazios, só "Você está sem internet.".
+  - Pendente: validação da usuária no aparelho.
 
 ---
 

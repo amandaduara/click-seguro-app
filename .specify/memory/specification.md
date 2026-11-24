@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **SafeNews**
 
-**Versão**: 2.6.0
+**Versão**: 2.7.0
 
 **Criado em**: 2026-09-07
 
@@ -355,10 +355,14 @@ está coberto.
 
 ## 6. Casos de Borda e Fluxos de Exceção
 
-- **CB-001 (Sem conexão ao abrir)**: Com cache disponível, o feed MUST abrir do cache com
-  indicador de "modo offline". Sem cache, MUST mostrar estado de erro com "Tentar novamente".
+- **CB-001 (Sem conexão ao abrir)**: Com cache disponível, a tela (feed, detalhe, salvas,
+  alertas) MUST abrir do cache com a faixa de sem internet; sem nada guardado, a faixa não fala
+  em conteúdo salvo. Sem cache, MUST mostrar o estado de erro de sem internet (ilustração da nuvem,
+  a mensagem de CB-002 e "Tentar novamente"), igual em todas as telas
+  (`specs/027-padrao-sem-internet`).
 - **CB-002 (Sem conexão durante ação)**: MUST resultar em `ConnectionFailure` com a mensagem
-  "Sem conexão com a internet. Verifique sua rede."
+  "Sem conexão com a internet. Verifique sua rede.", mostrada no lugar da mensagem genérica da
+  ação; as outras falhas mantêm a mensagem própria da ação.
 - **CB-003 (Sessão expirada / 401)**: O app MUST tentar renovar a credencial uma vez. Se a
   renovação falhar, MUST encerrar a sessão (`UnauthorizedFailure`) e exibir
   "Sua sessão expirou, faça login novamente." **sem tirar o usuário da tela atual**. O login é
@@ -432,9 +436,13 @@ Este documento descreve requisitos de **negócio e produto**. Se um requisito ex
 [constitution.md](constitution.md), o requisito MUST ser redesenhado. Mudanças de escopo exigem
 nova versão e registro no changelog.
 
-**Versão**: 2.6.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-11-23
+**Versão**: 2.7.0 | **Criado em**: 2026-09-07 | **Última alteração**: 2026-11-23
 
 ## Changelog
+
+- **2.7.0 (2026-11-23)**: padrão único de sem internet (`specs/027-padrao-sem-internet`). CB-001
+  e CB-002 valem para todas as telas e ações: mesmo estado de erro, mesma frase e a faixa curta
+  quando não há conteúdo guardado.
 
 - **2.6.0 (2026-11-23)**: login que continua a splash, aceite dos termos e tela Termos de uso
   (`specs/026-login-termos-uso`). RF-001 com a passagem animada para o login, RF-003 com o aceite
