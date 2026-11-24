@@ -142,7 +142,7 @@ Todos os caminhos partem de `click_seguro_app/`, salvo quando indicado.
 - [X] T047 [P] Atualizar `.specify/memory/specification.md` (repo root): CB-001/CB-002 citando o padrão e a spec 027; subir a versão do documento
 - [X] T048 [P] Adicionar **R4 Padrão de sem internet** na Fase R de `.specify/memory/tasks.md` (repo root), em aberto até a validação
 - [X] T049 Validação no aparelho pela usuária com [quickstart.md](quickstart.md) (passos 1 a 15); ajustes viram esclarecimentos na spec
-- [ ] T050 Marcar R4 como concluída, `/revisar-pr` na branch, push e PR para `develop`
+- [X] T050 Marcar R4 como concluída, `/revisar-pr` na branch, push e PR para `develop`
 
 ---
 
