@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-23
 
-**Status**: Draft
+**Status**: Implemented (validado pela usuária no aparelho em 2026-11-23)
 
 **Input**: Revisão da usuária no aparelho (2026-11-23), com quatro capturas sem internet: o login
 mostra um texto vermelho, o Início mostra a faixa azul com as notícias salvas, as Atividades
