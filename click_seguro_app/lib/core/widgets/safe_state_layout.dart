@@ -46,13 +46,18 @@ class SafeStateLayout extends StatelessWidget {
                 // Mesmo tamanho em todo estado vazio ou de erro do app
                 // (validação da usuária, specs/024): o texto da tela, em
                 // seminegrito, e a dica mais clara embaixo.
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: AppTypography.body.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: context.colors.textForeground,
-                    height: 1.4,
+                // Anunciada quando a tela troca para este estado (specs/027
+                // FR-012), como a faixa de sem internet.
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: AppTypography.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: context.colors.textForeground,
+                      height: 1.4,
+                    ),
                   ),
                 ),
                 if (hint case final String text) ...[

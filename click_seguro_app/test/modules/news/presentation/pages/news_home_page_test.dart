@@ -286,12 +286,31 @@ void main() {
       repository.feedResults[0] = Right(
         newsFeed(recent: newsItems(3), hasMore: true),
       );
-      repository.feedPages[2] = const Left(ConnectionFailure());
+      repository.feedPages[2] = const Left(ServerFailure());
 
       await pumpPage(tester);
       await tester.pumpAndSettle();
 
       expect(find.text('Não foi possível carregar mais.'), findsOneWidget);
+      expect(find.text('Tentar novamente'), findsOneWidget);
+    });
+
+    testWidgets('sem internet ao carregar mais: frase padrão (specs/027)', (
+      tester,
+    ) async {
+      repository.feedResults[0] = Right(
+        newsFeed(recent: newsItems(3), hasMore: true),
+      );
+      repository.feedPages[2] = const Left(ConnectionFailure());
+
+      await pumpPage(tester);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(find.text('Não foi possível carregar mais.'), findsNothing);
       expect(find.text('Tentar novamente'), findsOneWidget);
     });
 

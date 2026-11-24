@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_empty_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_error_state.dart';
 import 'package:click_seguro_app/core/widgets/safe_loading_state.dart';
@@ -48,7 +49,11 @@ void main() {
       var retries = 0;
       await pump(
         tester,
-        SafeErrorState(message: 'Falhou', onRetry: () => retries++),
+        SafeErrorState(
+          failure: null,
+          message: 'Falhou',
+          onRetry: () => retries++,
+        ),
       );
 
       expect(find.text('Falhou'), findsOneWidget);
@@ -68,7 +73,10 @@ void main() {
     });
 
     testWidgets('botão com pelo menos 48×48', (tester) async {
-      await pump(tester, SafeErrorState(message: 'Falhou', onRetry: () {}));
+      await pump(
+        tester,
+        SafeErrorState(failure: null, message: 'Falhou', onRetry: () {}),
+      );
 
       expectTapTarget(
         tester,
@@ -79,6 +87,92 @@ void main() {
             )
             .first,
       );
+    });
+  });
+
+  // specs/027: o desenho e a frase saem do tipo da falha, não do texto.
+  group('SafeErrorState decide pela falha', () {
+    Finder illustration(AppIllustration which) => find.byWidgetPredicate(
+      (widget) => widget is SafeIllustration && widget.illustration == which,
+    );
+    const String offline = 'Sem conexão com a internet. Verifique sua rede.';
+
+    testWidgets(
+      'sem conexão: nuvem e a frase padrão, mesmo com texto da tela',
+      (tester) async {
+        var retries = 0;
+        await pump(
+          tester,
+          SafeErrorState(
+            failure: const ConnectionFailure(),
+            message: 'Texto da tela',
+            onRetry: () => retries++,
+          ),
+        );
+
+        expect(illustration(AppIllustration.stateOffline), findsOneWidget);
+        expect(find.text(offline), findsOneWidget);
+        expect(find.text('Texto da tela'), findsNothing);
+        await tester.tap(find.text('Tentar novamente'));
+        expect(retries, 1);
+      },
+    );
+
+    testWidgets('servidor: tomada e o texto da tela', (tester) async {
+      await pump(
+        tester,
+        SafeErrorState(
+          failure: const ServerFailure(),
+          message: 'Texto da tela',
+          onRetry: () {},
+        ),
+      );
+
+      expect(illustration(AppIllustration.stateError), findsOneWidget);
+      expect(find.text('Texto da tela'), findsOneWidget);
+    });
+
+    testWidgets('servidor sem texto da tela: o texto da falha', (tester) async {
+      await pump(
+        tester,
+        SafeErrorState(failure: const ServerFailure(), onRetry: () {}),
+      );
+
+      expect(illustration(AppIllustration.stateError), findsOneWidget);
+      // A mensagem padrão do ServerFailure.
+      expect(
+        find.text(
+          'Não foi possível completar a ação. Tente novamente mais tarde.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('sem falha nem texto: a mensagem genérica', (tester) async {
+      await pump(tester, SafeErrorState(failure: null, onRetry: () {}));
+
+      expect(illustration(AppIllustration.stateError), findsOneWidget);
+      expect(
+        find.text(
+          'Não foi possível completar a ação. Tente novamente mais tarde.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    // FR-012: quem usa leitor de tela ouve o aviso quando a tela troca.
+    testWidgets('a frase é anunciada ao leitor de tela', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pump(
+        tester,
+        SafeErrorState(failure: const ConnectionFailure(), onRetry: () {}),
+      );
+
+      expect(
+        tester.getSemantics(find.text(offline)),
+        isSemantics(label: offline, isLiveRegion: true),
+      );
+      semantics.dispose();
     });
   });
 
@@ -153,6 +247,27 @@ void main() {
         tester.view.physicalSize.width / tester.view.devicePixelRatio,
       );
     });
+
+    // FR-011 de specs/027: sem conteúdo salvo, a faixa não promete nada.
+    testWidgets('variação curta, sem falar em conteúdo salvo', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await pump(
+        tester,
+        const Column(children: [SafeOfflineBanner(showsSavedContent: false)]),
+      );
+
+      const text = 'Você está sem internet.';
+      expect(find.text(text), findsOneWidget);
+      expect(
+        find.text('Você está sem internet. Mostrando o conteúdo salvo.'),
+        findsNothing,
+      );
+      expect(
+        tester.getSemantics(find.text(text)),
+        isSemantics(label: text, isLiveRegion: true),
+      );
+      semantics.dispose();
+    });
   });
 
   testWidgets('fonte em 200% não estoura nenhum estado', (tester) async {
@@ -167,7 +282,11 @@ void main() {
           const SizedBox(height: 200, child: SafeLoadingState()),
           SizedBox(
             height: 300,
-            child: SafeErrorState(message: 'Falhou', onRetry: () {}),
+            child: SafeErrorState(
+              failure: null,
+              message: 'Falhou',
+              onRetry: () {},
+            ),
           ),
           SizedBox(
             height: 300,
@@ -193,7 +312,11 @@ void main() {
     var retries = 0;
     await pump(
       tester,
-      SafeErrorState(message: 'Falhou ao carregar', onRetry: () => retries++),
+      SafeErrorState(
+        failure: null,
+        message: 'Falhou ao carregar',
+        onRetry: () => retries++,
+      ),
     );
 
     expect(tester.takeException(), isNull);
@@ -207,7 +330,10 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    await pump(tester, SafeErrorState(message: 'Falhou', onRetry: () {}));
+    await pump(
+      tester,
+      SafeErrorState(failure: null, message: 'Falhou', onRetry: () {}),
+    );
 
     expect(find.bySemanticsLabel('Falhou'), findsOneWidget);
     expect(find.bySemanticsLabel('Tentar novamente'), findsOneWidget);

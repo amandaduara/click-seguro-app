@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
@@ -6,30 +7,35 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Estado de erro (FR-015, FR-019): a mensagem (já traduzida, ex.:
-/// `failure.message.tr()`) e "Tentar novamente". Redesign 2.0: a ilustração
-/// da tomada desconectada, ou a da nuvem sem sinal quando a falha é de
-/// conexão.
+/// Estado de erro de tela inteira (FR-015, FR-019) com "Tentar novamente".
+///
+/// Padrão de sem internet (specs/027): o tipo de [failure] decide. Sem
+/// conexão, a nuvem sem sinal e a frase padrão, em qualquer tela; nas outras
+/// falhas, a tomada com [message] (o texto da tela, já traduzido) ou, sem
+/// ele, a mensagem da própria falha.
 class SafeErrorState extends StatelessWidget {
   const SafeErrorState({
     super.key,
-    required this.message,
+    required this.failure,
+    this.message,
     required this.onRetry,
   });
 
-  final String message;
+  final Failure? failure;
+  final String? message;
   final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    // A falha de conexão chega como a mensagem padrão já traduzida
-    // (`ConnectionFailure`): é ela que pede a ilustração de sem internet.
-    final bool offline = message == AppStrings.errorConnection.tr();
+    final Failure? current = failure;
+    final bool offline = current is ConnectionFailure;
     return SafeStateLayout(
       illustration: offline
           ? AppIllustration.stateOffline
           : AppIllustration.stateError,
-      message: message,
+      message: offline
+          ? current.message.tr()
+          : message ?? (current?.message ?? AppStrings.errorGeneric).tr(),
       actions: [
         SafeButton(
           label: AppStrings.commonTryAgain.tr(),

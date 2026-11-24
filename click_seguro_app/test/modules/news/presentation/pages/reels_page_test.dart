@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
@@ -18,6 +19,7 @@ import 'package:click_seguro_app/modules/news/presentation/widgets/reel_view.dar
 import 'package:click_seguro_app/modules/shell/presentation/widgets/account_required_sheet.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -148,11 +150,26 @@ void main() {
       expect(title('r1'), findsOneWidget);
     });
 
+    /// Contraste da cor do texto sobre o preto da tela (WCAG).
+    double contrastOnBlack(WidgetTester tester, String text) {
+      final RenderParagraph paragraph = tester.renderObject(find.text(text));
+      final double luminance = paragraph.text.style!.color!.computeLuminance();
+      return (luminance + 0.05) / 0.05;
+    }
+
     testWidgets('erro com "Tentar novamente" recarrega', (tester) async {
       repository.reelsResults[null] = const Left(ConnectionFailure());
       await pumpPage(tester);
 
       expect(find.text('Tentar novamente'), findsOneWidget);
+      // A frase de sem internet legível sobre o preto (specs/027 SC-003).
+      expect(
+        contrastOnBlack(
+          tester,
+          'Sem conexão com a internet. Verifique sua rede.',
+        ),
+        greaterThanOrEqualTo(4.5),
+      );
 
       firstPage(2);
       await tester.tap(find.text('Tentar novamente'));
@@ -165,6 +182,23 @@ void main() {
       await pumpPage(tester);
 
       expect(find.text('Nenhuma notícia por aqui ainda.'), findsOneWidget);
+      expect(
+        contrastOnBlack(tester, 'Nenhuma notícia por aqui ainda.'),
+        greaterThanOrEqualTo(4.5),
+      );
+      // O botão secundário pinta o rótulo com `textForeground` sobre
+      // `surfaceStrong`: os dois precisam valer sobre o preto (revisão da
+      // branch 027).
+      final AppPalette colors = tester.element(find.text('Atualizar')).colors;
+      final double label = colors.textForeground.computeLuminance();
+      final double button = Color.alphaBlend(
+        colors.surfaceStrong,
+        Colors.black,
+      ).computeLuminance();
+      final double ratio = label > button
+          ? (label + 0.05) / (button + 0.05)
+          : (button + 0.05) / (label + 0.05);
+      expect(ratio, greaterThanOrEqualTo(4.5));
 
       firstPage(1);
       await tester.tap(find.text('Atualizar'));
@@ -356,6 +390,23 @@ void main() {
       await pumpPage(tester);
 
       expect(find.text('Você viu todas as notícias'), findsOneWidget);
+    });
+
+    testWidgets('sem internet na parte seguinte: frase padrão (specs/027)', (
+      tester,
+    ) async {
+      firstPage(2, next: 'c2');
+      repository.reelsResults['c2'] = const Left(ConnectionFailure());
+      await pumpPage(tester);
+
+      await tester.fling(find.byType(PageView), const Offset(0, -600), 2000);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(find.text('Tentar novamente'), findsOneWidget);
     });
 
     testWidgets('falha da parte seguinte: aviso com "Tentar novamente"', (

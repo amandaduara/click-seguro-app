@@ -8,7 +8,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Faixa de sem internet, no topo do conteúdo guardado (FR-015).
 class SafeOfflineBanner extends StatelessWidget {
-  const SafeOfflineBanner({super.key});
+  const SafeOfflineBanner({super.key, this.showsSavedContent = true});
+
+  /// `false` quando a tela não tem nada guardado para mostrar: a faixa diz só
+  /// que está sem internet (specs/027 FR-011).
+  final bool showsSavedContent;
 
   /// Canto da faixa: entre o `radiusSm` (12) e o `radiusMd` (16).
   static const BorderRadius _radius = BorderRadius.all(Radius.circular(14));
@@ -42,7 +46,10 @@ class SafeOfflineBanner extends StatelessWidget {
             const SizedBox(width: AppSpacing.s3),
             Expanded(
               child: Text(
-                AppStrings.commonOfflineBanner.tr(),
+                (showsSavedContent
+                        ? AppStrings.commonOfflineBanner
+                        : AppStrings.commonOfflineBannerShort)
+                    .tr(),
                 style: AppTypography.label.copyWith(
                   color: colors.textPrimaryForeground,
                 ),

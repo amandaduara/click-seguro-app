@@ -95,6 +95,7 @@ abstract class AppStrings {
   static const String commonPhotoPermissionOk = 'common_photo_permission_ok';
   static const String commonEmpty = 'common_empty';
   static const String commonOfflineBanner = 'common_offline_banner';
+  static const String commonOfflineBannerShort = 'common_offline_banner_short';
   static const String commonComingSoon = 'common_coming_soon';
   static const String commonBackHome = 'common_back_home';
   static const String commonNotFoundTitle = 'common_not_found_title';

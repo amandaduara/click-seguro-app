@@ -52,14 +52,14 @@ class _LoadingGrid extends StatelessWidget {
     final ProfileController controller = context.watch<ProfileController>();
     if (controller.status == ProfileStatus.error) {
       return SafeErrorState(
-        message: (controller.failure?.message ?? AppStrings.errorGeneric).tr(),
+        failure: controller.failure,
         onRetry: controller.load,
       );
     }
     return switch (controller.achievements) {
       AreaLoading() => const SafeLoadingState(),
       AreaFailed(:final failure) => SafeErrorState(
-        message: failure.message.tr(),
+        failure: failure,
         onRetry: controller.retryAchievements,
       ),
       AreaLoaded(:final value) => _Grid(achievements: value),

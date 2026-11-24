@@ -246,8 +246,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
         return _FeedSkeleton(now: DateTime.now());
       case FeedStatus.error:
         return SafeErrorState(
-          message: (controller.failure?.message ?? AppStrings.errorGeneric)
-              .tr(),
+          failure: controller.failure,
           onRetry: controller.load,
         );
       case FeedStatus.loaded:
@@ -373,7 +372,7 @@ class _NewsHomePageState extends State<NewsHomePage> {
         child: FeedListFooter(
           hasMore: controller.hasMore,
           isLoading: controller.isLoadingMore,
-          failed: controller.loadMoreFailure != null,
+          failure: controller.loadMoreFailure,
           isEnd: controller.isEnd,
           offlineEnd: controller.isFromCache,
           onLoadMore: controller.loadMore,

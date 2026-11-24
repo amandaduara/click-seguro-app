@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/illustrations/app_illustration.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
@@ -267,9 +268,18 @@ class _StyleGuideScreenState extends State<_StyleGuideScreen> {
             ],
           ),
           _section('Estados'),
+          // Sem internet: a nuvem e a frase padrão (specs/027).
           SizedBox(
             height: 420,
             child: SafeErrorState(
+              failure: const ConnectionFailure(),
+              onRetry: () {},
+            ),
+          ),
+          SizedBox(
+            height: 420,
+            child: SafeErrorState(
+              failure: const ServerFailure(),
               message: 'Não foi possível carregar.',
               onRetry: () {},
             ),

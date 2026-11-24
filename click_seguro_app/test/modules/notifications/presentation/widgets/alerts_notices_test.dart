@@ -18,6 +18,7 @@ void main() {
   Future<void> pumpNotices(
     WidgetTester tester, {
     bool showOffline = false,
+    bool showsSavedContent = true,
     bool showDisabled = true,
     VoidCallback? onOpenSettings,
     ThemeData? theme,
@@ -27,6 +28,7 @@ void main() {
     child: Scaffold(
       body: AlertsNotices(
         showOffline: showOffline,
+        showsSavedContent: showsSavedContent,
         showDisabled: showDisabled,
         onOpenSettings: onOpenSettings ?? () {},
       ),
@@ -143,6 +145,29 @@ void main() {
 
     expect(find.byType(SafeOfflineBanner), findsOneWidget);
     expect(find.text(noticeText), findsOneWidget);
+  });
+
+  // FR-011 de specs/027: sem alertas guardados, a faixa não promete nada.
+  testWidgets('sem internet: texto da faixa conforme o conteúdo guardado', (
+    tester,
+  ) async {
+    await pumpNotices(tester, showOffline: true, showDisabled: false);
+    expect(
+      find.text('Você está sem internet. Mostrando o conteúdo salvo.'),
+      findsOneWidget,
+    );
+
+    await pumpNotices(
+      tester,
+      showOffline: true,
+      showsSavedContent: false,
+      showDisabled: false,
+    );
+    expect(find.text('Você está sem internet.'), findsOneWidget);
+    expect(
+      find.text('Você está sem internet. Mostrando o conteúdo salvo.'),
+      findsNothing,
+    );
   });
 
   testWidgets('nada a avisar: não ocupa espaço', (tester) async {

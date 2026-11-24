@@ -104,7 +104,7 @@ class _HistoryContent extends StatelessWidget {
       return _scrollableState(
         controller,
         SafeErrorState(
-          message: controller.historyFailure!.message.tr(),
+          failure: controller.historyFailure,
           onRetry: controller.retryHistory,
         ),
       );

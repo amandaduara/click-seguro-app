@@ -2,7 +2,7 @@
 
 **Projeto**: Click Seguro (TCC) — Aplicativo **Click Seguro** (antes "SafeNews")
 
-**Versão**: 2.1.0
+**Versão**: 2.2.0
 
 **Criado em**: 2026-10-04 · **Última alteração**: 2026-11-23
 
@@ -473,8 +473,8 @@ As telas de texto das Configurações (Privacidade, Termos de uso) usam um cart�
 | Estado | Visual |
 |---|---|
 | Carregando | **Esqueleto cinza, sem ilustração**: `SafeSkeleton` com os widgets da tela e dados de exemplo, ou `SafeLoadingState` com blocos nos formatos `cards`, `list` e `detail`. Lido como "Carregando"; brilho parado com movimento reduzido. Botões que salvam mostram o carregando no lugar do ícone. **Sem aviso de servidor lento** |
-| Vazio e erro | `SafeStateLayout` (via `SafeEmptyState` e `SafeErrorState`): ilustração de até 180 (encolhe até 96 em telas curtas), **texto 16 seminegrito** tinta centralizado, dica opcional 16 em apoio e as ações da tela (erro: "Tentar novamente"). Rola com letra grande. Ilustração: `stateEmpty`, `stateError` ou `stateOffline` (falha de conexão) |
-| Sem internet | `SafeOfflineBanner`: faixa `secondary` com ícone e texto brancos (`label`), no topo do conteúdo salvo |
+| Vazio e erro | `SafeStateLayout` (via `SafeEmptyState` e `SafeErrorState`): ilustração de até 180 (encolhe até 96 em telas curtas), **texto 16 seminegrito** tinta centralizado, dica opcional 16 em apoio e as ações da tela (erro: "Tentar novamente"). Rola com letra grande. Ilustração: `stateEmpty` ou, no erro, decidida pela `Failure` recebida: `stateOffline` com a frase padrão de sem conexão para `ConnectionFailure`, `stateError` com o texto da tela para as outras. A frase é anunciada ao leitor de tela (`liveRegion`) |
+| Sem internet | `SafeOfflineBanner`: faixa `secondary` com ícone e texto brancos (`label`), no topo do conteúdo salvo; `showsSavedContent: false` mostra só "Você está sem internet." quando não há nada guardado |
 | Aviso curto | `SnackBar` flutuante `secondary`, canto 16, texto 16 branco |
 | Falha numa chave | O switch dá lugar a um ícone vermelho (`destructive`) de tentar de novo (48), e a mensagem vira subtítulo da linha, sem SnackBar; carregando no lugar da chave enquanto salva |
 | Convite para criar conta | folha inferior (§7.18) com título, explicação, botão `large` e "Agora não" |
@@ -593,6 +593,14 @@ de abrir a fonte na coluna do Reel.
   nova versão abaixo) e avise quem mantém a versão web.
 
 ## Histórico de versões
+
+- **2.2.0 (2026-11-23)**: padrão de sem internet (feature 027). Três casos, sempre com a frase
+  "Sem conexão com a internet. Verifique sua rede.": **tela sem conteúdo** → `SafeErrorState`
+  (nuvem + "Tentar novamente"), decidido pelo tipo da falha e não pelo texto; **ação ou bloco que
+  falha com a tela aberta** → a frase no lugar de "Não foi possível…" (`messageKeyOr`), no
+  aviso rápido, na própria tela (formulários de entrada e Assistente) ou no bloco (Perfil, fim
+  da lista, alertas); **conteúdo guardado** → `SafeOfflineBanner`, com a variação curta. Sobre
+  fundo escuro (Reels), a moldura troca as cores de texto da paleta.
 
 - **2.1.0 (2026-11-23)**: §7.13 e §7.15 com a versão A do login (feature 026): cabeçalho
   centralizado, `BrandWave` no rodapé, link do visitante, aceite dos termos e a abertura que

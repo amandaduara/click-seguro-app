@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
@@ -178,7 +179,7 @@ class _AccountProfileState extends State<_AccountProfile>
     return switch (controller.status) {
       ProfileStatus.loading => const _ProfileSkeleton(),
       ProfileStatus.error => SafeErrorState(
-        message: (controller.failure?.message ?? AppStrings.errorGeneric).tr(),
+        failure: controller.failure,
         onRetry: controller.load,
       ),
       ProfileStatus.loaded => _LoadedProfile(
@@ -295,8 +296,8 @@ class _Stats extends StatelessWidget {
         enabled: true,
         child: _tiles(context, _placeholder),
       ),
-      AreaFailed() => AreaNotice(
-        message: AppStrings.profileStatsFailed.tr(),
+      AreaFailed(:final failure) => AreaNotice(
+        message: failure.messageKeyOr(AppStrings.profileStatsFailed).tr(),
         onRetry: onRetry,
       ),
       AreaLoaded(:final value) => _tiles(context, value),

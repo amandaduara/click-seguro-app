@@ -59,6 +59,16 @@ class SettingsController extends ChangeNotifier {
   /// Salvar a escolha dos alertas falhou.
   bool get alertsSaveFailed => _pendingAlertsValue != null;
 
+  Failure? _alertsSaveFailure;
+
+  /// A falha que a linha dos alertas mostra (specs/027): a da conta que não
+  /// carregou (a linha diz "não carregou") ou, sem ela, a do último salvar
+  /// que falhou.
+  Failure? get alertsFailure => switch (_account) {
+    AccountFailed(:final failure) => failure,
+    _ => _alertsSaveFailure,
+  };
+
   bool _isRetryingAlerts = false;
 
   /// [retryAlerts] em andamento: a tela mostra o carregamento no lugar do
@@ -101,6 +111,7 @@ class SettingsController extends ChangeNotifier {
     final Failure? failure = result.fold((failure) => failure, (_) => null);
     if (failure != null) _account = current;
     _pendingAlertsValue = failure == null ? null : value;
+    _alertsSaveFailure = failure;
     _notify();
     return failure;
   }

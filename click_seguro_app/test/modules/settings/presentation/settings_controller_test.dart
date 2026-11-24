@@ -133,6 +133,8 @@ void main() {
         expect(alertsOn(), isTrue);
         expect(controller.alertsSaveFailed, isTrue);
         expect(controller.alertsLoadFailed, isFalse);
+        // A linha escolhe a frase pela falha (specs/027).
+        expect(controller.alertsFailure, isA<ConnectionFailure>());
       },
     );
 
@@ -153,6 +155,7 @@ void main() {
       expect(repository.alertsCalls, [false, false]);
       expect(alertsOn(), isFalse);
       expect(controller.alertsSaveFailed, isFalse);
+      expect(controller.alertsFailure, isNull);
     });
 
     test('retryAlerts que falha de novo mantém o pedido pendente', () async {
@@ -167,12 +170,29 @@ void main() {
       expect(controller.isRetryingAlerts, isFalse);
     });
 
+    // Revisão da branch 027: com as duas falhas, a linha diz "não carregou";
+    // a falha mostrada tem de ser a da conta, não a do salvar antigo.
+    test('conta que não recarrega depois de salvar falhar: vale a falha da '
+        'conta', () async {
+      await controller.load();
+      repository.alertsResults[0] = const Left(ServerFailure());
+      await controller.setReceiveAlerts(false);
+      repository.accountResults[0] = const Left(ConnectionFailure());
+
+      await controller.retryAccount();
+
+      expect(controller.alertsLoadFailed, isTrue);
+      expect(controller.alertsSaveFailed, isTrue);
+      expect(controller.alertsFailure, isA<ConnectionFailure>());
+    });
+
     test('retryAlerts com a conta em erro recarrega a conta', () async {
       repository.accountResults
         ..[0] = const Left(ConnectionFailure())
         ..add(const Right(testAccount));
       await controller.load();
       expect(controller.alertsLoadFailed, isTrue);
+      expect(controller.alertsFailure, isA<ConnectionFailure>());
       repository.accountGate = Completer<void>();
 
       final retrying = controller.retryAlerts();
@@ -182,6 +202,7 @@ void main() {
       await retrying;
       expect(controller.account, isA<AccountLoaded>());
       expect(controller.alertsLoadFailed, isFalse);
+      expect(controller.alertsFailure, isNull);
       expect(controller.isRetryingAlerts, isFalse);
       expect(repository.alertsCalls, isEmpty);
     });

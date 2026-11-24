@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:click_seguro_app/core/widgets/brand_scene.dart';
 import 'package:click_seguro_app/core/widgets/password_rules_list.dart';
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
@@ -141,6 +142,23 @@ void main() {
       await tapPrimary(tester, 'Entrar');
 
       expect(find.text('E-mail ou senha incorretos.'), findsOneWidget);
+      expect(find.text('maria@exemplo.com'), findsOneWidget);
+    });
+
+    // Padrão de sem internet (specs/027): a frase na própria tela.
+    testWidgets('sem internet: frase padrão embaixo dos campos', (
+      tester,
+    ) async {
+      repository.loginResult = const Left(ConnectionFailure());
+      await pumpLogin(tester);
+      await fillLogin(tester);
+
+      await tapPrimary(tester, 'Entrar');
+
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
       expect(find.text('maria@exemplo.com'), findsOneWidget);
     });
 

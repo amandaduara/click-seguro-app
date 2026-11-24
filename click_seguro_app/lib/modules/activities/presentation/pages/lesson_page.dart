@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_motion.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
@@ -167,7 +168,10 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
     final AnswerAttempt attempt = await _controller.confirm();
     if (!mounted) return;
     final String? message = switch (attempt) {
-      AnswerAttempt.failed => AppStrings.activitiesAnswerFailed.tr(),
+      AnswerAttempt.failed =>
+        _controller.answerFailure
+            .messageKeyOr(AppStrings.activitiesAnswerFailed)
+            .tr(),
       AnswerAttempt.rejected => AppStrings.activitiesAnswerRejected.tr(),
       AnswerAttempt.answered || AnswerAttempt.ignored => null,
     };
@@ -305,6 +309,7 @@ class _LessonScaffoldState extends State<_LessonScaffold> {
         layout: SafeLoadingLayout.detail,
       ),
       LessonStatus.error => SafeErrorState(
+        failure: controller.failure,
         message: AppStrings.activitiesErrorTitle.tr(),
         onRetry: () => controller.load(widget.moduleId),
       ),

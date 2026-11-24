@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/widgets/safe_button.dart';
 import 'package:click_seguro_app/modules/authentication/domain/failures/auth_failures.dart';
 import 'package:click_seguro_app/modules/authentication/presentation/controller/authentication_controller.dart';
@@ -117,6 +118,19 @@ void main() {
       find.text('Senha alterada. Entre com a nova senha.'),
       findsOneWidget,
     );
+  });
+
+  // Padrão de sem internet (specs/027): a frase na própria tela.
+  testWidgets('sem internet ao pedir o código: frase padrão', (tester) async {
+    repository.requestResetResult = const Left(ConnectionFailure());
+    await openForgot(tester);
+    await tapButton(tester, 'Enviar código');
+
+    expect(
+      find.text('Sem conexão com a internet. Verifique sua rede.'),
+      findsOneWidget,
+    );
+    await unmount(tester);
   });
 
   testWidgets('código inválido mantém no passo do código', (tester) async {

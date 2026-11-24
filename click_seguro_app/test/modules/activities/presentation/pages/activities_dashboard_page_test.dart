@@ -649,13 +649,44 @@ void main() {
       expect(card('Golpes Digitais'), findsOneWidget);
     });
 
-    testWidgets('erro com "Tentar novamente", que recarrega', (tester) async {
+    Finder illustration(AppIllustration which) => find.byWidgetPredicate(
+      (w) => w is SafeIllustration && w.illustration == which,
+    );
+
+    // Padrão de sem internet (specs/027 FR-003): a nuvem e a frase padrão.
+    testWidgets('sem internet: nuvem, frase padrão e "Tentar novamente", que '
+        'recarrega', (tester) async {
       repository = FakeActivitiesRepository([
         const Left(ConnectionFailure()),
         Right(dashboard()),
       ]);
       await open(tester);
 
+      expect(illustration(AppIllustration.stateOffline), findsOneWidget);
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Não foi possível carregar as atividades'),
+        findsNothing,
+      );
+      await tester.tap(find.text('Tentar novamente'));
+      await tester.pumpAndSettle();
+
+      expect(card('Golpes Digitais'), findsOneWidget);
+    });
+
+    testWidgets('erro do servidor: tomada e o texto das atividades', (
+      tester,
+    ) async {
+      repository = FakeActivitiesRepository([
+        const Left(ServerFailure()),
+        Right(dashboard()),
+      ]);
+      await open(tester);
+
+      expect(illustration(AppIllustration.stateError), findsOneWidget);
       expect(
         find.text('Não foi possível carregar as atividades'),
         findsOneWidget,

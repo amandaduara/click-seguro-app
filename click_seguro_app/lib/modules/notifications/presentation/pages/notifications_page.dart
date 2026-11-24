@@ -122,6 +122,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
         AlertsNotices(
           showOffline: controller.lastCheckFailure is ConnectionFailure,
+          showsSavedContent: controller.alerts.isNotEmpty,
           showDisabled: controller.receiveAlerts == false,
           onOpenSettings: _openSettings,
         ),

@@ -1,3 +1,4 @@
+import 'package:click_seguro_app/core/errors/errors.dart';
 import 'package:click_seguro_app/core/i18n/app_strings.dart';
 import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/theme/app_spacing.dart';
@@ -94,8 +95,10 @@ class AchievementsSection extends StatelessWidget {
               enabled: true,
               child: _MedalStrip(achievements: _placeholders),
             ),
-            AreaFailed() => AreaNotice(
-              message: AppStrings.profileAchievementsFailed.tr(),
+            AreaFailed(:final failure) => AreaNotice(
+              message: failure
+                  .messageKeyOr(AppStrings.profileAchievementsFailed)
+                  .tr(),
               onRetry: onRetry,
             ),
             AreaLoaded(:final value) => _MedalStrip(achievements: value),

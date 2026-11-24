@@ -193,6 +193,22 @@ void main() {
     expect(find.text('Este e-mail já está em uso.'), findsOneWidget);
   });
 
+  testWidgets('sem internet → frase padrão e o texto continua (specs/027)', (
+    tester,
+  ) async {
+    repository.updateResults[0] = const Left(ConnectionFailure());
+    await open(tester);
+
+    await tester.enterText(field('Nome'), 'Maria Souza');
+    await tapSave(tester);
+
+    expect(
+      find.text('Sem conexão com a internet. Verifique sua rede.'),
+      findsOneWidget,
+    );
+    expect(textOf(tester, 'Nome'), 'Maria Souza');
+  });
+
   testWidgets('falha do serviço → aviso e o texto continua', (tester) async {
     repository.updateResults[0] = const Left(ServerFailure());
     await open(tester);
@@ -582,6 +598,54 @@ void main() {
 
       expect(find.text('Não foi possível trocar a foto.'), findsOneWidget);
       semantics.dispose();
+    });
+
+    testWidgets('sem internet no envio → frase padrão (specs/027)', (
+      tester,
+    ) async {
+      storage.nextResult = const PickedImage('/app/images/img_1.png');
+      repository.uploadResults[0] = const Left(ConnectionFailure());
+      await open(tester);
+
+      await openSheet(tester);
+      await tester.tap(find.text('Galeria'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+      expect(find.text('Não foi possível trocar a foto.'), findsNothing);
+    });
+
+    testWidgets('remover a foto: sem internet → frase padrão; servidor → '
+        '"Não foi possível trocar a foto."', (tester) async {
+      repository
+        ..profileResults[0] = const Right(withAvatar)
+        ..removeResults[0] = const Left(ConnectionFailure())
+        ..removeResults.add(const Left(ServerFailure()));
+      await open(tester);
+
+      Future<void> remove() async {
+        await openSheet(tester);
+        await tester.tap(find.text('Remover foto'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Remover'));
+        await tester.pumpAndSettle();
+      }
+
+      await remove();
+      expect(
+        find.text('Sem conexão com a internet. Verifique sua rede.'),
+        findsOneWidget,
+      );
+
+      ScaffoldMessenger.of(
+        tester.element(find.byType(Scaffold).first),
+      ).removeCurrentSnackBar();
+      await tester.pumpAndSettle();
+      await remove();
+      expect(find.text('Não foi possível trocar a foto.'), findsOneWidget);
     });
 
     testWidgets('imagem recusada → aviso de JPG ou PNG', (tester) async {
