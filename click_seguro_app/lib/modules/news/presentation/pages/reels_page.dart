@@ -469,7 +469,8 @@ class _Dark extends StatelessWidget {
       child: Center(
         child: Theme(
           // Os estados de erro e vazio pintam o texto com a paleta: sobre o
-          // preto, o texto vira o claro (specs/027 FR-004).
+          // preto, o texto vira o claro e o fundo do botão secundário
+          // ("Atualizar"), um cinza escuro (specs/027 FR-004).
           data: theme.copyWith(
             textTheme: theme.textTheme.apply(
               bodyColor: light,
@@ -479,6 +480,7 @@ class _Dark extends StatelessWidget {
               colors.copyWith(
                 textForeground: light,
                 textMutedForeground: light.withValues(alpha: 0.78),
+                surfaceStrong: light.withValues(alpha: 0.16),
               ),
             ],
           ),

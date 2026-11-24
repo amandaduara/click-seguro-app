@@ -170,6 +170,22 @@ void main() {
       expect(controller.isRetryingAlerts, isFalse);
     });
 
+    // Revisão da branch 027: com as duas falhas, a linha diz "não carregou";
+    // a falha mostrada tem de ser a da conta, não a do salvar antigo.
+    test('conta que não recarrega depois de salvar falhar: vale a falha da '
+        'conta', () async {
+      await controller.load();
+      repository.alertsResults[0] = const Left(ServerFailure());
+      await controller.setReceiveAlerts(false);
+      repository.accountResults[0] = const Left(ConnectionFailure());
+
+      await controller.retryAccount();
+
+      expect(controller.alertsLoadFailed, isTrue);
+      expect(controller.alertsSaveFailed, isTrue);
+      expect(controller.alertsFailure, isA<ConnectionFailure>());
+    });
+
     test('retryAlerts com a conta em erro recarrega a conta', () async {
       repository.accountResults
         ..[0] = const Left(ConnectionFailure())

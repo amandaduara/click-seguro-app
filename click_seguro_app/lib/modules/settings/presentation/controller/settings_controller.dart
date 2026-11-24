@@ -61,14 +61,13 @@ class SettingsController extends ChangeNotifier {
 
   Failure? _alertsSaveFailure;
 
-  /// A falha que a linha dos alertas mostra (specs/027): a do último salvar
-  /// que falhou ou, sem ela, a da conta que não carregou.
-  Failure? get alertsFailure =>
-      _alertsSaveFailure ??
-      switch (_account) {
-        AccountFailed(:final failure) => failure,
-        _ => null,
-      };
+  /// A falha que a linha dos alertas mostra (specs/027): a da conta que não
+  /// carregou (a linha diz "não carregou") ou, sem ela, a do último salvar
+  /// que falhou.
+  Failure? get alertsFailure => switch (_account) {
+    AccountFailed(:final failure) => failure,
+    _ => _alertsSaveFailure,
+  };
 
   bool _isRetryingAlerts = false;
 

@@ -99,7 +99,7 @@ para um caso.
 ## R6. Faixa dos Alertas sem conteúdo guardado
 
 **Decision**: `SafeOfflineBanner({bool showsSavedContent = true})`. Com `false`, mostra a chave
-nova `common_offline_banner_short` ("Você está sem internet." / "You are offline."). O
+nova `common_offline_banner_short` ("Você está sem internet." / "You're offline."). O
 `AlertsNotices` passa `showsSavedContent: alerts.isNotEmpty`.
 
 **Rationale**: um só componente, aparência igual, texto honesto (FR-011).

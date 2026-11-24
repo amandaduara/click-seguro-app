@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:click_seguro_app/core/errors/errors.dart';
+import 'package:click_seguro_app/core/theme/app_palette.dart';
 import 'package:click_seguro_app/core/widgets/safe_network_image.dart';
 import 'package:click_seguro_app/core/widgets/safe_skeleton.dart';
 import 'package:click_seguro_app/modules/common/accessibility/accessibility_preferences_notifier.dart';
@@ -185,6 +186,19 @@ void main() {
         contrastOnBlack(tester, 'Nenhuma notícia por aqui ainda.'),
         greaterThanOrEqualTo(4.5),
       );
+      // O botão secundário pinta o rótulo com `textForeground` sobre
+      // `surfaceStrong`: os dois precisam valer sobre o preto (revisão da
+      // branch 027).
+      final AppPalette colors = tester.element(find.text('Atualizar')).colors;
+      final double label = colors.textForeground.computeLuminance();
+      final double button = Color.alphaBlend(
+        colors.surfaceStrong,
+        Colors.black,
+      ).computeLuminance();
+      final double ratio = label > button
+          ? (label + 0.05) / (button + 0.05)
+          : (button + 0.05) / (label + 0.05);
+      expect(ratio, greaterThanOrEqualTo(4.5));
 
       firstPage(1);
       await tester.tap(find.text('Atualizar'));
